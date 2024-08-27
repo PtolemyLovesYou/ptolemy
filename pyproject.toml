@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "tvali"
+version = "0.0.1"
+description = "An open-source ML monitoring platform built for complex systems."
+authors = ["Raz Besaleli <rbesaleli@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
