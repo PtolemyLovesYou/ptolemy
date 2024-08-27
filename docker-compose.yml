@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    env_file: .env
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  
+  tvali:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file: .env
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+    driver: local
