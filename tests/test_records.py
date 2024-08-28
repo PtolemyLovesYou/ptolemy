@@ -1,6 +1,8 @@
 """Test Records classes."""
 import pytest
-from tvali.records.types import Record
+from uuid import uuid4
+from pydantic import ValidationInfo
+from tvali.records.types import Record, validate_id
 from tvali.records.records import SystemRecord, SubsystemRecord, SubcomponentRecord, ComponentRecord
 
 def test_record_creation():
@@ -35,7 +37,7 @@ def test_record_validation():
     with test_record:
         test_record.log_io(
             inputs={'foo': 'bar'},
-            outputs={'bar': 'baz'},
+            outputs={'baz': None},
             metadata={'metadata': 'test'},
             feedback={'feedback': [1, 2, [1, 2, 3]]}
         )
@@ -43,7 +45,7 @@ def test_record_validation():
     assert isinstance(test_record.start_time, float)
     assert isinstance(test_record.end_time, float)
     assert test_record.inputs == {'foo': 'bar'}
-    assert test_record.outputs == {'bar': 'baz'}
+    assert test_record.outputs == {'baz': None}
     assert test_record.metadata == {'metadata': 'test'}
     assert test_record.feedback == {'feedback': [1, 2, [1, 2, 3]]}
 
@@ -80,3 +82,61 @@ def test_bad_record_validation_io():
 
     with pytest.raises(ValueError):
         test_record.log_io(inputs={'foo': BadClass()})
+
+def test_record_id_validation():
+    """
+    Test the validation of a Record ID.
+
+    This test validates a UUID, None, and an invalid ID.
+    """
+    assert validate_id(uuid4(), None)
+    assert validate_id(None, None) is None
+
+    with pytest.raises(ValueError):
+        validate_id('asdf', None)
+
+def test_immutability():
+    """
+    Test that Record objects are immutable after they are started.
+
+    This test creates a new record and logs some inputs, outputs, metadata, and
+    feedback. It then checks that attempting to log more inputs, outputs, metadata,
+    and feedback raises an AttributeError.
+    """
+    test_record = Record.new('test_record', parameters={'foo': 'bar'})
+
+    with test_record:
+        test_record.log_io(
+            inputs={'foo': 'bar'},
+            outputs={'baz': None},
+            metadata={'metadata': 'test'},
+            feedback={'feedback': [1, 2, [1, 2, 3]]}
+        )
+
+    with pytest.raises(AttributeError):
+        test_record.log_io(
+            inputs={'foo': 'bar'},
+            outputs={'baz': None},
+            metadata={'metadata': 'test'},
+            feedback={'feedback': [1, 2, [1, 2, 3]]}
+        )
+
+    with pytest.raises(ValueError):
+        with test_record:
+            pass
+
+def test_error_handling():
+    """
+    Test that error information is logged correctly.
+
+    This test creates a new record and then raises a ValueError inside the record.
+    It then checks that the error_type and error_value fields are set correctly.
+    """
+    test_record = Record.new('test_record', parameters={'foo': 'bar'})
+
+    try:
+        with test_record:
+            raise ValueError("test error")
+    except ValueError:
+        assert test_record.error_type == "ValueError"
+        assert isinstance(test_record.error_value, str)

@@ -1,11 +1,12 @@
 """Records."""
 from typing import Optional, Any
+from pydantic import Field
 from .types import Record, ID, Parameters
 
 
 class SubcomponentRecord(Record):
     """Subcomponent Record."""
-    component_event_id: ID
+    component_event_id: ID = Field(frozen=True)
 
     @classmethod
     def new(
@@ -23,7 +24,7 @@ class SubcomponentRecord(Record):
 
 class ComponentRecord(Record):
     """Component Record."""
-    subsystem_event_id: ID
+    subsystem_event_id: ID = Field(frozen=True)
 
     @classmethod
     def new(
@@ -53,7 +54,7 @@ class ComponentRecord(Record):
 
 class SubsystemRecord(Record):
     """Subsystem Record."""
-    system_event_id: ID
+    system_event_id: ID = Field(frozen=True)
     
     @classmethod
     def new(

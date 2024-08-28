@@ -1,5 +1,5 @@
 """Types."""
-from typing import TypeVar, Union, Dict, Any, Optional, Type
+from typing import Union, Dict, Any, Optional, Type
 from types import TracebackType
 from typing_extensions import Annotated
 from uuid import UUID, uuid4
@@ -22,8 +22,6 @@ class LogType(StrEnum):
     OUTPUT = 'output'
     FEEDBACK = 'feedback'
     METADATA = 'metadata'
-
-T = TypeVar("T")
 
 def safe_json(value: Any) -> bool:
     if value is None:
@@ -61,7 +59,7 @@ ID = Annotated[
     ]
 
 IO = Annotated[
-    dict[str, Any],
+    Dict[str, Any],
     BeforeValidator(validate_io)
     ]
 
@@ -75,17 +73,24 @@ class Record(BaseModel):
     """Records base class."""
     model_config = ConfigDict(validate_assignment=True)
 
-    idx: ID = Field(default_factory=uuid4, alias='id')
-    name: str
-    parameters: Parameters = Field(default_factory=dict)
+    idx: ID = Field(default_factory=uuid4, alias='id', frozen=True)
+    name: str = Field(frozen=True)
+    parameters: Optional[Parameters] = Field(default=None, frozen=True)
     start_time: Optional[float] = None
     end_time: Optional[float] = None
     error_type: Optional[str] = None
     error_value: Optional[str] = None
-    inputs: Input = Field(default_factory=dict)
-    outputs: Output = Field(default_factory=dict)
-    feedback: Feedback = Field(default_factory=dict)
-    metadata: Metadata = Field(default_factory=dict)
+    inputs: Input = Field(default=None)
+    outputs: Output = Field(default=None)
+    feedback: Feedback = Field(default=None)
+    metadata: Metadata = Field(default=None)
+
+    def __setattr__(self, key: str, value: Any):
+        if key in ['start_time', 'end_time', 'error_type', 'error_value', 'inputs', 'outputs', 'feedback', 'metadata']:
+            if getattr(self, key) is not None:
+                raise AttributeError(f'{key} already set')
+
+        super().__setattr__(key, value)
 
     def start(self) -> None:
         """Start record."""
@@ -182,13 +187,13 @@ class Record(BaseModel):
 
         try:
             if name == LogType.INPUT:
-                self.inputs |= new
+                self.inputs = new
             elif name == LogType.OUTPUT:
-                self.outputs |= new
+                self.outputs = new
             elif name == LogType.FEEDBACK:
-                self.feedback |= new
+                self.feedback = new
             elif name == LogType.METADATA:
-                self.metadata |= new
+                self.metadata = new
         except ValidationError as e:
             if name == LogType.METADATA:
                 raise ValueError(f'Invalid {name}. Keys and values must be strings.') from e
