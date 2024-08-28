@@ -14,3 +14,5 @@ from .records.types import (
     Feedback,
     Metadata
 )
+
+from .config import init, TvaliConfig
