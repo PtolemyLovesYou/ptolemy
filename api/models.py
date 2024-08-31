@@ -1,6 +1,6 @@
 """Models."""
 from sqlalchemy import Column, String, Uuid, TIMESTAMP, JSON, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Relationship
 from .database import Base
 
 
@@ -41,7 +41,7 @@ class SubcomponentInput(IO):
     __tablename__ = "subcomponent_input"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event = relationship("SubcomponentEvent", back_populates="subcomponent_inputs")
+    subcomponent_event = relationship("SubcomponentEvent", back_populates="subcomponent_input")
 
 
 class SubcomponentOutput(IO):
@@ -49,7 +49,7 @@ class SubcomponentOutput(IO):
     __tablename__ = "subcomponent_output"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event = relationship("SubcomponentEvent", back_populates="subcomponent_outputs")
+    subcomponent_event = relationship("SubcomponentEvent", back_populates="subcomponent_output")
 
 
 class SubcomponentFeedback(IO):
@@ -57,7 +57,7 @@ class SubcomponentFeedback(IO):
     __tablename__ = "subcomponent_feedback"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event = relationship("SubcomponentEvent", back_populates="subcomponent_feedbacks")
+    subcomponent_event = relationship("SubcomponentEvent", back_populates="subcomponent_feedback")
 
 
 class SubcomponentMetadata(Metadata):
@@ -74,9 +74,9 @@ class SubcomponentEvent(Event):
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
 
-    subcomponent_inputs = relationship("SubcomponentInput", back_populates="subcomponent_event")
-    subcomponent_outputs = relationship("SubcomponentOutput", back_populates="subcomponent_event")
-    subcomponent_feedbacks = relationship("SubcomponentFeedback", back_populates="subcomponent_event")
+    subcomponent_input = relationship("SubcomponentInput", back_populates="subcomponent_event")
+    subcomponent_output = relationship("SubcomponentOutput", back_populates="subcomponent_event")
+    subcomponent_feedback = relationship("SubcomponentFeedback", back_populates="subcomponent_event")
     subcomponent_metadata = relationship("SubcomponentMetadata", back_populates="subcomponent_event")
     
     component_event = relationship("ComponentEvent", back_populates="subcomponent_events", uselist=False)
@@ -86,7 +86,7 @@ class ComponentInput(IO):
     __tablename__ = "component_input"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event = relationship("ComponentEvent", back_populates="component_inputs")
+    component_event = relationship("ComponentEvent", back_populates="component_input")
 
 
 class ComponentOutput(IO):
@@ -94,7 +94,7 @@ class ComponentOutput(IO):
     __tablename__ = "component_output"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event = relationship("ComponentEvent", back_populates="component_outputs")
+    component_event = relationship("ComponentEvent", back_populates="component_output")
 
 
 class ComponentFeedback(IO):
@@ -102,7 +102,7 @@ class ComponentFeedback(IO):
     __tablename__ = "component_feedback"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event = relationship("ComponentEvent", back_populates="component_feedbacks")
+    component_event = relationship("ComponentEvent", back_populates="component_feedback")
 
 
 class ComponentMetadata(Metadata):
@@ -119,9 +119,9 @@ class ComponentEvent(Event):
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
 
-    component_inputs = relationship("ComponentInput", back_populates="component_event")
-    component_outputs = relationship("ComponentOutput", back_populates="component_event")
-    component_feedbacks = relationship("ComponentFeedback", back_populates="component_event")
+    component_input = relationship("ComponentInput", back_populates="component_event")
+    component_output = relationship("ComponentOutput", back_populates="component_event")
+    component_feedback = relationship("ComponentFeedback", back_populates="component_event")
     component_metadata = relationship("ComponentMetadata", back_populates="component_event")
 
     subsystem_event = relationship("SubsystemEvent", back_populates="component_events")
@@ -132,7 +132,7 @@ class SubsystemInput(IO):
     __tablename__ = "subsystem_input"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event = relationship("SubsystemEvent", back_populates="subsystem_inputs")
+    subsystem_event = relationship("SubsystemEvent", back_populates="subsystem_input")
 
 
 class SubsystemOutput(IO):
@@ -140,7 +140,7 @@ class SubsystemOutput(IO):
     __tablename__ = "subsystem_output"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event = relationship("SubsystemEvent", back_populates="subsystem_outputs")
+    subsystem_event = relationship("SubsystemEvent", back_populates="subsystem_output")
 
 
 class SubsystemFeedback(IO):
@@ -148,7 +148,7 @@ class SubsystemFeedback(IO):
     __tablename__ = "subsystem_feedback"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event = relationship("SubsystemEvent", back_populates="subsystem_feedbacks")
+    subsystem_event = relationship("SubsystemEvent", back_populates="subsystem_feedback")
 
 
 class SubsystemMetadata(Metadata):
@@ -165,9 +165,9 @@ class SubsystemEvent(Event):
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
     
-    subsystem_inputs = relationship("SubsystemInput", back_populates="subsystem_event")
-    subsystem_outputs = relationship("SubsystemOutput", back_populates="subsystem_event")
-    subsystem_feedbacks = relationship("SubsystemFeedback", back_populates="subsystem_event")
+    subsystem_input = relationship("SubsystemInput", back_populates="subsystem_event")
+    subsystem_output = relationship("SubsystemOutput", back_populates="subsystem_event")
+    subsystem_feedback = relationship("SubsystemFeedback", back_populates="subsystem_event")
     subsystem_metadata = relationship("SubsystemMetadata", back_populates="subsystem_event")
 
     pipeline_event = relationship("PipelineEvent", back_populates="subsystem_events")
@@ -178,7 +178,7 @@ class SystemInput(IO):
     __tablename__ = "system_input"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event = relationship("SystemEvent", back_populates="system_inputs")
+    system_event = relationship("SystemEvent", back_populates="system_input")
 
 
 class SystemOutput(IO):
@@ -186,7 +186,7 @@ class SystemOutput(IO):
     __tablename__ = "system_output"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event = relationship("SystemEvent", back_populates="system_outputs")
+    system_event = relationship("SystemEvent", back_populates="system_output")
 
 
 class SystemFeedback(IO):
@@ -194,7 +194,7 @@ class SystemFeedback(IO):
     __tablename__ = "system_feedback"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event = relationship("SystemEvent", back_populates="system_feedbacks")
+    system_event = relationship("SystemEvent", back_populates="system_feedback")
 
 
 class SystemMetadata(Metadata):
@@ -209,9 +209,9 @@ class SystemEvent(Event):
     """System Event."""
     __tablename__ = "system_event"
     
-    system_inputs = relationship("SystemInput", back_populates="system_event")
-    system_outputs = relationship("SystemOutput", back_populates="system_event")
-    system_feedbacks = relationship("SystemFeedback", back_populates="system_event")
+    system_input = relationship("SystemInput", back_populates="system_event")
+    system_output = relationship("SystemOutput", back_populates="system_event")
+    system_feedback = relationship("SystemFeedback", back_populates="system_event")
     system_metadata = relationship("SystemMetadata", back_populates="system_event")
 
     subsystem_events = relationship("SubsystemEvent", back_populates="system_events")
