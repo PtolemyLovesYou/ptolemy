@@ -173,6 +173,7 @@ class SubsystemEvent(Event):
     pipeline_event = relationship("PipelineEvent", back_populates="subsystem_events")
     component_events = relationship("ComponentEvent", back_populates="subsystem_event")
 
+
 class SystemInput(IO):
     """System Input."""
     __tablename__ = "system_input"
