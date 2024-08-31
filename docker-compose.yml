@@ -18,7 +18,7 @@ services:
       - postgres
     volumes:
       - ./tvali_app:/app/tvali_app
-    command: gunicorn tvali_app.wsgi -b 0.0.0.0:8000 --chdir /app/tvali_app/
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
 
 volumes:
   pgdata:
