@@ -14,4 +14,4 @@ RUN poetry install \
     --no-dev \
     -E api
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["gunicorn", "tvali_app.asgi", "-b", "0.0.0.0:8000", "--chdir", "/app/tvali_app/"]

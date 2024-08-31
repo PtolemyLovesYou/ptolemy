@@ -7,15 +7,18 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
   
-  tvali:
+  app:
     build:
       context: ./
       dockerfile: Dockerfile
     env_file: .env
     ports:
-      - 8080:8080
+      - 8000:8000
     depends_on:
       - postgres
+    volumes:
+      - ./tvali_app:/app/tvali_app
+    command: gunicorn tvali_app.wsgi -b 0.0.0.0:8000 --chdir /app/tvali_app/
 
 volumes:
   pgdata:
