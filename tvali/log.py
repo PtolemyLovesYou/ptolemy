@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 from typing_extensions import Annotated
 from uuid import UUID, uuid4
 from datetime import datetime
-from pydantic import BaseModel, RootModel, Field, BeforeValidator, PlainSerializer
+from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
 
 def is_json(data: Any) -> bool:
     """
@@ -46,6 +46,18 @@ def validate_datetime_field(obj: Union[datetime, str, int]) -> datetime:
 def serialize_datetime_field(obj: datetime) -> str:
     return obj.isoformat()
 
+def validate_uuid(obj: Union[UUID, str]) -> UUID:
+    if isinstance(obj, str):
+        return UUID(obj)
+
+    if isinstance(obj, UUID):
+        return obj
+
+    raise ValueError("Invalid UUID")
+
+def serialize_uuid(obj: UUID) -> str:
+    return obj.hex
+
 IO = Annotated[
     Dict[str, Any],
     BeforeValidator(validate_io_field)
@@ -61,9 +73,16 @@ Time = Annotated[
     ]
 
 
+ID = Annotated[
+    UUID,
+    BeforeValidator(validate_uuid),
+    PlainSerializer(serialize_uuid, return_type=str, when_used='always')
+]
+
+
 class Log(BaseModel):
     """Log Base class."""
-    id: UUID = Field(default_factory=uuid4)
+    id: ID = Field(default_factory=uuid4)
     name: str
     parameters: Optional[IO] = None
     start_time: Time
@@ -85,14 +104,14 @@ class SystemLog(Log):
 
 class SubsystemLog(Log):
     """Subsystem Log."""
-    system_event_id: UUID
+    system_event_id: ID
 
 
 class ComponentLog(Log):
     """Component Log."""
-    subsystem_event_id: UUID
+    subsystem_event_id: ID
 
 
 class SubcomponentLog(Log):
     """Subcomponent Log."""
-    component_event_id: UUID
+    component_event_id: ID
