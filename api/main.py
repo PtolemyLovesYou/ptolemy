@@ -13,4 +13,3 @@ async def index():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
