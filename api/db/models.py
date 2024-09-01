@@ -1,33 +1,32 @@
 """Models."""
-from abc import ABC, abstractmethod
 from typing import List
-from sqlalchemy import Column, String, Uuid, TIMESTAMP, JSON, ForeignKey
+from sqlalchemy import Column, String, Uuid, TIMESTAMP, JSON, ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped
 from tvali import SystemLog, SubsystemLog, ComponentLog, SubcomponentLog, Log
 from .database import Base
 
 
-class Event(Base, ABC):
+class Event(Base):
     """Event abstract model."""
     __abstract__ = True
     
     id = Column(Uuid, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String(64), nullable=False)
     parameters = Column(JSON)
     start_time = Column(TIMESTAMP, nullable=False)
     end_time = Column(TIMESTAMP, nullable=False)
-    error_type = Column(String)
-    error_content = Column(String)
-    version = Column(String)
-    
-    @abstractmethod
+    error_type = Column(String(64))
+    error_content = Column(Text())
+    version = Column(String(32))
+    environment = Column(Text())
+
     def to_log(self) -> Log:
         """
         Abstract method to convert the event to a tvali Log object.
         
         :return: A tvali Log object.
         """
-        ...
+        raise NotImplementedError(f"Event type {self.__class__.__name__} must be defined.")
 
 
 class IO(Base):
@@ -35,7 +34,7 @@ class IO(Base):
     __abstract__ = True
 
     id = Column(Uuid, primary_key=True, index=True)
-    field_name = Column(String, nullable=False)
+    field_name = Column(String(32), nullable=False)
     field_value = Column(JSON, nullable=False)
 
 
@@ -44,8 +43,8 @@ class Metadata(Base):
     __abstract__ = True
 
     id = Column(Uuid, primary_key=True, index=True)
-    field_name = Column(String, nullable=False)
-    field_value = Column(String, nullable=False)
+    field_name = Column(String(32), nullable=False)
+    field_value = Column(String(64), nullable=False)
 
 
 class SubcomponentInputRecord(IO):
@@ -103,6 +102,7 @@ class SubcomponentEventRecord(Event):
             error_type=self.error_type,
             error_content=self.error_content,
             version=self.version,
+            environment=self.environment,
             inputs={inp.field_name: inp.field_value for inp in self.subcomponent_input} if self.subcomponent_input else None,
             outputs={out.field_name: out.field_value for out in self.subcomponent_output} if self.subcomponent_output else None,
             feedback={fb.field_name: fb.field_value for fb in self.subcomponent_feedback} if self.subcomponent_feedback else None,
@@ -167,6 +167,7 @@ class ComponentEventRecord(Event):
             error_type=self.error_type,
             error_content=self.error_content,
             version=self.version,
+            environment=self.environment,
             inputs={inp.field_name: inp.field_value for inp in self.component_input} if self.component_input else None,
             outputs={out.field_name: out.field_value for out in self.component_output} if self.component_output else None,
             feedback={fb.field_name: fb.field_value for fb in self.component_feedback} if self.component_feedback else None,
@@ -231,6 +232,7 @@ class SubsystemEventRecord(Event):
             error_type=self.error_type,
             error_content=self.error_content,
             version=self.version,
+            environment=self.environment,
             inputs=self.subsystem_input,
             outputs=self.subsystem_output,
             feedback=self.subsystem_feedback,

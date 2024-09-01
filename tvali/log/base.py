@@ -30,11 +30,16 @@ class _Log(BaseModel, ABC):
     outputs: Optional[IO] = None
     feedback: Optional[IO] = None
     metadata: Optional[IO] = None
-    
+
     @computed_field
     @property
     def version(self) -> Optional[str]:
         return Config.version
+
+    @computed_field
+    @property
+    def environment(self) -> Optional[str]:
+        return Config.environment
 
     @computed_field
     @property

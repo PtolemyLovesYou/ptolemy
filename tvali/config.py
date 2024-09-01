@@ -9,15 +9,18 @@ class Config(BaseModel):
 
     version: ClassVar[Optional[str]] = None
     client_type: ClassVar[str] = None
+    environment: ClassVar[str] = None
 
 def init(
     client_type: ClientType,
     version: Optional[str] = None,
+    environment: Optional[str] = None,
 ) -> None:
+    Config.client_type = client_type
     Config.version = version
+    Config.environment = environment
 
     Config.initialized = True
-    Config.client_type = client_type
 
 def require_initialize(func: Callable) -> Callable:
     """
