@@ -56,7 +56,7 @@ class _Log(BaseModel, ABC):
         End time.
         """
         return self._end_time
-    
+
     def event(self) -> dict:
         return self.model_dump(
             exclude=["inputs", "outputs", "feedback", "metadata"],
