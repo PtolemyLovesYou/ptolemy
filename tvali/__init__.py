@@ -1,5 +1,6 @@
 """Tvali."""
 from .log import (
+    Log,
     SystemLog,
     SubsystemLog,
     ComponentLog,

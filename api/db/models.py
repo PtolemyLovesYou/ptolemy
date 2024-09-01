@@ -1,11 +1,13 @@
 """Models."""
+from abc import ABC, abstractmethod
 from typing import List
 from sqlalchemy import Column, String, Uuid, TIMESTAMP, JSON, ForeignKey
-from sqlalchemy.orm import relationship, Relationship, Mapped
+from sqlalchemy.orm import relationship, Mapped
+from tvali import SystemLog, SubsystemLog, ComponentLog, SubcomponentLog, Log
 from .database import Base
 
 
-class Event(Base):
+class Event(Base, ABC):
     """Event abstract model."""
     __abstract__ = True
     
@@ -17,6 +19,15 @@ class Event(Base):
     error_type = Column(String)
     error_content = Column(String)
     version = Column(String)
+    
+    @abstractmethod
+    def to_log(self) -> Log:
+        """
+        Abstract method to convert the event to a tvali Log object.
+        
+        :return: A tvali Log object.
+        """
+        ...
 
 
 class IO(Base):
@@ -80,6 +91,24 @@ class SubcomponentEventRecord(Event):
     subcomponent_metadata: Mapped[List["SubcomponentMetadataRecord"]] = relationship(back_populates="subcomponent_event")
     
     component_event: Mapped["ComponentEventRecord"] = relationship(back_populates="subcomponent_events")
+    
+    def to_log(self) -> SubcomponentLog:
+        return SubcomponentLog(
+            id=self.id,
+            component_event_id=self.component_event_id,
+            name=self.name,
+            parameters=self.parameters,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            error_type=self.error_type,
+            error_content=self.error_content,
+            version=self.version,
+            inputs={inp.field_name: inp.field_value for inp in self.subcomponent_input} if self.subcomponent_input else None,
+            outputs={out.field_name: out.field_value for out in self.subcomponent_output} if self.subcomponent_output else None,
+            feedback={fb.field_name: fb.field_value for fb in self.subcomponent_feedback} if self.subcomponent_feedback else None,
+            metadata={md.field_name: md.field_value for md in self.subcomponent_metadata} if self.subcomponent_metadata else None,
+        )
+
 
 class ComponentInputRecord(IO):
     """Component Input."""
@@ -126,6 +155,23 @@ class ComponentEventRecord(Event):
 
     subsystem_event: Mapped["SubsystemEventRecord"] = relationship(back_populates="component_events")
     subcomponent_events: Mapped[List["SubcomponentEventRecord"]] = relationship(back_populates="component_event")
+    
+    def to_log(self) -> ComponentLog:
+        return ComponentLog(
+            id=self.id,
+            subsystem_event_id=self.subsystem_event_id,
+            name=self.name,
+            parameters=self.parameters,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            error_type=self.error_type,
+            error_content=self.error_content,
+            version=self.version,
+            inputs={inp.field_name: inp.field_value for inp in self.component_input} if self.component_input else None,
+            outputs={out.field_name: out.field_value for out in self.component_output} if self.component_output else None,
+            feedback={fb.field_name: fb.field_value for fb in self.component_feedback} if self.component_feedback else None,
+            metadata={md.field_name: md.field_value for md in self.component_metadata} if self.component_metadata else None,
+        )
 
 
 class SubsystemInputRecord(IO):
@@ -173,6 +219,23 @@ class SubsystemEventRecord(Event):
 
     system_event: Mapped["SystemEventRecord"] = relationship(back_populates="subsystem_events")
     component_events: Mapped[List["ComponentEventRecord"]] = relationship(back_populates="subsystem_event")
+    
+    def to_log(self) -> SubsystemLog:
+        return SubsystemLog(
+            id=self.id,
+            system_event_id=self.system_event_id,
+            name=self.name,
+            parameters=self.parameters,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            error_type=self.error_type,
+            error_content=self.error_content,
+            version=self.version,
+            inputs=self.subsystem_input,
+            outputs=self.subsystem_output,
+            feedback=self.subsystem_feedback,
+            metadata=self.subsystem_metadata,
+        )
 
 
 class SystemInputRecord(IO):
@@ -217,3 +280,18 @@ class SystemEventRecord(Event):
     system_metadata: Mapped[List["SystemMetadataRecord"]] = relationship(back_populates="system_event")
 
     subsystem_events: Mapped[List["SubsystemEventRecord"]] = relationship(back_populates="system_event")
+
+    def to_log(self) -> SystemLog:
+        return SystemLog(
+            id=self.id,
+            name=self.name,
+            parameters=self.parameters,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            error_type=self.error_type,
+            error_content=self.error_content,
+            inputs=self.system_input,
+            outputs=self.system_output,
+            feedback=self.system_feedback,
+            metadata=self.system_metadata,
+        )
