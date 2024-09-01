@@ -1,9 +1,26 @@
-"""Log objects."""
-from typing import Any, Dict, Optional, Union
+"""Type annotations."""
+from typing import Any, Union, Dict, TypedDict, Optional
 from typing_extensions import Annotated
-from uuid import UUID, uuid4
+from enum import StrEnum
 from datetime import datetime
-from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+from uuid import UUID
+from pydantic import BeforeValidator, PlainSerializer
+
+
+class Tier(StrEnum):
+    SYSTEM = 'system'
+    SUBSYSTEM = 'subsystem'
+    COMPONENT = 'component'
+    SUBCOMPONENT = 'subcomponent'
+
+
+class RecordType(StrEnum):
+    EVENT = 'event'
+    INPUT = 'input'
+    OUTPUT = 'output'
+    METADATA = 'metadata'
+    FEEDBACK = 'feedback'
+
 
 def is_json(data: Any) -> bool:
     """
@@ -63,6 +80,7 @@ IO = Annotated[
     BeforeValidator(validate_io_field)
     ]
 
+
 Metadata = Dict[str, str]
 
 
@@ -78,40 +96,3 @@ ID = Annotated[
     BeforeValidator(validate_uuid),
     PlainSerializer(serialize_uuid, return_type=str, when_used='always')
 ]
-
-
-class Log(BaseModel):
-    """Log Base class."""
-    id: ID = Field(default_factory=uuid4)
-    name: str
-    parameters: Optional[IO] = None
-    start_time: Time
-    end_time: Time
-    error_type: Optional[str] = None
-    error_content: Optional[str] = None
-    version: str
-
-    inputs: Optional[IO] = None
-    outputs: Optional[IO] = None
-    feedback: Optional[IO] = None
-    metadata: Optional[IO] = None
-
-
-class SystemLog(Log):
-    """System log."""
-    ...
-
-
-class SubsystemLog(Log):
-    """Subsystem Log."""
-    system_event_id: ID
-
-
-class ComponentLog(Log):
-    """Component Log."""
-    subsystem_event_id: ID
-
-
-class SubcomponentLog(Log):
-    """Subcomponent Log."""
-    component_event_id: ID

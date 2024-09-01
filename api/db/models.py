@@ -21,7 +21,7 @@ class Event(Base, ABC):
     version = Column(String)
     
     @abstractmethod
-    def to_log(self) -> Log:
+    def toLog(self) -> Log:
         """
         Abstract method to convert the event to a tvali Log object.
         
@@ -92,7 +92,7 @@ class SubcomponentEventRecord(Event):
     
     component_event: Mapped["ComponentEventRecord"] = relationship(back_populates="subcomponent_events")
     
-    def to_log(self) -> SubcomponentLog:
+    def toLog(self) -> SubcomponentLog:
         return SubcomponentLog(
             id=self.id,
             component_event_id=self.component_event_id,
@@ -156,7 +156,7 @@ class ComponentEventRecord(Event):
     subsystem_event: Mapped["SubsystemEventRecord"] = relationship(back_populates="component_events")
     subcomponent_events: Mapped[List["SubcomponentEventRecord"]] = relationship(back_populates="component_event")
     
-    def to_log(self) -> ComponentLog:
+    def toLog(self) -> ComponentLog:
         return ComponentLog(
             id=self.id,
             subsystem_event_id=self.subsystem_event_id,
@@ -220,7 +220,7 @@ class SubsystemEventRecord(Event):
     system_event: Mapped["SystemEventRecord"] = relationship(back_populates="subsystem_events")
     component_events: Mapped[List["ComponentEventRecord"]] = relationship(back_populates="subsystem_event")
     
-    def to_log(self) -> SubsystemLog:
+    def toLog(self) -> SubsystemLog:
         return SubsystemLog(
             id=self.id,
             system_event_id=self.system_event_id,
@@ -281,7 +281,7 @@ class SystemEventRecord(Event):
 
     subsystem_events: Mapped[List["SubsystemEventRecord"]] = relationship(back_populates="system_event")
 
-    def to_log(self) -> SystemLog:
+    def toLog(self) -> SystemLog:
         return SystemLog(
             id=self.id,
             name=self.name,
