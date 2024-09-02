@@ -48,20 +48,17 @@ def validate_io_field(obj: dict) -> dict:
 
     return obj
 
-def validate_datetime_field(obj: Union[datetime, str, int]) -> datetime:
+def validate_datetime_field(obj: Union[datetime, str, float]) -> datetime:
     if isinstance(obj, str):
         return datetime.fromisoformat(obj)
 
-    if isinstance(obj, int):
+    if isinstance(obj, float):
         return datetime.fromtimestamp(obj)
 
     if isinstance(obj, datetime):
         return obj
 
     raise ValueError("Invalid datetime field")
-
-def serialize_datetime_field(obj: datetime) -> str:
-    return obj.isoformat()
 
 def validate_uuid(obj: Union[UUID, str]) -> UUID:
     if isinstance(obj, str):
@@ -72,8 +69,6 @@ def validate_uuid(obj: Union[UUID, str]) -> UUID:
 
     raise ValueError("Invalid UUID")
 
-def serialize_uuid(obj: UUID) -> str:
-    return obj.hex
 
 IO = Annotated[
     Dict[str, Any],
@@ -87,12 +82,12 @@ Metadata = Dict[str, str]
 Time = Annotated[
     datetime,
     BeforeValidator(validate_datetime_field),
-    PlainSerializer(serialize_datetime_field, return_type=str, when_used='always')
+    PlainSerializer(lambda i: i.isoformat(), return_type=str, when_used='always')
     ]
 
 
 ID = Annotated[
     UUID,
     BeforeValidator(validate_uuid),
-    PlainSerializer(serialize_uuid, return_type=str, when_used='always')
+    PlainSerializer(lambda i: i.hex, return_type=str, when_used='always')
 ]
