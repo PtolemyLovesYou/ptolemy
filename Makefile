@@ -7,8 +7,8 @@ run-unit-tests:
 
 .PHONY: format
 format:
-	python3 -m black tvali api
+	python3 -m black tvali api tests
 
 .PHONY: lint
 lint:
-	python3 -m pylint tvali api
+	python3 -m pylint tvali api tests
