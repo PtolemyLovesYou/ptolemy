@@ -4,3 +4,11 @@ run-unit-tests:
 		--cov=tvali \
 		--cov-report term-missing \
 		tests
+
+.PHONY: format
+format:
+	python3 -m black tvali api
+
+.PHONY: lint
+lint:
+	python3 -m pylint tvali api

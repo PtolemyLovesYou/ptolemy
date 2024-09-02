@@ -1,6 +1,7 @@
 """Log base class."""
-from typing import ClassVar, Optional, Type
-from abc import ABC, abstractmethod
+
+from typing import ClassVar, Optional
+from abc import ABC
 import traceback
 from contextlib import contextmanager
 from uuid import uuid4
@@ -10,8 +11,9 @@ from .types import IO, ID, Metadata, Time, Tier
 from ..config import Config
 
 
-class _Log(BaseModel, ABC):
+class LogBase(BaseModel, ABC):
     """Log Base class."""
+
     TIER: ClassVar[Tier]
 
     model_config = ConfigDict(validate_assignment=True)
@@ -59,9 +61,8 @@ class _Log(BaseModel, ABC):
 
     def event(self) -> dict:
         return self.model_dump(
-            exclude=["inputs", "outputs", "feedback", "metadata"],
-            exclude_none=True
-            )
+            exclude=["inputs", "outputs", "feedback", "metadata"], exclude_none=True
+        )
 
     def start(self) -> None:
         if self._start_time is not None:
@@ -110,8 +111,8 @@ class _Log(BaseModel, ABC):
         inputs: Optional[IO] = None,
         outputs: Optional[IO] = None,
         feedback: Optional[IO] = None,
-        metadata: Optional[Metadata] = None
-        ):
+        metadata: Optional[Metadata] = None,
+    ):
         if inputs:
             if self.inputs is not None:
                 raise ValueError("Inputs already set")

@@ -1,26 +1,51 @@
 """Config."""
+
 from typing import Optional, ClassVar, Callable
 import functools
 from pydantic import BaseModel
 from .client.types import ClientType
 
+
 class Config(BaseModel):
+    """Config class for Tvali. Follows singleton design pattern."""
+
     initialized: ClassVar[bool] = False
 
     version: ClassVar[Optional[str]] = None
     client_type: ClassVar[str] = None
     environment: ClassVar[str] = None
 
+
 def init(
     client_type: ClientType,
     version: Optional[str] = None,
     environment: Optional[str] = None,
 ) -> None:
+    """
+    Initialize Tvali.
+
+    This function must be called before any other Tvali functionality is used.
+    It sets the client type, version, and environment for the application.
+
+    Parameters
+    ----------
+    client_type : ClientType
+        The type of client to use. Can be either "api" or "console".
+    version : str, optional
+        The version of the application, by default None
+    environment : str, optional
+        The environment of the application, by default None
+
+    Returns
+    -------
+    None
+    """
     Config.client_type = client_type
     Config.version = version
     Config.environment = environment
 
     Config.initialized = True
+
 
 def require_initialize(func: Callable) -> Callable:
     """
@@ -30,6 +55,7 @@ def require_initialize(func: Callable) -> Callable:
     If the decorated function is called before tvali.init(), a RuntimeError
     is raised.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         """

@@ -1,4 +1,5 @@
 """Database utilities."""
+
 from .database import get_db, engine, Base
 from .models import (
     SystemEventRecord,
@@ -15,5 +16,5 @@ from .models import (
     ComponentInputRecord,
     ComponentOutputRecord,
     ComponentFeedbackRecord,
-    ComponentMetadataRecord
+    ComponentMetadataRecord,
 )
