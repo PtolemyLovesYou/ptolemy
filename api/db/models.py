@@ -7,7 +7,7 @@ from tvali import SystemLog, SubsystemLog, ComponentLog, SubcomponentLog, Log
 from .database import Base
 
 
-class Event(Base):
+class EventModel(Base):
     """Event abstract model."""
 
     __abstract__ = True
@@ -31,7 +31,7 @@ class Event(Base):
         raise NotImplementedError(f"Event type {self.__class__.__name__} must be defined.")
 
 
-class IO(Base):
+class IOModel(Base):
     """IO abstract model."""
 
     __abstract__ = True
@@ -41,7 +41,7 @@ class IO(Base):
     field_value = Column(JSON, nullable=False)
 
 
-class Metadata(Base):
+class MetadataModel(Base):
     """IO abstract model."""
 
     __abstract__ = True
@@ -51,71 +51,71 @@ class Metadata(Base):
     field_value = Column(String(64), nullable=False)
 
 
-class SubcomponentInputRecord(IO):
+class SubcomponentInputModel(IOModel):
     """Subcomponent Input."""
 
     __tablename__ = "subcomponent_input"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event: Mapped["SubcomponentEventRecord"] = relationship(
+    subcomponent_event: Mapped["SubcomponentEventModel"] = relationship(
         back_populates="subcomponent_input"
     )
 
 
-class SubcomponentOutputRecord(IO):
+class SubcomponentOutputModel(IOModel):
     """Subcomponent Output."""
 
     __tablename__ = "subcomponent_output"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event: Mapped["SubcomponentEventRecord"] = relationship(
+    subcomponent_event: Mapped["SubcomponentEventModel"] = relationship(
         back_populates="subcomponent_output"
     )
 
 
-class SubcomponentFeedbackRecord(IO):
+class SubcomponentFeedbackModel(IOModel):
     """Subcomponent Feedback."""
 
     __tablename__ = "subcomponent_feedback"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event: Mapped["SubcomponentEventRecord"] = relationship(
+    subcomponent_event: Mapped["SubcomponentEventModel"] = relationship(
         back_populates="subcomponent_feedback"
     )
 
 
-class SubcomponentMetadataRecord(Metadata):
+class SubcomponentMetadataModel(MetadataModel):
     """Subcomponent Metadata."""
 
     __tablename__ = "subcomponent_metadata"
 
     subcomponent_event_id = Column(Uuid, ForeignKey("subcomponent_event.id", ondelete="CASCADE"))
-    subcomponent_event: Mapped["SubcomponentEventRecord"] = relationship(
+    subcomponent_event: Mapped["SubcomponentEventModel"] = relationship(
         back_populates="subcomponent_metadata"
     )
 
 
-class SubcomponentEventRecord(Event):
+class SubcomponentEventModel(EventModel):
     """Subcomponent Event."""
 
     __tablename__ = "subcomponent_event"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
 
-    subcomponent_input: Mapped[List["SubcomponentInputRecord"]] = relationship(
+    subcomponent_input: Mapped[List["SubcomponentInputModel"]] = relationship(
         back_populates="subcomponent_event"
     )
-    subcomponent_output: Mapped[List["SubcomponentOutputRecord"]] = relationship(
+    subcomponent_output: Mapped[List["SubcomponentOutputModel"]] = relationship(
         back_populates="subcomponent_event"
     )
-    subcomponent_feedback: Mapped[List["SubcomponentFeedbackRecord"]] = relationship(
+    subcomponent_feedback: Mapped[List["SubcomponentFeedbackModel"]] = relationship(
         back_populates="subcomponent_event"
     )
-    subcomponent_metadata: Mapped[List["SubcomponentMetadataRecord"]] = relationship(
+    subcomponent_metadata: Mapped[List["SubcomponentMetadataModel"]] = relationship(
         back_populates="subcomponent_event"
     )
 
-    component_event: Mapped["ComponentEventRecord"] = relationship(
+    component_event: Mapped["ComponentEventModel"] = relationship(
         back_populates="subcomponent_events"
     )
 
@@ -154,72 +154,72 @@ class SubcomponentEventRecord(Event):
         )
 
 
-class ComponentInputRecord(IO):
+class ComponentInputModel(IOModel):
     """Component Input."""
 
     __tablename__ = "component_input"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event: Mapped["ComponentEventRecord"] = relationship(back_populates="component_input")
+    component_event: Mapped["ComponentEventModel"] = relationship(back_populates="component_input")
 
 
-class ComponentOutputRecord(IO):
+class ComponentOutputModel(IOModel):
     """Component Output."""
 
     __tablename__ = "component_output"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event: Mapped["ComponentEventRecord"] = relationship(
+    component_event: Mapped["ComponentEventModel"] = relationship(
         back_populates="component_output"
     )
 
 
-class ComponentFeedbackRecord(IO):
+class ComponentFeedbackModel(IOModel):
     """Component Feedback."""
 
     __tablename__ = "component_feedback"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event: Mapped["ComponentEventRecord"] = relationship(
+    component_event: Mapped["ComponentEventModel"] = relationship(
         back_populates="component_feedback"
     )
 
 
-class ComponentMetadataRecord(Metadata):
+class ComponentMetadataModel(MetadataModel):
     """Component Metadata."""
 
     __tablename__ = "component_metadata"
 
     component_event_id = Column(Uuid, ForeignKey("component_event.id", ondelete="CASCADE"))
-    component_event: Mapped["ComponentEventRecord"] = relationship(
+    component_event: Mapped["ComponentEventModel"] = relationship(
         back_populates="component_metadata"
     )
 
 
-class ComponentEventRecord(Event):
+class ComponentEventModel(EventModel):
     """Component Event."""
 
     __tablename__ = "component_event"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
 
-    component_input: Mapped[List["ComponentInputRecord"]] = relationship(
+    component_input: Mapped[List["ComponentInputModel"]] = relationship(
         back_populates="component_event"
     )
-    component_output: Mapped[List["ComponentOutputRecord"]] = relationship(
+    component_output: Mapped[List["ComponentOutputModel"]] = relationship(
         back_populates="component_event"
     )
-    component_feedback: Mapped[List["ComponentFeedbackRecord"]] = relationship(
+    component_feedback: Mapped[List["ComponentFeedbackModel"]] = relationship(
         back_populates="component_event"
     )
-    component_metadata: Mapped[List["ComponentMetadataRecord"]] = relationship(
+    component_metadata: Mapped[List["ComponentMetadataModel"]] = relationship(
         back_populates="component_event"
     )
 
-    subsystem_event: Mapped["SubsystemEventRecord"] = relationship(
+    subsystem_event: Mapped["SubsystemEventModel"] = relationship(
         back_populates="component_events"
     )
-    subcomponent_events: Mapped[List["SubcomponentEventRecord"]] = relationship(
+    subcomponent_events: Mapped[List["SubcomponentEventModel"]] = relationship(
         back_populates="component_event"
     )
 
@@ -258,70 +258,70 @@ class ComponentEventRecord(Event):
         )
 
 
-class SubsystemInputRecord(IO):
+class SubsystemInputModel(IOModel):
     """Subsystem Input."""
 
     __tablename__ = "subsystem_input"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event: Mapped["SubsystemEventRecord"] = relationship(back_populates="subsystem_input")
+    subsystem_event: Mapped["SubsystemEventModel"] = relationship(back_populates="subsystem_input")
 
 
-class SubsystemOutputRecord(IO):
+class SubsystemOutputModel(IOModel):
     """Subsystem Output."""
 
     __tablename__ = "subsystem_output"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event: Mapped["SubsystemEventRecord"] = relationship(
+    subsystem_event: Mapped["SubsystemEventModel"] = relationship(
         back_populates="subsystem_output"
     )
 
 
-class SubsystemFeedbackRecord(IO):
+class SubsystemFeedbackModel(IOModel):
     """Subsystem Feedback."""
 
     __tablename__ = "subsystem_feedback"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event: Mapped["SubsystemEventRecord"] = relationship(
+    subsystem_event: Mapped["SubsystemEventModel"] = relationship(
         back_populates="subsystem_feedback"
     )
 
 
-class SubsystemMetadataRecord(Metadata):
+class SubsystemMetadataModel(MetadataModel):
     """Subsystem Metadata."""
 
     __tablename__ = "subsystem_metadata"
 
     subsystem_event_id = Column(Uuid, ForeignKey("subsystem_event.id", ondelete="CASCADE"))
-    subsystem_event: Mapped["SubsystemEventRecord"] = relationship(
+    subsystem_event: Mapped["SubsystemEventModel"] = relationship(
         back_populates="subsystem_metadata"
     )
 
 
-class SubsystemEventRecord(Event):
+class SubsystemEventModel(EventModel):
     """Subsystem Event."""
 
     __tablename__ = "subsystem_event"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
 
-    subsystem_input: Mapped[List["SubsystemInputRecord"]] = relationship(
+    subsystem_input: Mapped[List["SubsystemInputModel"]] = relationship(
         back_populates="subsystem_event"
     )
-    subsystem_output: Mapped[List["SubsystemOutputRecord"]] = relationship(
+    subsystem_output: Mapped[List["SubsystemOutputModel"]] = relationship(
         back_populates="subsystem_event"
     )
-    subsystem_feedback: Mapped[List["SubsystemFeedbackRecord"]] = relationship(
+    subsystem_feedback: Mapped[List["SubsystemFeedbackModel"]] = relationship(
         back_populates="subsystem_event"
     )
-    subsystem_metadata: Mapped[List["SubsystemMetadataRecord"]] = relationship(
+    subsystem_metadata: Mapped[List["SubsystemMetadataModel"]] = relationship(
         back_populates="subsystem_event"
     )
 
-    system_event: Mapped["SystemEventRecord"] = relationship(back_populates="subsystem_events")
-    component_events: Mapped[List["ComponentEventRecord"]] = relationship(
+    system_event: Mapped["SystemEventModel"] = relationship(back_populates="subsystem_events")
+    component_events: Mapped[List["ComponentEventModel"]] = relationship(
         back_populates="subsystem_event"
     )
 
@@ -344,57 +344,57 @@ class SubsystemEventRecord(Event):
         )
 
 
-class SystemInputRecord(IO):
+class SystemInputModel(IOModel):
     """System Input."""
 
     __tablename__ = "system_input"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event: Mapped["SystemEventRecord"] = relationship(back_populates="system_input")
+    system_event: Mapped["SystemEventModel"] = relationship(back_populates="system_input")
 
 
-class SystemOutputRecord(IO):
+class SystemOutputModel(IOModel):
     """System Output."""
 
     __tablename__ = "system_output"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event: Mapped["SystemEventRecord"] = relationship(back_populates="system_output")
+    system_event: Mapped["SystemEventModel"] = relationship(back_populates="system_output")
 
 
-class SystemFeedbackRecord(IO):
+class SystemFeedbackModel(IOModel):
     """System Feedback."""
 
     __tablename__ = "system_feedback"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event: Mapped["SystemEventRecord"] = relationship(back_populates="system_feedback")
+    system_event: Mapped["SystemEventModel"] = relationship(back_populates="system_feedback")
 
 
-class SystemMetadataRecord(Metadata):
+class SystemMetadataModel(MetadataModel):
     """System Metadata."""
 
     __tablename__ = "system_metadata"
 
     system_event_id = Column(Uuid, ForeignKey("system_event.id", ondelete="CASCADE"))
-    system_event: Mapped["SystemEventRecord"] = relationship(back_populates="system_metadata")
+    system_event: Mapped["SystemEventModel"] = relationship(back_populates="system_metadata")
 
 
-class SystemEventRecord(Event):
+class SystemEventModel(EventModel):
     """System Event."""
 
     __tablename__ = "system_event"
 
-    system_input: Mapped[List["SystemInputRecord"]] = relationship(back_populates="system_event")
-    system_output: Mapped[List["SystemOutputRecord"]] = relationship(back_populates="system_event")
-    system_feedback: Mapped[List["SystemFeedbackRecord"]] = relationship(
+    system_input: Mapped[List["SystemInputModel"]] = relationship(back_populates="system_event")
+    system_output: Mapped[List["SystemOutputModel"]] = relationship(back_populates="system_event")
+    system_feedback: Mapped[List["SystemFeedbackModel"]] = relationship(
         back_populates="system_event"
     )
-    system_metadata: Mapped[List["SystemMetadataRecord"]] = relationship(
+    system_metadata: Mapped[List["SystemMetadataModel"]] = relationship(
         back_populates="system_event"
     )
 
-    subsystem_events: Mapped[List["SubsystemEventRecord"]] = relationship(
+    subsystem_events: Mapped[List["SubsystemEventModel"]] = relationship(
         back_populates="system_event"
     )
 
