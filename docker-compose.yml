@@ -1,0 +1,9 @@
+services:
+  tvali:
+    build:
+      context: ./tvali
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./tvali:/app
