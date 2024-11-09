@@ -15,7 +15,9 @@ router = APIRouter(
 @router.get("/{subcomponent_runtime_id}")
 async def get_subcomponent_runtime(subcomponent_runtime_id: str) -> SubcomponentRuntime:
     """Get subcomponent runtime."""
-    return get_event(models.SubcomponentRuntime, SubcomponentRuntime, subcomponent_runtime_id)
+    return get_event(
+        models.SubcomponentRuntime, SubcomponentRuntime, subcomponent_runtime_id
+    )
 
 
 @router.post("/")

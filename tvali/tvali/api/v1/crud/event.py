@@ -1,12 +1,12 @@
 """CRUD operations for events."""
+
 from ....db import models, session
 from ..schemas.core import Record
 
+
 def get_event(
-    db_class: type[models.EventTable],
-    return_class: type[Record],
-    idx: str
-    ) -> Record:
+    db_class: type[models.EventTable], return_class: type[Record], idx: str
+) -> Record:
     """
     Get event.
 

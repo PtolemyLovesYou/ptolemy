@@ -15,7 +15,9 @@ router = APIRouter(
 @router.get("/{subcomponent_output_id}")
 async def get_subcomponent_output(subcomponent_output_id: str) -> SubcomponentOutput:
     """Get subcomponent output."""
-    return get_event(models.SubcomponentOutput, SubcomponentOutput, subcomponent_output_id)
+    return get_event(
+        models.SubcomponentOutput, SubcomponentOutput, subcomponent_output_id
+    )
 
 
 @router.post("/")

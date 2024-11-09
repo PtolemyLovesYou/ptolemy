@@ -17,7 +17,9 @@ async def get_subcomponent_metadata(
     subcomponent_metadata_id: str,
 ) -> SubcomponentMetadata:
     """Get subcomponent metadata."""
-    return get_event(models.SubcomponentMetadata, SubcomponentMetadata, subcomponent_metadata_id)
+    return get_event(
+        models.SubcomponentMetadata, SubcomponentMetadata, subcomponent_metadata_id
+    )
 
 
 @router.post("/")

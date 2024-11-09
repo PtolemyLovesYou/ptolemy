@@ -17,7 +17,9 @@ async def get_subcomponent_feedback(
     subcomponent_feedback_id: str,
 ) -> SubcomponentFeedback:
     """Get subcomponent feedback."""
-    return get_event(models.SubcomponentFeedback, SubcomponentFeedback, subcomponent_feedback_id)
+    return get_event(
+        models.SubcomponentFeedback, SubcomponentFeedback, subcomponent_feedback_id
+    )
 
 
 @router.post("/")
