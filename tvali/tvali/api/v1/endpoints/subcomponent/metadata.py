@@ -1,4 +1,5 @@
 """Subcomponent metadata endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.subcomponent import SubcomponentMetadata, SubcomponentMetadataCreate
 from .....db import models
@@ -9,18 +10,21 @@ router = APIRouter(
     tags=["metadata"],
 )
 
+
 @router.get("/{subcomponent_metadata_id}")
-async def get_subcomponent_metadata(subcomponent_metadata_id: str) -> SubcomponentMetadata:
+async def get_subcomponent_metadata(
+    subcomponent_metadata_id: str,
+) -> SubcomponentMetadata:
     """Get subcomponent metadata."""
     db = SessionLocal()
     event = (
-        db
-        .query(models.SubcomponentMetadata)
+        db.query(models.SubcomponentMetadata)
         .filter(models.SubcomponentEvent.id == subcomponent_metadata_id)
         .first()
-        )
+    )
 
     return event
+
 
 @router.post("/")
 async def create_subcomponent_metadata(event: SubcomponentMetadataCreate):
@@ -31,17 +35,16 @@ async def create_subcomponent_metadata(event: SubcomponentMetadataCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{subcomponent_metadata_id}")
 async def delete_subcomponent_metadata(subcomponent_metadata_id: str):
     """Delete subcomponent metadata."""
     db = SessionLocal()
-    db.query(models.SubcomponentMetadata).filter(models.SubcomponentEvent.id == subcomponent_metadata_id).delete()
+    db.query(models.SubcomponentMetadata).filter(
+        models.SubcomponentEvent.id == subcomponent_metadata_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

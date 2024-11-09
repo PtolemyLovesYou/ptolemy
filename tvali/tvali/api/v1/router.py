@@ -1,4 +1,5 @@
 """API v1 router."""
+
 from fastapi import APIRouter
 from .endpoints.system.router import router as system_router
 from .endpoints.subsystem.router import router as subsystem_router

@@ -1,4 +1,5 @@
 """Subcomponent input endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.subcomponent import SubcomponentInput, SubcomponentInputCreate
 from .....db import models
@@ -9,18 +10,19 @@ router = APIRouter(
     tags=["input"],
 )
 
+
 @router.get("/{subcomponent_input_id}")
 async def get_subcomponent_input(subcomponent_input_id: str) -> SubcomponentInput:
     """Get subcomponent input."""
     db = SessionLocal()
     event = (
-        db
-        .query(models.SubcomponentInput)
+        db.query(models.SubcomponentInput)
         .filter(models.SubcomponentEvent.id == subcomponent_input_id)
         .first()
-        )
+    )
 
     return event
+
 
 @router.post("/")
 async def create_subcomponent_input(event: SubcomponentInputCreate):
@@ -31,17 +33,16 @@ async def create_subcomponent_input(event: SubcomponentInputCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{subcomponent_input_id}")
 async def delete_subcomponent_input(subcomponent_input_id: str):
     """Delete subcomponent input."""
     db = SessionLocal()
-    db.query(models.SubcomponentInput).filter(models.SubcomponentEvent.id == subcomponent_input_id).delete()
+    db.query(models.SubcomponentInput).filter(
+        models.SubcomponentEvent.id == subcomponent_input_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

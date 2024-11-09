@@ -1,4 +1,5 @@
 """System event endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.system import SystemEvent, SystemEventCreate
 from .....db import models
@@ -9,12 +10,18 @@ router = APIRouter(
     tags=["event"],
 )
 
+
 @router.get("/{system_event_id}")
 async def get_system_event(system_event_id: str) -> SystemEvent:
     """Get system event."""
     db = SessionLocal()
-    event = db.query(models.SystemEvent).filter(models.SystemEvent.id == system_event_id).first()
+    event = (
+        db.query(models.SystemEvent)
+        .filter(models.SystemEvent.id == system_event_id)
+        .first()
+    )
     return event
+
 
 @router.post("/")
 async def create_system_event(event: SystemEventCreate):
@@ -25,17 +32,16 @@ async def create_system_event(event: SystemEventCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{system_event_id}")
 async def delete_system_event(system_event_id: str):
     """Delete system event."""
     db = SessionLocal()
-    db.query(models.SystemEvent).filter(models.SystemEvent.id == system_event_id).delete()
+    db.query(models.SystemEvent).filter(
+        models.SystemEvent.id == system_event_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

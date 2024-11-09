@@ -1,12 +1,15 @@
 """Abstract models."""
+
 from typing import Dict, Any
 import uuid
 from sqlalchemy import UUID, String, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 from ..session import Base
 
+
 class Event(Base):
     """Event model."""
+
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -18,6 +21,7 @@ class Event(Base):
 
 class EventRuntime(Base):
     """Event runtime model."""
+
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -29,6 +33,7 @@ class EventRuntime(Base):
 
 class EventInput(Base):
     """Event input model."""
+
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -38,6 +43,7 @@ class EventInput(Base):
 
 class EventOutput(Base):
     """Event output model."""
+
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -47,6 +53,7 @@ class EventOutput(Base):
 
 class EventFeedback(Base):
     """Event feedback model."""
+
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -56,6 +63,7 @@ class EventFeedback(Base):
 
 class EventMetadata(Base):
     """Event metadata model."""
+
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)

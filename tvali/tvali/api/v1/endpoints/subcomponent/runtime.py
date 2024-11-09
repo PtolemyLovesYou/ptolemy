@@ -1,4 +1,5 @@
 """Subcomponent runtime endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.subcomponent import SubcomponentRuntime, SubcomponentRuntimeCreate
 from .....db import models
@@ -9,18 +10,19 @@ router = APIRouter(
     tags=["runtime"],
 )
 
+
 @router.get("/{subcomponent_runtime_id}")
 async def get_subcomponent_runtime(subcomponent_runtime_id: str) -> SubcomponentRuntime:
     """Get subcomponent runtime."""
     db = SessionLocal()
     event = (
-        db
-        .query(models.SubcomponentRuntime)
+        db.query(models.SubcomponentRuntime)
         .filter(models.SubcomponentEvent.id == subcomponent_runtime_id)
         .first()
-        )
+    )
 
     return event
+
 
 @router.post("/")
 async def create_subcomponent_runtime(event: SubcomponentRuntimeCreate):
@@ -31,17 +33,16 @@ async def create_subcomponent_runtime(event: SubcomponentRuntimeCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{subcomponent_runtime_id}")
 async def delete_subcomponent_runtime(subcomponent_runtime_id: str):
     """Delete subcomponent runtime."""
     db = SessionLocal()
-    db.query(models.SubcomponentRuntime).filter(models.SubcomponentEvent.id == subcomponent_runtime_id).delete()
+    db.query(models.SubcomponentRuntime).filter(
+        models.SubcomponentEvent.id == subcomponent_runtime_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

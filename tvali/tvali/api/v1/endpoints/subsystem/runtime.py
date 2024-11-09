@@ -1,4 +1,5 @@
 """Subsystem runtime endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.subsystem import SubsystemRuntime, SubsystemRuntimeCreate
 from .....db import models
@@ -9,18 +10,19 @@ router = APIRouter(
     tags=["runtime"],
 )
 
+
 @router.get("/{subsystem_runtime_id}")
 async def get_subsystem_runtime(subsystem_runtime_id: str) -> SubsystemRuntime:
     """Get subsystem runtime."""
     db = SessionLocal()
     event = (
-        db
-        .query(models.SubsystemRuntime)
+        db.query(models.SubsystemRuntime)
         .filter(models.SubsystemEvent.id == subsystem_runtime_id)
         .first()
-        )
+    )
 
     return event
+
 
 @router.post("/")
 async def create_subsystem_runtime(event: SubsystemRuntimeCreate):
@@ -31,17 +33,16 @@ async def create_subsystem_runtime(event: SubsystemRuntimeCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{subsystem_runtime_id}")
 async def delete_subsystem_runtime(subsystem_runtime_id: str):
     """Delete subsystem runtime."""
     db = SessionLocal()
-    db.query(models.SubsystemRuntime).filter(models.SubsystemEvent.id == subsystem_runtime_id).delete()
+    db.query(models.SubsystemRuntime).filter(
+        models.SubsystemEvent.id == subsystem_runtime_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

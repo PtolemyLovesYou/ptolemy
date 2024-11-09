@@ -16,6 +16,7 @@ psycopg = "^3.2.3"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 pytest-sugar = "^1.0.0"
+black = "^24.10.0"
 
 [build-system]
 requires = ["poetry-core"]

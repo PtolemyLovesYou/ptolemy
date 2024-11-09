@@ -1,4 +1,5 @@
 """Session dependencies"""
+
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -8,22 +9,22 @@ from ..config import (
     POSTGRES_USER,
     POSTGRES_PASSWORD,
     POSTGRES_HOST,
-    POSTGRES_PORT
+    POSTGRES_PORT,
 )
 
 # Configuration
-SQLALCHEMY_DATABASE_URL = ''.join(
+SQLALCHEMY_DATABASE_URL = "".join(
     [
-        'postgresql+psycopg://',
+        "postgresql+psycopg://",
         POSTGRES_USER,
-        ':',
+        ":",
         POSTGRES_PASSWORD,
-        '@',
+        "@",
         POSTGRES_HOST,
-        ':',
+        ":",
         str(POSTGRES_PORT),
-        '/',
-        POSTGRES_DB
+        "/",
+        POSTGRES_DB,
     ]
 )
 
@@ -32,20 +33,18 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     # For SQLite, add: connect_args={"check_same_thread": False}
     pool_pre_ping=True,  # Enable automatic reconnection
-    pool_size=5,         # Connection pool size
-    max_overflow=10      # Max number of connections beyond pool_size
+    pool_size=5,  # Connection pool size
+    max_overflow=10,  # Max number of connections beyond pool_size
 )
 
 # Create session factory
 SessionLocal = sessionmaker(
-    bind=engine,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False
+    bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
 )
 
 # Base class for declarative models
 Base = declarative_base()
+
 
 def get_db() -> Generator[Session, None, None]:
     """

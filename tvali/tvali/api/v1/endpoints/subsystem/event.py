@@ -1,4 +1,5 @@
 """Subsystem event endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.subsystem import SubsystemEvent, SubsystemEventCreate
 from .....db import models
@@ -9,12 +10,18 @@ router = APIRouter(
     tags=["event"],
 )
 
+
 @router.get("/{subsystem_event_id}")
 async def get_subsystem_event(subsystem_event_id: str) -> SubsystemEvent:
     """Get subsystem event."""
     db = SessionLocal()
-    event = db.query(models.SubsystemEvent).filter(models.SubsystemEvent.id == subsystem_event_id).first()
+    event = (
+        db.query(models.SubsystemEvent)
+        .filter(models.SubsystemEvent.id == subsystem_event_id)
+        .first()
+    )
     return event
+
 
 @router.post("/")
 async def create_subsystem_event(event: SubsystemEventCreate):
@@ -25,17 +32,16 @@ async def create_subsystem_event(event: SubsystemEventCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{subsystem_event_id}")
 async def delete_subsystem_event(subsystem_event_id: str):
     """Delete subsystem event."""
     db = SessionLocal()
-    db.query(models.SubsystemEvent).filter(models.SubsystemEvent.id == subsystem_event_id).delete()
+    db.query(models.SubsystemEvent).filter(
+        models.SubsystemEvent.id == subsystem_event_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

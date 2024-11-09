@@ -1,4 +1,5 @@
 """Subcomponent feedback endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.subcomponent import SubcomponentFeedback, SubcomponentFeedbackCreate
 from .....db import models
@@ -9,18 +10,21 @@ router = APIRouter(
     tags=["feedback"],
 )
 
+
 @router.get("/{subcomponent_feedback_id}")
-async def get_subcomponent_feedback(subcomponent_feedback_id: str) -> SubcomponentFeedback:
+async def get_subcomponent_feedback(
+    subcomponent_feedback_id: str,
+) -> SubcomponentFeedback:
     """Get subcomponent feedback."""
     db = SessionLocal()
     event = (
-        db
-        .query(models.SubcomponentFeedback)
+        db.query(models.SubcomponentFeedback)
         .filter(models.SubcomponentEvent.id == subcomponent_feedback_id)
         .first()
-        )
+    )
 
     return event
+
 
 @router.post("/")
 async def create_subcomponent_feedback(event: SubcomponentFeedbackCreate):
@@ -31,17 +35,16 @@ async def create_subcomponent_feedback(event: SubcomponentFeedbackCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{subcomponent_feedback_id}")
 async def delete_subcomponent_feedback(subcomponent_feedback_id: str):
     """Delete subcomponent feedback."""
     db = SessionLocal()
-    db.query(models.SubcomponentFeedback).filter(models.SubcomponentEvent.id == subcomponent_feedback_id).delete()
+    db.query(models.SubcomponentFeedback).filter(
+        models.SubcomponentEvent.id == subcomponent_feedback_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}

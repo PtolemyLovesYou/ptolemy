@@ -1,12 +1,11 @@
 """Config"""
+
 import os
 
+
 def get_env(
-    key: str,
-    default: str = None,
-    return_type: type = str,
-    optional: bool = False
-    ) -> str:
+    key: str, default: str = None, return_type: type = str, optional: bool = False
+) -> str:
     """Get environment variable"""
     value = os.getenv(key)
 
@@ -16,6 +15,7 @@ def get_env(
         return default
 
     return return_type(value)
+
 
 POSTGRES_USER = get_env("POSTGRES_USER")
 POSTGRES_PASSWORD = get_env("POSTGRES_PASSWORD")

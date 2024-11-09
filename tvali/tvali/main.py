@@ -1,4 +1,5 @@
 """Tvali API"""
+
 from fastapi import FastAPI
 from .api.health import router as health_router
 from .api.v1.router import router as v1_router

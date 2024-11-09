@@ -1,4 +1,5 @@
 """Database models"""
+
 from .models import (
     SystemEvent,
     SystemRuntime,

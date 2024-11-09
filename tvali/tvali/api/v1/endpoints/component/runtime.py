@@ -1,4 +1,5 @@
 """Component runtime endpoints."""
+
 from fastapi import APIRouter
 from ...schemas.component import ComponentRuntime, ComponentRuntimeCreate
 from .....db import models
@@ -9,18 +10,19 @@ router = APIRouter(
     tags=["runtime"],
 )
 
+
 @router.get("/{component_runtime_id}")
 async def get_component_runtime(component_runtime_id: str) -> ComponentRuntime:
     """Get component runtime."""
     db = SessionLocal()
     event = (
-        db
-        .query(models.ComponentRuntime)
+        db.query(models.ComponentRuntime)
         .filter(models.ComponentEvent.id == component_runtime_id)
         .first()
-        )
+    )
 
     return event
+
 
 @router.post("/")
 async def create_component_runtime(event: ComponentRuntimeCreate):
@@ -31,17 +33,16 @@ async def create_component_runtime(event: ComponentRuntimeCreate):
     db.commit()
     db.refresh(db_event)
 
-    return {
-        "id": db_event.id
-    }
+    return {"id": db_event.id}
+
 
 @router.delete("/{component_runtime_id}")
 async def delete_component_runtime(component_runtime_id: str):
     """Delete component runtime."""
     db = SessionLocal()
-    db.query(models.ComponentRuntime).filter(models.ComponentEvent.id == component_runtime_id).delete()
+    db.query(models.ComponentRuntime).filter(
+        models.ComponentEvent.id == component_runtime_id
+    ).delete()
     db.commit()
 
-    return {
-        "status": "success"
-    }
+    return {"status": "success"}
