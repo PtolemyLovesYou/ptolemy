@@ -7,6 +7,6 @@ router = APIRouter(
 )
 
 @router.get("/")
-def health():
+async def health():
     """Health endpoint."""
     return {"status": "ok"}
