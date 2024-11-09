@@ -1,10 +1,9 @@
 """System feedback endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.system import SystemFeedback, SystemFeedbackCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/feedback",
@@ -21,22 +20,10 @@ async def get_system_feedback(system_feedback_id: str) -> SystemFeedback:
 @router.post("/")
 async def create_system_feedback(event: SystemFeedbackCreate):
     """Create system feedback."""
-    db = SessionLocal()
-    db_event = models.SystemFeedback(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.SystemFeedback)
 
 
 @router.delete("/{system_feedback_id}")
 async def delete_system_feedback(system_feedback_id: str):
     """Delete system feedback."""
-    db = SessionLocal()
-    db.query(models.SystemFeedback).filter(
-        models.SystemEvent.id == system_feedback_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.SystemFeedback, system_feedback_id)

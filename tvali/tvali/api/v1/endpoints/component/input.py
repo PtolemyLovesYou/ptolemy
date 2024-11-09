@@ -1,10 +1,9 @@
 """Component input endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.component import ComponentInput, ComponentInputCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/input",
@@ -21,22 +20,10 @@ async def get_component_input(component_input_id: str) -> ComponentInput:
 @router.post("/")
 async def create_component_input(event: ComponentInputCreate):
     """Create component input."""
-    db = SessionLocal()
-    db_event = models.ComponentInput(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.ComponentInput)
 
 
 @router.delete("/{component_input_id}")
 async def delete_component_input(component_input_id: str):
     """Delete component input."""
-    db = SessionLocal()
-    db.query(models.ComponentInput).filter(
-        models.ComponentEvent.id == component_input_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.ComponentInput, component_input_id)

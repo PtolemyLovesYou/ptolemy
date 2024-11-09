@@ -1,10 +1,9 @@
 """Component metadata endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.component import ComponentMetadata, ComponentMetadataCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/metadata",
@@ -21,22 +20,10 @@ async def get_component_metadata(component_metadata_id: str) -> ComponentMetadat
 @router.post("/")
 async def create_component_metadata(event: ComponentMetadataCreate):
     """Create component metadata."""
-    db = SessionLocal()
-    db_event = models.ComponentMetadata(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.ComponentMetadata)
 
 
 @router.delete("/{component_metadata_id}")
 async def delete_component_metadata(component_metadata_id: str):
     """Delete component metadata."""
-    db = SessionLocal()
-    db.query(models.ComponentMetadata).filter(
-        models.ComponentEvent.id == component_metadata_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.ComponentMetadata, component_metadata_id)

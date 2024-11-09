@@ -1,10 +1,9 @@
 """Component event endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.component import ComponentEvent, ComponentEventCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/event",
@@ -21,22 +20,10 @@ async def get_component_event(component_event_id: str) -> ComponentEvent:
 @router.post("/")
 async def create_component_event(event: ComponentEventCreate):
     """Create component event."""
-    db = SessionLocal()
-    db_event = models.ComponentEvent(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.ComponentEvent)
 
 
 @router.delete("/{component_event_id}")
 async def delete_component_event(component_event_id: str):
     """Delete component event."""
-    db = SessionLocal()
-    db.query(models.ComponentEvent).filter(
-        models.ComponentEvent.id == component_event_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.ComponentEvent, component_event_id)

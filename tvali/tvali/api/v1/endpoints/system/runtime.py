@@ -1,10 +1,9 @@
 """System runtime endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.system import SystemRuntime, SystemRuntimeCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/runtime",
@@ -21,22 +20,10 @@ async def get_system_runtime(system_runtime_id: str) -> SystemRuntime:
 @router.post("/")
 async def create_system_runtime(event: SystemRuntimeCreate):
     """Create system runtime."""
-    db = SessionLocal()
-    db_event = models.SystemRuntime(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.SystemRuntime)
 
 
 @router.delete("/{system_runtime_id}")
 async def delete_system_runtime(system_runtime_id: str):
     """Delete system runtime."""
-    db = SessionLocal()
-    db.query(models.SystemRuntime).filter(
-        models.SystemEvent.id == system_runtime_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.SystemRuntime, system_runtime_id)

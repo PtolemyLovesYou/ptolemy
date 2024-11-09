@@ -1,10 +1,9 @@
 """Subcomponent runtime endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.subcomponent import SubcomponentRuntime, SubcomponentRuntimeCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/runtime",
@@ -23,22 +22,10 @@ async def get_subcomponent_runtime(subcomponent_runtime_id: str) -> Subcomponent
 @router.post("/")
 async def create_subcomponent_runtime(event: SubcomponentRuntimeCreate):
     """Create subcomponent runtime."""
-    db = SessionLocal()
-    db_event = models.SubcomponentRuntime(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.SubcomponentRuntime)
 
 
 @router.delete("/{subcomponent_runtime_id}")
 async def delete_subcomponent_runtime(subcomponent_runtime_id: str):
     """Delete subcomponent runtime."""
-    db = SessionLocal()
-    db.query(models.SubcomponentRuntime).filter(
-        models.SubcomponentEvent.id == subcomponent_runtime_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.SubcomponentRuntime, subcomponent_runtime_id)

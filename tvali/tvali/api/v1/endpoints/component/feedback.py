@@ -1,10 +1,9 @@
 """Component feedback endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.component import ComponentFeedback, ComponentFeedbackCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/feedback",
@@ -21,22 +20,10 @@ async def get_component_feedback(component_feedback_id: str) -> ComponentFeedbac
 @router.post("/")
 async def create_component_feedback(event: ComponentFeedbackCreate):
     """Create component feedback."""
-    db = SessionLocal()
-    db_event = models.ComponentFeedback(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.ComponentFeedback)
 
 
 @router.delete("/{component_feedback_id}")
 async def delete_component_feedback(component_feedback_id: str):
     """Delete component feedback."""
-    db = SessionLocal()
-    db.query(models.ComponentFeedback).filter(
-        models.ComponentEvent.id == component_feedback_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.ComponentFeedback, component_feedback_id)

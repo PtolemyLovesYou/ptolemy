@@ -1,10 +1,9 @@
 """Subcomponent feedback endpoints."""
 
 from fastapi import APIRouter
-from ...crud.event import get_event
+from ...crud.event import get_event, create_event, delete_event
 from ...schemas.subcomponent import SubcomponentFeedback, SubcomponentFeedbackCreate
 from .....db import models
-from .....db.session import SessionLocal
 
 router = APIRouter(
     prefix="/feedback",
@@ -25,22 +24,10 @@ async def get_subcomponent_feedback(
 @router.post("/")
 async def create_subcomponent_feedback(event: SubcomponentFeedbackCreate):
     """Create subcomponent feedback."""
-    db = SessionLocal()
-    db_event = models.SubcomponentFeedback(**event.model_dump())
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-
-    return {"id": db_event.id}
+    return create_event(event, models.SubcomponentFeedback)
 
 
 @router.delete("/{subcomponent_feedback_id}")
 async def delete_subcomponent_feedback(subcomponent_feedback_id: str):
     """Delete subcomponent feedback."""
-    db = SessionLocal()
-    db.query(models.SubcomponentFeedback).filter(
-        models.SubcomponentEvent.id == subcomponent_feedback_id
-    ).delete()
-    db.commit()
-
-    return {"status": "success"}
+    return delete_event(models.SubcomponentFeedback, subcomponent_feedback_id)
