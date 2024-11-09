@@ -23,9 +23,8 @@ def get_event(
     event = db.query(db_class).filter(db_class.id == idx).first()
     return return_class(**event.__dict__)
 
-def create_event(
-    data: Create, db_class: type[models.EventTable]
-) -> dict[str, UUID]:
+
+def create_event(data: Create, db_class: type[models.EventTable]) -> dict[str, UUID]:
     """
     Create event.
 
@@ -43,6 +42,7 @@ def create_event(
     db.refresh(obj)
 
     return {"id": obj.id}
+
 
 def delete_event(db_class: type[models.EventTable], idx: str) -> dict[str, str]:
     """
