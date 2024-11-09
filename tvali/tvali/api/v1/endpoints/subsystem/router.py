@@ -1,4 +1,4 @@
-"""System-level endpoints."""
+"""Subsystem-level endpoints."""
 from fastapi import APIRouter
 from .event import router as event_router
 from .runtime import router as runtime_router
@@ -8,8 +8,8 @@ from .feedback import router as feedback_router
 from .metadata import router as metadata_router
 
 router = APIRouter(
-    prefix="/system",
-    tags=["system"],
+    prefix="/subsystem",
+    tags=["subsystem"],
 )
 router.include_router(event_router)
 router.include_router(runtime_router)
