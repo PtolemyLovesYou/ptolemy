@@ -1,6 +1,7 @@
 """Component feedback endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.component import ComponentFeedback, ComponentFeedbackCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{component_feedback_id}")
 async def get_component_feedback(component_feedback_id: str) -> ComponentFeedback:
     """Get component feedback."""
-    db = SessionLocal()
-    event = (
-        db.query(models.ComponentFeedback)
-        .filter(models.ComponentEvent.id == component_feedback_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.ComponentFeedback, ComponentFeedback, component_feedback_id)
 
 
 @router.post("/")

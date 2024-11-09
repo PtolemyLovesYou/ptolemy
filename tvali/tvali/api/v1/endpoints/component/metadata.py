@@ -1,6 +1,7 @@
 """Component metadata endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.component import ComponentMetadata, ComponentMetadataCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{component_metadata_id}")
 async def get_component_metadata(component_metadata_id: str) -> ComponentMetadata:
     """Get component metadata."""
-    db = SessionLocal()
-    event = (
-        db.query(models.ComponentMetadata)
-        .filter(models.ComponentEvent.id == component_metadata_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.ComponentMetadata, ComponentMetadata, component_metadata_id)
 
 
 @router.post("/")

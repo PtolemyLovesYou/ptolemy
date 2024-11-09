@@ -1,6 +1,7 @@
 """Subcomponent input endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.subcomponent import SubcomponentInput, SubcomponentInputCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{subcomponent_input_id}")
 async def get_subcomponent_input(subcomponent_input_id: str) -> SubcomponentInput:
     """Get subcomponent input."""
-    db = SessionLocal()
-    event = (
-        db.query(models.SubcomponentInput)
-        .filter(models.SubcomponentEvent.id == subcomponent_input_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.SubcomponentInput, SubcomponentInput, subcomponent_input_id)
 
 
 @router.post("/")

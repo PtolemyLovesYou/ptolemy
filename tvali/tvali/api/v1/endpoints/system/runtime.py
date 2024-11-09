@@ -1,6 +1,7 @@
 """System runtime endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.system import SystemRuntime, SystemRuntimeCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{system_runtime_id}")
 async def get_system_runtime(system_runtime_id: str) -> SystemRuntime:
     """Get system runtime."""
-    db = SessionLocal()
-    event = (
-        db.query(models.SystemRuntime)
-        .filter(models.SystemEvent.id == system_runtime_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.SystemRuntime, SystemRuntime, system_runtime_id)
 
 
 @router.post("/")

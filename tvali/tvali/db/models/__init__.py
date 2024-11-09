@@ -1,5 +1,5 @@
 """Database models"""
-
+from .core import EventTable
 from .models import (
     SystemEvent,
     SystemRuntime,

@@ -1,6 +1,7 @@
 """Subcomponent metadata endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.subcomponent import SubcomponentMetadata, SubcomponentMetadataCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -16,14 +17,7 @@ async def get_subcomponent_metadata(
     subcomponent_metadata_id: str,
 ) -> SubcomponentMetadata:
     """Get subcomponent metadata."""
-    db = SessionLocal()
-    event = (
-        db.query(models.SubcomponentMetadata)
-        .filter(models.SubcomponentEvent.id == subcomponent_metadata_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.SubcomponentMetadata, SubcomponentMetadata, subcomponent_metadata_id)
 
 
 @router.post("/")

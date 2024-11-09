@@ -1,6 +1,7 @@
 """Subcomponent runtime endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.subcomponent import SubcomponentRuntime, SubcomponentRuntimeCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{subcomponent_runtime_id}")
 async def get_subcomponent_runtime(subcomponent_runtime_id: str) -> SubcomponentRuntime:
     """Get subcomponent runtime."""
-    db = SessionLocal()
-    event = (
-        db.query(models.SubcomponentRuntime)
-        .filter(models.SubcomponentEvent.id == subcomponent_runtime_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.SubcomponentRuntime, SubcomponentRuntime, subcomponent_runtime_id)
 
 
 @router.post("/")

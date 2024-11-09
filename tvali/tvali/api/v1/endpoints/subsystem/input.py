@@ -1,6 +1,7 @@
 """Subsystem input endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.subsystem import SubsystemInput, SubsystemInputCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{subsystem_input_id}")
 async def get_subsystem_input(subsystem_input_id: str) -> SubsystemInput:
     """Get subsystem input."""
-    db = SessionLocal()
-    event = (
-        db.query(models.SubsystemInput)
-        .filter(models.SubsystemEvent.id == subsystem_input_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.SubsystemInput, SubsystemInput, subsystem_input_id)
 
 
 @router.post("/")

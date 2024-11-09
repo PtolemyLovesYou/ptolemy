@@ -7,65 +7,67 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..session import Base
 
 
-class Event(Base):
-    """Event model."""
+class EventTable(Base):
+    """Base model for event tables."""
 
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
+
+
+class Event(EventTable):
+    """Event model."""
+
+    __abstract__ = True
+
     name: Mapped[str] = mapped_column(String(), nullable=False)
     parameters: Mapped[Dict[str, Any]] = mapped_column(JSON(), nullable=True)
     environment: Mapped[str] = mapped_column(String(length=8), nullable=False)
     version: Mapped[str] = mapped_column(String(length=16), nullable=False)
 
 
-class EventRuntime(Base):
+class EventRuntime(EventTable):
     """Event runtime model."""
 
     __abstract__ = True
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     start_time: Mapped[DateTime] = mapped_column(DateTime(), nullable=False)
     end_time: Mapped[DateTime] = mapped_column(DateTime(), nullable=False)
     error_type: Mapped[str] = mapped_column(String(), nullable=True)
     error_content: Mapped[str] = mapped_column(String(), nullable=True)
 
 
-class EventInput(Base):
+class EventInput(EventTable):
     """Event input model."""
 
     __abstract__ = True
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     field_name: Mapped[str] = mapped_column(String(), nullable=False)
     field_value: Mapped[Any] = mapped_column(JSON(), nullable=True)
 
 
-class EventOutput(Base):
+class EventOutput(EventTable):
     """Event output model."""
 
     __abstract__ = True
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     field_name: Mapped[str] = mapped_column(String(), nullable=False)
     field_value: Mapped[Any] = mapped_column(JSON(), nullable=True)
 
 
-class EventFeedback(Base):
+class EventFeedback(EventTable):
     """Event feedback model."""
 
     __abstract__ = True
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     field_name: Mapped[str] = mapped_column(String(), nullable=False)
     field_value: Mapped[Any] = mapped_column(JSON(), nullable=True)
 
 
-class EventMetadata(Base):
+class EventMetadata(EventTable):
     """Event metadata model."""
 
     __abstract__ = True
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(), primary_key=True, default=uuid.uuid4)
     field_name: Mapped[str] = mapped_column(String(), nullable=False)
     field_value: Mapped[str] = mapped_column(String(), nullable=True)

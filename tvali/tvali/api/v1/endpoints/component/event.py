@@ -1,6 +1,7 @@
 """Component event endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.component import ComponentEvent, ComponentEventCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,13 +15,7 @@ router = APIRouter(
 @router.get("/{component_event_id}")
 async def get_component_event(component_event_id: str) -> ComponentEvent:
     """Get component event."""
-    db = SessionLocal()
-    event = (
-        db.query(models.ComponentEvent)
-        .filter(models.ComponentEvent.id == component_event_id)
-        .first()
-    )
-    return event
+    return get_event(models.ComponentEvent, ComponentEvent, component_event_id)
 
 
 @router.post("/")

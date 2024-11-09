@@ -1,6 +1,7 @@
 """Subsystem runtime endpoints."""
 
 from fastapi import APIRouter
+from ...crud.event import get_event
 from ...schemas.subsystem import SubsystemRuntime, SubsystemRuntimeCreate
 from .....db import models
 from .....db.session import SessionLocal
@@ -14,14 +15,7 @@ router = APIRouter(
 @router.get("/{subsystem_runtime_id}")
 async def get_subsystem_runtime(subsystem_runtime_id: str) -> SubsystemRuntime:
     """Get subsystem runtime."""
-    db = SessionLocal()
-    event = (
-        db.query(models.SubsystemRuntime)
-        .filter(models.SubsystemEvent.id == subsystem_runtime_id)
-        .first()
-    )
-
-    return event
+    return get_event(models.SubsystemRuntime, SubsystemRuntime, subsystem_runtime_id)
 
 
 @router.post("/")
