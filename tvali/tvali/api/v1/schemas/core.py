@@ -65,8 +65,8 @@ class EventBase(_Base):
 
     name: str
     parameters: dict
-    environment: str
-    version: str
+    environment: str = Field(min_length=1, max_length=8)
+    version: str = Field(min_length=1, max_length=16)
 
 
 class EventRuntimeBase(_Base):
