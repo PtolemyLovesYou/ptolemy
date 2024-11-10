@@ -1,85 +1,85 @@
 """System event schemas."""
 
 from .core import (
-    EventBase,
-    EventInputBase,
-    EventRuntimeBase,
-    EventOutputBase,
-    EventFeedbackBase,
-    EventMetadataBase,
-    Record,
-    Create,
-    SystemDependent,
+    EventLogMixin,
+    InputLogMixin,
+    RuntimeLogMixin,
+    OutputLogMixin,
+    FeedbackLogMixin,
+    MetadataLogMixin,
+    RecordSchemaMixin,
+    CreateSchemaMixin,
+    SystemDependentMixin,
 )
 
 
-class SystemEventBase(EventBase):
+class SystemEventBase(EventLogMixin):
     """System event base schema."""
 
 
-class SystemEvent(SystemEventBase, Record):
+class SystemEvent(SystemEventBase, RecordSchemaMixin):
     """System event schema."""
 
 
-class SystemEventCreate(SystemEventBase, Create):
+class SystemEventCreate(SystemEventBase, CreateSchemaMixin):
     """System event create schema."""
 
 
-class SystemRuntimeBase(EventRuntimeBase, SystemDependent):
+class SystemRuntimeBase(RuntimeLogMixin, SystemDependentMixin):
     """System event runtime base schema."""
 
 
-class SystemRuntime(SystemRuntimeBase, Record):
+class SystemRuntime(SystemRuntimeBase, RecordSchemaMixin):
     """System event runtime schema."""
 
 
-class SystemRuntimeCreate(SystemRuntimeBase, Create):
+class SystemRuntimeCreate(SystemRuntimeBase, CreateSchemaMixin):
     """System event runtime create schema."""
 
 
-class SystemInputBase(EventInputBase, SystemDependent):
+class SystemInputBase(InputLogMixin, SystemDependentMixin):
     """System event input base schema."""
 
 
-class SystemInput(SystemInputBase, Record):
+class SystemInput(SystemInputBase, RecordSchemaMixin):
     """System event input schema."""
 
 
-class SystemInputCreate(SystemInputBase, Create):
+class SystemInputCreate(SystemInputBase, CreateSchemaMixin):
     """System event input create schema."""
 
 
-class SystemOutputBase(EventOutputBase, SystemDependent):
+class SystemOutputBase(OutputLogMixin, SystemDependentMixin):
     """System event output base schema."""
 
 
-class SystemOutput(SystemOutputBase, Record):
+class SystemOutput(SystemOutputBase, RecordSchemaMixin):
     """System event output schema."""
 
 
-class SystemOutputCreate(SystemOutputBase, Create):
+class SystemOutputCreate(SystemOutputBase, CreateSchemaMixin):
     """System event output create schema."""
 
 
-class SystemFeedbackBase(EventFeedbackBase, SystemDependent):
+class SystemFeedbackBase(FeedbackLogMixin, SystemDependentMixin):
     """System event feedback base schema."""
 
 
-class SystemFeedback(SystemFeedbackBase, Record):
+class SystemFeedback(SystemFeedbackBase, RecordSchemaMixin):
     """System event feedback schema."""
 
 
-class SystemFeedbackCreate(SystemFeedbackBase, Create):
+class SystemFeedbackCreate(SystemFeedbackBase, CreateSchemaMixin):
     """System event feedback create schema."""
 
 
-class SystemMetadataBase(EventMetadataBase, SystemDependent):
+class SystemMetadataBase(MetadataLogMixin, SystemDependentMixin):
     """System event metadata base schema."""
 
 
-class SystemMetadata(SystemMetadataBase, Record):
+class SystemMetadata(SystemMetadataBase, RecordSchemaMixin):
     """System event metadata schema."""
 
 
-class SystemMetadataCreate(SystemMetadataBase, Create):
+class SystemMetadataCreate(SystemMetadataBase, CreateSchemaMixin):
     """System event metadata create schema."""

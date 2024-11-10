@@ -1,86 +1,86 @@
 """Component event schemas."""
 
 from .core import (
-    EventBase,
-    EventInputBase,
-    EventRuntimeBase,
-    EventOutputBase,
-    EventFeedbackBase,
-    EventMetadataBase,
-    Record,
-    Create,
-    SubsystemDependent,
-    ComponentDependent,
+    EventLogMixin,
+    InputLogMixin,
+    RuntimeLogMixin,
+    OutputLogMixin,
+    FeedbackLogMixin,
+    MetadataLogMixin,
+    RecordSchemaMixin,
+    CreateSchemaMixin,
+    SubsystemDependentMixin,
+    ComponentDependentMixin,
 )
 
 
-class ComponentEventBase(EventBase, SubsystemDependent):
+class ComponentEventBase(EventLogMixin, SubsystemDependentMixin):
     """Component event base schema."""
 
 
-class ComponentEvent(ComponentEventBase, Record):
+class ComponentEvent(ComponentEventBase, RecordSchemaMixin):
     """Component event schema."""
 
 
-class ComponentEventCreate(ComponentEventBase, Create):
+class ComponentEventCreate(ComponentEventBase, CreateSchemaMixin):
     """Component event create schema."""
 
 
-class ComponentRuntimeBase(EventRuntimeBase, ComponentDependent):
+class ComponentRuntimeBase(RuntimeLogMixin, ComponentDependentMixin):
     """Component event runtime base schema."""
 
 
-class ComponentRuntime(ComponentRuntimeBase, Record):
+class ComponentRuntime(ComponentRuntimeBase, RecordSchemaMixin):
     """Component event runtime schema."""
 
 
-class ComponentRuntimeCreate(ComponentRuntimeBase, Create):
+class ComponentRuntimeCreate(ComponentRuntimeBase, CreateSchemaMixin):
     """Component event runtime create schema."""
 
 
-class ComponentInputBase(EventInputBase, ComponentDependent):
+class ComponentInputBase(InputLogMixin, ComponentDependentMixin):
     """Component event input base schema."""
 
 
-class ComponentInput(ComponentInputBase, Record):
+class ComponentInput(ComponentInputBase, RecordSchemaMixin):
     """Component event input schema."""
 
 
-class ComponentInputCreate(ComponentInputBase, Create):
+class ComponentInputCreate(ComponentInputBase, CreateSchemaMixin):
     """Component event input create schema."""
 
 
-class ComponentOutputBase(EventOutputBase, ComponentDependent):
+class ComponentOutputBase(OutputLogMixin, ComponentDependentMixin):
     """Component event output base schema."""
 
 
-class ComponentOutput(ComponentOutputBase, Record):
+class ComponentOutput(ComponentOutputBase, RecordSchemaMixin):
     """Component event output schema."""
 
 
-class ComponentOutputCreate(ComponentOutputBase, Create):
+class ComponentOutputCreate(ComponentOutputBase, CreateSchemaMixin):
     """Component event output create schema."""
 
 
-class ComponentFeedbackBase(EventFeedbackBase, ComponentDependent):
+class ComponentFeedbackBase(FeedbackLogMixin, ComponentDependentMixin):
     """Component event feedback base schema."""
 
 
-class ComponentFeedback(ComponentFeedbackBase, Record):
+class ComponentFeedback(ComponentFeedbackBase, RecordSchemaMixin):
     """Component event feedback schema."""
 
 
-class ComponentFeedbackCreate(ComponentFeedbackBase, Create):
+class ComponentFeedbackCreate(ComponentFeedbackBase, CreateSchemaMixin):
     """Component event feedback create schema."""
 
 
-class ComponentMetadataBase(EventMetadataBase, ComponentDependent):
+class ComponentMetadataBase(MetadataLogMixin, ComponentDependentMixin):
     """Component event metadata base schema."""
 
 
-class ComponentMetadata(ComponentMetadataBase, Record):
+class ComponentMetadata(ComponentMetadataBase, RecordSchemaMixin):
     """Component event metadata schema."""
 
 
-class ComponentMetadataCreate(ComponentMetadataBase, Create):
+class ComponentMetadataCreate(ComponentMetadataBase, CreateSchemaMixin):
     """Component event metadata create schema."""

@@ -35,7 +35,7 @@ class Tier(StrEnum):
     SUBCOMPONENT = "subcomponent"
 
 
-class EventType(StrEnum):
+class EventRecordType(StrEnum):
     """Event type enum."""
 
     EVENT = "event"
@@ -46,21 +46,30 @@ class EventType(StrEnum):
     METADATA = "metadata"
 
 
-class _Base(BaseModel):
+# Base classes & types
+class SchemaMixin(BaseModel):
     """Event base schema."""
 
 
-class Record(BaseModel):
+class DependentMixin(BaseModel):
+    """Dependent base class."""
+
+
+class LogMixin(BaseModel):
+    """Event base schema."""
+
+
+class RecordSchemaMixin(SchemaMixin):
     """Event record schema."""
 
     id: RequiredID
 
 
-class Create(BaseModel):
+class CreateSchemaMixin(SchemaMixin):
     """Event create schema."""
 
 
-class EventBase(_Base):
+class EventLogMixin(LogMixin):
     """Event base schema."""
 
     name: str
@@ -69,7 +78,7 @@ class EventBase(_Base):
     version: str = Field(min_length=1, max_length=16)
 
 
-class EventRuntimeBase(_Base):
+class RuntimeLogMixin(LogMixin):
     """Event runtime base schema."""
 
     start_time: Timestamp
@@ -78,57 +87,53 @@ class EventRuntimeBase(_Base):
     error_content: str
 
 
-class EventInputBase(_Base):
+class InputLogMixin(LogMixin):
     """Event input base schema."""
 
     field_name: str
     field_value: Any
 
 
-class EventOutputBase(_Base):
+class OutputLogMixin(LogMixin):
     """Event output base schema."""
 
     field_name: str
     field_value: Any
 
 
-class EventFeedbackBase(_Base):
+class FeedbackLogMixin(LogMixin):
     """Event feedback base schema."""
 
     field_name: str
     field_value: Any
 
 
-class EventMetadataBase(_Base):
+class MetadataLogMixin(LogMixin):
     """Event metadata base schema."""
 
     field_name: str
     field_value: str
 
 
-class _Dependent(BaseModel):
-    """Dependent base class."""
-
-
-class SystemDependent(_Dependent):
+class SystemDependentMixin(DependentMixin):
     """System dependent schema."""
 
     system_event_id: RequiredID
 
 
-class SubsystemDependent(_Dependent):
+class SubsystemDependentMixin(DependentMixin):
     """Subsystem dependent schema."""
 
     subsystem_event_id: RequiredID
 
 
-class ComponentDependent(_Dependent):
+class ComponentDependentMixin(DependentMixin):
     """Component dependent schema."""
 
     component_event_id: RequiredID
 
 
-class SubcomponentDependent(_Dependent):
+class SubcomponentDependentMixin(DependentMixin):
     """Subcomponent dependent schema."""
 
     subcomponent_event_id: RequiredID

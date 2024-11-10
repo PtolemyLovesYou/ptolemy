@@ -6,14 +6,16 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 from ....db import models, session
-from ..schemas.core import Record, Create
+from ..schemas.core import RecordSchemaMixin, CreateSchemaMixin
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 # Type variables for better type hinting
 EventModel = TypeVar("EventModel", bound=models.EventTable)
-RecordType = TypeVar("RecordType", bound=Record)  # pylint: disable=invalid-name
+RecordType = TypeVar(
+    "RecordType", bound=RecordSchemaMixin
+)  # pylint: disable=invalid-name
 
 
 class EventNotFoundError(Exception):
@@ -81,7 +83,9 @@ def get_event(
             ) from e
 
 
-def create_event(data: Create, db_class: Type[EventModel]) -> dict[str, UUID]:
+def create_event(
+    data: CreateSchemaMixin, db_class: Type[EventModel]
+) -> dict[str, UUID]:
     """
     Create new event with error handling.
 
@@ -143,9 +147,8 @@ def delete_event(db_class: Type[EventModel], idx: str) -> dict[str, str]:
         except EventNotFoundError as e:
             logger.warning("Event not found for deletion: %s", e)
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=str(e)
-                ) from e
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+            ) from e
         except SQLAlchemyError as e:
             db.rollback()
             logger.error("Database error in delete_event: %s", e)
