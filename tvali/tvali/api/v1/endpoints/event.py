@@ -8,8 +8,8 @@ from ..crud.event import get_event, create_event, delete_event
 from ....db import models
 
 router = APIRouter(
-    prefix="/event",
-    tags=["event"],
+    prefix="/log",
+    tags=["log"],
 )
 
 DB_MODEL_MAP = {
