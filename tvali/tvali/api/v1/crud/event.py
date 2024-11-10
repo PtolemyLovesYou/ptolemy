@@ -6,7 +6,7 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 from ....db import models, session
-from ..schemas.core import RecordSchemaMixin, CreateSchemaMixin
+from ..schemas.event import RecordSchemaMixin, CreateSchemaMixin
 
 # Setup logging
 logger = logging.getLogger(__name__)
