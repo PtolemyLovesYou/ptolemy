@@ -6,7 +6,7 @@ from .api.v1.router import router as v1_router
 from .db.session import Base, engine
 
 # import all models so they actually get created
-from .db.models import * # pylint: disable=unused-wildcard-import,wildcard-import
+from .db.models import *  # pylint: disable=unused-wildcard-import,wildcard-import
 
 Base.metadata.create_all(bind=engine)
 

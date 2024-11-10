@@ -1,6 +1,7 @@
 """Session dependencies"""
 
 from typing import Generator
+from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
@@ -46,6 +47,7 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
+@contextmanager
 def get_db() -> Generator[Session, None, None]:
     """
     FastAPI dependency that provides a database session.
