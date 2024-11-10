@@ -13,38 +13,11 @@ router = APIRouter(
 )
 
 DB_MODEL_MAP = {
-    Tier.SYSTEM: {
-        EventRecordType.EVENT: models.SystemEvent,
-        EventRecordType.RUNTIME: models.SystemRuntime,
-        EventRecordType.INPUT: models.SystemInput,
-        EventRecordType.OUTPUT: models.SystemOutput,
-        EventRecordType.FEEDBACK: models.SystemFeedback,
-        EventRecordType.METADATA: models.SystemMetadata,
-    },
-    Tier.SUBSYSTEM: {
-        EventRecordType.EVENT: models.SubsystemEvent,
-        EventRecordType.RUNTIME: models.SubsystemRuntime,
-        EventRecordType.INPUT: models.SubsystemInput,
-        EventRecordType.OUTPUT: models.SubsystemOutput,
-        EventRecordType.FEEDBACK: models.SubsystemFeedback,
-        EventRecordType.METADATA: models.SubsystemMetadata,
-    },
-    Tier.COMPONENT: {
-        EventRecordType.EVENT: models.ComponentEvent,
-        EventRecordType.RUNTIME: models.ComponentRuntime,
-        EventRecordType.INPUT: models.ComponentInput,
-        EventRecordType.OUTPUT: models.ComponentOutput,
-        EventRecordType.FEEDBACK: models.ComponentFeedback,
-        EventRecordType.METADATA: models.ComponentMetadata,
-    },
-    Tier.SUBCOMPONENT: {
-        EventRecordType.EVENT: models.SubcomponentEvent,
-        EventRecordType.RUNTIME: models.SubcomponentRuntime,
-        EventRecordType.INPUT: models.SubcomponentInput,
-        EventRecordType.OUTPUT: models.SubcomponentOutput,
-        EventRecordType.FEEDBACK: models.SubcomponentFeedback,
-        EventRecordType.METADATA: models.SubcomponentMetadata,
-    },
+    t: {
+        et: getattr(models, f"{t.capitalize()}{et.capitalize()}")
+        for et in EventRecordType
+    }
+    for t in Tier
 }
 
 
@@ -61,14 +34,35 @@ def endpoint_factory(tier: Tier, event_type: EventRecordType) -> APIRouter:
     """
     db_model = DB_MODEL_MAP[tier][event_type]
 
-    class ModelSchemaBase(tier.dependent_mixin(event_type), event_type.mixin()):
-        """Base class for model schema."""
+    class ModelSchemaBase(
+        tier.dependent_mixin(event_type), event_type.mixin()
+    ):  # pylint: disable=missing-class-docstring,too-few-public-methods
+        pass
 
-    class ModelSchemaCreate(ModelSchemaBase, CreateSchemaMixin):
-        """Create class for model schema."""
+    ModelSchemaBase.__name__ = f"{tier.capitalize()}{event_type.capitalize()}Base"
+    ModelSchemaBase.__doc__ = (
+        f"Base class for {tier.capitalize}{event_type.capitalize()}."
+    )
 
-    class ModelSchemaRecord(ModelSchemaBase, RecordSchemaMixin):
-        """Record class for model schema."""
+    class ModelSchemaCreate(
+        ModelSchemaBase, CreateSchemaMixin
+    ):  # pylint: disable=missing-class-docstring,too-few-public-methods
+        pass
+
+    ModelSchemaCreate.__name__ = f"{tier.capitalize()}{event_type.capitalize()}Create"
+    ModelSchemaCreate.__doc__ = (
+        f"Create class for {tier.capitalize}{event_type.capitalize()}."
+    )
+
+    class ModelSchemaRecord(
+        ModelSchemaBase, RecordSchemaMixin
+    ):  # pylint: disable=missing-class-docstring,too-few-public-methods
+        pass
+
+    ModelSchemaRecord.__name__ = f"{tier.capitalize()}{event_type.capitalize()}"
+    ModelSchemaRecord.__doc__ = (
+        f"Record class for {tier.capitalize()}{event_type.capitalize()}."
+    )
 
     fct_router = APIRouter(
         prefix=f"/{tier}/{event_type}",
