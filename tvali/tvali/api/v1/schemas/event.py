@@ -1,6 +1,6 @@
 """Event schemas"""
 
-from typing import Annotated, Any, TypeVar
+from typing import Annotated, Any
 from enum import StrEnum
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -34,39 +34,14 @@ class LogMixin(BaseModel):
     """Event base schema."""
 
 
-SchemaMixinType = TypeVar(
-    "SchemaMixinType", bound=SchemaMixin
-)  # pylint: disable=invalid-name
-DependentMixinType = TypeVar(
-    "DependentMixinType", bound=DependentMixin
-)  # pylint: disable=invalid-name
-LogMixinType = TypeVar("LogMixinType", bound=LogMixin)  # pylint: disable=invalid-name
-
-SchemaType = TypeVar(  # pylint: disable=invalid-name
-    "SchemaType", bound=type[DependentMixin, LogMixin, SchemaMixin]  # type: ignore
-)
-
-
 class RecordSchemaMixin(SchemaMixin):
     """Event record schema."""
 
     id: RequiredID
 
 
-RecordSchemaType = TypeVar(  # pylint: disable=invalid-name
-    "RecordSchemaType",
-    bound=type[DependentMixin, LogMixin, RecordSchemaMixin],  # type: ignore
-)
-
-
 class CreateSchemaMixin(SchemaMixin):
     """Event create schema."""
-
-
-CreateSchemaType = TypeVar(  # pylint: disable=invalid-name
-    "CreateSchemaType",
-    bound=type[DependentMixin, LogMixin, CreateSchemaMixin],  # type: ignore
-)
 
 
 class EventLogMixin(LogMixin):
