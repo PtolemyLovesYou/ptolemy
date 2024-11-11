@@ -15,6 +15,7 @@ class SchemaMixin(BaseModel):
 
 class DependentMixin(BaseModel):
     """Dependent base class."""
+
     @classmethod
     def build(cls, tier: Tier) -> type["DependentMixin"]:
         """Build a dependent mixin class for the given tier.
@@ -24,9 +25,7 @@ class DependentMixin(BaseModel):
         """
         return create_model(
             f"{tier.capitalize()}DependentMixin",
-            **{
-                f"{tier.lower()}_event_id": (RequiredID, Field())
-            },
+            **{f"{tier.lower()}_event_id": (RequiredID, Field())},
             __base__=cls,
             __doc__=f"{tier.capitalize()} dependent schema.",
         )

@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from pydantic import Field, BeforeValidator, PlainSerializer, RootModel
 
+
 def _validate_id(v: Union[UUID, str]) -> UUID:
     """
     Validate a UUID.
@@ -28,6 +29,7 @@ def _validate_id(v: Union[UUID, str]) -> UUID:
         return v
 
     raise ValueError(f"Invalid UUID: {v}")
+
 
 def _validate_timestamp(v: Union[datetime, str]) -> datetime:
     """
@@ -54,20 +56,27 @@ def _validate_timestamp(v: Union[datetime, str]) -> datetime:
 
     raise ValueError(f"Invalid timestamp: {v}")
 
+
 id_validator = BeforeValidator(_validate_id)
 id_serializer = PlainSerializer(lambda v: v.hex, when_used="json")
 
 timestamp_validator = BeforeValidator(_validate_timestamp)
 timestamp_serializer = PlainSerializer(lambda v: v.isoformat(), when_used="json")
 
+
 class ID(RootModel):
     """ID class."""
+
     root: Annotated[UUID, Field(default_factory=uuid4), id_validator, id_serializer]
+
 
 class RequiredID(RootModel):
     """RequiredID class."""
+
     root: Annotated[UUID, Field(), id_validator, id_serializer]
+
 
 class Timestamp(RootModel):
     """Timestamp class."""
+
     root: Annotated[datetime, timestamp_validator, timestamp_serializer]
