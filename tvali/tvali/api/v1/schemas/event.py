@@ -1,6 +1,6 @@
 """Event schemas"""
 
-from typing import Annotated, Any
+from typing import Annotated, TypeVar, Generic, Any
 from datetime import datetime
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
@@ -19,6 +19,8 @@ ID = Annotated[UUID, Field(default_factory=uuid4), id_validator, id_serializer]
 RequiredID = Annotated[UUID, Field(), id_validator, id_serializer]
 
 Timestamp = Annotated[datetime, timestamp_validator, timestamp_serializer]
+
+T = TypeVar("T")
 
 
 # Base classes & types
@@ -62,32 +64,11 @@ class RuntimeLogMixin(LogMixin):
     error_content: str
 
 
-class InputLogMixin(LogMixin):
+class IOLogMixin(LogMixin, Generic[T]):
     """Event input base schema."""
 
     field_name: str
-    field_value: Any
-
-
-class OutputLogMixin(LogMixin):
-    """Event output base schema."""
-
-    field_name: str
-    field_value: Any
-
-
-class FeedbackLogMixin(LogMixin):
-    """Event feedback base schema."""
-
-    field_name: str
-    field_value: Any
-
-
-class MetadataLogMixin(LogMixin):
-    """Event metadata base schema."""
-
-    field_name: str
-    field_value: str
+    field_value: T
 
 
 class SystemDependentMixin(DependentMixin):
@@ -131,14 +112,14 @@ def event_record_type_mixin(event_record_type: EventRecordType) -> type[LogMixin
         return EventLogMixin
     if event_record_type == EventRecordType.RUNTIME:
         return RuntimeLogMixin
-    if event_record_type == EventRecordType.INPUT:
-        return InputLogMixin
-    if event_record_type == EventRecordType.OUTPUT:
-        return OutputLogMixin
-    if event_record_type == EventRecordType.FEEDBACK:
-        return FeedbackLogMixin
+    if event_record_type in (
+        EventRecordType.INPUT,
+        EventRecordType.OUTPUT,
+        EventRecordType.FEEDBACK,
+    ):
+        return IOLogMixin[Any]
     if event_record_type == EventRecordType.METADATA:
-        return MetadataLogMixin
+        return IOLogMixin[str]
 
     raise ValueError(f"Unknown event type: {event_record_type}")
 
