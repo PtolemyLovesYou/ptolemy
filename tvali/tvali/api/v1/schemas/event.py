@@ -1,24 +1,9 @@
 """Event schemas"""
 
-from typing import Annotated, TypeVar, Generic, Any
-from datetime import datetime
-from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+from typing import TypeVar, Generic, Any
+from pydantic import BaseModel, Field, create_model
 from ....utils.enums import Tier, EventRecordType
-
-id_validator = BeforeValidator(lambda v: UUID(v) if isinstance(v, str) else v)
-id_serializer = PlainSerializer(lambda v: v.hex, when_used="json")
-
-timestamp_validator = BeforeValidator(
-    lambda v: datetime.fromisoformat(v) if isinstance(v, str) else v
-)
-timestamp_serializer = PlainSerializer(lambda v: v.isoformat(), when_used="json")
-
-ID = Annotated[UUID, Field(default_factory=uuid4), id_validator, id_serializer]
-
-RequiredID = Annotated[UUID, Field(), id_validator, id_serializer]
-
-Timestamp = Annotated[datetime, timestamp_validator, timestamp_serializer]
+from ....utils.types import RequiredID, Timestamp
 
 T = TypeVar("T")
 
@@ -30,6 +15,21 @@ class SchemaMixin(BaseModel):
 
 class DependentMixin(BaseModel):
     """Dependent base class."""
+    @classmethod
+    def build(cls, tier: Tier) -> type["DependentMixin"]:
+        """Build a dependent mixin class for the given tier.
+
+        The class will have a single attribute, `{tier}_event_id`, which is a required
+        UUID field.
+        """
+        return create_model(
+            f"{tier.capitalize()}DependentMixin",
+            **{
+                f"{tier.lower()}_event_id": (RequiredID, Field())
+            },
+            __base__=cls,
+            __doc__=f"{tier.capitalize()} dependent schema.",
+        )
 
 
 class LogMixin(BaseModel):
@@ -71,28 +71,10 @@ class IOLogMixin(LogMixin, Generic[T]):
     field_value: T
 
 
-class SystemDependentMixin(DependentMixin):
-    """System dependent schema."""
-
-    system_event_id: RequiredID
-
-
-class SubsystemDependentMixin(DependentMixin):
-    """Subsystem dependent schema."""
-
-    subsystem_event_id: RequiredID
-
-
-class ComponentDependentMixin(DependentMixin):
-    """Component dependent schema."""
-
-    component_event_id: RequiredID
-
-
-class SubcomponentDependentMixin(DependentMixin):
-    """Subcomponent dependent schema."""
-
-    subcomponent_event_id: RequiredID
+SystemDependentMixin = DependentMixin.build(Tier.SYSTEM)
+SubsystemDependentMixin = DependentMixin.build(Tier.SUBSYSTEM)
+ComponentDependentMixin = DependentMixin.build(Tier.COMPONENT)
+SubcomponentDependentMixin = DependentMixin.build(Tier.SUBCOMPONENT)
 
 
 def event_record_type_mixin(event_record_type: EventRecordType) -> type[LogMixin]:
