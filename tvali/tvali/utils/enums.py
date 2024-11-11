@@ -1,8 +1,11 @@
 """Enums."""
+
 from enum import StrEnum
+
 
 class EventRecordType(StrEnum):
     """Event record types."""
+
     EVENT = "event"
     RUNTIME = "runtime"
     INPUT = "input"
@@ -13,6 +16,7 @@ class EventRecordType(StrEnum):
 
 class Tier(StrEnum):
     """Tier types."""
+
     SYSTEM = "system"
     SUBSYSTEM = "subsystem"
     COMPONENT = "component"

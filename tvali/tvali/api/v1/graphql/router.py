@@ -1,4 +1,5 @@
 """Router for GraphQL API."""
+
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from .query import Query

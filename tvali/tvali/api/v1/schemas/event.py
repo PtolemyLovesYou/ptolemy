@@ -113,6 +113,7 @@ class SubcomponentDependentMixin(DependentMixin):
 
     subcomponent_event_id: RequiredID
 
+
 def event_record_type_mixin(event_record_type: EventRecordType) -> type[LogMixin]:
     """
     Return the appropriate LogMixin subclass based on the event record type.
@@ -140,6 +141,7 @@ def event_record_type_mixin(event_record_type: EventRecordType) -> type[LogMixin
         return MetadataLogMixin
 
     raise ValueError(f"Unknown event type: {event_record_type}")
+
 
 def dependent_mixin(tier: Tier, event_type: EventRecordType) -> type[DependentMixin]:
     """

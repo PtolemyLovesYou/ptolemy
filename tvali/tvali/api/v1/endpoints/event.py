@@ -7,8 +7,8 @@ from ..schemas.event import (
     CreateSchemaMixin,
     RecordSchemaMixin,
     event_record_type_mixin,
-    dependent_mixin
-    )
+    dependent_mixin,
+)
 from ..crud.event import get_event, create_event, delete_event
 from ....db import models
 from ....utils.enums import Tier, EventRecordType
