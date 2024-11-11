@@ -1,10 +1,10 @@
 """Event schemas"""
 
 from typing import Annotated, Any
-from enum import StrEnum
 from datetime import datetime
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, BeforeValidator, PlainSerializer
+from ....utils.enums import Tier, EventRecordType
 
 id_validator = BeforeValidator(lambda v: UUID(v) if isinstance(v, str) else v)
 id_serializer = PlainSerializer(lambda v: v.hex, when_used="json")
@@ -113,94 +113,71 @@ class SubcomponentDependentMixin(DependentMixin):
 
     subcomponent_event_id: RequiredID
 
+def event_record_type_mixin(event_record_type: EventRecordType) -> type[LogMixin]:
+    """
+    Return the appropriate LogMixin subclass based on the event record type.
 
-class EventRecordType(StrEnum):
-    """Event type enum."""
+    Args:
+        event_record_type: The type of the event record.
 
-    EVENT = "event"
-    RUNTIME = "runtime"
-    INPUT = "input"
-    OUTPUT = "output"
-    FEEDBACK = "feedback"
-    METADATA = "metadata"
+    Returns:
+        A subclass of LogMixin corresponding to the event record type.
 
-    def mixin(self) -> type[LogMixin]:
-        """
-        Return the mixin for the given event type.
+    Raises:
+        ValueError: If the event record type is unknown.
+    """
+    if event_record_type == EventRecordType.EVENT:
+        return EventLogMixin
+    if event_record_type == EventRecordType.RUNTIME:
+        return RuntimeLogMixin
+    if event_record_type == EventRecordType.INPUT:
+        return InputLogMixin
+    if event_record_type == EventRecordType.OUTPUT:
+        return OutputLogMixin
+    if event_record_type == EventRecordType.FEEDBACK:
+        return FeedbackLogMixin
+    if event_record_type == EventRecordType.METADATA:
+        return MetadataLogMixin
 
-        Args:
-            self: The event type.
+    raise ValueError(f"Unknown event type: {event_record_type}")
 
-        Returns:
-            The mixin for the given event type.
+def dependent_mixin(tier: Tier, event_type: EventRecordType) -> type[DependentMixin]:
+    """
+    Return the appropriate DependentMixin subclass based on the tier and event type.
 
-        Raises:
-            ValueError: If the event type is unknown.
-        """
-        if self == EventRecordType.EVENT:
-            return EventLogMixin
-        if self == EventRecordType.RUNTIME:
-            return RuntimeLogMixin
-        if self == EventRecordType.INPUT:
-            return InputLogMixin
-        if self == EventRecordType.OUTPUT:
-            return OutputLogMixin
-        if self == EventRecordType.FEEDBACK:
-            return FeedbackLogMixin
-        if self == EventRecordType.METADATA:
-            return MetadataLogMixin
+    Args:
+        tier: The tier of the event.
+        event_type: The type of the event.
 
-        raise ValueError(f"Unknown event type: {self}")
+    Returns:
+        A subclass of DependentMixin corresponding to the tier and event type.
 
+    Raises:
+        ValueError: If the tier is unknown.
+    """
+    if tier == Tier.SYSTEM:
+        return (
+            DependentMixin
+            if event_type == EventRecordType.EVENT
+            else SystemDependentMixin
+        )
+    if tier == Tier.SUBSYSTEM:
+        return (
+            SystemDependentMixin
+            if event_type == EventRecordType.EVENT
+            else SubsystemDependentMixin
+        )
+    if tier == Tier.COMPONENT:
+        return (
+            SubsystemDependentMixin
+            if event_type == EventRecordType.EVENT
+            else ComponentDependentMixin
+        )
+    if tier == Tier.SUBCOMPONENT:
+        return (
+            ComponentDependentMixin
+            if event_type == EventRecordType.EVENT
+            else SubcomponentDependentMixin
+        )
 
-class Tier(StrEnum):
-    """Tier enum."""
-
-    SYSTEM = "system"
-    SUBSYSTEM = "subsystem"
-    COMPONENT = "component"
-    SUBCOMPONENT = "subcomponent"
-
-    def dependent_mixin(self, event_type: EventRecordType) -> type[DependentMixin]:
-        """
-        Return the mixin for the given tier and event type.
-
-        If the event type is an event, return the dependent mixin for the tier.
-        If the event type is not an event, return the dependent mixin for the tier
-        that is one level below the given tier.
-
-        Args:
-            event_type: The event type.
-
-        Returns:
-            The mixin for the given tier and event type.
-
-        Raises:
-            ValueError: If the tier is unknown.
-        """
-        if self == Tier.SYSTEM:
-            return (
-                DependentMixin
-                if event_type == EventRecordType.EVENT
-                else SystemDependentMixin
-            )
-        if self == Tier.SUBSYSTEM:
-            return (
-                SystemDependentMixin
-                if event_type == EventRecordType.EVENT
-                else SubsystemDependentMixin
-            )
-        if self == Tier.COMPONENT:
-            return (
-                SubsystemDependentMixin
-                if event_type == EventRecordType.EVENT
-                else ComponentDependentMixin
-            )
-        if self == Tier.SUBCOMPONENT:
-            return (
-                ComponentDependentMixin
-                if event_type == EventRecordType.EVENT
-                else SubcomponentDependentMixin
-            )
-
-        raise ValueError(f"Unknown tier: {self}")
+    raise ValueError(f"Unknown tier: {tier}")

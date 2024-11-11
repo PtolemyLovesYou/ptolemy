@@ -3,9 +3,15 @@
 from uuid import UUID
 from fastapi import APIRouter
 
-from ..schemas.event import Tier, EventRecordType, CreateSchemaMixin, RecordSchemaMixin
+from ..schemas.event import (
+    CreateSchemaMixin,
+    RecordSchemaMixin,
+    event_record_type_mixin,
+    dependent_mixin
+    )
 from ..crud.event import get_event, create_event, delete_event
 from ....db import models
+from ....utils.enums import Tier, EventRecordType
 
 router = APIRouter(
     prefix="/record",
@@ -35,7 +41,7 @@ def endpoint_factory(tier: Tier, event_type: EventRecordType) -> APIRouter:
     db_model = DB_MODEL_MAP[tier][event_type]
 
     class ModelSchemaBase(
-        tier.dependent_mixin(event_type), event_type.mixin()
+        dependent_mixin(tier, event_type), event_record_type_mixin(event_type)
     ):  # pylint: disable=missing-class-docstring,too-few-public-methods
         pass
 
