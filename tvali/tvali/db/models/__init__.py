@@ -1,6 +1,14 @@
 """Database models"""
 
-from .core import EventTable
+from .core import (
+    EventTable,
+    EventInput,
+    EventOutput,
+    EventFeedback,
+    EventMetadata,
+    EventRuntime,
+    Event,
+)
 from .models import (
     SystemEvent,
     SystemRuntime,

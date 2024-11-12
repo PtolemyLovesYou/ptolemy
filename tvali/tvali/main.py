@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from .api.health import router as health_router
 from .api.v1.router import router as v1_router
+from .api.graphql.router import router as graphql_router
 from .db.session import Base, engine
 
 # import all models so they actually get created
@@ -19,3 +20,4 @@ app = FastAPI(
 
 app.include_router(health_router)
 app.include_router(v1_router)
+app.include_router(graphql_router)
