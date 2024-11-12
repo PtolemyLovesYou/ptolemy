@@ -3,7 +3,7 @@
 from typing import List
 import uuid
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 from .core import (
     Event,
     EventRuntime,
@@ -40,6 +40,8 @@ class SystemRuntime(EventRuntime):
     __tablename__ = "system_runtime"
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
+    parent_id: Mapped[uuid.UUID] = synonym("system_event_id")
+
     event: Mapped[SystemEvent] = relationship(back_populates="event_runtime")
 
 
@@ -49,6 +51,8 @@ class SystemInput(EventInput):
     __tablename__ = "system_input"
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
+    parent_id: Mapped[uuid.UUID] = synonym("system_event_id")
+
     event: Mapped[SystemEvent] = relationship(back_populates="event_inputs")
 
 
@@ -58,6 +62,8 @@ class SystemOutput(EventOutput):
     __tablename__ = "system_output"
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
+    parent_id: Mapped[uuid.UUID] = synonym("system_event_id")
+
     event: Mapped[SystemEvent] = relationship(back_populates="event_outputs")
 
 
@@ -67,6 +73,8 @@ class SystemFeedback(EventFeedback):
     __tablename__ = "system_feedback"
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
+    parent_id: Mapped[uuid.UUID] = synonym("system_event_id")
+
     event: Mapped[SystemEvent] = relationship(back_populates="event_feedback")
 
 
@@ -76,6 +84,8 @@ class SystemMetadata(EventMetadata):
     __tablename__ = "system_metadata"
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
+    parent_id: Mapped[uuid.UUID] = synonym("system_event_id")
+
     event: Mapped[SystemEvent] = relationship(back_populates="event_metadata")
 
 
@@ -97,6 +107,8 @@ class SubsystemEvent(Event):
     )
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
+    parent_id: Mapped[uuid.UUID] = synonym("system_event_id")
+
     system_event: Mapped[SystemEvent] = relationship(back_populates="subsystem_events")
 
     component_events: Mapped[List["ComponentEvent"]] = relationship(
@@ -112,6 +124,8 @@ class SubsystemRuntime(EventRuntime):
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subsystem_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subsystem_event_id")
+
     event: Mapped[SubsystemEvent] = relationship(back_populates="event_runtime")
 
 
@@ -123,6 +137,8 @@ class SubsystemInput(EventInput):
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subsystem_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subsystem_event_id")
+
     event: Mapped[SubsystemEvent] = relationship(back_populates="event_inputs")
 
 
@@ -134,6 +150,8 @@ class SubsystemOutput(EventOutput):
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subsystem_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subsystem_event_id")
+
     event: Mapped[SubsystemEvent] = relationship(back_populates="event_outputs")
 
 
@@ -145,6 +163,8 @@ class SubsystemFeedback(EventFeedback):
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subsystem_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subsystem_event_id")
+
     event: Mapped[SubsystemEvent] = relationship(back_populates="event_feedback")
 
 
@@ -156,6 +176,8 @@ class SubsystemMetadata(EventMetadata):
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subsystem_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subsystem_event_id")
+
     event: Mapped[SubsystemEvent] = relationship(back_populates="event_metadata")
 
 
@@ -179,6 +201,8 @@ class ComponentEvent(Event):
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subsystem_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subsystem_event_id")
+
     subsystem_event: Mapped[SubsystemEvent] = relationship(
         back_populates="component_events"
     )
@@ -196,6 +220,8 @@ class ComponentRuntime(EventRuntime):
     component_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("component_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("component_event_id")
+
     event: Mapped[ComponentEvent] = relationship(back_populates="event_runtime")
 
 
@@ -207,6 +233,8 @@ class ComponentInput(EventInput):
     component_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("component_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("component_event_id")
+
     event: Mapped[ComponentEvent] = relationship(back_populates="event_inputs")
 
 
@@ -218,6 +246,8 @@ class ComponentOutput(EventOutput):
     component_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("component_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("component_event_id")
+
     event: Mapped[ComponentEvent] = relationship(back_populates="event_outputs")
 
 
@@ -229,6 +259,8 @@ class ComponentFeedback(EventFeedback):
     component_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("component_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("component_event_id")
+
     event: Mapped[ComponentEvent] = relationship(back_populates="event_feedback")
 
 
@@ -240,6 +272,8 @@ class ComponentMetadata(EventMetadata):
     component_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("component_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("component_event_id")
+
     event: Mapped[ComponentEvent] = relationship(back_populates="event_metadata")
 
 
@@ -265,6 +299,8 @@ class SubcomponentEvent(Event):
     component_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("component_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("component_event_id")
+
     component_event: Mapped[ComponentEvent] = relationship(
         back_populates="subcomponent_events"
     )
@@ -278,6 +314,8 @@ class SubcomponentRuntime(EventRuntime):
     subcomponent_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subcomponent_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subcomponent_event_id")
+
     event: Mapped[SubcomponentEvent] = relationship(back_populates="event_runtime")
 
 
@@ -289,6 +327,8 @@ class SubcomponentInput(EventInput):
     subcomponent_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subcomponent_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subcomponent_event_id")
+
     event: Mapped[SubcomponentEvent] = relationship(back_populates="event_inputs")
 
 
@@ -300,6 +340,8 @@ class SubcomponentOutput(EventOutput):
     subcomponent_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subcomponent_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subcomponent_event_id")
+
     event: Mapped[SubcomponentEvent] = relationship(back_populates="event_outputs")
 
 
@@ -311,6 +353,8 @@ class SubcomponentFeedback(EventFeedback):
     subcomponent_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subcomponent_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subcomponent_event_id")
+
     event: Mapped[SubcomponentEvent] = relationship(back_populates="event_feedback")
 
 
@@ -322,4 +366,6 @@ class SubcomponentMetadata(EventMetadata):
     subcomponent_event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subcomponent_event.id")
     )
+    parent_id: Mapped[uuid.UUID] = synonym("subcomponent_event_id")
+
     event: Mapped[SubcomponentEvent] = relationship(back_populates="event_metadata")
