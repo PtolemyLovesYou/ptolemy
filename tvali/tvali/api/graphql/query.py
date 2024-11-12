@@ -7,7 +7,7 @@ from .types.event import (
     SubsystemEvent,
     ComponentEvent,
     SubcomponentEvent,
-    event_query_resolver,
+    event_query_resolver_factory,
 )
 from ...db import models
 
@@ -17,14 +17,14 @@ class Query:
     """GraphQL Query."""
 
     system_events: List[SystemEvent] = strawberry.field(
-        resolver=event_query_resolver(SystemEvent, models.SystemEvent)
+        resolver=event_query_resolver_factory(SystemEvent, models.SystemEvent)
     )
     subsystem_events: List[SubsystemEvent] = strawberry.field(
-        resolver=event_query_resolver(SubsystemEvent, models.SubsystemEvent)
+        resolver=event_query_resolver_factory(SubsystemEvent, models.SubsystemEvent)
     )
     component_events: List[ComponentEvent] = strawberry.field(
-        resolver=event_query_resolver(ComponentEvent, models.ComponentEvent)
+        resolver=event_query_resolver_factory(ComponentEvent, models.ComponentEvent)
     )
     subcomponent_events: List[SubcomponentEvent] = strawberry.field(
-        resolver=event_query_resolver(SubcomponentEvent, models.SubcomponentEvent)
+        resolver=event_query_resolver_factory(SubcomponentEvent, models.SubcomponentEvent)
     )

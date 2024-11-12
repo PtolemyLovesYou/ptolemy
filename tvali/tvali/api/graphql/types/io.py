@@ -24,7 +24,7 @@ class IO(Generic[T]):
     field_value: T
 
 
-def get_io_resolver(
+def io_resolver_factory(
     log_type: LogType, tier: Tier, io_type: T
 ) -> Callable[[strawberry.Parent], List[IO[T]]]:
     """Get IO resolver."""

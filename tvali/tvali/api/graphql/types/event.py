@@ -3,8 +3,8 @@
 from typing import List, Optional, ClassVar, Callable, TypeVar
 from uuid import UUID
 import strawberry
-from .io import JSON, get_io_resolver
-from .runtime import get_runtime_resolver
+from .io import JSON, io_resolver_factory
+from .runtime import runtime_resolver_factory
 from ....db import models, session
 from ....utils.enums import Tier, LogType
 
@@ -21,25 +21,25 @@ class Event:
     environment: str
     version: str
 
-    runtime = strawberry.field(resolver=get_runtime_resolver(TIER))
-    inputs = strawberry.field(resolver=get_io_resolver(LogType.INPUT, TIER, JSON))
-    outputs = strawberry.field(resolver=get_io_resolver(LogType.OUTPUT, TIER, JSON))
-    feedback = strawberry.field(resolver=get_io_resolver(LogType.FEEDBACK, TIER, JSON))
-    metadata = strawberry.field(resolver=get_io_resolver(LogType.METADATA, TIER, str))
+    runtime = strawberry.field(resolver=runtime_resolver_factory(TIER))
+    inputs = strawberry.field(resolver=io_resolver_factory(LogType.INPUT, TIER, JSON))
+    outputs = strawberry.field(resolver=io_resolver_factory(LogType.OUTPUT, TIER, JSON))
+    feedback = strawberry.field(resolver=io_resolver_factory(LogType.FEEDBACK, TIER, JSON))
+    metadata = strawberry.field(resolver=io_resolver_factory(LogType.METADATA, TIER, str))
 
 
 E = TypeVar("E", bound=Event)
 
 
-def get_child_events_resolver(
+def child_events_resolver(
     child_strawberry_cls: E, child_db_cls: type[models.Event], parent_tier: Tier
 ) -> Callable[..., List[E]]:
     """
     Generates a resolver function for fetching child events based on specified filters.
 
     Args:
-        child_strawberry_cls (E): The Strawberry class representing the GraphQL type of the child event.
-        child_db_cls (type[models.Event]): The SQLAlchemy model class representing the child event in the database.
+        child_strawberry_cls (E): Strawberry type.
+        child_db_cls (type[models.Event]): SQLAlchemy model class.
 
     Returns:
         Callable[..., List[E]]: A resolver function that retrieves a list of child events
@@ -105,7 +105,7 @@ class ComponentEvent(Event):
 
     TIER = Tier.COMPONENT
     subsystem_events = strawberry.field(
-        resolver=get_child_events_resolver(
+        resolver=child_events_resolver(
             SubcomponentEvent, models.SubcomponentEvent, TIER
         )
     )
@@ -117,7 +117,7 @@ class SubsystemEvent(Event):
 
     TIER = Tier.SUBSYSTEM
     component_events = strawberry.field(
-        resolver=get_child_events_resolver(ComponentEvent, models.ComponentEvent, TIER)
+        resolver=child_events_resolver(ComponentEvent, models.ComponentEvent, TIER)
     )
 
 
@@ -127,13 +127,25 @@ class SystemEvent(Event):
 
     TIER = Tier.SYSTEM
     subsystem_events = strawberry.field(
-        resolver=get_child_events_resolver(SubsystemEvent, models.SubsystemEvent, TIER)
+        resolver=child_events_resolver(SubsystemEvent, models.SubsystemEvent, TIER)
     )
 
 
-def event_query_resolver(
+def event_query_resolver_factory(
     strawberry_cls: E, db_cls: type[models.Event]
 ) -> Callable[..., List[E]]:
+    """
+    Creates a query resolver function for fetching events from the database
+    using specified filters and pagination options.
+
+    Args:
+        strawberry_cls (E): The Strawberry class representing the GraphQL type of the event.
+        db_cls (type[models.Event]): The SQLAlchemy model class representing the event in the database.
+
+    Returns:
+        Callable[..., List[E]]: A resolver function that retrieves a list of events 
+        from the database based on the provided filter criteria and pagination options.
+    """
     def wrapper(
         _id: Optional[UUID] = strawberry.UNSET,
         name: Optional[str] = strawberry.UNSET,

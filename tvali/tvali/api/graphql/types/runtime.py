@@ -33,7 +33,7 @@ class Runtime:
         return "SUCCESS"
 
 
-def get_runtime_resolver(tier: Tier) -> Callable[[strawberry.Parent], Runtime]:
+def runtime_resolver_factory(tier: Tier) -> Callable[[strawberry.Parent], Runtime]:
     """Get runtime resolver."""
 
     def wrapper(parent: strawberry.Parent) -> Runtime:
