@@ -1,11 +1,11 @@
 """CRUD ops for logs."""
 
 import logging
-from typing import Callable, List
+from typing import Callable, List, Annotated
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
-from fastapi import HTTPException
-from ..schemas.log import Log, CreateSchema, RecordSchema
+from fastapi import HTTPException, Query
+from ..schemas.log import Log, CreateSchema, RecordSchema, QueryMixin
 from ....db import session, models
 from ....utils.enums import Tier, LogType
 
@@ -51,11 +51,19 @@ class LogCRUDFactory(BaseModel):
     def get_function(self) -> Callable[[str], Log]:
         """Generate get endpoint for object."""
 
-        async def get(id_: str) -> Log[self.tier, self.log_type, RecordSchema]:
+        async def get(query: Annotated[Log[self.tier, self.log_type, QueryMixin], Query()]) -> List[Log[self.tier, self.log_type, RecordSchema]]:
+            query_params = query.model_dump(exclude_none=True, exclude=["order_by", "limit", "offset"])
+            filter_params = {getattr(self.db_class, k): v for k, v in query_params.items()}
+
             with session.get_db() as db:
                 try:
-                    obj = (
-                        db.query(self.db_class).filter(self.db_class.id == id_).first()
+                    objs = (
+                        db
+                        .query(self.db_class)
+                        .filter(**filter_params)
+                        .limit(query.limit)
+                        .offset(query.offset)
+                        .all()
                     )
                 except SQLAlchemyError as e:
                     logger.error("Database error in get_event: %s", e)
@@ -64,9 +72,10 @@ class LogCRUDFactory(BaseModel):
                         detail="Database error in get_event",
                     ) from e
 
-            return Log[self.tier, self.log_type, RecordSchema].model_validate(
-                obj.__dict__
-            )
+            return [
+                Log[self.tier, self.log_type, RecordSchema].model_validate(obj.__dict__)
+                for obj in objs
+            ]
 
         return get
 

@@ -36,6 +36,32 @@ class IOLogMixin(BaseModel, Generic[T]):
     field_value: T
 
 
+# Query mixins
+class QueryMixin(BaseModel):
+    """Query Mixin."""
+    id: Optional[RequiredID] = None
+
+    limit: int = Field(default=10, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+
+class EventQueryMixin(QueryMixin):
+    """Event Query Mixin."""
+    name: Optional[str] = None
+    environment: Optional[str] = None
+    version: Optional[str] = None
+
+
+class RuntimeQueryMixin(QueryMixin):
+    """Runtime Query mixin."""
+    error_type: Optional[str] = None
+
+
+class IOLogQueryMixin(QueryMixin):
+    """IOLog Query Mixin."""
+    field_name: Optional[str] = None
+
+
 LOG_MIXIN_MAP = {
     LogType.EVENT: EventLogMixin,
     LogType.RUNTIME: RuntimeLogMixin,
@@ -43,6 +69,15 @@ LOG_MIXIN_MAP = {
     LogType.OUTPUT: IOLogMixin[Any],
     LogType.FEEDBACK: IOLogMixin[Any],
     LogType.METADATA: IOLogMixin[str],
+}
+
+QUERY_MIXIN_MAP = {
+    LogType.EVENT: EventQueryMixin,
+    LogType.RUNTIME: RuntimeQueryMixin,
+    LogType.INPUT: IOLogQueryMixin,
+    LogType.OUTPUT: IOLogQueryMixin,
+    LogType.FEEDBACK: IOLogQueryMixin,
+    LogType.METADATA: IOLogQueryMixin,
 }
 
 
@@ -67,7 +102,7 @@ class RecordSchema(BaseSchema):
     id: RequiredID
 
 
-def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Field]]:
+def dependent_mixin(tier: Tier, log_type: LogType, optional: bool = False) -> dict[str, tuple[type, Field]]:
     """
     Return a dictionary with the dependent fields to be included in the schema
     based on the given tier and log type.
@@ -104,8 +139,10 @@ def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Fiel
     else:
         raise ValueError(f"Unknown tier: {tier}")
 
+    t = Optional[RequiredID] if optional else RequiredID
+
     return {
-        f"{parent}_event_id": (RequiredID, Field()),
+        f"{parent}_event_id": (t, Field()),
     }
 
 
@@ -113,13 +150,19 @@ class LogMetaclass(type):
     """Metaclass for LogSchema class."""
 
     def __getitem__(cls, mixins: tuple[Tier, LogType, BaseSchema]) -> type[BaseModel]:
+        if issubclass(mixins[2], QueryMixin):
+            return create_model(
+                f"{mixins[0].capitalize()}{mixins[1].capitalize()}Query",
+                **dependent_mixin(mixins[0], mixins[1], optional=True),
+                __base__=(QUERY_MIXIN_MAP[mixins[1]]),
+            )
+
         name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
         return create_model(
             name,
-            **dependent_mixin(mixins[0], mixins[1]),
+            **dependent_mixin(mixins[0], mixins[1], optional=False),
             __base__=(LOG_MIXIN_MAP[mixins[1]], mixins[2]),
         )
-
 
 class Log(metaclass=LogMetaclass):  # pylint: disable=too-few-public-methods
     """Log schema."""
