@@ -5,6 +5,7 @@ from pydantic import BaseModel, create_model, Field
 from ....utils.enums import Tier, LogType
 from ....utils.types import RequiredID, Timestamp, T
 
+
 # Log mixins
 class LogMixin(BaseModel):
     """Log mixin."""
@@ -34,6 +35,7 @@ class IOLogMixin(BaseModel, Generic[T]):
     field_name: str
     field_value: T
 
+
 LOG_MIXIN_MAP = {
     LogType.EVENT: EventLogMixin,
     LogType.RUNTIME: RuntimeLogMixin,
@@ -43,22 +45,27 @@ LOG_MIXIN_MAP = {
     LogType.METADATA: IOLogMixin[str],
 }
 
+
 # Schema mixins
 class Base(BaseModel):
     """Base schema."""
+
     NAME: ClassVar[str] = "Base"
 
 
 class Create(Base):
     """Create schema."""
+
     NAME: ClassVar[str] = "Create"
 
 
 class Record(Base):
     """Record schema."""
+
     NAME: ClassVar[str] = "Record"
 
     id: RequiredID
+
 
 def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Field]]:
     """
@@ -91,15 +98,9 @@ def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Fiel
     elif tier == Tier.SUBSYSTEM:
         parent = Tier.SYSTEM if log_type == LogType.EVENT else Tier.SUBSYSTEM
     elif tier == Tier.COMPONENT:
-        parent = (
-            Tier.SUBSYSTEM if log_type == LogType.EVENT else Tier.COMPONENT
-        )
+        parent = Tier.SUBSYSTEM if log_type == LogType.EVENT else Tier.COMPONENT
     elif tier == Tier.SUBCOMPONENT:
-        parent = (
-            Tier.COMPONENT
-            if log_type == LogType.EVENT
-            else Tier.SUBCOMPONENT
-        )
+        parent = Tier.COMPONENT if log_type == LogType.EVENT else Tier.SUBCOMPONENT
     else:
         raise ValueError(f"Unknown tier: {tier}")
 
@@ -110,13 +111,15 @@ def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Fiel
 
 class LogMetaclass(type):
     """Metaclass for LogSchema class."""
+
     def __getitem__(cls, mixins: tuple[Tier, LogType, Base]) -> type[BaseModel]:
         name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
         return create_model(
             name,
             **dependent_mixin(mixins[0], mixins[1]),
-            __base__=(LOG_MIXIN_MAP[mixins[1]], mixins[2])
+            __base__=(LOG_MIXIN_MAP[mixins[1]], mixins[2]),
         )
 
-class LogSchema(metaclass=LogMetaclass): # pylint: disable=too-few-public-methods
+
+class LogSchema(metaclass=LogMetaclass):  # pylint: disable=too-few-public-methods
     """Log schema."""

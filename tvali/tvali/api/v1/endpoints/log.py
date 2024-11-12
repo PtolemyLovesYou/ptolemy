@@ -1,4 +1,5 @@
 """Log endpoints."""
+
 from pydantic import BaseModel
 from fastapi import APIRouter
 from ..crud.log import LogCRUDFactory
@@ -7,6 +8,7 @@ from ....utils.enums import Tier, LogType
 
 class LogEndpointFactory(BaseModel):
     """Log endpoint factory."""
+
     tier: Tier
     log_type: LogType
 
@@ -20,9 +22,12 @@ class LogEndpointFactory(BaseModel):
 
         router_.add_api_route("/", crud_factory.create_function(), methods=["POST"])
         router_.add_api_route("/{id_}", crud_factory.get_function(), methods=["GET"])
-        router_.add_api_route("/{id_}", crud_factory.delete_function(), methods=["DELETE"])
+        router_.add_api_route(
+            "/{id_}", crud_factory.delete_function(), methods=["DELETE"]
+        )
 
         return router_
+
 
 def create_router() -> APIRouter:
     """
@@ -44,8 +49,11 @@ def create_router() -> APIRouter:
 
     for tier in Tier:
         for log_type in LogType:
-            log_router.include_router(LogEndpointFactory(tier=tier, log_type=log_type)())
+            log_router.include_router(
+                LogEndpointFactory(tier=tier, log_type=log_type)()
+            )
 
     return log_router
+
 
 router = create_router()

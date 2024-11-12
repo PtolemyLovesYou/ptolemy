@@ -1,4 +1,5 @@
 """CRUD ops for logs."""
+
 import logging
 from typing import Callable
 from pydantic import BaseModel
@@ -10,8 +11,10 @@ from ....utils.enums import Tier, LogType
 
 logger = logging.getLogger(__name__)
 
+
 class LogCRUDFactory(BaseModel):
     """Log CRUD method factory."""
+
     tier: Tier
     log_type: LogType
 
@@ -22,7 +25,10 @@ class LogCRUDFactory(BaseModel):
 
     def create_function(self) -> Callable[[LogSchema], dict[str, str]]:
         """Generate create endpoint for object."""
-        async def create(data: LogSchema[self.tier, self.log_type, Create]) -> dict[str, str]:
+
+        async def create(
+            data: LogSchema[self.tier, self.log_type, Create]
+        ) -> dict[str, str]:
             with session.get_db() as db:
                 try:
                     obj = self.db_class(**data.model_dump(exclude_none=True))
@@ -42,10 +48,13 @@ class LogCRUDFactory(BaseModel):
 
     def get_function(self) -> Callable[[str], LogSchema]:
         """Generate get endpoint for object."""
+
         async def get(id_: str) -> LogSchema[self.tier, self.log_type, Record]:
             with session.get_db() as db:
                 try:
-                    obj = db.query(self.db_class).filter(self.db_class.id == id_).first()
+                    obj = (
+                        db.query(self.db_class).filter(self.db_class.id == id_).first()
+                    )
                 except SQLAlchemyError as e:
                     logger.error("Database error in get_event: %s", e)
                     raise HTTPException(
@@ -53,12 +62,15 @@ class LogCRUDFactory(BaseModel):
                         detail="Database error in get_event",
                     ) from e
 
-            return LogSchema[self.tier, self.log_type, Record].model_validate(obj.__dict__)
+            return LogSchema[self.tier, self.log_type, Record].model_validate(
+                obj.__dict__
+            )
 
         return get
 
     def delete_function(self) -> Callable[[str], dict[str, str]]:
         """Generate delete endpoint for object."""
+
         async def delete(id_: str) -> dict[str, str]:
             with session.get_db() as db:
                 db.query(self.db_class).filter(self.db_class.id == id_).delete()
