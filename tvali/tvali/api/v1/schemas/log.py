@@ -110,7 +110,7 @@ def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Fiel
 
 class LogMetaclass(type):
     """Metaclass for LogSchema class."""
-    def __getitem__(cls, mixins: tuple[Tier, LogType, Base]):
+    def __getitem__(cls, mixins: tuple[Tier, LogType, Base]) -> type[BaseModel]:
         name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
         return create_model(
             name,

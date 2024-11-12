@@ -1,8 +1,7 @@
 """Log endpoints."""
-from typing import Callable
 from pydantic import BaseModel
 from fastapi import APIRouter
-from ..schemas.log import LogSchema, Create, Record
+from ..crud.log import LogCRUDFactory
 from ....utils.enums import Tier, LogType
 
 
@@ -11,36 +10,17 @@ class LogEndpointFactory(BaseModel):
     tier: Tier
     log_type: LogType
 
-    def create_endpoint(self) -> Callable:
-        """Generate create endpoint."""
-        async def create(data: LogSchema[self.tier, self.log_type, Create]) -> dict:
-            return data
-
-        return create
-
-    def get_endpoint(self) -> Callable:
-        """Generate get endpoint."""
-        async def get(id_: str) -> LogSchema[self.tier, self.log_type, Record]: # pylint: disable=unused-argument
-            return {}
-
-        return get
-
-    def delete_endpoint(self) -> Callable:
-        """Generate delete endpoint."""
-        async def delete(id_: str) -> dict: # pylint: disable=unused-argument
-            return {"status": "success"}
-
-        return delete
-
     def __call__(self) -> APIRouter:
         router_ = APIRouter(
             prefix=f"/{self.tier}/{self.log_type}",
             tags=[f"{self.tier}_{self.log_type}"],
         )
 
-        router_.add_api_route("/", self.create_endpoint(), methods=["POST"])
-        router_.add_api_route("/{id_}", self.get_endpoint(), methods=["GET"])
-        router_.add_api_route("/{id_}", self.delete_endpoint(), methods=["DELETE"])
+        crud_factory = LogCRUDFactory(tier=self.tier, log_type=self.log_type)
+
+        router_.add_api_route("/", crud_factory.create_function(), methods=["POST"])
+        router_.add_api_route("/{id_}", crud_factory.get_function(), methods=["GET"])
+        router_.add_api_route("/{id_}", crud_factory.delete_function(), methods=["DELETE"])
 
         return router_
 
