@@ -51,15 +51,20 @@ class LogCRUDFactory(BaseModel):
     def get_function(self) -> Callable[[str], Log]:
         """Generate get endpoint for object."""
 
-        async def get(query: Annotated[Log[self.tier, self.log_type, QueryMixin], Query()]) -> List[Log[self.tier, self.log_type, RecordSchema]]:
-            query_params = query.model_dump(exclude_none=True, exclude=["order_by", "limit", "offset"])
-            filter_params = {getattr(self.db_class, k): v for k, v in query_params.items()}
+        async def get(
+            query: Annotated[Log[self.tier, self.log_type, QueryMixin], Query()]
+        ) -> List[Log[self.tier, self.log_type, RecordSchema]]:
+            query_params = query.model_dump(
+                exclude_none=True, exclude=["order_by", "limit", "offset"]
+            )
+            filter_params = {
+                getattr(self.db_class, k): v for k, v in query_params.items()
+            }
 
             with session.get_db() as db:
                 try:
                     objs = (
-                        db
-                        .query(self.db_class)
+                        db.query(self.db_class)
                         .filter(**filter_params)
                         .limit(query.limit)
                         .offset(query.offset)

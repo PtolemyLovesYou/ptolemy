@@ -39,6 +39,7 @@ class IOLogMixin(BaseModel, Generic[T]):
 # Query mixins
 class QueryMixin(BaseModel):
     """Query Mixin."""
+
     id: Optional[RequiredID] = None
 
     limit: int = Field(default=10, ge=1, le=100)
@@ -47,6 +48,7 @@ class QueryMixin(BaseModel):
 
 class EventQueryMixin(QueryMixin):
     """Event Query Mixin."""
+
     name: Optional[str] = None
     environment: Optional[str] = None
     version: Optional[str] = None
@@ -54,11 +56,13 @@ class EventQueryMixin(QueryMixin):
 
 class RuntimeQueryMixin(QueryMixin):
     """Runtime Query mixin."""
+
     error_type: Optional[str] = None
 
 
 class IOLogQueryMixin(QueryMixin):
     """IOLog Query Mixin."""
+
     field_name: Optional[str] = None
 
 
@@ -102,7 +106,9 @@ class RecordSchema(BaseSchema):
     id: RequiredID
 
 
-def dependent_mixin(tier: Tier, log_type: LogType, optional: bool = False) -> dict[str, tuple[type, Field]]:
+def dependent_mixin(
+    tier: Tier, log_type: LogType, optional: bool = False
+) -> dict[str, tuple[type, Field]]:
     """
     Return a dictionary with the dependent fields to be included in the schema
     based on the given tier and log type.
@@ -163,6 +169,7 @@ class LogMetaclass(type):
             **dependent_mixin(mixins[0], mixins[1], optional=False),
             __base__=(LOG_MIXIN_MAP[mixins[1]], mixins[2]),
         )
+
 
 class Log(metaclass=LogMetaclass):  # pylint: disable=too-few-public-methods
     """Log schema."""
