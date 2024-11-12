@@ -1,9 +1,11 @@
 """Types."""
 
-from typing import Annotated, Union
+from typing import Annotated, Union, TypeVar
 from datetime import datetime
 from uuid import UUID, uuid4
 from pydantic import Field, BeforeValidator, PlainSerializer, RootModel
+
+T = TypeVar("T")
 
 
 def _validate_id(v: Union[UUID, str]) -> UUID:

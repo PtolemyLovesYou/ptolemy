@@ -3,8 +3,8 @@
 from enum import StrEnum
 
 
-class EventRecordType(StrEnum):
-    """Event record types."""
+class LogType(StrEnum):
+    """Log types."""
 
     EVENT = "event"
     RUNTIME = "runtime"
