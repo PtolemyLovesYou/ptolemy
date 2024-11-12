@@ -1,1 +1,0 @@
-"""Strawberry models core."""
