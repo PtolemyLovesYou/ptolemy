@@ -32,7 +32,7 @@ def io_resolver_factory(
     def wrapper(parent: strawberry.Parent) -> List[IO[io_type]]:
         model = models.DB_OBJ_MAP[log_type][tier]
         with session.get_db() as db:
-            objs = db.query(model).filter(model.id == parent.id).all()
+            objs = db.query(model).filter(model.parent_id == parent.id).all()
 
         io_type = str if log_type == LogType.RUNTIME else JSON
         return [

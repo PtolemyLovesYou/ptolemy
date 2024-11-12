@@ -40,7 +40,7 @@ def runtime_resolver_factory(tier: Tier) -> Callable[[strawberry.Parent], Runtim
         model: models.EventRuntime = models.DB_OBJ_MAP[LogType.RUNTIME][tier]
         with session.get_db() as db:
             obj: models.EventRuntime = (
-                db.query(model).filter(model.id == parent.id).first()
+                db.query(model).filter(model.parent_id == parent.id).first()
             )
 
         return Runtime(
