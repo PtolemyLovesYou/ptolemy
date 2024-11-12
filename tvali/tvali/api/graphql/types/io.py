@@ -1,6 +1,6 @@
 """IO type."""
 
-from typing import NewType, Generic, List, Callable
+from typing import NewType, Generic, List, Callable, TypeVar
 from uuid import UUID
 import strawberry
 from ....db import models, session
@@ -10,6 +10,13 @@ from ....utils.enums import LogType, Tier
 JSON = strawberry.scalar(
     NewType("JSON", object),
     description="The `JSON` scalar type represents JSON values as specified by ECMA-404",
+    serialize=lambda v: v,
+    parse_value=lambda v: v,
+)
+
+Parameters = strawberry.scalar(
+    NewType("Parameters", dict),
+    description="System parameters. Dict[str, Any].",
     serialize=lambda v: v,
     parse_value=lambda v: v,
 )
@@ -24,21 +31,41 @@ class IO(Generic[T]):
     field_value: T
 
 
+@strawberry.type
+class Input(IO[JSON]):
+    """Input type."""
+
+
+@strawberry.type
+class Output(IO[JSON]):
+    """Output type."""
+
+
+@strawberry.type
+class Feedback(IO[JSON]):
+    """Feedback type."""
+
+
+@strawberry.type
+class Metadata(IO[str]):
+    """Metadata type."""
+
+
+IOType = TypeVar("IOType", bound=IO)  # pylint: disable=invalid-name
+
+
 def io_resolver_factory(
-    log_type: LogType, tier: Tier, io_type: T
-) -> Callable[[strawberry.Parent], List[IO[T]]]:
+    log_type: LogType, tier: Tier, io_type: IOType
+) -> Callable[[strawberry.Parent], List[IO]]:
     """Get IO resolver."""
 
-    def wrapper(parent: strawberry.Parent) -> List[IO[io_type]]:
+    def wrapper(parent: strawberry.Parent) -> List[io_type]:
         model = models.DB_OBJ_MAP[log_type][tier]
         with session.get_db() as db:
             objs = db.query(model).filter(model.parent_id == parent.id).all()
 
-        io_type = str if log_type == LogType.RUNTIME else JSON
         return [
-            IO[io_type](
-                id=obj.id, field_name=obj.field_name, field_value=obj.field_value
-            )
+            io_type(id=obj.id, field_name=obj.field_name, field_value=obj.field_value)
             for obj in objs
         ]
 

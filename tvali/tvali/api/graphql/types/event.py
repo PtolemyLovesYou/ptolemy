@@ -3,7 +3,8 @@
 from typing import List, Optional, ClassVar, Callable, TypeVar
 from uuid import UUID
 import strawberry
-from .io import JSON, io_resolver_factory
+from .io import Parameters, io_resolver_factory, Input, Output, Feedback, Metadata
+from .runtime import Runtime
 from .runtime import runtime_resolver_factory
 from ....db import models, session
 from ....utils.enums import Tier, LogType
@@ -17,15 +18,29 @@ class Event:
 
     id: UUID
     name: str
-    parameters: JSON
+    parameters: Parameters
     environment: str
     version: str
 
-    runtime = strawberry.field(resolver=runtime_resolver_factory(TIER))
-    inputs = strawberry.field(resolver=io_resolver_factory(LogType.INPUT, TIER, JSON))
-    outputs = strawberry.field(resolver=io_resolver_factory(LogType.OUTPUT, TIER, JSON))
-    feedback = strawberry.field(resolver=io_resolver_factory(LogType.FEEDBACK, TIER, JSON))
-    metadata = strawberry.field(resolver=io_resolver_factory(LogType.METADATA, TIER, str))
+    @strawberry.field
+    def runtime(self) -> Runtime:
+        return runtime_resolver_factory(self.TIER)(self)
+
+    @strawberry.field
+    def inputs(self) -> List[Input]:
+        return io_resolver_factory(LogType.INPUT, self.TIER, Input)(self)
+
+    @strawberry.field
+    def outputs(self) -> List[Output]:
+        return io_resolver_factory(LogType.OUTPUT, self.TIER, Output)(self)
+
+    @strawberry.field
+    def feedback(self) -> List[Feedback]:
+        return io_resolver_factory(LogType.FEEDBACK, self.TIER, Feedback)(self)
+
+    @strawberry.field
+    def metadata(self) -> List[Metadata]:
+        return io_resolver_factory(LogType.METADATA, self.TIER, Metadata)(self)
 
 
 E = TypeVar("E", bound=Event)
@@ -143,9 +158,10 @@ def event_query_resolver_factory(
         db_cls (type[models.Event]): The SQLAlchemy model class representing the event in the database.
 
     Returns:
-        Callable[..., List[E]]: A resolver function that retrieves a list of events 
+        Callable[..., List[E]]: A resolver function that retrieves a list of events
         from the database based on the provided filter criteria and pagination options.
     """
+
     def wrapper(
         _id: Optional[UUID] = strawberry.UNSET,
         name: Optional[str] = strawberry.UNSET,

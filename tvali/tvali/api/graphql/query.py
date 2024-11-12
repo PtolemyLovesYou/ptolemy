@@ -26,5 +26,7 @@ class Query:
         resolver=event_query_resolver_factory(ComponentEvent, models.ComponentEvent)
     )
     subcomponent_events: List[SubcomponentEvent] = strawberry.field(
-        resolver=event_query_resolver_factory(SubcomponentEvent, models.SubcomponentEvent)
+        resolver=event_query_resolver_factory(
+            SubcomponentEvent, models.SubcomponentEvent
+        )
     )
