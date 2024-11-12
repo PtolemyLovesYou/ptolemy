@@ -5,7 +5,7 @@ from typing import Callable
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
-from ..schemas.log import LogSchema, Create, Record
+from ..schemas.log import Log, CreateSchema, RecordSchema
 from ....db import session, models
 from ....utils.enums import Tier, LogType
 
@@ -23,11 +23,11 @@ class LogCRUDFactory(BaseModel):
         """Database class."""
         return models.DB_OBJ_MAP[self.log_type][self.tier]
 
-    def create_function(self) -> Callable[[LogSchema], dict[str, str]]:
+    def create_function(self) -> Callable[[Log], dict[str, str]]:
         """Generate create endpoint for object."""
 
         async def create(
-            data: LogSchema[self.tier, self.log_type, Create]
+            data: Log[self.tier, self.log_type, CreateSchema]
         ) -> dict[str, str]:
             with session.get_db() as db:
                 try:
@@ -46,10 +46,10 @@ class LogCRUDFactory(BaseModel):
 
         return create
 
-    def get_function(self) -> Callable[[str], LogSchema]:
+    def get_function(self) -> Callable[[str], Log]:
         """Generate get endpoint for object."""
 
-        async def get(id_: str) -> LogSchema[self.tier, self.log_type, Record]:
+        async def get(id_: str) -> Log[self.tier, self.log_type, RecordSchema]:
             with session.get_db() as db:
                 try:
                     obj = (
@@ -62,7 +62,7 @@ class LogCRUDFactory(BaseModel):
                         detail="Database error in get_event",
                     ) from e
 
-            return LogSchema[self.tier, self.log_type, Record].model_validate(
+            return Log[self.tier, self.log_type, RecordSchema].model_validate(
                 obj.__dict__
             )
 

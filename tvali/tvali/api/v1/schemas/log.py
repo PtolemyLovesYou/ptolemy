@@ -47,19 +47,19 @@ LOG_MIXIN_MAP = {
 
 
 # Schema mixins
-class Base(BaseModel):
+class BaseSchema(BaseModel):
     """Base schema."""
 
     NAME: ClassVar[str] = "Base"
 
 
-class Create(Base):
+class CreateSchema(BaseSchema):
     """Create schema."""
 
     NAME: ClassVar[str] = "Create"
 
 
-class Record(Base):
+class RecordSchema(BaseSchema):
     """Record schema."""
 
     NAME: ClassVar[str] = "Record"
@@ -112,7 +112,7 @@ def dependent_mixin(tier: Tier, log_type: LogType) -> dict[str, tuple[type, Fiel
 class LogMetaclass(type):
     """Metaclass for LogSchema class."""
 
-    def __getitem__(cls, mixins: tuple[Tier, LogType, Base]) -> type[BaseModel]:
+    def __getitem__(cls, mixins: tuple[Tier, LogType, BaseSchema]) -> type[BaseModel]:
         name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
         return create_model(
             name,
@@ -121,5 +121,5 @@ class LogMetaclass(type):
         )
 
 
-class LogSchema(metaclass=LogMetaclass):  # pylint: disable=too-few-public-methods
+class Log(metaclass=LogMetaclass):  # pylint: disable=too-few-public-methods
     """Log schema."""
