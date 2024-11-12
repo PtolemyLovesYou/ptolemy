@@ -1,7 +1,7 @@
 """CRUD ops for logs."""
 
 import logging
-from typing import Callable
+from typing import Callable, List
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
@@ -23,16 +23,18 @@ class LogCRUDFactory(BaseModel):
         """Database class."""
         return models.DB_OBJ_MAP[self.log_type][self.tier]
 
-    def create_function(self) -> Callable[[Log], dict[str, str]]:
+    def create_function(self) -> Callable[[List[Log]], List[dict[str, str]]]:
         """Generate create endpoint for object."""
 
         async def create(
-            data: Log[self.tier, self.log_type, CreateSchema]
+            data: List[Log[self.tier, self.log_type, CreateSchema]]
         ) -> dict[str, str]:
             with session.get_db() as db:
                 try:
-                    obj = self.db_class(**data.model_dump(exclude_none=True))
-                    db.add(obj)
+                    objs = [
+                        self.db_class(**d.model_dump(exclude_none=True)) for d in data
+                    ]
+                    db.add_all(objs)
                     db.commit()
                 except SQLAlchemyError as e:
                     db.rollback()
@@ -42,7 +44,7 @@ class LogCRUDFactory(BaseModel):
                         detail="Database error in create_event",
                     ) from e
 
-            return {"id": obj.id.hex}
+            return [{"id": obj.id.hex} for obj in objs]
 
         return create
 
