@@ -19,5 +19,5 @@ app = FastAPI(
 )
 
 app.include_router(health_router)
-app.include_router(v1_router)
 app.include_router(graphql_router)
+app.include_router(v1_router)
