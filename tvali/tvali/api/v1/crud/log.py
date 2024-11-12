@@ -1,53 +1,14 @@
 """CRUD ops for logs."""
 import logging
-from typing import Callable, Dict
+from typing import Callable
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from ..schemas.log import LogSchema, Create, Record
-from ....db import models, session
+from ....db import session, models
 from ....utils.enums import Tier, LogType
 
 logger = logging.getLogger(__name__)
-
-DB_OBJ_MAP : Dict[LogType, Dict[Tier, type[models.EventTable]]]= {
-    LogType.EVENT: {
-        Tier.SYSTEM: models.SystemEvent,
-        Tier.SUBSYSTEM: models.SubsystemEvent,
-        Tier.COMPONENT: models.ComponentEvent,
-        Tier.SUBCOMPONENT: models.SubcomponentEvent,
-    },
-    LogType.RUNTIME: {
-        Tier.SYSTEM: models.SystemRuntime,
-        Tier.SUBSYSTEM: models.SubsystemRuntime,
-        Tier.COMPONENT: models.ComponentRuntime,
-        Tier.SUBCOMPONENT: models.SubcomponentRuntime,
-        },
-    LogType.INPUT: {
-        Tier.SYSTEM: models.SystemInput,
-        Tier.SUBSYSTEM: models.SubsystemInput,
-        Tier.COMPONENT: models.ComponentInput,
-        Tier.SUBCOMPONENT: models.SubcomponentInput,
-        },
-    LogType.OUTPUT: {
-        Tier.SYSTEM: models.SystemOutput,
-        Tier.SUBSYSTEM: models.SubsystemOutput,
-        Tier.COMPONENT: models.ComponentOutput,
-        Tier.SUBCOMPONENT: models.SubcomponentOutput,
-        },
-    LogType.FEEDBACK: {
-        Tier.SYSTEM: models.SystemFeedback,
-        Tier.SUBSYSTEM: models.SubsystemFeedback,
-        Tier.COMPONENT: models.ComponentFeedback,
-        Tier.SUBCOMPONENT: models.SubcomponentFeedback,
-        },
-    LogType.METADATA: {
-        Tier.SYSTEM: models.SystemMetadata,
-        Tier.SUBSYSTEM: models.SubsystemMetadata,
-        Tier.COMPONENT: models.ComponentMetadata,
-        Tier.SUBCOMPONENT: models.SubcomponentMetadata,
-        },
-    }
 
 class LogCRUDFactory(BaseModel):
     """Log CRUD method factory."""
@@ -57,7 +18,7 @@ class LogCRUDFactory(BaseModel):
     @property
     def db_class(self) -> type[models.EventTable]:
         """Database class."""
-        return DB_OBJ_MAP[self.log_type][self.tier]
+        return models.DB_OBJ_MAP[self.log_type][self.tier]
 
     def create_function(self) -> Callable[[LogSchema], dict[str, str]]:
         """Generate create endpoint for object."""

@@ -27,3 +27,4 @@ from .models import (
     SubcomponentFeedback,
     SubcomponentMetadata,
 )
+from .map import DB_OBJ_MAP
