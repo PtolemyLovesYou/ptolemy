@@ -1,6 +1,6 @@
-"""Client."""
+"""Log."""
 
-from typing import Dict, Optional, ClassVar, Any, List
+from typing import Dict, Optional, ClassVar, Any, List, Generic
 from abc import abstractmethod, ABC
 import traceback
 from contextlib import asynccontextmanager
@@ -10,12 +10,32 @@ from pydantic import (
     BaseModel,
     ConfigDict,
 )
-from tvali_utils.types import ID, Timestamp, Parameters, IO
+from tvali_utils.types import ID, Timestamp, Parameters, T
 from tvali_utils.enums import Tier
+
+
+class IORecord(BaseModel, Generic[T]):
+    """IO record."""
+
+    id: ID = Field(default_factory=ID.new)
+    field_name: str
+    field_value: T
+
+    @classmethod
+    def tier(cls, tier: Tier) -> type["IORecord"]:
+        """Get IORecord type with the given tier."""
+        return create_model(
+            f"{cls.__name__}[{tier.capitalize()}]",
+            __base__=cls,
+            **{
+                f"{tier}_event_id": (ID, Field()),
+            },
+        )
 
 
 class Runtime(BaseModel):
     """Runtime model."""
+
     model_config = ConfigDict(validate_assignment=True)
 
     start_time: Timestamp = Field(default=None, init=False)
@@ -82,15 +102,16 @@ class Runtime(BaseModel):
 
 class Log(BaseModel, ABC):
     """Log base class."""
+
     model_config = ConfigDict(validate_assignment=True)
 
     _TIER: ClassVar[Tier]
 
-    runtime: Runtime = Field(default_factory=Runtime, init=False)
-    inputs: Optional[IO[Any]] = Field(default=None, init=False)
-    outputs: Optional[IO[Any]] = Field(default=None, init=False)
-    feedback: Optional[IO[Any]] = Field(default=None, init=False)
-    metadata: Optional[IO[str]] = Field(default=None, init=False)
+    runtime: Runtime = Field(default_factory=Runtime)
+    inputs: Optional[List[IORecord[Any]]] = Field(default=None)
+    outputs: Optional[List[IORecord[Any]]] = Field(default=None)
+    feedback: Optional[List[IORecord[Any]]] = Field(default=None)
+    metadata: Optional[List[IORecord[str]]] = Field(default=None)
 
     id: ID = Field(default_factory=ID.new)
     name: str = Field()
@@ -152,55 +173,19 @@ class Log(BaseModel, ABC):
 
     def inputs_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log inputs."""
-        return (
-            [
-                {**self.id_dict(), "field_name": field_name, "field_value": field_value}
-                for field_name, field_value in self.inputs.model_dump(
-                    exclude_none=True
-                ).items()
-            ]
-            if self.inputs
-            else None
-        )
+        return [i.model_dump() for i in self.inputs] if self.inputs else None
 
     def outputs_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log outputs."""
-        return (
-            [
-                {**self.id_dict(), "field_name": field_name, "field_value": field_value}
-                for field_name, field_value in self.outputs.model_dump(
-                    exclude_none=True
-                ).items()
-            ]
-            if self.outputs
-            else None
-        )
+        return [o.model_dump() for o in self.outputs] if self.outputs else None
 
     def feedback_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log feedback."""
-        return (
-            [
-                {**self.id_dict(), "field_name": field_name, "field_value": field_value}
-                for field_name, field_value in self.feedback.model_dump(
-                    exclude_none=True
-                ).items()
-            ]
-            if self.feedback
-            else None
-        )
+        return [f.model_dump() for f in self.feedback] if self.feedback else None
 
     def metadata_dicts(self) -> List[Dict[str, str]] | None:
         """Get log metadata."""
-        return (
-            [
-                {**self.id_dict(), "field_name": field_name, "field_value": field_value}
-                for field_name, field_value in self.metadata.model_dump(
-                    exclude_none=True
-                ).items()
-            ]
-            if self.metadata
-            else None
-        )
+        return [m.model_dump() for m in self.metadata] if self.metadata else None
 
     async def log(
         self,
@@ -224,22 +209,42 @@ class Log(BaseModel, ABC):
         if inputs is not None:
             if self.inputs is not None:
                 raise ValueError("Inputs already set")
-            self.inputs = inputs
+            self.inputs = [
+                IORecord[Any].tier(self._TIER)(
+                    field_name=field_name, field_value=field_value, **self.id_dict()
+                )
+                for field_name, field_value in inputs.items()
+            ]
 
         if outputs is not None:
             if self.outputs is not None:
                 raise ValueError("Outputs already set")
-            self.outputs = outputs
+            self.outputs = [
+                IORecord[Any].tier(self._TIER)(
+                    field_name=field_name, field_value=field_value, **self.id_dict()
+                )
+                for field_name, field_value in outputs.items()
+            ]
 
         if feedback is not None:
             if self.feedback is not None:
                 raise ValueError("Feedback already set")
-            self.feedback = feedback
+            self.feedback = [
+                IORecord[Any].tier(self._TIER)(
+                    field_name=field_name, field_value=field_value, **self.id_dict()
+                )
+                for field_name, field_value in feedback.items()
+            ]
 
         if metadata is not None:
             if self.metadata is not None:
                 raise ValueError("Metadata already set")
-            self.metadata = metadata
+            self.metadata = [
+                IORecord[str].tier(self._TIER)(
+                    field_name=field_name, field_value=field_value, **self.id_dict()
+                )
+                for field_name, field_value in metadata.items()
+            ]
 
     def start(self) -> None:
         """Start runtime."""
@@ -293,6 +298,18 @@ class Log(BaseModel, ABC):
                 )
 
             await self.push_on_ending()
+
+    @classmethod
+    def new(
+        cls,
+        name: str,
+        parameters: Optional[Parameters] = None,
+        version: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> "Log":
+        return cls(
+            name=name, parameters=parameters, version=version, environment=environment
+        )
 
     def spawn(
         self,
