@@ -3,7 +3,7 @@
 from typing import Generic, Optional, Dict, Any, ClassVar
 from pydantic import BaseModel, create_model, Field
 from ....utils.enums import Tier, LogType
-from ....utils.types import RequiredID, Timestamp, T
+from ....utils.types import ID, Timestamp, T
 
 
 # Log mixins
@@ -15,9 +15,9 @@ class EventLogMixin(LogMixin):
     """Event mixin."""
 
     name: str
-    parameters: Dict[str, Any]
-    environment: str = Field(min_length=1, max_length=8)
-    version: str = Field(min_length=1, max_length=16)
+    parameters: Optional[Dict[str, Any]] = None
+    environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
+    version: Optional[str] = Field(min_length=1, max_length=16, default=None)
 
 
 class RuntimeLogMixin(LogMixin):
@@ -40,7 +40,7 @@ class IOLogMixin(BaseModel, Generic[T]):
 class QueryMixin(BaseModel):
     """Query Mixin."""
 
-    id: Optional[RequiredID] = None
+    id: Optional[ID] = None
 
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
@@ -97,13 +97,15 @@ class CreateSchema(BaseSchema):
 
     NAME: ClassVar[str] = "Create"
 
+    id: Optional[ID] = None
+
 
 class RecordSchema(BaseSchema):
     """Record schema."""
 
     NAME: ClassVar[str] = "Record"
 
-    id: RequiredID
+    id: ID
 
 
 def dependent_mixin(
@@ -145,7 +147,7 @@ def dependent_mixin(
     else:
         raise ValueError(f"Unknown tier: {tier}")
 
-    t = Optional[RequiredID] if optional else RequiredID
+    t = Optional[ID] if optional else ID
 
     return {
         f"{parent}_event_id": (t, Field()),

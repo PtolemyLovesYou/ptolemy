@@ -22,8 +22,8 @@ class Event(EventTable):
 
     name: Mapped[str] = mapped_column(String(), nullable=False)
     parameters: Mapped[Dict[str, Any]] = mapped_column(JSON(), nullable=True)
-    environment: Mapped[str] = mapped_column(String(length=8), nullable=False)
-    version: Mapped[str] = mapped_column(String(length=16), nullable=False)
+    environment: Mapped[str] = mapped_column(String(length=8), nullable=True)
+    version: Mapped[str] = mapped_column(String(length=16), nullable=True)
 
 
 class EventRuntime(EventTable):

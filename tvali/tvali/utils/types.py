@@ -2,7 +2,7 @@
 
 from typing import Annotated, Union, TypeVar
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 from pydantic import Field, BeforeValidator, PlainSerializer, RootModel
 
 T = TypeVar("T")
@@ -68,12 +68,6 @@ timestamp_serializer = PlainSerializer(lambda v: v.isoformat(), when_used="json"
 
 class ID(RootModel):
     """ID class."""
-
-    root: Annotated[UUID, Field(default_factory=uuid4), id_validator, id_serializer]
-
-
-class RequiredID(RootModel):
-    """RequiredID class."""
 
     root: Annotated[UUID, Field(), id_validator, id_serializer]
 

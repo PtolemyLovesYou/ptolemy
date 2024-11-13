@@ -28,7 +28,7 @@ class LogCRUDFactory(BaseModel):
 
         async def create(
             data: List[Log[self.tier, self.log_type, CreateSchema]]
-        ) -> dict[str, str]:
+        ) -> List[dict[str, str]]:
             with session.get_db() as db:
                 try:
                     objs = [
