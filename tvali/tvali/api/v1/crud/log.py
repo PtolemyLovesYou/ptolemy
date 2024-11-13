@@ -89,7 +89,8 @@ class LogCRUDFactory(BaseModel):
 
         async def delete(id_: str) -> dict[str, str]:
             with session.get_db() as db:
-                db.query(self.db_class).filter(self.db_class.id == id_).delete()
+                item = db.query(self.db_class).filter(self.db_class.id == id_).first()
+                db.delete(item)
 
                 db.commit()
                 return {"status": "success"}

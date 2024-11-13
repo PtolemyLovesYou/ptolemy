@@ -19,18 +19,21 @@ class SystemEvent(Event):
 
     __tablename__ = "system_event"
 
-    event_runtime: Mapped["SystemRuntime"] = relationship(back_populates="event")
-    event_inputs: Mapped[List["SystemInput"]] = relationship(back_populates="event")
-    event_outputs: Mapped[List["SystemOutput"]] = relationship(back_populates="event")
+    event_runtime: Mapped["SystemRuntime"] = relationship(back_populates="event", cascade="all, delete-orphan")
+    event_inputs: Mapped[List["SystemInput"]] = relationship(back_populates="event", cascade="all, delete-orphan")
+    event_outputs: Mapped[List["SystemOutput"]] = relationship(back_populates="event", cascade="all, delete-orphan")
     event_feedback: Mapped[List["SystemFeedback"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan",
     )
     event_metadata: Mapped[List["SystemMetadata"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan",
     )
 
     subsystem_events: Mapped[List["SubsystemEvent"]] = relationship(
-        back_populates="system_event"
+        back_populates="system_event",
+        cascade="all, delete-orphan",
     )
 
 
@@ -94,16 +97,19 @@ class SubsystemEvent(Event):
 
     __tablename__ = "subsystem_event"
 
-    event_runtime: Mapped["SubsystemRuntime"] = relationship(back_populates="event")
-    event_inputs: Mapped[List["SubsystemInput"]] = relationship(back_populates="event")
+    event_runtime: Mapped["SubsystemRuntime"] = relationship(back_populates="event", cascade="all, delete-orphan")
+    event_inputs: Mapped[List["SubsystemInput"]] = relationship(back_populates="event", cascade="all, delete-orphan")
     event_outputs: Mapped[List["SubsystemOutput"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan",
     )
     event_feedback: Mapped[List["SubsystemFeedback"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan",
     )
     event_metadata: Mapped[List["SubsystemMetadata"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan",
     )
 
     system_event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("system_event.id"))
@@ -112,7 +118,8 @@ class SubsystemEvent(Event):
     system_event: Mapped[SystemEvent] = relationship(back_populates="subsystem_events")
 
     component_events: Mapped[List["ComponentEvent"]] = relationship(
-        back_populates="subsystem_event"
+        back_populates="subsystem_event",
+        cascade="all, delete-orphan",
     )
 
 
@@ -186,16 +193,19 @@ class ComponentEvent(Event):
 
     __tablename__ = "component_event"
 
-    event_runtime: Mapped["ComponentRuntime"] = relationship(back_populates="event")
-    event_inputs: Mapped[List["ComponentInput"]] = relationship(back_populates="event")
+    event_runtime: Mapped["ComponentRuntime"] = relationship(back_populates="event", cascade="all, delete-orphan")
+    event_inputs: Mapped[List["ComponentInput"]] = relationship(back_populates="event", cascade="all, delete-orphan")
     event_outputs: Mapped[List["ComponentOutput"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan"
     )
     event_feedback: Mapped[List["ComponentFeedback"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan"
     )
     event_metadata: Mapped[List["ComponentMetadata"]] = relationship(
-        back_populates="event"
+        back_populates="event",
+        cascade="all, delete-orphan"
     )
 
     subsystem_event_id: Mapped[uuid.UUID] = mapped_column(
@@ -208,7 +218,8 @@ class ComponentEvent(Event):
     )
 
     subcomponent_events: Mapped[List["SubcomponentEvent"]] = relationship(
-        back_populates="component_event"
+        back_populates="component_event",
+        cascade="all, delete-orphan"
     )
 
 
@@ -282,18 +293,18 @@ class SubcomponentEvent(Event):
 
     __tablename__ = "subcomponent_event"
 
-    event_runtime: Mapped["SubcomponentRuntime"] = relationship(back_populates="event")
+    event_runtime: Mapped["SubcomponentRuntime"] = relationship(back_populates="event", cascade="all, delete-orphan")
     event_inputs: Mapped[List["SubcomponentInput"]] = relationship(
-        back_populates="event"
+        back_populates="event", cascade="all, delete-orphan"
     )
     event_outputs: Mapped[List["SubcomponentOutput"]] = relationship(
-        back_populates="event"
+        back_populates="event", cascade="all, delete-orphan"
     )
     event_feedback: Mapped[List["SubcomponentFeedback"]] = relationship(
-        back_populates="event"
+        back_populates="event", cascade="all, delete-orphan"
     )
     event_metadata: Mapped[List["SubcomponentMetadata"]] = relationship(
-        back_populates="event"
+        back_populates="event", cascade="all, delete-orphan"
     )
 
     component_event_id: Mapped[uuid.UUID] = mapped_column(

@@ -7,7 +7,16 @@ from datetime import datetime
 import traceback
 from contextlib import asynccontextmanager
 import uuid
-from pydantic import PrivateAttr, computed_field, Field, create_model, BaseModel, RootModel, field_validator, field_serializer
+from pydantic import (
+    PrivateAttr,
+    computed_field,
+    Field,
+    create_model,
+    BaseModel,
+    RootModel,
+    field_validator,
+    field_serializer
+    )
 
 
 class Timestamp(RootModel):
@@ -58,7 +67,7 @@ class Timestamp(RootModel):
 class ID(RootModel):
     """ID type."""
     root: Optional[uuid.UUID] = Field()
-    
+
     @classmethod
     def new(self) -> "ID":
         return ID(uuid.uuid4())
@@ -340,6 +349,10 @@ class Log(BaseModel, ABC):
     @abstractmethod
     async def push(self) -> None:
         """Push log."""
+
+    @abstractmethod
+    async def delete(self, id_: str) -> None:
+        """Delete log."""
 
     @asynccontextmanager
     async def observe(self):
