@@ -152,8 +152,8 @@ class Log(BaseModel, ABC):
             as the key and the serialized ID as the value.
         """
         return {
-            f"{self._TIER}_event_id": self.id.model_dump()
-        }  # pylint: disable=no-member
+            f"{self._TIER}_event_id": self.id.model_dump() # pylint: disable=no-member
+        }
 
     @computed_field
     @property
