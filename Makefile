@@ -1,3 +1,3 @@
 .PHONY: format
 format:
-	black tvali tvali-client
+	black tvali tvali-client tvali-utils

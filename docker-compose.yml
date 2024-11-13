@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - ./tvali:/app/tvali
-      - ./tvali_utils:/app/tvali_utils
+      - ./tvali-utils:/app/tvali-utils
     networks:
       - tvali
     depends_on:

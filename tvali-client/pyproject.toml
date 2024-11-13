@@ -11,6 +11,10 @@ pydantic = "^2.9.2"
 aiohttp = "^3.11.0"
 tvali-utils = { path = "../tvali-utils/", develop = false }
 
+[tool.poetry.group.dev.dependencies]
+pylint-pydantic = "^0.3.2"
+pylint = "^3.3.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

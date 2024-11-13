@@ -3,7 +3,7 @@
 from typing import Annotated, Union, TypeVar, Dict, Any
 from datetime import datetime
 from uuid import UUID, uuid4
-from pydantic import Field, BeforeValidator, PlainSerializer, RootModel
+from pydantic import Field, PlainSerializer, RootModel, field_validator
 
 T = TypeVar("T")
 
@@ -15,68 +15,33 @@ class IO(RootModel[T]):
 
     root: Dict[str, T]
 
-def _validate_id(v: Union[UUID, str]) -> UUID:
-    """
-    Validate a UUID.
 
-    Args:
-        v: Value to validate.
-
-    Returns:
-        UUID: Validated UUID.
-
-    Raises:
-        ValueError: If value is not a valid UUID.
-    """
-    if isinstance(v, str):
-        try:
-            return UUID(v)
-        except ValueError as exc:
-            raise ValueError(f"Invalid UUID: {v}") from exc
-
-    if isinstance(v, UUID):
-        return v
-
-    raise ValueError(f"Invalid UUID: {v}")
-
-
-def _validate_timestamp(v: Union[datetime, str]) -> datetime:
-    """
-    Validate timestamp.
-
-    Args:
-        v: Union[datetime, str]
-
-    Returns:
-        datetime
-
-    Raises:
-        ValueError: If timestamp is invalid
-    """
-
-    if isinstance(v, datetime):
-        return v
-
-    if isinstance(v, str):
-        try:
-            return datetime.fromisoformat(v)
-        except ValueError as exc:
-            raise ValueError(f"Invalid timestamp: {v}") from exc
-
-    raise ValueError(f"Invalid timestamp: {v}")
-
-
-id_validator = BeforeValidator(_validate_id)
 id_serializer = PlainSerializer(lambda v: v.hex, when_used="always")
-
-timestamp_validator = BeforeValidator(_validate_timestamp)
 timestamp_serializer = PlainSerializer(lambda v: v.isoformat(), when_used="always")
 
 
 class ID(RootModel):
     """ID class."""
 
-    root: Annotated[UUID, Field(), id_validator, id_serializer]
+    root: Annotated[UUID, Field(), id_serializer]
+
+    @field_validator("root")
+    @classmethod
+    def validate_id(cls, v: Union[UUID, str, "ID"]) -> UUID:
+        """Validate ID."""
+        if isinstance(v, ID):
+            return v.root
+
+        if isinstance(v, str):
+            try:
+                return UUID(v)
+            except ValueError as exc:
+                raise ValueError(f"Invalid UUID: {v}") from exc
+
+        if isinstance(v, UUID):
+            return v
+
+        raise ValueError(f"Invalid UUID: {v}")
 
     @classmethod
     def new(cls) -> "ID":
@@ -87,7 +52,25 @@ class ID(RootModel):
 class Timestamp(RootModel):
     """Timestamp class."""
 
-    root: Annotated[datetime, timestamp_validator, timestamp_serializer]
+    root: Annotated[datetime, timestamp_serializer]
+
+    @field_validator("root")
+    @classmethod
+    def validate_timestamp(cls, v: Union[datetime, str, "Timestamp"]) -> datetime:
+        """Validate timestamp."""
+        if isinstance(v, Timestamp):
+            return v.root
+
+        if isinstance(v, datetime):
+            return v
+
+        if isinstance(v, str):
+            try:
+                return datetime.fromisoformat(v)
+            except ValueError as exc:
+                raise ValueError(f"Invalid timestamp: {v}") from exc
+
+        raise ValueError(f"Invalid timestamp: {v}")
 
     @classmethod
     def now(cls) -> "Timestamp":

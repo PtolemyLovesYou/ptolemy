@@ -44,7 +44,7 @@ class LogCRUDFactory(BaseModel):
                         detail="Database error in create_event",
                     ) from e
 
-            return [{"id": obj.id.hex} for obj in objs]
+            return [{"id": str(obj.id)} for obj in objs]
 
         return create
 

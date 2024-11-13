@@ -19,6 +19,8 @@ tvali-utils = { path = "../tvali-utils/", develop = false }
 pytest = "^8.3.3"
 pytest-sugar = "^1.0.0"
 black = "^24.10.0"
+pylint-pydantic = "^0.3.2"
+pylint = "^3.3.1"
 
 [build-system]
 requires = ["poetry-core"]
