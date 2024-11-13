@@ -1,9 +1,7 @@
 """Client."""
 
-from typing import Any, Dict, Optional, ClassVar, Union
-from enum import StrEnum
+from typing import Dict, Optional, ClassVar, Any
 from abc import abstractmethod, ABC
-from datetime import datetime
 import traceback
 from contextlib import asynccontextmanager
 import uuid
@@ -13,131 +11,9 @@ from pydantic import (
     Field,
     create_model,
     BaseModel,
-    RootModel,
-    field_validator,
-    field_serializer
-    )
-
-
-class Timestamp(RootModel):
-    """Timestamp type."""
-    root: datetime = Field()
-
-    @classmethod
-    def now(cls) -> "Timestamp":
-        """Get current time. Wraps datetime.now()."""
-        return Timestamp(datetime.now())
-
-    @field_validator("root")
-    @classmethod
-    def validate_timestamp(cls, v: Union[str, datetime]) -> datetime:
-        """
-        Validate a timestamp.
-
-        Args:
-            v: Value to validate.
-
-        Returns:
-            datetime: Validated timestamp.
-
-        Raises:
-            ValueError: If value is not a valid timestamp.
-        """
-        if isinstance(v, datetime):
-            return v
-
-        if isinstance(v, str):
-            return datetime.fromisoformat(v)
-
-        raise ValueError(f"Invalid timestamp: {v}")
-
-    @field_serializer('root', when_used="always")
-    def serialize_timestamp(self, v: datetime) -> str:
-        """
-        Serialize timestamp to ISO format.
-
-        Args:
-            v: Timestamp to serialize.
-
-        Returns:
-            str: ISO format timestamp.
-        """
-        return v.isoformat()
-
-class ID(RootModel):
-    """ID type."""
-    root: Optional[uuid.UUID] = Field()
-
-    @classmethod
-    def new(self) -> "ID":
-        return ID(uuid.uuid4())
-
-    @field_validator("root")
-    @classmethod
-    def validate_uuid(cls, v: Union[str, uuid.UUID]) -> uuid.UUID:
-        """
-        Validate a UUID.
-
-        Args:
-            v: Value to validate.
-
-        Returns:
-            UUID: Validated UUID.
-
-        Raises:
-            ValueError: If value is not a valid UUID.
-        """
-        if isinstance(v, str):
-            return uuid.UUID(v)
-
-        if isinstance(v, uuid.UUID):
-            return v
-
-        raise ValueError(f"Invalid UUID: {v}")
-
-    @field_serializer('root', when_used="always")
-    def serialize_uuid(self, v: uuid.UUID) -> str:
-        """
-        Serialize UUID to hex string.
-
-        Args:
-            v: UUID to serialize.
-
-        Returns:
-            str: Hex string representation of UUID.
-        """
-        return v.hex
-
-class Tier(StrEnum):
-    """Tiers."""
-
-    SYSTEM = "system"
-    SUBSYSTEM = "subsystem"
-    COMPONENT = "component"
-    SUBCOMPONENT = "subcomponent"
-
-    @property
-    def parent(self) -> Optional["Tier"]:
-        """Get parent tier."""
-        return {
-            Tier.SUBCOMPONENT: Tier.COMPONENT,
-            Tier.COMPONENT: Tier.SUBSYSTEM,
-            Tier.SUBSYSTEM: Tier.SYSTEM,
-        }.get(self)
-
-    @property
-    def child(self) -> Optional["Tier"]:
-        """Get child tier."""
-        return {
-            Tier.SYSTEM: Tier.SUBSYSTEM,
-            Tier.SUBSYSTEM: Tier.COMPONENT,
-            Tier.COMPONENT: Tier.SUBCOMPONENT,
-        }.get(self)
-
-
-Parameters = Dict[str, Any]
-IO = Dict[str, Any]
-Metadata = Dict[str, str]
+)
+from .utils.types import ID, Timestamp, Parameters, IO
+from .utils.enums import Tier
 
 
 class Runtime(BaseModel):
@@ -227,10 +103,10 @@ class Log(BaseModel, ABC):
     _TIER: ClassVar[Tier]
 
     _runtime: Runtime = PrivateAttr(default_factory=Runtime)
-    _inputs: IO = PrivateAttr(default=None)
-    _outputs: IO = PrivateAttr(default=None)
-    _feedback: IO = PrivateAttr(default=None)
-    _metadata: Metadata = PrivateAttr(default=None)
+    _inputs: IO[Any] = PrivateAttr(default=None)
+    _outputs: IO[Any] = PrivateAttr(default=None)
+    _feedback: IO[Any] = PrivateAttr(default=None)
+    _metadata: IO[str] = PrivateAttr(default=None)
 
     id: ID = Field(default_factory=ID.new)
     name: str = Field()
@@ -275,7 +151,9 @@ class Log(BaseModel, ABC):
             Dict[str, str]: A dictionary with the log's tier-specific event ID
             as the key and the serialized ID as the value.
         """
-        return {f"{self._TIER}_event_id": self.id.model_dump()} # pylint: disable=no-member
+        return {
+            f"{self._TIER}_event_id": self.id.model_dump()
+        }  # pylint: disable=no-member
 
     @computed_field
     @property
@@ -285,34 +163,34 @@ class Log(BaseModel, ABC):
 
     @computed_field
     @property
-    def inputs(self) -> IO | None:
+    def inputs(self) -> Dict[str, Any] | None:
         """Get log inputs."""
-        return self._inputs
+        return self._inputs.model_dump()
 
     @computed_field
     @property
-    def outputs(self) -> IO | None:
+    def outputs(self) -> Dict[str, Any] | None:
         """Get log outputs."""
-        return self._outputs
+        return self._outputs.model_dump()
 
     @computed_field
     @property
-    def feedback(self) -> IO | None:
+    def feedback(self) -> Dict[str, Any] | None:
         """Get log feedback."""
-        return self._feedback
+        return self._feedback.model_dump()
 
     @computed_field
     @property
-    def metadata(self) -> Metadata | None:
+    def metadata(self) -> Dict[str, str] | None:
         """Get log metadata."""
-        return self._metadata
+        return self._metadata.model_dump()
 
     async def log(
         self,
-        inputs: Optional[IO] = None,
-        outputs: Optional[IO] = None,
-        feedback: Optional[IO] = None,
-        metadata: Optional[Metadata] = None,
+        inputs: Optional[Dict[str, Any]] = None,
+        outputs: Optional[Dict[str, Any]] = None,
+        feedback: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         Log a single event.
@@ -329,22 +207,22 @@ class Log(BaseModel, ABC):
         if inputs is not None:
             if self._inputs is not None:
                 raise ValueError("Inputs already set")
-            self._inputs = inputs
+            self._inputs = IO[Any](inputs)
 
         if outputs is not None:
             if self._outputs is not None:
                 raise ValueError("Outputs already set")
-            self._outputs = outputs
+            self._outputs = IO[Any](outputs)
 
         if feedback is not None:
             if self._feedback is not None:
                 raise ValueError("Feedback already set")
-            self._feedback = feedback
+            self._feedback = IO[Any](feedback)
 
         if metadata is not None:
             if self._metadata is not None:
                 raise ValueError("Metadata already set")
-            self._metadata = metadata
+            self._metadata = IO[Any](metadata)
 
     @abstractmethod
     async def push(self) -> None:
@@ -355,7 +233,7 @@ class Log(BaseModel, ABC):
         """Delete log."""
 
     @asynccontextmanager
-    async def observe(self):
+    async def observe(self, push: bool = False):
         """
         Asynchronous context manager that logs the execution time and any
         exceptions that occur in the block.
@@ -375,7 +253,8 @@ class Log(BaseModel, ABC):
             raise e
         finally:
             self._runtime.end()
-            await self.push()
+            if push:
+                await self.push()
 
     async def spawn(
         self,
