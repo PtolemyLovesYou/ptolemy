@@ -8,6 +8,7 @@ from pydantic import (
     Field,
     create_model,
     BaseModel,
+    ConfigDict,
 )
 from tvali_utils.types import ID, Timestamp, Parameters, IO
 from tvali_utils.enums import Tier
@@ -15,6 +16,7 @@ from tvali_utils.enums import Tier
 
 class Runtime(BaseModel):
     """Runtime model."""
+    model_config = ConfigDict(validate_assignment=True)
 
     start_time: Timestamp = Field(default=None, init=False)
     end_time: Timestamp = Field(default=None, init=False)
@@ -80,14 +82,15 @@ class Runtime(BaseModel):
 
 class Log(BaseModel, ABC):
     """Log base class."""
+    model_config = ConfigDict(validate_assignment=True)
 
     _TIER: ClassVar[Tier]
 
     runtime: Runtime = Field(default_factory=Runtime, init=False)
-    inputs: IO[Any] = Field(default=None, init=False)
-    outputs: IO[Any] = Field(default=None, init=False)
-    feedback: IO[Any] = Field(default=None, init=False)
-    metadata: IO[str] = Field(default=None, init=False)
+    inputs: Optional[IO[Any]] = Field(default=None, init=False)
+    outputs: Optional[IO[Any]] = Field(default=None, init=False)
+    feedback: Optional[IO[Any]] = Field(default=None, init=False)
+    metadata: Optional[IO[str]] = Field(default=None, init=False)
 
     id: ID = Field(default_factory=ID.new)
     name: str = Field()
@@ -221,22 +224,22 @@ class Log(BaseModel, ABC):
         if inputs is not None:
             if self.inputs is not None:
                 raise ValueError("Inputs already set")
-            self.inputs = IO[Any](inputs)
+            self.inputs = inputs
 
         if outputs is not None:
             if self.outputs is not None:
                 raise ValueError("Outputs already set")
-            self.outputs = IO[Any](outputs)
+            self.outputs = outputs
 
         if feedback is not None:
             if self.feedback is not None:
                 raise ValueError("Feedback already set")
-            self.feedback = IO[Any](feedback)
+            self.feedback = feedback
 
         if metadata is not None:
             if self.metadata is not None:
                 raise ValueError("Metadata already set")
-            self.metadata = IO[Any](metadata)
+            self.metadata = metadata
 
     def start(self) -> None:
         """Start runtime."""
@@ -314,9 +317,9 @@ class Log(BaseModel, ABC):
         id_kwargs = {f"{self._TIER}_event_id": self.id}
 
         return self.tier(self._TIER.child)(
+            **id_kwargs,
             name=name,
             parameters=parameters,
-            **id_kwargs,
             version=version,
             environment=environment,
         )
