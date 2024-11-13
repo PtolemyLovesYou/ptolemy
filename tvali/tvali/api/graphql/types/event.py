@@ -3,11 +3,11 @@
 from typing import List, Optional, ClassVar, Callable, TypeVar
 from uuid import UUID
 import strawberry
+from tvali_utils.enums import Tier, LogType
 from .io import Parameters, io_resolver_factory, Input, Output, Feedback, Metadata
 from .runtime import Runtime
 from .runtime import runtime_resolver_factory
 from ....db import models, session
-from ....utils.enums import Tier, LogType
 
 
 @strawberry.interface

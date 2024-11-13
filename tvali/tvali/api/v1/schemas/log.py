@@ -2,8 +2,8 @@
 
 from typing import Generic, Optional, Dict, Any, ClassVar
 from pydantic import BaseModel, create_model, Field
-from ....utils.enums import Tier, LogType
-from ....utils.types import ID, Timestamp, T
+from tvali_utils.enums import Tier, LogType
+from tvali_utils.types import ID, Timestamp, T
 
 
 # Log mixins

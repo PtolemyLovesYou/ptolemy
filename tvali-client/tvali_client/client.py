@@ -12,8 +12,8 @@ from pydantic import (
     create_model,
     BaseModel,
 )
-from .utils.types import ID, Timestamp, Parameters, IO
-from .utils.enums import Tier
+from tvali_utils.types import ID, Timestamp, Parameters, IO
+from tvali_utils.enums import Tier
 
 
 class Runtime(BaseModel):

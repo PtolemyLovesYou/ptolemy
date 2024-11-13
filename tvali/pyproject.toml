@@ -12,6 +12,7 @@ uvicorn = "^0.32.0"
 sqlalchemy = "^2.0.36"
 psycopg = "^3.2.3"
 strawberry-graphql = {extras = ["fastapi"], version = "^0.248.1"}
+tvali-utils = { path = "../tvali-utils/", develop = false }
 
 
 [tool.poetry.group.dev.dependencies]

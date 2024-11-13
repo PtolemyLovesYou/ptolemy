@@ -600,6 +600,22 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
+name = "tvali-utils"
+version = "0.1.0"
+description = ""
+optional = false
+python-versions = "^3.12"
+files = []
+develop = false
+
+[package.dependencies]
+pydantic = "^2.9.2"
+
+[package.source]
+type = "directory"
+url = "../tvali-utils"
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -709,4 +725,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "bb028cd65c092928f525abbb1bb357f94edd561b7efe56053a8227e99ca8a77c"
+content-hash = "983d501ebd1495fcf78867eb1ab00cc79da15da12084a82e84545ea3975ab7b6"

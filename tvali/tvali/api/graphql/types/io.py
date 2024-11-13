@@ -2,10 +2,10 @@
 
 from typing import NewType, Generic, List, Callable, TypeVar
 from uuid import UUID
+from tvali_utils.types import T
+from tvali_utils.enums import LogType, Tier
 import strawberry
 from ....db import models, session
-from ....utils.types import T
-from ....utils.enums import LogType, Tier
 
 JSON = strawberry.scalar(
     NewType("JSON", object),
