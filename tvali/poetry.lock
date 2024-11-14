@@ -2883,9 +2883,10 @@ propcache = ">=0.2.0"
 anthropic = ["anthropic"]
 api = ["fastapi", "psycopg", "sqlalchemy", "strawberry-graphql", "uvicorn"]
 cohere = ["cohere"]
+groq = ["groq"]
 openai = ["openai"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8bd24292edac2aa28d87a79c93619aa8e9232e0a03a65b09d5f37da1fe461745"
+content-hash = "41b91eb75221973760b2c8594b3d56f3e1dfefae43da0c349295b14dd9c101e2"

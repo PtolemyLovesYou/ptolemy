@@ -2,10 +2,6 @@
 format:
 	black tvali
 
-.PHONY: install
-install:
-	pip install -e "tvali[client,api]"
-
 .PHONY: run
 run:
 	docker compose up --remove-orphans
