@@ -26,7 +26,7 @@ class TvaliLog(Log):
         async with session.post(
             f"/v1/log/{self.TIER.value}/event", json=event
         ) as response:
-            print(await response.json())
+            await response.json()
 
     async def _push_runtime(self, session: aiohttp.ClientSession) -> None:
         # runtime data

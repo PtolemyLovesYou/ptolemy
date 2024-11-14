@@ -122,7 +122,7 @@ class Log(BaseModel, ABC):
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
 
     @classmethod
-    def tier(cls, tier: Tier) -> type["Log"]:
+    def configure(cls, tier: Tier, transport_config: TransportConfig) -> type["Log"]:
         """
         Create a new log type with the given tier.
 
@@ -134,19 +134,21 @@ class Log(BaseModel, ABC):
         """
         name = f"{cls.__name__}[{tier.capitalize()}]"
 
-        fields = {}
+        fields = {
+            "TRANSPORT_CONFIG": (ClassVar[TransportConfig], transport_config),
+        }
 
         if tier.parent:
             fields[f"{tier.parent}_event_id"] = (ID, Field())
+
+        if tier.child:
+            fields["TIER"] = (ClassVar[Tier], tier)
 
         model = create_model(
             name,
             __base__=cls,
             **fields,
         )
-
-        if tier.child:
-            setattr(model, "TIER", tier)
 
         return model
 
@@ -340,7 +342,7 @@ class Log(BaseModel, ABC):
 
         id_kwargs = {f"{self.TIER}_event_id": self.id}
 
-        return self.tier(self.TIER.child)(
+        return self.configure(self.TIER.child, self.TRANSPORT_CONFIG)(
             **id_kwargs,
             name=name,
             parameters=parameters,
