@@ -103,6 +103,7 @@ class RecordSchema(BaseSchema):
 
 class LogMetaclass(type):
     """Metaclass for LogSchema class."""
+
     LOG_MIXIN_MAP: Dict[LogType, type[LogMixin]] = {
         LogType.EVENT: EventLogMixin,
         LogType.RUNTIME: RuntimeLogMixin,
@@ -133,7 +134,10 @@ class LogMetaclass(type):
             name_suffix = "Query"
 
             if parent is not None:
-                dependent_mixin_fields[f"{parent}_event_id"] = (Optional[ID], Field(default=None))
+                dependent_mixin_fields[f"{parent}_event_id"] = (
+                    Optional[ID],
+                    Field(default=None),
+                )
 
             base_class = cls.QUERY_MIXIN_MAP[mixins[1]]
         else:
