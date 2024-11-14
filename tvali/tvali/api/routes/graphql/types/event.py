@@ -3,6 +3,7 @@
 from typing import List, Optional, ClassVar, Callable, TypeVar
 from uuid import UUID
 import strawberry
+from sqlalchemy import select
 from .....utils import Tier, LogType
 from .io import Parameters, io_resolver_factory, Input, Output, Feedback, Metadata
 from .runtime import Runtime
@@ -61,7 +62,7 @@ def child_events_resolver(
         based on the provided filter criteria and pagination options.
     """
 
-    def wrapper(
+    async def wrapper(
         parent: strawberry.Parent,
         _id: Optional[UUID] = strawberry.UNSET,
         name: Optional[str] = strawberry.UNSET,
@@ -78,20 +79,24 @@ def child_events_resolver(
             f"{parent_tier}_event_id": parent.id,
         }
 
-        with session.get_db() as db:
-            objs = (
-                db.query(child_db_cls)
-                .filter(
-                    *[
-                        getattr(child_db_cls, k) == v
-                        for k, v in obj_filters.items()
-                        if v is not strawberry.UNSET
-                    ]
+        async with session.get_db() as db:
+            result = await (
+                db
+                .execute(
+                    select(child_db_cls)
+                    .where(
+                        *[
+                            getattr(child_db_cls, k) == v
+                            for k, v in obj_filters.items()
+                            if v is not strawberry.UNSET
+                            ]
+                        )
+                    .limit(limit)
+                    .offset(offset)
+                    )
                 )
-                .limit(limit)
-                .offset(offset)
-                .all()
-            )
+
+            objs = result.scalars().all()
 
         return [
             child_strawberry_cls(
@@ -162,7 +167,7 @@ def event_query_resolver_factory(
         from the database based on the provided filter criteria and pagination options.
     """
 
-    def wrapper(
+    async def wrapper(
         _id: Optional[UUID] = strawberry.UNSET,
         name: Optional[str] = strawberry.UNSET,
         environment: Optional[str] = strawberry.UNSET,
@@ -177,10 +182,10 @@ def event_query_resolver_factory(
             "version": version,
         }
 
-        with session.get_db() as db:
-            objs = (
-                db.query(db_cls)
-                .filter(
+        async with session.get_db() as db:
+            result = await db.execute(
+                select(db_cls)
+                .where(
                     *[
                         getattr(db_cls, k) == v
                         for k, v in obj_filters.items()
@@ -189,8 +194,9 @@ def event_query_resolver_factory(
                 )
                 .limit(limit)
                 .offset(offset)
-                .all()
             )
+
+            objs = result.scalars().all()
 
         return [
             strawberry_cls(

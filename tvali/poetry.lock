@@ -1583,7 +1583,7 @@ files = [
 ]
 
 [package.dependencies]
-greenlet = {version = "!=0.4.17", markers = "python_version < \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"}
+greenlet = {version = "!=0.4.17", optional = true, markers = "python_version < \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\") or extra == \"asyncio\""}
 typing-extensions = ">=4.6.0"
 
 [package.extras]
@@ -2080,4 +2080,4 @@ client = ["aiohttp"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ac28a48f5b338db651f0c126c61599dcac99f838d6607b35ec133c19a46a2280"
+content-hash = "6e838321979a121528698eaf3066f707a959b0907003f0d7ea5837c2c98a9cde"

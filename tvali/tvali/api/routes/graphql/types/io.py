@@ -3,6 +3,7 @@
 from typing import NewType, Generic, List, Callable, TypeVar
 from uuid import UUID
 import strawberry
+from sqlalchemy import select
 from .....utils import LogType, Tier
 from ....db import models, session
 
@@ -60,10 +61,15 @@ def io_resolver_factory(
 ) -> Callable[[strawberry.Parent], List[IO]]:
     """Get IO resolver."""
 
-    def wrapper(parent: strawberry.Parent) -> List[io_type]:
+    async def wrapper(parent: strawberry.Parent) -> List[io_type]:
         model = models.DB_OBJ_MAP[log_type][tier]
-        with session.get_db() as db:
-            objs = db.query(model).filter(model.parent_id == parent.id).all()
+        async with session.get_db() as db:
+            result = await db.execute(
+                select(model)
+                .where(model.parent_id == parent.id)
+            )
+
+        objs = result.scalars().all()
 
         return [
             io_type(id=obj.id, field_name=obj.field_name, field_value=obj.field_value)

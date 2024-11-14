@@ -3,6 +3,7 @@
 import logging
 from typing import Callable, List, Annotated
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from fastapi import HTTPException, Query
 from ..schemas.log import Log, CreateSchema, RecordSchema, QueryMixin
@@ -29,15 +30,15 @@ class LogCRUDFactory(BaseModel):
         async def create(
             data: List[Log[self.tier, self.log_type, CreateSchema]]
         ) -> List[dict[str, str]]:
-            with session.get_db() as db:
+            async with session.get_db() as db:
                 try:
                     objs = [
                         self.db_class(**d.model_dump(exclude_none=True)) for d in data
                     ]
                     db.add_all(objs)
-                    db.commit()
+                    await db.commit()
                 except SQLAlchemyError as e:
-                    db.rollback()
+                    await db.rollback()
                     logger.error("Database error in create_event: %s", e)
                     raise HTTPException(
                         status_code=500,
@@ -61,16 +62,18 @@ class LogCRUDFactory(BaseModel):
                 getattr(self.db_class, k) == v for k, v in query_params.items()
             ]
 
-            with session.get_db() as db:
+            async with session.get_db() as db:
                 try:
-                    objs = (
-                        db
-                        .query(self.db_class)
+                    result = await db.execute(
+                        select(self.db_class)
                         .filter(*filter_params)
+                        .order_by(query.order_by)
                         .limit(query.limit)
                         .offset(query.offset)
-                        .all()
                     )
+
+                    objs = result.scalars().all()
+
                 except SQLAlchemyError as e:
                     logger.error("Database error in get_event: %s", e)
                     raise HTTPException(
@@ -89,20 +92,26 @@ class LogCRUDFactory(BaseModel):
         """Generate delete endpoint for object."""
 
         async def delete(id_: str) -> dict[str, str]:
-            with session.get_db() as db:
+            async with session.get_db() as db:
                 try:
-                    item = db.query(self.db_class).filter(self.db_class.id == id_).one()
-                    db.delete(item)
+                    result = await db.execute(
+                        select(self.db_class)
+                        .where(self.db_class.id == id_)
+                    )
 
-                    db.commit()
+                    item = result.scalars().one()
+
+                    await db.delete(item)
+
+                    await db.commit()
                 except NoResultFound as e:
-                    db.rollback()
+                    await db.rollback()
                     raise HTTPException(
                         status_code=404,
                         detail=f"Could not delete {self.tier.capitalize()}{self.log_type.capitalize()} with id {id_}: item does not exist"
                     ) from e
                 except SQLAlchemyError as e:
-                    db.rollback()
+                    await db.rollback()
                     logger.error("Database error in delete_event: %s", e)
                     raise HTTPException(
                         status_code=500,

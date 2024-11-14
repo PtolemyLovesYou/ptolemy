@@ -1,9 +1,8 @@
 """Session dependencies"""
 
-from typing import Generator
-from contextlib import contextmanager
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from typing import AsyncGenerator
+from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from ..config import (
     POSTGRES_DB,
@@ -30,7 +29,7 @@ SQLALCHEMY_DATABASE_URL = "".join(
 )
 
 # Create database engine
-engine = create_engine(
+engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     # For SQLite, add: connect_args={"check_same_thread": False}
     pool_pre_ping=True,  # Enable automatic reconnection
@@ -39,7 +38,7 @@ engine = create_engine(
 )
 
 # Create session factory
-SessionLocal = sessionmaker(
+SessionLocal = async_sessionmaker(
     bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
 )
 
@@ -47,17 +46,17 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
-@contextmanager
-def get_db() -> Generator[Session, None, None]:
+@asynccontextmanager
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency that provides a database session.
     Usage:
         @app.get("/users/")
-        def get_users(db: Session = Depends(get_db)):
+        async def get_users(db: AsyncSession = Depends(get_db)) -> None:
             ...
     """
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await db.close()
