@@ -10,11 +10,9 @@ client = TestClient(app)
 
 tier_ids = {tier.value: uuid4().hex for tier in Tier}
 
-@pytest.mark.parametrize("tier", [Tier.SYSTEM, Tier.SUBSYSTEM, Tier.COMPONENT, Tier.SUBCOMPONENT])
-@pytest.mark.dependency(name="test_create_event")
-def test_create_event(tier: Tier):
-    """Test create log."""
-    event_data = {
+def get_event_data(tier: Tier):
+    """Get event data."""
+    return {
         "id": tier_ids[tier],
         "name": "test",
         "parameters": {"foo": "bar"},
@@ -22,62 +20,51 @@ def test_create_event(tier: Tier):
         "version": "0.0.1test",
     }
 
-    if tier.parent is not None:
-        event_data[f"{tier.parent}_event_id"] = tier_ids[tier.parent]
-
-    response = client.post(
-        f"/v1/log/{tier.value}/event",
-        json=[event_data],
-        )
-
-    assert response.status_code == 200
-    assert response.json()[0]["id"] == tier_ids[tier]
-
-@pytest.mark.parametrize("tier", [Tier.SYSTEM, Tier.SUBSYSTEM, Tier.COMPONENT, Tier.SUBCOMPONENT])
-@pytest.mark.dependency(name="test_create_runtime", depends=["test_create_event"])
-def test_create_runtime(tier: Tier):
-    runtime_data = {
+def get_runtime_data(tier: Tier):
+    """Get runtime data."""
+    return {
         "id": uuid4().hex,
         f"{tier}_event_id": tier_ids[tier],
         "start_time": datetime.now().isoformat(),
         "end_time": datetime.now().isoformat(),
-        "error_type": "test",
-        "error_content": "test",
     }
 
-    response = client.post(
-        f"/v1/log/{tier.value}/runtime",
-        json=[runtime_data],
-        )
-
-    assert response.status_code == 200
-    assert response.json()[0]["id"] == runtime_data["id"]
-
-@pytest.mark.parametrize("tier", [Tier.SYSTEM, Tier.SUBSYSTEM, Tier.COMPONENT, Tier.SUBCOMPONENT])
-@pytest.mark.parametrize("log_type", [LogType.INPUT, LogType.OUTPUT, LogType.FEEDBACK, LogType.METADATA])
-@pytest.mark.dependency(name="test_create_io", depends=["test_create_event"])
-def test_create_io(tier: Tier, log_type: LogType):
-    io_data = {
+def get_io_data(tier: Tier):
+    """Get IO data."""
+    return {
         "id": uuid4().hex,
         f"{tier}_event_id": tier_ids[tier],
         "field_name": "foo",
         "field_value": "bar",
     }
 
-    url = f"/v1/log/{tier.value}/{log_type.value}"
-    print(url)
+@pytest.mark.parametrize("log_type", [*LogType])
+@pytest.mark.parametrize("tier", [*Tier])
+@pytest.mark.dependency(name="test_create")
+def test_create(tier: Tier, log_type: LogType):
+    """Test create log."""
+    if log_type == LogType.EVENT:
+        event_data = get_event_data(tier)
+        if tier.parent is not None:
+            event_data[f"{tier.parent}_event_id"] = tier_ids[tier.parent]
+
+    elif log_type == LogType.RUNTIME:
+        event_data = get_runtime_data(tier)
+    else:
+        event_data = get_io_data(tier)
 
     response = client.post(
-        url,
-        json=[io_data],
+        f"/v1/log/{tier.value}/{log_type.value}",
+        json=[event_data],
         )
 
-    assert response.status_code == 200, response.text
-    assert response.json()[0]["id"] == io_data["id"]
+    assert response.status_code == 200
+    assert response.json()[0]["id"] == event_data["id"]
 
-@pytest.mark.parametrize("tier", [Tier.SYSTEM, Tier.SUBSYSTEM, Tier.COMPONENT, Tier.SUBCOMPONENT])
-@pytest.mark.dependency(name="test_get_event", depends=["test_create_event", "test_create_runtime", "test_create_io"])
+@pytest.mark.parametrize("tier", [*Tier])
+@pytest.mark.dependency(name="test_get_log", depends=["test_create"])
 def test_get_log(tier: Tier):
+    """Test get log."""
     response = client.get(f"/v1/log/{tier.value}/event/?id={tier_ids[tier]}")
 
     assert response.status_code == 200, response.text
