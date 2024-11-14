@@ -1,6 +1,6 @@
 """REST API client."""
 
-from ..client import client_factory
+from ...client import client_factory
 from .log import TvaliLog
 from .config import TvaliConfig
 

@@ -4,7 +4,7 @@ from typing import List, ClassVar
 import asyncio
 import aiohttp
 from .config import TvaliConfig
-from ..log.core import Log
+from ...log.core import Log
 
 
 class TvaliLog(Log):

@@ -1,6 +1,6 @@
 """Tvali Config."""
 
-from ..config import TransportConfig
+from ...config import TransportConfig
 
 
 class TvaliConfig(TransportConfig):

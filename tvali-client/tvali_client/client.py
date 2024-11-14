@@ -6,21 +6,21 @@ from tvali_utils import Parameters, Tier
 from .log.core import Log
 from .config import TransportConfig
 
-TransportConfigType = TypeVar(  # pylint: disable=invalid-name
-    "TransportConfigType", bound=TransportConfig, covariant=True
+TransportConfigType_co = TypeVar(  # pylint: disable=invalid-name
+    "TransportConfigType_co", bound=TransportConfig, covariant=True
 )
 
-LogType = TypeVar("LogType", bound=Log, covariant=True)  # pylint: disable=invalid-name
+LogType_co = TypeVar("LogType_co", bound=Log, covariant=True)  # pylint: disable=invalid-name
 
 
-class TvaliClient(BaseModel, Generic[TransportConfigType, LogType]):
+class TvaliClient(BaseModel, Generic[TransportConfigType_co, LogType_co]):
     """Tvali client."""
 
     TRANSPORT_CONFIG_CLS: ClassVar[type[TransportConfig]]
-    LOG_CLS: ClassVar[type[LogType]]
+    LOG_CLS: ClassVar[type[LogType_co]]
 
     @property
-    def transport_config(self) -> TransportConfigType:
+    def transport_config(self) -> TransportConfigType_co:
         """
         Get the transport config.
 
@@ -34,7 +34,7 @@ class TvaliClient(BaseModel, Generic[TransportConfigType, LogType]):
         Returns:
             TransportConfigType: The transport config.
         """
-        config: TransportConfigType = self.TRANSPORT_CONFIG_CLS(
+        config: TransportConfigType_co = self.TRANSPORT_CONFIG_CLS(
             **self.model_dump(
                 include=self.TRANSPORT_CONFIG_CLS.model_fields.keys(),
             )
@@ -48,7 +48,7 @@ class TvaliClient(BaseModel, Generic[TransportConfigType, LogType]):
         parameters: Optional[Parameters] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> LogType:
+    ) -> LogType_co:
         """Trace."""
         return self.LOG_CLS.configure(Tier.SYSTEM, self.transport_config)(
             name=name,
@@ -59,8 +59,8 @@ class TvaliClient(BaseModel, Generic[TransportConfigType, LogType]):
 
 
 def client_factory(
-    name: str, log_cls: type[LogType], transport_cls: type[TransportConfigType]
-) -> type[TransportConfigType, TvaliClient[TransportConfigType, LogType]]:  # type: ignore
+    name: str, log_cls: type[LogType_co], transport_cls: type[TransportConfigType_co]
+) -> type[TransportConfigType_co, TvaliClient[TransportConfigType_co, LogType_co]]:  # type: ignore
     """Client factory."""
     return create_model(
         name,
@@ -68,6 +68,6 @@ def client_factory(
             transport_cls,
             TvaliClient,
         ),
-        TRANSPORT_CONFIG_CLS=(ClassVar[type[TransportConfigType]], transport_cls),
-        LOG_CLS=(ClassVar[type[LogType]], log_cls),
+        TRANSPORT_CONFIG_CLS=(ClassVar[type[TransportConfigType_co]], transport_cls),
+        LOG_CLS=(ClassVar[type[LogType_co]], log_cls),
     )
