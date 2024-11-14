@@ -63,7 +63,6 @@ class LogCRUDFactory(BaseModel):
 
             with session.get_db() as db:
                 try:
-                    print(self.db_class, filter_params, query)
                     objs = (
                         db
                         .query(self.db_class)
@@ -92,13 +91,7 @@ class LogCRUDFactory(BaseModel):
         async def delete(id_: str) -> dict[str, str]:
             with session.get_db() as db:
                 try:
-                    item = db.query(self.db_class).filter(self.db_class.id == id_).first()
-
-                    if not item:
-                        raise HTTPException(
-                            status_code=404,
-                            detail=f"Could not find {self.tier.capitalize()}{self.log_type.capitalize()} object with id {id_}"
-                        )
+                    item = db.query(self.db_class).filter(self.db_class.id == id_).one()
                     db.delete(item)
 
                     db.commit()
@@ -106,7 +99,7 @@ class LogCRUDFactory(BaseModel):
                     db.rollback()
                     raise HTTPException(
                         status_code=404,
-                        detail="Could not find object to delete"
+                        detail=f"Could not delete {self.tier.capitalize()}{self.log_type.capitalize()} with id {id_}: item does not exist"
                     ) from e
                 except SQLAlchemyError as e:
                     db.rollback()
