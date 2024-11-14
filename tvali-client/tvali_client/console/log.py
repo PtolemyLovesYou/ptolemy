@@ -35,8 +35,8 @@ class ConsoleLog(Log):
             (LogType.INPUT, self.inputs_dicts()),
             (LogType.OUTPUT, self.outputs_dicts()),
             (LogType.FEEDBACK, self.feedback_dicts()),
-            (LogType.METADATA, self.metadata_dicts())
-            ]:
+            (LogType.METADATA, self.metadata_dicts()),
+        ]:
             if dicts_list is not None:
                 for d in dicts_list:
                     self._log_data(d, record_type)

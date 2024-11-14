@@ -15,6 +15,7 @@ from ..config import TransportConfig
 
 T = TypeVar("T")
 
+
 class IORecord(BaseModel, Generic[T]):
     """IO record."""
 
