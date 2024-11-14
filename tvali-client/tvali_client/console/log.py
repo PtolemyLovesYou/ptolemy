@@ -2,7 +2,7 @@
 
 from typing import ClassVar
 import logging
-from tvali_utils.enums import LogType
+from tvali_utils import LogType
 from .config import ConsoleConfig
 from ..log.core import Log
 

@@ -3,8 +3,7 @@
 from typing import Optional, ClassVar, Generic, TypeVar
 from abc import ABC
 from pydantic import BaseModel, create_model
-from tvali_utils.types import Parameters
-from tvali_utils.enums import Tier
+from tvali_utils import Parameters, Tier
 from .log.core import Log
 from .config import TransportConfig
 

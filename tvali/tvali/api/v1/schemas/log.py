@@ -1,9 +1,10 @@
 """Log schema factory."""
 
-from typing import Generic, Optional, Dict, Any, ClassVar
+from typing import Generic, Optional, Dict, Any, ClassVar, TypeVar
 from pydantic import BaseModel, create_model, Field
-from tvali_utils.enums import Tier, LogType
-from tvali_utils.types import ID, Timestamp, T
+from tvali_utils import Tier, LogType, ID, Timestamp
+
+T = TypeVar("T")
 
 
 # Log mixins

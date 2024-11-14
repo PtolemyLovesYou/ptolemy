@@ -1,6 +1,6 @@
 """Log."""
 
-from typing import Dict, Optional, ClassVar, Any, List, Generic
+from typing import Dict, Optional, ClassVar, Any, List, Generic, TypeVar
 from abc import abstractmethod, ABC
 import traceback
 from contextlib import asynccontextmanager
@@ -10,10 +10,10 @@ from pydantic import (
     BaseModel,
     ConfigDict,
 )
-from tvali_utils.types import ID, Timestamp, Parameters, T
-from tvali_utils.enums import Tier
+from tvali_utils import ID, Timestamp, Parameters, Tier
 from ..config import TransportConfig
 
+T = TypeVar("T")
 
 class IORecord(BaseModel, Generic[T]):
     """IO record."""

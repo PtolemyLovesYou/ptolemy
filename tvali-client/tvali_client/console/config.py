@@ -4,7 +4,7 @@ import logging
 from typing import Callable, Any
 from functools import cached_property
 from pydantic import Field
-from tvali_utils.enums import Tier, LogType
+from tvali_utils import Tier, LogType
 from ..config import TransportConfig
 
 def default_message_formatter(data: dict, tier: Tier, record_type: LogType) -> dict:

@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 from fastapi import APIRouter
-from tvali_utils.enums import Tier, LogType
+from tvali_utils import Tier, LogType
 from ..crud.log import LogCRUDFactory
 
 

@@ -1,33 +1,25 @@
 """Types."""
 
-from typing import Annotated, Union, TypeVar, Dict, Any
+from typing import Union, Dict, Any
 from datetime import datetime
 from uuid import UUID, uuid4
-from pydantic import Field, PlainSerializer, RootModel, field_validator
-
-T = TypeVar("T")
+from pydantic import RootModel, field_validator, field_serializer
 
 Parameters = Dict[str, Any]  # pylint: disable=invalid-name
-
-
-class IO(RootModel[T]):
-    """IO Type."""
-
-    root: Dict[str, T]
-
-
-id_serializer = PlainSerializer(lambda v: v.hex, when_used="always")
-timestamp_serializer = PlainSerializer(lambda v: v.isoformat(), when_used="always")
 
 
 class ID(RootModel):
     """ID class."""
 
-    root: Annotated[UUID, Field(), id_serializer]
+    root: UUID
+
+    @field_serializer("root")
+    def _serialize_id(self, v: UUID) -> str:
+        return v.hex
 
     @field_validator("root")
     @classmethod
-    def validate_id(cls, v: Union[UUID, str, "ID"]) -> UUID:
+    def _validate_id(cls, v: Union[UUID, str, "ID"]) -> UUID:
         """Validate ID."""
         if isinstance(v, ID):
             return v.root
@@ -52,11 +44,16 @@ class ID(RootModel):
 class Timestamp(RootModel):
     """Timestamp class."""
 
-    root: Annotated[datetime, timestamp_serializer]
+    root: datetime
+
+    @field_serializer("root")
+    def _serialize_timestamp(self, v: datetime) -> str:
+        """Serialize timestamp to ISO format."""
+        return v.isoformat()
 
     @field_validator("root")
     @classmethod
-    def validate_timestamp(cls, v: Union[datetime, str, "Timestamp"]) -> datetime:
+    def _validate_timestamp(cls, v: Union[datetime, str, "Timestamp"]) -> datetime:
         """Validate timestamp."""
         if isinstance(v, Timestamp):
             return v.root

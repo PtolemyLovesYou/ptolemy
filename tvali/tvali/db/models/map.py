@@ -1,7 +1,7 @@
 """Model map."""
 
 from typing import Dict
-from tvali_utils.enums import LogType, Tier
+from tvali_utils import LogType, Tier
 from . import models, core
 
 DB_OBJ_MAP: Dict[LogType, Dict[Tier, type[core.EventTable]]] = {
