@@ -3,7 +3,7 @@
 import logging
 from typing import Callable, List, Annotated
 from pydantic import BaseModel
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from fastapi import HTTPException, Query
 from ..schemas.log import Log, CreateSchema, RecordSchema, QueryMixin
 from .....utils import Tier, LogType
@@ -89,10 +89,24 @@ class LogCRUDFactory(BaseModel):
 
         async def delete(id_: str) -> dict[str, str]:
             with session.get_db() as db:
-                item = db.query(self.db_class).filter(self.db_class.id == id_).first()
-                db.delete(item)
+                try:
+                    item = db.query(self.db_class).filter(self.db_class.id == id_).first()
+                    db.delete(item)
 
-                db.commit()
+                    db.commit()
+                except NoResultFound as e:
+                    db.rollback()
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Could not find object to delete"
+                    ) from e
+                except SQLAlchemyError as e:
+                    db.rollback()
+                    logger.error("Database error in delete_event: %s", e)
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Database error in delete_event",
+                    ) from e
                 return {"status": "success"}
 
         return delete
