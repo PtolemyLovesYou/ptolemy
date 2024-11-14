@@ -12,6 +12,7 @@ from pydantic import (
 )
 from tvali_utils.types import ID, Timestamp, Parameters, T
 from tvali_utils.enums import Tier
+from ..config import TransportConfig
 
 
 class IORecord(BaseModel, Generic[T]):
@@ -105,7 +106,8 @@ class Log(BaseModel, ABC):
 
     model_config = ConfigDict(validate_assignment=True)
 
-    _TIER: ClassVar[Tier]
+    TRANSPORT_CONFIG: ClassVar[TransportConfig]
+    TIER: ClassVar[Tier]
 
     runtime: Runtime = Field(default_factory=Runtime)
     inputs: Optional[List[IORecord[Any]]] = Field(default=None)
@@ -144,7 +146,7 @@ class Log(BaseModel, ABC):
         )
 
         if tier.child:
-            setattr(model, "_TIER", tier)
+            setattr(model, "TIER", tier)
 
         return model
 
@@ -157,7 +159,7 @@ class Log(BaseModel, ABC):
             as the key and the serialized ID as the value.
         """
         return {
-            f"{self._TIER}_event_id": self.id.model_dump()  # pylint: disable=no-member
+            f"{self.TIER}_event_id": self.id.model_dump()  # pylint: disable=no-member
         }
 
     def event_dict(self) -> dict:
@@ -169,7 +171,10 @@ class Log(BaseModel, ABC):
 
     def runtime_dict(self) -> dict:
         """Get log runtime."""
-        return self.runtime.model_dump(exclude_none=True) | self.id_dict()
+        return (
+            self.runtime.model_dump(exclude_none=True)  # pylint: disable=no-member
+            | self.id_dict()
+        )
 
     def inputs_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log inputs."""
@@ -210,7 +215,7 @@ class Log(BaseModel, ABC):
             if self.inputs is not None:
                 raise ValueError("Inputs already set")
             self.inputs = [
-                IORecord[Any].tier(self._TIER)(
+                IORecord[Any].tier(self.TIER)(
                     field_name=field_name, field_value=field_value, **self.id_dict()
                 )
                 for field_name, field_value in inputs.items()
@@ -220,7 +225,7 @@ class Log(BaseModel, ABC):
             if self.outputs is not None:
                 raise ValueError("Outputs already set")
             self.outputs = [
-                IORecord[Any].tier(self._TIER)(
+                IORecord[Any].tier(self.TIER)(
                     field_name=field_name, field_value=field_value, **self.id_dict()
                 )
                 for field_name, field_value in outputs.items()
@@ -230,7 +235,7 @@ class Log(BaseModel, ABC):
             if self.feedback is not None:
                 raise ValueError("Feedback already set")
             self.feedback = [
-                IORecord[Any].tier(self._TIER)(
+                IORecord[Any].tier(self.TIER)(
                     field_name=field_name, field_value=field_value, **self.id_dict()
                 )
                 for field_name, field_value in feedback.items()
@@ -240,7 +245,7 @@ class Log(BaseModel, ABC):
             if self.metadata is not None:
                 raise ValueError("Metadata already set")
             self.metadata = [
-                IORecord[str].tier(self._TIER)(
+                IORecord[str].tier(self.TIER)(
                     field_name=field_name, field_value=field_value, **self.id_dict()
                 )
                 for field_name, field_value in metadata.items()
@@ -248,11 +253,11 @@ class Log(BaseModel, ABC):
 
     def start(self) -> None:
         """Start runtime."""
-        self.runtime.start()
+        self.runtime.start()  # pylint: disable=no-member
 
     def end(self) -> None:
         """End runtime."""
-        self.runtime.end()
+        self.runtime.end()  # pylint: disable=no-member
 
     @abstractmethod
     async def push_on_beginning(self) -> None:
@@ -263,7 +268,7 @@ class Log(BaseModel, ABC):
         """Push log."""
 
     @abstractmethod
-    async def delete(self, id_: str) -> None:
+    async def delete(self) -> None:
         """Delete log."""
 
     @asynccontextmanager
@@ -286,13 +291,15 @@ class Log(BaseModel, ABC):
         try:
             yield
         except Exception as e:
-            self.runtime.log_error(e.__class__.__name__, traceback.format_exc())
+            self.runtime.log_error(  # pylint: disable=no-member
+                e.__class__.__name__, traceback.format_exc()
+            )
             raise e
         finally:
             if time:
                 self.end()
 
-            if time and not self.runtime.completed:
+            if time and not self.runtime.completed:  # pylint: disable=no-member
                 raise RuntimeError(
                     "Runtime isn't completed. Make sure to call .start() and .end() inside your .observe() clause."
                 )
@@ -328,12 +335,12 @@ class Log(BaseModel, ABC):
         Returns:
             Log: The new log.
         """
-        if self._TIER.child is None:
-            raise ValueError(f"Cannot spawn child of tier {self._TIER}")
+        if self.TIER.child is None:
+            raise ValueError(f"Cannot spawn child of tier {self.TIER}")
 
-        id_kwargs = {f"{self._TIER}_event_id": self.id}
+        id_kwargs = {f"{self.TIER}_event_id": self.id}
 
-        return self.tier(self._TIER.child)(
+        return self.tier(self.TIER.child)(
             **id_kwargs,
             name=name,
             parameters=parameters,
