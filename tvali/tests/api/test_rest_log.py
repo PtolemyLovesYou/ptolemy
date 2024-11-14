@@ -107,10 +107,11 @@ def test_delete_log(tier: Tier):
 
 
 @pytest.mark.parametrize("tier", [*Tier])
+@pytest.mark.parametrize("log_type", [*LogType])
 @pytest.mark.dependency(name="test_delete_not_found", depends=["test_delete_log"])
-def test_delete_not_found(tier: Tier):
-    """Test delete log after it has been deleted."""
-    response = client.delete(f"/v1/log/{tier.value}/event/{tier_ids[tier]}")
+def test_delete_not_found(tier: Tier, log_type: LogType):
+    """Test delete non-existent log."""
+    response = client.delete(f"/v1/log/{tier.value}/{log_type}/{uuid4().hex}")
 
     assert response.status_code == 404
 
