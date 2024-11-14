@@ -39,8 +39,7 @@ RUN poetry install \
     --no-root \
     --no-interaction \
     --no-ansi \
-    --all-extras \
-    $(if [ "$ENV" = "DEV" ]; then echo "--with dev"; fi)
+    $(if [ "$ENV" = "DEV" ]; then echo "--with dev --all-extras"; else "-E api"; fi)
 
 COPY . .
 
