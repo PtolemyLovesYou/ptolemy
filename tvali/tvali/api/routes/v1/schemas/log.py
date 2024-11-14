@@ -78,25 +78,6 @@ class IOLogQueryMixin(QueryMixin):
     field_name: Optional[str] = None
 
 
-LOG_MIXIN_MAP = {
-    LogType.EVENT: EventLogMixin,
-    LogType.RUNTIME: RuntimeLogMixin,
-    LogType.INPUT: IOLogMixin[Any],
-    LogType.OUTPUT: IOLogMixin[Any],
-    LogType.FEEDBACK: IOLogMixin[Any],
-    LogType.METADATA: IOLogMixin[str],
-}
-
-QUERY_MIXIN_MAP = {
-    LogType.EVENT: EventQueryMixin,
-    LogType.RUNTIME: RuntimeQueryMixin,
-    LogType.INPUT: IOLogQueryMixin,
-    LogType.OUTPUT: IOLogQueryMixin,
-    LogType.FEEDBACK: IOLogQueryMixin,
-    LogType.METADATA: IOLogQueryMixin,
-}
-
-
 # Schema mixins
 class BaseSchema(Mixin):
     """Base schema."""
@@ -120,72 +101,51 @@ class RecordSchema(BaseSchema):
     id: ID
 
 
-def dependent_mixin(
-    tier: Tier, log_type: LogType, optional: bool = False
-) -> dict[str, tuple[type, Field]]:
-    """
-    Return a dictionary with the dependent fields to be included in the schema
-    based on the given tier and log type.
-
-    If the tier is Tier.SYSTEM and the log type is LogType.EVENT, an empty
-    dictionary is returned.
-
-    Otherwise, a dictionary containing a single key-value pair is returned.
-    The key is the name of the foreign key field (e.g. system_event_id,
-    subsystem_event_id, etc.) and the value is a tuple of the type of the
-    field (RequiredID) and a Field object.
-
-    Args:
-        tier: The tier of the schema (e.g. SYSTEM, SUBSYSTEM, COMPONENT, SUBCOMPONENT).
-        log_type: The type of the log (e.g. EVENT, RUNTIME, INPUT, OUTPUT, FEEDBACK, METADATA).
-
-    Returns:
-        A dictionary with the dependent fields for the schema.
-
-    Raises:
-        ValueError: If the tier is unknown.
-    """
-    if tier == Tier.SYSTEM:
-        if log_type == LogType.EVENT:
-            return {}
-
-        parent = Tier.SYSTEM
-    elif tier == Tier.SUBSYSTEM:
-        parent = Tier.SYSTEM if log_type == LogType.EVENT else Tier.SUBSYSTEM
-    elif tier == Tier.COMPONENT:
-        parent = Tier.SUBSYSTEM if log_type == LogType.EVENT else Tier.COMPONENT
-    elif tier == Tier.SUBCOMPONENT:
-        parent = Tier.COMPONENT if log_type == LogType.EVENT else Tier.SUBCOMPONENT
-    else:
-        raise ValueError(f"Unknown tier: {tier}")
-
-    if optional:
-        return {
-            f"{parent}_event_id": (Optional[ID], Field(default=None)),
-        }
-
-    return {
-        f"{parent}_event_id": (ID, Field()),
-    }
-
-
 class LogMetaclass(type):
     """Metaclass for LogSchema class."""
+    LOG_MIXIN_MAP: Dict[LogType, type[LogMixin]] = {
+        LogType.EVENT: EventLogMixin,
+        LogType.RUNTIME: RuntimeLogMixin,
+        LogType.INPUT: IOLogMixin[Any],
+        LogType.OUTPUT: IOLogMixin[Any],
+        LogType.FEEDBACK: IOLogMixin[Any],
+        LogType.METADATA: IOLogMixin[str],
+    }
+
+    QUERY_MIXIN_MAP: Dict[LogType, type[QueryMixin]] = {
+        LogType.EVENT: EventQueryMixin,
+        LogType.RUNTIME: RuntimeQueryMixin,
+        LogType.INPUT: IOLogQueryMixin,
+        LogType.OUTPUT: IOLogQueryMixin,
+        LogType.FEEDBACK: IOLogQueryMixin,
+        LogType.METADATA: IOLogQueryMixin,
+    }
 
     def __getitem__(
         cls, mixins: tuple[Tier, LogType, type[MixinType_co]]
     ) -> type[MixinType_co]:
+        # figure out dependency fields.
+        parent = mixins[0].parent if mixins[1] == LogType.EVENT else mixins[0]
+        dependent_mixin_fields = {}
+        name_suffix = "Query"
+
         if issubclass(mixins[2], QueryMixin):
-            name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}Query"
-            dependent_mixin_fields = dependent_mixin(mixins[0], mixins[1], optional=True)
-            base_class = QUERY_MIXIN_MAP[mixins[1]]
+            name_suffix = "Query"
+
+            if parent is not None:
+                dependent_mixin_fields[f"{parent}_event_id"] = (Optional[ID], Field(default=None))
+
+            base_class = cls.QUERY_MIXIN_MAP[mixins[1]]
         else:
-            name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
-            dependent_mixin_fields = dependent_mixin(mixins[0], mixins[1], optional=False)
-            base_class = (LOG_MIXIN_MAP[mixins[1]], mixins[2])
+            name_suffix = mixins[2].NAME
+
+            if parent is not None:
+                dependent_mixin_fields[f"{parent}_event_id"] = (ID, Field())
+
+            base_class = (cls.LOG_MIXIN_MAP[mixins[1]], mixins[2])
 
         return create_model(
-            name,
+            f"{mixins[0].capitalize()}{mixins[1].capitalize()}{name_suffix}",
             **dependent_mixin_fields,
             __base__=base_class,
         )
