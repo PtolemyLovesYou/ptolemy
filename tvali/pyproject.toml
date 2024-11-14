@@ -7,13 +7,16 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = {extras = ["standard"], version = "^0.115.4"}
-uvicorn = "^0.32.0"
-sqlalchemy = "^2.0.36"
-psycopg = "^3.2.3"
-strawberry-graphql = {extras = ["fastapi"], version = "^0.248.1"}
-tvali-utils = { path = "../tvali-utils/", develop = false }
+aiohttp = {version = "^3.11.0", optional = true}
+fastapi = {extras = ["standard"], version = "^0.115.4", optional = true}
+uvicorn = {version = "^0.32.0", optional = true}
+sqlalchemy = {version = "^2.0.36", optional = true}
+psycopg = {version = "^3.2.3", optional = true}
+strawberry-graphql = {extras = ["fastapi"], version = "^0.248.1", optional = true}
 
+[tool.poetry.extras]
+api = ["fastapi", "uvicorn", "sqlalchemy", "psycopg", "strawberry-graphql"]
+client = ["aiohttp"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

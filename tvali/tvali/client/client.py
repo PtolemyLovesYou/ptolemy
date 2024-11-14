@@ -2,7 +2,7 @@
 
 from typing import Optional, ClassVar, Generic, TypeVar
 from pydantic import BaseModel, create_model
-from tvali_utils import Parameters, Tier
+from ..utils import Parameters, Tier
 from .log.core import Log
 from .config import TransportConfig
 

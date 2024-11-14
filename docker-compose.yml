@@ -1,15 +1,14 @@
 services:
   tvali:
     build:
-      context: ./
-      dockerfile: tvali/Dockerfile
+      context: ./tvali
+      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
       - "8000:8000"
     volumes:
-      - ./tvali:/app/tvali
-      - ./tvali-utils:/app/tvali-utils
+      - ./tvali:/app
     networks:
       - tvali
     depends_on:

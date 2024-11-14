@@ -10,8 +10,8 @@ from pydantic import (
     BaseModel,
     ConfigDict,
 )
-from tvali_utils import ID, Timestamp, Parameters, Tier
 from ..config import TransportConfig
+from ...utils import ID, Timestamp, Parameters, Tier
 
 T = TypeVar("T")
 

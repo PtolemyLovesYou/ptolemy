@@ -2,8 +2,8 @@
 
 from typing import NewType, Generic, List, Callable, TypeVar
 from uuid import UUID
-from tvali_utils import LogType, Tier
 import strawberry
+from .....utils import LogType, Tier
 from ....db import models, session
 
 T = TypeVar("T")

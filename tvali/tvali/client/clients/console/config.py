@@ -5,7 +5,7 @@ import json
 from typing import Callable, Any
 from functools import cached_property
 from pydantic import Field
-from tvali_utils import Tier, LogType
+from ....utils import Tier, LogType
 from ...config import TransportConfig
 
 

@@ -2,7 +2,7 @@
 
 from typing import Generic, Optional, Dict, Any, ClassVar, TypeVar
 from pydantic import BaseModel, create_model, Field
-from tvali_utils import Tier, LogType, ID, Timestamp
+from .....utils import Tier, LogType, ID, Timestamp
 
 T = TypeVar("T")
 

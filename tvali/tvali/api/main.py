@@ -1,9 +1,9 @@
 """Tvali API"""
 
 from fastapi import FastAPI
-from .api.health import router as health_router
-from .api.v1.router import router as v1_router
-from .api.graphql.router import router as graphql_router
+from .routes.health import router as health_router
+from .routes.v1.router import router as v1_router
+from .routes.graphql.router import router as graphql_router
 from .db.session import Base, engine
 
 # import all models so they actually get created

@@ -4,7 +4,7 @@ from typing import Optional, Callable
 from uuid import UUID
 from datetime import datetime
 import strawberry
-from tvali_utils import LogType, Tier
+from .....utils import LogType, Tier
 from ....db import models, session
 
 

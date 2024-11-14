@@ -26,37 +26,22 @@ RUN apt-get update && apt-get install -y \
 RUN pip install -U pip setuptools && \
     pip install "poetry==${POETRY_VERSION}"
 
-FROM build as build1
+FROM build
 
-WORKDIR /app/tvali-utils
-
-# Install tvali-utils
-COPY tvali-utils/poetry.lock tvali-utils/pyproject.toml .
-
-RUN poetry install \
-    --no-cache \
-    --no-root \
-    --no-interaction \
-    --no-ansi
-
-COPY tvali-utils .
-RUN poetry install --only-root
-
-FROM build1 as build2
-
-WORKDIR /app/tvali
+WORKDIR /app
 
 ARG ENV=DEV
 
-COPY tvali/poetry.lock tvali/pyproject.toml .
+COPY poetry.lock pyproject.toml .
 
 RUN poetry install \
     --no-cache \
     --no-root \
     --no-interaction \
     --no-ansi \
+    -E api \
     $(if [ "$ENV" = "DEV" ]; then echo "--with dev"; fi)
 
-COPY tvali .
+COPY . .
 
-CMD ["uvicorn", "tvali.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "tvali.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

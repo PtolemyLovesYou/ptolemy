@@ -5,8 +5,8 @@ from typing import Callable, List, Annotated
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, Query
-from tvali_utils import Tier, LogType
 from ..schemas.log import Log, CreateSchema, RecordSchema, QueryMixin
+from .....utils import Tier, LogType
 from ....db import session, models
 
 logger = logging.getLogger(__name__)
