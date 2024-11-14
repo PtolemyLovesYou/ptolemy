@@ -1,7 +1,6 @@
 """Tvali Client."""
 
 from typing import Optional, ClassVar, Generic, TypeVar
-from abc import ABC
 from pydantic import BaseModel, create_model
 from tvali_utils import Parameters, Tier
 from .log.core import Log
@@ -9,27 +8,37 @@ from .config import TransportConfig
 
 TransportConfigType = TypeVar( # pylint: disable=invalid-name
     "TransportConfigType",
-    bound=TransportConfig
+    bound=TransportConfig,
+    covariant=True
     )
 
 LogType = TypeVar( # pylint: disable=invalid-name
     "LogType",
-    bound=Log
+    bound=Log,
+    covariant=True
 )
 
-class TvaliClient(BaseModel, Generic[TransportConfigType, LogType], ABC):
+class TvaliClient(BaseModel, Generic[TransportConfigType, LogType]):
     """Tvali client."""
-    TRANSPORT_CONFIG_CLS: ClassVar[TransportConfigType]
-    LOG_CLS: ClassVar[LogType]
+    TRANSPORT_CONFIG_CLS: ClassVar[type[TransportConfig]]
+    LOG_CLS: ClassVar[type[LogType]]
 
     @property
-    def transport_config(self) -> TransportConfig:
-        """Get transport config.
+    def transport_config(self) -> TransportConfigType:
+        """
+        Get the transport config.
+
+        The transport config is a pydantic model created from the client's model fields that
+        are specified in the transport config class.
+
+        The client's model fields are filtered by the transport config class's `model_fields`
+        attribute. The `model_fields` attribute is a dictionary of model field names to their
+        corresponding types.
 
         Returns:
-            TvaliConfig: Transport config
+            TransportConfigType: The transport config.
         """
-        config = self.TRANSPORT_CONFIG_CLS(
+        config : TransportConfigType = self.TRANSPORT_CONFIG_CLS(
             **self.model_dump(
                 include=self.TRANSPORT_CONFIG_CLS.model_fields.keys(),
             )
@@ -43,13 +52,12 @@ class TvaliClient(BaseModel, Generic[TransportConfigType, LogType], ABC):
         parameters: Optional[Parameters] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> Log:
+    ) -> LogType:
         """Trace."""
         return (
             self
             .LOG_CLS
-            .configure(Tier.SYSTEM, self.transport_config)
-            .new(
+            .configure(Tier.SYSTEM, self.transport_config)(
                 name=name,
                 parameters=parameters,
                 version=version,
@@ -59,13 +67,13 @@ class TvaliClient(BaseModel, Generic[TransportConfigType, LogType], ABC):
 
 def client_factory(
     name: str,
-    log_cls: type[Log],
-    transport_cls: type[TransportConfig]
-    ) -> type[TvaliClient]:
+    log_cls: type[LogType],
+    transport_cls: type[TransportConfigType]
+    ) -> type[TransportConfigType, TvaliClient[TransportConfigType, LogType]]: # type: ignore
     """Client factory."""
     return create_model(
         name,
-        __base__=(TvaliClient[transport_cls, log_cls], transport_cls),
-        LOG_CLS=(ClassVar[type[log_cls]], log_cls),
-        TRANSPORT_CONFIG_CLS=(ClassVar[type[transport_cls]], transport_cls),
+        __base__=(transport_cls, TvaliClient,),
+        TRANSPORT_CONFIG_CLS=(ClassVar[type[TransportConfigType]], transport_cls),
+        LOG_CLS=(ClassVar[type[LogType]], log_cls),
     )

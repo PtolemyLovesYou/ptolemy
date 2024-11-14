@@ -4,8 +4,4 @@ from ..client import client_factory
 from .log import ConsoleLog
 from .config import ConsoleConfig
 
-ConsoleClient = client_factory(
-    "ConsoleClient",
-    ConsoleLog,
-    ConsoleConfig
-)
+ConsoleClient = client_factory("ConsoleClient", ConsoleLog, ConsoleConfig)
