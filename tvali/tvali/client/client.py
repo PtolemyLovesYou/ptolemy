@@ -50,9 +50,11 @@ class TvaliClient(BaseModel, Generic[TransportConfigType_co, LogType_co]):
         parameters: Optional[Parameters] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> LogType_co:
+    ) -> Log:
         """Trace."""
-        return self.LOG_CLS.configure(Tier.SYSTEM, self.transport_config)(
+        return self.LOG_CLS.configure(
+            Tier.SYSTEM, self.LOG_CLS, self.transport_config
+            )(
             name=name,
             parameters=parameters,
             version=version,
