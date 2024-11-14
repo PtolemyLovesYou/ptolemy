@@ -7,7 +7,7 @@ from .config import TvaliConfig
 from ..log.core import Log
 
 
-class APILog(Log):
+class TvaliLog(Log):
     """API Log."""
 
     TRANSPORT_CONFIG: ClassVar[TvaliConfig]

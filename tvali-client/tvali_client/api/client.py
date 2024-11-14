@@ -3,7 +3,7 @@
 from typing import ClassVar
 from pydantic import create_model
 from ..client import TvaliClient
-from .log import APILog
+from .log import TvaliLog
 from .config import TvaliConfig
 
 
@@ -23,9 +23,9 @@ class Tvali(TvaliClient, TvaliConfig):
             )
         )
 
-    def log_class(self) -> type[APILog]:
+    def log_class(self) -> type[TvaliLog]:
         return create_model(
             "APILog",
-            __base__=APILog,
+            __base__=TvaliLog,
             TRANSPORT_CONFIG=(ClassVar[TvaliConfig], self.transport_config),
         )
