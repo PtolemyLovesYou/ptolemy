@@ -154,10 +154,13 @@ def dependent_mixin(
     else:
         raise ValueError(f"Unknown tier: {tier}")
 
-    t = Optional[ID] if optional else ID
+    if optional:
+        return {
+            f"{parent}_event_id": (Optional[ID], Field(default=None)),
+        }
 
     return {
-        f"{parent}_event_id": (t, Field()),
+        f"{parent}_event_id": (ID, Field()),
     }
 
 

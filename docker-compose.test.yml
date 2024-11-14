@@ -1,0 +1,34 @@
+services:
+  tvali:
+    build:
+      context: ./tvali
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./tvali:/app
+    networks:
+      - tvali
+    depends_on:
+      - postgres
+    command: python3 -m pytest . --force-sugar -vvv
+  postgres:
+    image: postgres:17
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql
+    networks:
+      - tvali
+
+volumes:
+  postgres:
+    driver: local
+
+networks:
+  tvali:
+    driver: bridge

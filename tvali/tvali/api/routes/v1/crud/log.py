@@ -67,7 +67,6 @@ class LogCRUDFactory(BaseModel):
                     result = await db.execute(
                         select(self.db_class)
                         .filter(*filter_params)
-                        .order_by(query.order_by)
                         .limit(query.limit)
                         .offset(query.offset)
                     )
