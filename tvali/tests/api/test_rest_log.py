@@ -9,7 +9,7 @@ from tvali.utils import Tier, LogType
 
 client = TestClient(
     app,
-    )
+)
 
 tier_ids = {tier.value: uuid4().hex for tier in Tier}
 
@@ -115,6 +115,7 @@ def test_delete_not_found(tier: Tier, log_type: LogType):
 
     assert response.status_code == 404
 
+
 @pytest.mark.parametrize("log_type", [*LogType])
 @pytest.mark.parametrize("tier", [*Tier])
 def test_malformed_create(tier: Tier, log_type: LogType):
@@ -125,6 +126,7 @@ def test_malformed_create(tier: Tier, log_type: LogType):
     )
 
     assert response.status_code == 422
+
 
 @pytest.mark.parametrize("log_type", [*LogType])
 @pytest.mark.parametrize("tier", [*Tier])

@@ -12,6 +12,7 @@ event_dict = {
     "environment": "DEV",
 }
 
+
 @pytest.mark.asyncio
 async def test_api_client():
     """Test API client."""
@@ -40,7 +41,7 @@ async def test_api_client():
                         outputs={"foo": "bar"},
                         feedback={"foo": "bar"},
                         metadata={"foo": "bar"},
-                        )
+                    )
 
     await sc_log.delete()
     await c_log.delete()

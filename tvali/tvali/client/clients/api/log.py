@@ -10,6 +10,7 @@ from ...log.core import Log
 
 logger = logging.getLogger(__name__)
 
+
 class TvaliLog(Log):
     """API Log."""
 
@@ -49,7 +50,7 @@ class TvaliLog(Log):
             ) as response:
                 result = await response.json()
                 if response.status == 404:
-                    logger.warning("Failed to delete log: %s", result['detail'])
+                    logger.warning("Failed to delete log: %s", result["detail"])
 
     async def push_on_beginning(self) -> None:
         async with aiohttp.ClientSession(

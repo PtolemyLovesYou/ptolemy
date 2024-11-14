@@ -10,7 +10,7 @@ TransportConfigType_co = TypeVar(  # pylint: disable=invalid-name
     "TransportConfigType_co", bound=TransportConfig, covariant=True
 )
 
-LogType_co = TypeVar( # pylint: disable=invalid-name
+LogType_co = TypeVar(  # pylint: disable=invalid-name
     "LogType_co", bound=Log, covariant=True
 )
 
@@ -52,9 +52,7 @@ class TvaliClient(BaseModel, Generic[TransportConfigType_co, LogType_co]):
         environment: Optional[str] = None,
     ) -> Log:
         """Trace."""
-        return self.LOG_CLS.configure(
-            Tier.SYSTEM, self.LOG_CLS, self.transport_config
-            )(
+        return self.LOG_CLS.configure(Tier.SYSTEM, self.LOG_CLS, self.transport_config)(
             name=name,
             parameters=parameters,
             version=version,

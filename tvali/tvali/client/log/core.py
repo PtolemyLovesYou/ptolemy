@@ -108,7 +108,7 @@ class Log(BaseModel, ABC):
     model_config = ConfigDict(validate_assignment=True)
 
     TRANSPORT_CONFIG: ClassVar[TransportConfig]
-    LOG_CLS: ClassVar[type['Log']]
+    LOG_CLS: ClassVar[type["Log"]]
     TIER: ClassVar[Tier]
 
     runtime: Runtime = Field(default_factory=Runtime)
@@ -124,7 +124,9 @@ class Log(BaseModel, ABC):
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
 
     @classmethod
-    def configure(cls, tier: Tier, log_cls: type["Log"],transport_config: TransportConfig) -> type["Log"]:
+    def configure(
+        cls, tier: Tier, log_cls: type["Log"], transport_config: TransportConfig
+    ) -> type["Log"]:
         """
         Create a new log type with the given tier.
 
@@ -343,9 +345,7 @@ class Log(BaseModel, ABC):
 
         id_kwargs = {f"{self.TIER}_event_id": self.id}
 
-        return self.configure(
-            self.TIER.child, self.LOG_CLS, self.TRANSPORT_CONFIG
-            )(
+        return self.configure(self.TIER.child, self.LOG_CLS, self.TRANSPORT_CONFIG)(
             **id_kwargs,
             name=name,
             parameters=parameters,

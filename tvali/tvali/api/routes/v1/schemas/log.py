@@ -49,6 +49,7 @@ class IOLogMixin(Mixin, Generic[T]):
 # Query mixins
 class QueryMixin(Mixin):
     """Query Mixin."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: Optional[ID] = None
