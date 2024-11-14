@@ -13,6 +13,21 @@ services:
       - tvali
     depends_on:
       - postgres
+  tvali_test:
+    build:
+      context: ./tvali
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./tvali:/app
+    networks:
+      - tvali
+    depends_on:
+      - postgres
+      - tvali
     command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html
   postgres:
     image: postgres:17

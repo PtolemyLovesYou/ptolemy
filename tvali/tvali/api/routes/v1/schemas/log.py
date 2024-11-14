@@ -1,7 +1,7 @@
 """Log schema factory."""
 
 from typing import Generic, Optional, Dict, Any, ClassVar, TypeVar
-from pydantic import BaseModel, create_model, Field
+from pydantic import BaseModel, create_model, Field, ConfigDict
 from .....utils import Tier, LogType, ID, Timestamp
 
 T = TypeVar("T")
@@ -49,6 +49,7 @@ class IOLogMixin(Mixin, Generic[T]):
 # Query mixins
 class QueryMixin(Mixin):
     """Query Mixin."""
+    model_config = ConfigDict(extra="forbid")
 
     id: Optional[ID] = None
 

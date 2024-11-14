@@ -1,4 +1,4 @@
-"""Test create methods."""
+"""Test REST API methods."""
 
 from uuid import uuid4
 from datetime import datetime
@@ -7,7 +7,9 @@ from fastapi.testclient import TestClient
 from tvali.api.main import app
 from tvali.utils import Tier, LogType
 
-client = TestClient(app)
+client = TestClient(
+    app,
+    )
 
 tier_ids = {tier.value: uuid4().hex for tier in Tier}
 
@@ -105,8 +107,30 @@ def test_delete_log(tier: Tier):
 
 
 @pytest.mark.parametrize("tier", [*Tier])
+@pytest.mark.dependency(name="test_delete_not_found", depends=["test_delete_log"])
 def test_delete_not_found(tier: Tier):
     """Test delete log after it has been deleted."""
     response = client.delete(f"/v1/log/{tier.value}/event/{tier_ids[tier]}")
 
     assert response.status_code == 404
+
+@pytest.mark.parametrize("log_type", [*LogType])
+@pytest.mark.parametrize("tier", [*Tier])
+def test_malformed_create(tier: Tier, log_type: LogType):
+    """Test malformed create."""
+    response = client.post(
+        f"/v1/log/{tier.value}/{log_type}",
+        json=[{}],
+    )
+
+    assert response.status_code == 422
+
+@pytest.mark.parametrize("log_type", [*LogType])
+@pytest.mark.parametrize("tier", [*Tier])
+def test_malformed_get(tier: Tier, log_type: LogType):
+    """Test malformed create."""
+    response = client.get(
+        f"/v1/log/{tier.value}/{log_type}/?nonExistentType=foo",
+    )
+
+    assert response.status_code == 422
