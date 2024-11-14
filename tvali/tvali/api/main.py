@@ -14,7 +14,7 @@ app = FastAPI(
     description="Tvali API",
     version="0.0.1",
     docs_url="/swagger",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.include_router(health_router)

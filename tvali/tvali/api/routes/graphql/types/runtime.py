@@ -40,9 +40,7 @@ def runtime_resolver_factory(tier: Tier) -> Callable[[strawberry.Parent], Runtim
     async def wrapper(parent: strawberry.Parent) -> Runtime:
         model: models.EventRuntime = models.DB_OBJ_MAP[LogType.RUNTIME][tier]
         async with session.get_db() as db:
-            result = await db.execute(
-                select(model).where(model.parent_id == parent.id)
-            )
+            result = await db.execute(select(model).where(model.parent_id == parent.id))
 
             obj = result.scalars().one()
 

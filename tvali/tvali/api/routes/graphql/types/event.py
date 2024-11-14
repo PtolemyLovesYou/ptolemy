@@ -80,21 +80,18 @@ def child_events_resolver(
         }
 
         async with session.get_db() as db:
-            result = await (
-                db
-                .execute(
-                    select(child_db_cls)
-                    .where(
-                        *[
-                            getattr(child_db_cls, k) == v
-                            for k, v in obj_filters.items()
-                            if v is not strawberry.UNSET
-                            ]
-                        )
-                    .limit(limit)
-                    .offset(offset)
-                    )
+            result = await db.execute(
+                select(child_db_cls)
+                .where(
+                    *[
+                        getattr(child_db_cls, k) == v
+                        for k, v in obj_filters.items()
+                        if v is not strawberry.UNSET
+                    ]
                 )
+                .limit(limit)
+                .offset(offset)
+            )
 
             objs = result.scalars().all()
 

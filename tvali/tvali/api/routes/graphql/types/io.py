@@ -64,10 +64,7 @@ def io_resolver_factory(
     async def wrapper(parent: strawberry.Parent) -> List[io_type]:
         model = models.DB_OBJ_MAP[log_type][tier]
         async with session.get_db() as db:
-            result = await db.execute(
-                select(model)
-                .where(model.parent_id == parent.id)
-            )
+            result = await db.execute(select(model).where(model.parent_id == parent.id))
 
         objs = result.scalars().all()
 

@@ -1,4 +1,5 @@
 """Test create methods."""
+
 from uuid import uuid4
 from datetime import datetime
 import pytest
@@ -10,6 +11,7 @@ client = TestClient(app)
 
 tier_ids = {tier.value: uuid4().hex for tier in Tier}
 
+
 def get_event_data(tier: Tier):
     """Get event data."""
     return {
@@ -20,6 +22,7 @@ def get_event_data(tier: Tier):
         "version": "0.0.1test",
     }
 
+
 def get_runtime_data(tier: Tier):
     """Get runtime data."""
     return {
@@ -29,6 +32,7 @@ def get_runtime_data(tier: Tier):
         "end_time": datetime.now().isoformat(),
     }
 
+
 def get_io_data(tier: Tier):
     """Get IO data."""
     return {
@@ -37,6 +41,7 @@ def get_io_data(tier: Tier):
         "field_name": "foo",
         "field_value": "bar",
     }
+
 
 @pytest.mark.parametrize("log_type", [*LogType])
 @pytest.mark.parametrize("tier", [*Tier])
@@ -56,10 +61,11 @@ def test_create(tier: Tier, log_type: LogType):
     response = client.post(
         f"/v1/log/{tier.value}/{log_type.value}",
         json=[event_data],
-        )
+    )
 
     assert response.status_code == 200
     assert response.json()[0]["id"] == event_data["id"]
+
 
 @pytest.mark.parametrize("log_type", [*LogType])
 @pytest.mark.parametrize("tier", [*Tier])
@@ -80,6 +86,7 @@ def test_get_log(tier: Tier, log_type: LogType):
     else:
         assert response.json()[0][f"{tier}_event_id"] == tier_ids[tier]
 
+
 @pytest.mark.parametrize("tier", [*reversed(Tier)])
 @pytest.mark.dependency(name="test_delete_log", depends=["test_get_log"])
 def test_delete_log(tier: Tier):
@@ -95,6 +102,7 @@ def test_delete_log(tier: Tier):
 
         assert response.status_code == 200
         assert len(response.json()) == 0
+
 
 @pytest.mark.parametrize("tier", [*Tier])
 def test_delete_not_found(tier: Tier):

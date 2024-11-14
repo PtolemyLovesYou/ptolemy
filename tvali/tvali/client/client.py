@@ -10,7 +10,9 @@ TransportConfigType_co = TypeVar(  # pylint: disable=invalid-name
     "TransportConfigType_co", bound=TransportConfig, covariant=True
 )
 
-LogType_co = TypeVar("LogType_co", bound=Log, covariant=True)  # pylint: disable=invalid-name
+LogType_co = TypeVar(
+    "LogType_co", bound=Log, covariant=True
+)  # pylint: disable=invalid-name
 
 
 class TvaliClient(BaseModel, Generic[TransportConfigType_co, LogType_co]):

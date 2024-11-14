@@ -6,18 +6,20 @@ from .....utils import Tier, LogType, ID, Timestamp
 
 T = TypeVar("T")
 
+
 class Mixin(BaseModel):
     """Mixin."""
 
-MixinType_co = TypeVar( # pylint: disable=invalid-name
-    "MixinType_co",
-    bound=Mixin,
-    covariant=True
-    )
+
+MixinType_co = TypeVar(  # pylint: disable=invalid-name
+    "MixinType_co", bound=Mixin, covariant=True
+)
+
 
 # Log mixins
 class LogMixin(Mixin):
     """Log mixin."""
+
 
 class EventLogMixin(LogMixin):
     """Event mixin."""
@@ -52,6 +54,7 @@ class QueryMixin(Mixin):
 
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
+
 
 class EventQueryMixin(QueryMixin):
     """Event Query Mixin."""
@@ -167,7 +170,9 @@ def dependent_mixin(
 class LogMetaclass(type):
     """Metaclass for LogSchema class."""
 
-    def __getitem__(cls, mixins: tuple[Tier, LogType, type[MixinType_co]]) -> type[MixinType_co]:
+    def __getitem__(
+        cls, mixins: tuple[Tier, LogType, type[MixinType_co]]
+    ) -> type[MixinType_co]:
         if issubclass(mixins[2], QueryMixin):
             return create_model(
                 f"{mixins[0].capitalize()}{mixins[1].capitalize()}Query",

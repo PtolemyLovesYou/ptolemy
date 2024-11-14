@@ -94,8 +94,7 @@ class LogCRUDFactory(BaseModel):
             async with session.get_db() as db:
                 try:
                     result = await db.execute(
-                        select(self.db_class)
-                        .where(self.db_class.id == id_)
+                        select(self.db_class).where(self.db_class.id == id_)
                     )
 
                     item = result.scalars().one()
@@ -107,7 +106,7 @@ class LogCRUDFactory(BaseModel):
                     await db.rollback()
                     raise HTTPException(
                         status_code=404,
-                        detail=f"Could not delete {self.tier.capitalize()}{self.log_type.capitalize()} with id {id_}: item does not exist"
+                        detail=f"Could not delete {self.tier.capitalize()}{self.log_type.capitalize()} with id {id_}: item does not exist",
                     ) from e
                 except SQLAlchemyError as e:
                     await db.rollback()

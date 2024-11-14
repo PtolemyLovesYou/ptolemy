@@ -13,7 +13,7 @@ services:
       - tvali
     depends_on:
       - postgres
-    command: python3 -m pytest . --force-sugar -vvv
+    command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html
   postgres:
     image: postgres:17
     env_file:
