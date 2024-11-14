@@ -176,17 +176,18 @@ class LogMetaclass(type):
         cls, mixins: tuple[Tier, LogType, type[MixinType_co]]
     ) -> type[MixinType_co]:
         if issubclass(mixins[2], QueryMixin):
-            return create_model(
-                f"{mixins[0].capitalize()}{mixins[1].capitalize()}Query",
-                **dependent_mixin(mixins[0], mixins[1], optional=True),
-                __base__=(QUERY_MIXIN_MAP[mixins[1]]),
-            )
+            name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}Query"
+            dependent_mixin_fields = dependent_mixin(mixins[0], mixins[1], optional=True)
+            base_class = QUERY_MIXIN_MAP[mixins[1]]
+        else:
+            name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
+            dependent_mixin_fields = dependent_mixin(mixins[0], mixins[1], optional=False)
+            base_class = (LOG_MIXIN_MAP[mixins[1]], mixins[2])
 
-        name = f"{mixins[0].capitalize()}{mixins[1].capitalize()}{mixins[2].NAME}"
         return create_model(
             name,
-            **dependent_mixin(mixins[0], mixins[1], optional=False),
-            __base__=(LOG_MIXIN_MAP[mixins[1]], mixins[2]),
+            **dependent_mixin_fields,
+            __base__=base_class,
         )
 
 
