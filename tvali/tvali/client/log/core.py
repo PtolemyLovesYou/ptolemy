@@ -35,7 +35,7 @@ class IORecord(BaseModel, Generic[T]):
         )
 
 
-class Runtime(BaseModel):
+class RuntimeMixin(BaseModel):
     """Runtime model."""
 
     model_config = ConfigDict(validate_assignment=True)
@@ -102,7 +102,25 @@ class Runtime(BaseModel):
         self.error_content = error_content
 
 
-class Log(BaseModel, ABC):
+class EventRecordMixin(BaseModel):
+    """Event record mixin."""
+    id: ID = Field(default_factory=ID.new)
+    name: str = Field()
+    parameters: Optional[Parameters] = Field(default=None)
+    version: Optional[str] = Field(min_length=1, max_length=16, default=None)
+    environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
+
+
+class IOMixin(BaseModel):
+    """IO mixin."""
+    inputs: Optional[List[IORecord[Any]]] = Field(default_factory=list)
+    outputs: Optional[List[IORecord[Any]]] = Field(default_factory=list)
+    feedback: Optional[List[IORecord[Any]]] = Field(default_factory=list)
+    metadata: Optional[List[IORecord[str]]] = Field(default_factory=list)
+
+
+
+class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
     """Log base class."""
 
     model_config = ConfigDict(validate_assignment=True)
@@ -110,18 +128,6 @@ class Log(BaseModel, ABC):
     TRANSPORT_CONFIG: ClassVar[TransportConfig]
     LOG_CLS: ClassVar[type["Log"]]
     TIER: ClassVar[Tier]
-
-    runtime: Runtime = Field(default_factory=Runtime)
-    inputs: Optional[List[IORecord[Any]]] = Field(default=None)
-    outputs: Optional[List[IORecord[Any]]] = Field(default=None)
-    feedback: Optional[List[IORecord[Any]]] = Field(default=None)
-    metadata: Optional[List[IORecord[str]]] = Field(default=None)
-
-    id: ID = Field(default_factory=ID.new)
-    name: str = Field()
-    parameters: Optional[Parameters] = Field(default=None)
-    version: Optional[str] = Field(min_length=1, max_length=16, default=None)
-    environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
 
     @classmethod
     def configure(
@@ -177,25 +183,25 @@ class Log(BaseModel, ABC):
     def runtime_dict(self) -> dict:
         """Get log runtime."""
         return (
-            self.runtime.model_dump(exclude_none=True)  # pylint: disable=no-member
+            self.model_dump(include=[*RuntimeMixin.model_fields.keys()], exclude_none=True)  # pylint: disable=no-member
             | self.id_dict()
         )
 
     def inputs_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log inputs."""
-        return [i.model_dump() for i in self.inputs] if self.inputs else None
+        return [i.model_dump() for i in self.inputs] or None
 
     def outputs_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log outputs."""
-        return [o.model_dump() for o in self.outputs] if self.outputs else None
+        return [o.model_dump() for o in self.outputs] or None
 
     def feedback_dicts(self) -> List[Dict[str, Any]] | None:
         """Get log feedback."""
-        return [f.model_dump() for f in self.feedback] if self.feedback else None
+        return [f.model_dump() for f in self.feedback] or None
 
     def metadata_dicts(self) -> List[Dict[str, str]] | None:
         """Get log metadata."""
-        return [m.model_dump() for m in self.metadata] if self.metadata else None
+        return [m.model_dump() for m in self.metadata] or None
 
     async def log(
         self,
@@ -217,52 +223,48 @@ class Log(BaseModel, ABC):
         ValueError: If any of the parameters are already set
         """
         if inputs is not None:
-            if self.inputs is not None:
-                raise ValueError("Inputs already set")
-            self.inputs = [
-                IORecord[Any].tier(self.TIER)(
-                    field_name=field_name, field_value=field_value, **self.id_dict()
+            for field_name, field_value in inputs.items():
+                if field_name in self.inputs:
+                    raise ValueError(f"Input {field_name} already set")
+
+                self.inputs.append( # pylint: disable=no-member
+                    IORecord[Any].tier(self.TIER)(
+                        field_name=field_name, field_value=field_value, **self.id_dict()
+                    )
                 )
-                for field_name, field_value in inputs.items()
-            ]
 
         if outputs is not None:
-            if self.outputs is not None:
-                raise ValueError("Outputs already set")
-            self.outputs = [
-                IORecord[Any].tier(self.TIER)(
-                    field_name=field_name, field_value=field_value, **self.id_dict()
+            for field_name, field_value in outputs.items():
+                if field_name in self.outputs:
+                    raise ValueError(f"Output {field_name} already set")
+
+                self.outputs.append( # pylint: disable=no-member
+                    IORecord[Any].tier(self.TIER)(
+                        field_name=field_name, field_value=field_value, **self.id_dict()
+                    )
                 )
-                for field_name, field_value in outputs.items()
-            ]
 
         if feedback is not None:
-            if self.feedback is not None:
-                raise ValueError("Feedback already set")
-            self.feedback = [
-                IORecord[Any].tier(self.TIER)(
-                    field_name=field_name, field_value=field_value, **self.id_dict()
+            for field_name, field_value in feedback.items():
+                if field_name in self.feedback:
+                    raise ValueError(f"Feedback {field_name} already set")
+
+                self.feedback.append( # pylint: disable=no-member
+                    IORecord[Any].tier(self.TIER)(
+                        field_name=field_name, field_value=field_value, **self.id_dict()
+                    )
                 )
-                for field_name, field_value in feedback.items()
-            ]
 
         if metadata is not None:
-            if self.metadata is not None:
-                raise ValueError("Metadata already set")
-            self.metadata = [
-                IORecord[str].tier(self.TIER)(
-                    field_name=field_name, field_value=field_value, **self.id_dict()
+            for field_name, field_value in metadata.items():
+                if field_name in self.metadata:
+                    raise ValueError(f"Metadata {field_name} already set")
+
+                self.metadata.append( # pylint: disable=no-member
+                    IORecord[str].tier(self.TIER)(
+                        field_name=field_name, field_value=field_value, **self.id_dict()
+                    )
                 )
-                for field_name, field_value in metadata.items()
-            ]
-
-    def start(self) -> None:
-        """Start runtime."""
-        self.runtime.start()  # pylint: disable=no-member
-
-    def end(self) -> None:
-        """End runtime."""
-        self.runtime.end()  # pylint: disable=no-member
 
     @abstractmethod
     async def push_on_beginning(self) -> None:
@@ -296,7 +298,7 @@ class Log(BaseModel, ABC):
         try:
             yield
         except Exception as e:
-            self.runtime.log_error(  # pylint: disable=no-member
+            self.log_error(  # pylint: disable=no-member
                 e.__class__.__name__, traceback.format_exc()
             )
             raise e
@@ -304,7 +306,7 @@ class Log(BaseModel, ABC):
             if time:
                 self.end()
 
-            if time and not self.runtime.completed:  # pylint: disable=no-member
+            if time and not self.completed:  # pylint: disable=no-member
                 raise RuntimeError(
                     "Runtime isn't completed. Make sure to call .start() and .end() inside your .observe() clause."
                 )
