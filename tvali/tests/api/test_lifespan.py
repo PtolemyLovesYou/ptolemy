@@ -12,6 +12,6 @@ async def test_lifespan():
     in the database when called with the app object.
 
     """
-    
+
     async with lifespan(app):
         pass
