@@ -809,17 +809,6 @@ test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "d
 tqdm = ["tqdm"]
 
 [[package]]
-name = "graphql-core"
-version = "3.2.5"
-description = "GraphQL implementation for Python, a port of GraphQL.js, the JavaScript reference implementation for GraphQL."
-optional = true
-python-versions = "<4,>=3.6"
-files = [
-    {file = "graphql_core-3.2.5-py3-none-any.whl", hash = "sha256:2f150d5096448aa4f8ab26268567bbfeef823769893b39c1a2e1409590939c8a"},
-    {file = "graphql_core-3.2.5.tar.gz", hash = "sha256:e671b90ed653c808715645e3998b7ab67d382d55467b7e2978549111bbabf8d5"},
-]
-
-[[package]]
 name = "greenlet"
 version = "3.1.1"
 description = "Lightweight in-process concurrent programming"
@@ -1949,20 +1938,6 @@ termcolor = ">=2.1.0"
 dev = ["black", "flake8", "pre-commit"]
 
 [[package]]
-name = "python-dateutil"
-version = "2.9.0.post0"
-description = "Extensions to the standard Python datetime module"
-optional = true
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-files = [
-    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
-    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
-]
-
-[package.dependencies]
-six = ">=1.5"
-
-[[package]]
 name = "python-dotenv"
 version = "1.0.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
@@ -2120,17 +2095,6 @@ files = [
 ]
 
 [[package]]
-name = "six"
-version = "1.16.0"
-description = "Python 2 and 3 compatibility utilities"
-optional = true
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
-files = [
-    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
-    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
-]
-
-[[package]]
 name = "sniffio"
 version = "1.3.1"
 description = "Sniff out which async library your code is running under"
@@ -2252,42 +2216,6 @@ anyio = ">=3.4.0,<5"
 
 [package.extras]
 full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7)", "pyyaml"]
-
-[[package]]
-name = "strawberry-graphql"
-version = "0.248.1"
-description = "A library for creating GraphQL APIs"
-optional = true
-python-versions = "<4.0,>=3.8"
-files = [
-    {file = "strawberry_graphql-0.248.1-py3-none-any.whl", hash = "sha256:04e0b966ff7972e668095824358766496d432fa61b38833bcb8d1b3115d88753"},
-    {file = "strawberry_graphql-0.248.1.tar.gz", hash = "sha256:d05870ada9f0ff3d536813834e7deb14f3b93a97f551d88be887c301b0c000ab"},
-]
-
-[package.dependencies]
-fastapi = {version = ">=0.65.2", optional = true, markers = "extra == \"fastapi\""}
-graphql-core = ">=3.2.0,<3.4.0"
-python-dateutil = ">=2.7.0,<3.0.0"
-python-multipart = {version = ">=0.0.7", optional = true, markers = "extra == \"asgi\" or extra == \"debug-server\" or extra == \"fastapi\""}
-typing-extensions = ">=4.5.0"
-
-[package.extras]
-aiohttp = ["aiohttp (>=3.7.4.post0,<4.0.0)"]
-asgi = ["python-multipart (>=0.0.7)", "starlette (>=0.18.0)"]
-chalice = ["chalice (>=1.22,<2.0)"]
-channels = ["asgiref (>=3.2,<4.0)", "channels (>=3.0.5)"]
-cli = ["graphlib_backport", "libcst (>=0.4.7)", "pygments (>=2.3,<3.0)", "rich (>=12.0.0)", "typer (>=0.7.0)"]
-debug = ["libcst (>=0.4.7)", "rich (>=12.0.0)"]
-debug-server = ["libcst (>=0.4.7)", "pygments (>=2.3,<3.0)", "python-multipart (>=0.0.7)", "rich (>=12.0.0)", "starlette (>=0.18.0)", "typer (>=0.7.0)", "uvicorn (>=0.11.6)"]
-django = ["Django (>=3.2)", "asgiref (>=3.2,<4.0)"]
-fastapi = ["fastapi (>=0.65.2)", "python-multipart (>=0.0.7)"]
-flask = ["flask (>=1.1)"]
-litestar = ["litestar (>=2)"]
-opentelemetry = ["opentelemetry-api (<2)", "opentelemetry-sdk (<2)"]
-pydantic = ["pydantic (>1.6.1)"]
-pyinstrument = ["pyinstrument (>=4.0.0)"]
-quart = ["quart (>=0.19.3)"]
-sanic = ["sanic (>=20.12.2)"]
 
 [[package]]
 name = "termcolor"
@@ -2889,4 +2817,4 @@ openai = ["openai"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "41b91eb75221973760b2c8594b3d56f3e1dfefae43da0c349295b14dd9c101e2"
+content-hash = "41458623aa23abb2a248f36a813c0893af157feb076fb16efd7392dba008ef5e"
