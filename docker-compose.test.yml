@@ -28,7 +28,7 @@ services:
     depends_on:
       - postgres
       - tvali
-    command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html
+    command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html --profile --profile-svg
   postgres:
     image: postgres:17
     env_file:

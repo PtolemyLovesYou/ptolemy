@@ -809,6 +809,17 @@ test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "d
 tqdm = ["tqdm"]
 
 [[package]]
+name = "gprof2dot"
+version = "2024.6.6"
+description = "Generate a dot graph from the output of several profilers."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "gprof2dot-2024.6.6-py2.py3-none-any.whl", hash = "sha256:45b14ad7ce64e299c8f526881007b9eb2c6b75505d5613e96e66ee4d5ab33696"},
+    {file = "gprof2dot-2024.6.6.tar.gz", hash = "sha256:fa1420c60025a9eb7734f65225b4da02a10fc6dd741b37fa129bc6b41951e5ab"},
+]
+
+[[package]]
 name = "greenlet"
 version = "3.1.1"
 description = "Lightweight in-process concurrent programming"
@@ -1919,6 +1930,25 @@ pytest = ">=3.7.0"
 setuptools = "*"
 
 [[package]]
+name = "pytest-profiling"
+version = "1.7.0"
+description = "Profiling plugin for py.test"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-profiling-1.7.0.tar.gz", hash = "sha256:93938f147662225d2b8bd5af89587b979652426a8a6ffd7e73ec4a23e24b7f29"},
+    {file = "pytest_profiling-1.7.0-py2.py3-none-any.whl", hash = "sha256:999cc9ac94f2e528e3f5d43465da277429984a1c237ae9818f8cfd0b06acb019"},
+]
+
+[package.dependencies]
+gprof2dot = "*"
+pytest = "*"
+six = "*"
+
+[package.extras]
+tests = ["pytest-virtualenv"]
+
+[[package]]
 name = "pytest-sugar"
 version = "1.0.0"
 description = "pytest-sugar is a plugin for pytest that changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly)."
@@ -2092,6 +2122,17 @@ python-versions = ">=3.7"
 files = [
     {file = "shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"},
     {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
+]
+
+[[package]]
+name = "six"
+version = "1.16.0"
+description = "Python 2 and 3 compatibility utilities"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
+    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 
 [[package]]
@@ -2809,7 +2850,7 @@ propcache = ">=0.2.0"
 
 [extras]
 anthropic = ["anthropic"]
-api = ["fastapi", "psycopg", "sqlalchemy", "strawberry-graphql", "uvicorn"]
+api = ["fastapi", "psycopg", "sqlalchemy", "uvicorn"]
 cohere = ["cohere"]
 groq = ["groq"]
 openai = ["openai"]
@@ -2817,4 +2858,4 @@ openai = ["openai"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "41458623aa23abb2a248f36a813c0893af157feb076fb16efd7392dba008ef5e"
+content-hash = "bbdc6b77eda7ea6fabb3ba38dcbe57a12449dcb77f6fe5281d73f90055945b35"
