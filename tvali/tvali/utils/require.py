@@ -27,7 +27,7 @@ def require(
             except pkg_resources.DistributionNotFound as e:
                 # Raise an error if the required extras are not installed
                 raise ImportError(
-                    f"This functionality requires the following extras to be installed: {required_extras}. To install, run `pip install tvali[{','.join(required_extras)}]`"
+                    f"This functionality requires the following extras to be installed: {required_extras}. To install, run `pip install tvali[{','.join(required_extras)}]` or `poetry install -E {' -E '.join(required_extras)}"
                     ) from e
 
         return wrapper
