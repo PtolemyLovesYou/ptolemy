@@ -1,6 +1,8 @@
 """Log."""
 
 from typing import Dict, Optional, ClassVar, Any, List, Generic, TypeVar
+import uuid
+from datetime import datetime
 from abc import abstractmethod, ABC
 import traceback
 from contextlib import asynccontextmanager
@@ -19,7 +21,7 @@ T = TypeVar("T")
 class IORecord(BaseModel, Generic[T]):
     """IO record."""
 
-    id: ID = Field(default_factory=ID.new)
+    id: ID = Field(default_factory=uuid.uuid4)
     field_name: str
     field_value: T
 
@@ -66,7 +68,7 @@ class RuntimeMixin(BaseModel):
         if self.end_time:
             raise ValueError("Runtime already ended")
 
-        self.start_time = Timestamp.now()
+        self.start_time = datetime.now()
 
     def end(self):
         """
@@ -82,7 +84,7 @@ class RuntimeMixin(BaseModel):
         if self.end_time:
             raise ValueError("Runtime already ended")
 
-        self.end_time = Timestamp.now()
+        self.end_time = datetime.now()
 
     def log_error(self, error_type: str, error_content: str):
         """
@@ -104,7 +106,8 @@ class RuntimeMixin(BaseModel):
 
 class EventRecordMixin(BaseModel):
     """Event record mixin."""
-    id: ID = Field(default_factory=ID.new)
+
+    id: ID = Field(default_factory=uuid.uuid4)
     name: str = Field()
     parameters: Optional[Parameters] = Field(default=None)
     version: Optional[str] = Field(min_length=1, max_length=16, default=None)
@@ -113,11 +116,11 @@ class EventRecordMixin(BaseModel):
 
 class IOMixin(BaseModel):
     """IO mixin."""
+
     inputs: Optional[List[IORecord[Any]]] = Field(default_factory=list)
     outputs: Optional[List[IORecord[Any]]] = Field(default_factory=list)
     feedback: Optional[List[IORecord[Any]]] = Field(default_factory=list)
     metadata: Optional[List[IORecord[str]]] = Field(default_factory=list)
-
 
 
 class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
@@ -170,7 +173,7 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
             as the key and the serialized ID as the value.
         """
         return {
-            f"{self.TIER}_event_id": self.id.model_dump()  # pylint: disable=no-member
+            f"{self.TIER}_event_id": self.id.hex  # pylint: disable=no-member
         }
 
     def event_dict(self) -> dict:
@@ -183,7 +186,9 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
     def runtime_dict(self) -> dict:
         """Get log runtime."""
         return (
-            self.model_dump(include=[*RuntimeMixin.model_fields.keys()], exclude_none=True)  # pylint: disable=no-member
+            self.model_dump(
+                include=[*RuntimeMixin.model_fields.keys()], exclude_none=True
+            )  # pylint: disable=no-member
             | self.id_dict()
         )
 
@@ -227,7 +232,7 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
                 if field_name in self.inputs:
                     raise ValueError(f"Input {field_name} already set")
 
-                self.inputs.append( # pylint: disable=no-member
+                self.inputs.append(  # pylint: disable=no-member
                     IORecord[Any].tier(self.TIER)(
                         field_name=field_name, field_value=field_value, **self.id_dict()
                     )
@@ -238,7 +243,7 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
                 if field_name in self.outputs:
                     raise ValueError(f"Output {field_name} already set")
 
-                self.outputs.append( # pylint: disable=no-member
+                self.outputs.append(  # pylint: disable=no-member
                     IORecord[Any].tier(self.TIER)(
                         field_name=field_name, field_value=field_value, **self.id_dict()
                     )
@@ -249,7 +254,7 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
                 if field_name in self.feedback:
                     raise ValueError(f"Feedback {field_name} already set")
 
-                self.feedback.append( # pylint: disable=no-member
+                self.feedback.append(  # pylint: disable=no-member
                     IORecord[Any].tier(self.TIER)(
                         field_name=field_name, field_value=field_value, **self.id_dict()
                     )
@@ -260,7 +265,7 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
                 if field_name in self.metadata:
                     raise ValueError(f"Metadata {field_name} already set")
 
-                self.metadata.append( # pylint: disable=no-member
+                self.metadata.append(  # pylint: disable=no-member
                     IORecord[str].tier(self.TIER)(
                         field_name=field_name, field_value=field_value, **self.id_dict()
                     )

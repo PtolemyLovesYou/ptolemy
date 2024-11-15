@@ -1,75 +1,52 @@
 """Types."""
 
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Annotated
 from datetime import datetime
-from uuid import UUID, uuid4
-from pydantic import RootModel, field_validator, field_serializer
+from uuid import UUID
+from pydantic import BeforeValidator, PlainSerializer
 
 Parameters = Dict[str, Any]  # pylint: disable=invalid-name
 
 
-class ID(RootModel):
-    """ID class."""
-
-    root: UUID
-
-    @field_serializer("root")
-    def _serialize_id(self, v: UUID) -> str:
-        return v.hex
-
-    @field_validator("root")
-    @classmethod
-    def _validate_id(cls, v: Union[UUID, str, "ID"]) -> UUID:
-        """Validate ID."""
-        if isinstance(v, ID):
-            return v.root
-
-        if isinstance(v, str):
-            try:
-                return UUID(v)
-            except ValueError as exc:
-                raise ValueError(f"Invalid UUID: {v}") from exc
-
-        if isinstance(v, UUID):
-            return v
-
-        raise ValueError(f"Invalid UUID: {v}")
-
-    @classmethod
-    def new(cls) -> "ID":
-        """Generate a new ID."""
-        return ID(uuid4())
+def _serialize_id(v: UUID) -> str:
+    return v.hex
 
 
-class Timestamp(RootModel):
-    """Timestamp class."""
+def _validate_id(v: Union[UUID, str]) -> UUID:
+    if isinstance(v, str):
+        try:
+            return UUID(v)
+        except ValueError as exc:
+            raise ValueError(f"Invalid UUID: {v}") from exc
 
-    root: datetime
+    if isinstance(v, UUID):
+        return v
 
-    @field_serializer("root")
-    def _serialize_timestamp(self, v: datetime) -> str:
-        """Serialize timestamp to ISO format."""
-        return v.isoformat()
+    raise ValueError(f"Invalid UUID: {v}")
 
-    @field_validator("root")
-    @classmethod
-    def _validate_timestamp(cls, v: Union[datetime, str, "Timestamp"]) -> datetime:
-        """Validate timestamp."""
-        if isinstance(v, Timestamp):
-            return v.root
 
-        if isinstance(v, datetime):
-            return v
+ID = Annotated[UUID, BeforeValidator(_validate_id), PlainSerializer(_serialize_id)]
 
-        if isinstance(v, str):
-            try:
-                return datetime.fromisoformat(v)
-            except ValueError as exc:
-                raise ValueError(f"Invalid timestamp: {v}") from exc
 
-        raise ValueError(f"Invalid timestamp: {v}")
+def _serialize_timestamp(v: datetime) -> str:
+    return v.isoformat()
 
-    @classmethod
-    def now(cls) -> "Timestamp":
-        """Get current time. Wraps datetime.now()."""
-        return Timestamp(datetime.now())
+
+def _validate_timestamp(v: Union[datetime, str]) -> datetime:
+    if isinstance(v, datetime):
+        return v
+
+    if isinstance(v, str):
+        try:
+            return datetime.fromisoformat(v)
+        except ValueError as exc:
+            raise ValueError(f"Invalid timestamp: {v}") from exc
+
+    raise ValueError(f"Invalid timestamp: {v}")
+
+
+Timestamp = Annotated[ # pylint: disable=invalid-name
+    datetime,
+    BeforeValidator(_validate_timestamp),
+    PlainSerializer(_serialize_timestamp),
+]

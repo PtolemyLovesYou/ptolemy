@@ -1,7 +1,9 @@
 """TestClient."""
+
 import pytest
 from tvali.api.core.lifespan import lifespan
 from tvali.api.main import app
+
 
 @pytest.mark.asyncio
 async def test_lifespan():

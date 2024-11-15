@@ -46,7 +46,7 @@ class TvaliLog(Log):
             base_url=self.TRANSPORT_CONFIG.base_url
         ) as session:
             async with session.delete(
-                f"/v1/log/{self.TIER.value}/event/{self.id.model_dump()}"  # pylint: disable=no-member
+                f"/v1/log/{self.TIER.value}/event/{self.id.hex}"  # pylint: disable=no-member
             ) as response:
                 result = await response.json()
                 if response.status == 404:
