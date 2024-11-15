@@ -20,10 +20,10 @@ class LogEndpointFactory(BaseModel):
 
         crud_factory = LogCRUDFactory(tier=self.tier, log_type=self.log_type)
 
-        router_.add_api_route("/", crud_factory.create_function(), methods=["POST"])
-        router_.add_api_route("/", crud_factory.get_function(), methods=["GET"])
+        router_.add_api_route("/", crud_factory.create_function(), methods=["POST"], status_code=201)
+        router_.add_api_route("/", crud_factory.get_function(), methods=["GET"], status_code=200)
         router_.add_api_route(
-            "/{id_}", crud_factory.delete_function(), methods=["DELETE"]
+            "/{id_}", crud_factory.delete_function(), methods=["DELETE"], status_code=200
         )
 
         return router_

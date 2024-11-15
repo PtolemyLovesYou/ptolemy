@@ -65,7 +65,7 @@ def test_create(tier: Tier, log_type: LogType):
         json=[event_data],
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json()[0]["id"] == event_data["id"]
 
 
