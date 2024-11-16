@@ -61,7 +61,7 @@ def test_create(tier: Tier, log_type: LogType):
         event_data = get_io_data(tier)
 
     response = client.post(
-        f"/v1/log/{tier.value}/{log_type.value}",
+        f"/external/v1/log/{tier.value}/{log_type.value}",
         json=[event_data],
     )
 
@@ -79,7 +79,7 @@ def test_get_log(tier: Tier, log_type: LogType):
     else:
         query = f"?{tier}_event_id={tier_ids[tier]}"
 
-    response = client.get(f"/v1/log/{tier.value}/{log_type}/{query}")
+    response = client.get(f"/external/v1/log/{tier.value}/{log_type}/{query}")
 
     assert response.status_code == 200, response.text
 
@@ -93,14 +93,14 @@ def test_get_log(tier: Tier, log_type: LogType):
 @pytest.mark.dependency(name="test_delete_log", depends=["test_get_log"])
 def test_delete_log(tier: Tier):
     """Test delete log."""
-    response = client.delete(f"/v1/log/{tier.value}/event/{tier_ids[tier]}")
+    response = client.delete(f"/external/v1/log/{tier.value}/event/{tier_ids[tier]}")
 
     assert response.status_code == 200
 
     for log_type in LogType:
         query = f"?{'id' if log_type == LogType.EVENT else f'{tier}_event_id'}={tier_ids[tier]}"
 
-        response = client.get(f"/v1/log/{tier.value}/{log_type}/{query}")
+        response = client.get(f"/external/v1/log/{tier.value}/{log_type}/{query}")
 
         assert response.status_code == 200
         assert len(response.json()) == 0
@@ -111,7 +111,7 @@ def test_delete_log(tier: Tier):
 @pytest.mark.dependency(name="test_delete_not_found", depends=["test_delete_log"])
 def test_delete_not_found(tier: Tier, log_type: LogType):
     """Test delete non-existent log."""
-    response = client.delete(f"/v1/log/{tier.value}/{log_type}/{uuid4().hex}")
+    response = client.delete(f"/external/v1/log/{tier.value}/{log_type}/{uuid4().hex}")
 
     assert response.status_code == 404
 
@@ -121,7 +121,7 @@ def test_delete_not_found(tier: Tier, log_type: LogType):
 def test_malformed_create(tier: Tier, log_type: LogType):
     """Test malformed create."""
     response = client.post(
-        f"/v1/log/{tier.value}/{log_type}",
+        f"/external/v1/log/{tier.value}/{log_type}",
         json=[{}],
     )
 
@@ -133,7 +133,7 @@ def test_malformed_create(tier: Tier, log_type: LogType):
 def test_malformed_get(tier: Tier, log_type: LogType):
     """Test malformed create."""
     response = client.get(
-        f"/v1/log/{tier.value}/{log_type}/?nonExistentType=foo",
+        f"/external/v1/log/{tier.value}/{log_type}/?nonExistentType=foo",
     )
 
     assert response.status_code == 422

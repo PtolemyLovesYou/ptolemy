@@ -28,7 +28,7 @@ class TvaliLog(Log):
         event = [self.event_dict()]
 
         async with session.post(
-            f"/v1/log/{self.TIER.value}/event", json=event
+            f"/external/v1/log/{self.TIER.value}/event", json=event
         ) as response:
             await response.json()
 
@@ -37,7 +37,7 @@ class TvaliLog(Log):
         runtime = [self.runtime_dict()]
 
         async with session.post(
-            f"/v1/log/{self.TIER.value}/runtime", json=runtime
+            f"/external/v1/log/{self.TIER.value}/runtime", json=runtime
         ) as response:
             await response.json()
 
@@ -46,7 +46,7 @@ class TvaliLog(Log):
             base_url=self.TRANSPORT_CONFIG.base_url
         ) as session:
             async with session.delete(
-                f"/v1/log/{self.TIER.value}/event/{self.id.hex}"  # pylint: disable=no-member
+                f"/external/v1/log/{self.TIER.value}/event/{self.id.hex}"  # pylint: disable=no-member
             ) as response:
                 result = await response.json()
                 if response.status == 404:
@@ -65,19 +65,23 @@ class TvaliLog(Log):
             await asyncio.gather(
                 self._push_runtime(session),
                 self._push_io(
-                    session, f"/v1/log/{self.TIER.value}/input", self.inputs_dicts()
-                ),
-                self._push_io(
-                    session, f"/v1/log/{self.TIER.value}/output", self.outputs_dicts()
+                    session,
+                    f"/external/v1/log/{self.TIER.value}/input",
+                    self.inputs_dicts(),
                 ),
                 self._push_io(
                     session,
-                    f"/v1/log/{self.TIER.value}/feedback",
+                    f"/external/v1/log/{self.TIER.value}/output",
+                    self.outputs_dicts(),
+                ),
+                self._push_io(
+                    session,
+                    f"/external/v1/log/{self.TIER.value}/feedback",
                     self.feedback_dicts(),
                 ),
                 self._push_io(
                     session,
-                    f"/v1/log/{self.TIER.value}/metadata",
+                    f"/external/v1/log/{self.TIER.value}/metadata",
                     self.metadata_dicts(),
                 ),
             )

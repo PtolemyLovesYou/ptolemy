@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from fastapi import HTTPException, Query
 from ..schemas.log import Log, CreateSchema, RecordSchema, QueryMixin
-from .....utils import Tier, LogType
-from ....db import session, models
+from ......utils import Tier, LogType
+from .....db import session, models
 
 logger = logging.getLogger(__name__)
 

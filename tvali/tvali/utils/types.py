@@ -45,7 +45,7 @@ def _validate_timestamp(v: Union[datetime, str]) -> datetime:
     raise ValueError(f"Invalid timestamp: {v}")
 
 
-Timestamp = Annotated[ # pylint: disable=invalid-name
+Timestamp = Annotated[  # pylint: disable=invalid-name
     datetime,
     BeforeValidator(_validate_timestamp),
     PlainSerializer(_serialize_timestamp),

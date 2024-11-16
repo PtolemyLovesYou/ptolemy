@@ -172,9 +172,7 @@ class Log(EventRecordMixin, IOMixin, RuntimeMixin, ABC):
             Dict[str, str]: A dictionary with the log's tier-specific event ID
             as the key and the serialized ID as the value.
         """
-        return {
-            f"{self.TIER}_event_id": self.id.hex  # pylint: disable=no-member
-        }
+        return {f"{self.TIER}_event_id": self.id.hex}  # pylint: disable=no-member
 
     def event_dict(self) -> dict:
         """Get event dict."""
