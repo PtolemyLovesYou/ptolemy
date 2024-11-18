@@ -4,8 +4,6 @@ import logging
 import json
 import asyncio
 from redis.asyncio import Redis
-from ..api.core.lifespan import lifespan
-from ..api.main import app
 from ..db import models, session
 from ..utils.record import get_record_class
 from ..utils import LogType, Tier
@@ -30,23 +28,26 @@ async def listen(redis_client: Redis, channel: str):
         Exception: Catches any exception that occurs during message processing and 
         logs the error traceback.
     """
-    async with lifespan(app):
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe(channel)
-        logger.error("Subscribed to %s. Waiting for messages...", channel)
-        async for message in pubsub.listen():
-            if message["type"] == "message":
-                data = json.loads(message["data"].decode("utf-8"))
-                record = get_record_class(
-                    LogType(data["log_type"]), Tier(data["tier"])
-                )(**data["record"])
-                model = models.DB_OBJ_MAP[data["log_type"]][data["tier"]]
-                async with session.get_db() as db:
-                    obj = model(**record.model_dump(exclude_none=True))
-                    db.add(obj)
-                    await db.commit()
-            else:
-                logger.error(message)
+    logger.info("Creating db tables...")
+    async with session.engine.begin() as conn:
+        await conn.run_sync(session.Base.metadata.create_all)
+
+    pubsub = redis_client.pubsub()
+    await pubsub.subscribe(channel)
+    logger.error("Subscribed to %s. Waiting for messages...", channel)
+    async for message in pubsub.listen():
+        if message["type"] == "message":
+            data = json.loads(message["data"].decode("utf-8"))
+            record = get_record_class(
+                LogType(data["log_type"]), Tier(data["tier"])
+            )(**data["record"])
+            model = models.DB_OBJ_MAP[data["log_type"]][data["tier"]]
+            async with session.get_db() as db:
+                obj = model(**record.model_dump(exclude_none=True))
+                db.add(obj)
+                await db.commit()
+        else:
+            logger.error(message)
 
 
 if __name__ == "__main__":
