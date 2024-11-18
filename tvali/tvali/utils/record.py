@@ -1,8 +1,8 @@
 """Record base class."""
 
-from typing import Optional, Generic, TypeVar, Any, ClassVar, Self
-from pydantic import BaseModel, Field, create_model
+from typing import Optional, Generic, TypeVar, Any, ClassVar, Self, Literal
 import uuid
+from pydantic import BaseModel, Field, create_model
 from tvali.utils import ID, Timestamp, Parameters, LogType, Tier
 
 T = TypeVar("T")
@@ -18,15 +18,31 @@ class Record(BaseModel):
     id: ID = Field(default_factory=uuid.uuid4)
 
     @classmethod
-    def tier(cls, tier: Tier) -> type[Self]:
+    def tier(
+        cls,
+        tier: Tier,
+        parent_id_alias: Literal[
+            'always',
+            'on_validation',
+            'on_serialization', 'never'
+            ] = 'on_serialization'
+        ) -> type[Self]:
         """Tier."""
         t = tier.parent or "workspace" if tier == Tier.SYSTEM else tier
+
+        kwargs = {"TIER": (ClassVar[Tier], tier)}
+
+        if parent_id_alias == 'on_validation':
+            kwargs['parent_id'] = (ID, Field(validation_alias=f"{t}_event_id"))
+        if parent_id_alias == 'on_serialization':
+            kwargs['parent_id'] = (ID, Field(serialization_alias=f"{t}_event_id"))
+        if parent_id_alias == 'always':
+            kwargs['parent_id'] = (ID, Field(alias=f"{t}_event_id"))
 
         model = create_model(
             f"{cls.LOGTYPE.capitalize()}[{tier}]",
             __base__=cls,
-            TIER=(ClassVar[Tier], tier),
-            parent_id=(ID, Field(serialization_alias=f"{t}_event_id")),
+            **kwargs
         )
 
         return model

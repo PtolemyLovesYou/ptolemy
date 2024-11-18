@@ -60,8 +60,7 @@ class TvaliBase(BaseModel, ABC):
             raise ValueError(f"Cannot spawn child of tier {self.tier}")
 
         return self.__class__(
-            event=Event.tier(self.tier.child)(
-                parent_id=self.event.id,
+            event=self.event.spawn(
                 name=name,
                 parameters=parameters,
                 environment=ENVIRONMENT,

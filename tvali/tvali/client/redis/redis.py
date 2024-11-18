@@ -4,13 +4,14 @@ from typing import List
 import asyncio
 from redis.asyncio import Redis
 from pydantic import BaseModel, computed_field, field_serializer
-from .core import TvaliBase
-from ..utils import Record
+from ..core import TvaliBase
+from ...utils import Record
 
 redis_client = Redis(host="localhost", port=6379)
 
 
 class RedisMessage(BaseModel):
+    """Redis message."""
     record: Record
 
     @computed_field
