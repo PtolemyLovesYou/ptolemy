@@ -6,7 +6,7 @@ from .routes.health import router as health_router
 from .routes.external.router import router as external_router
 
 # import all models so they actually get created
-from .db.models import *  # pylint: disable=unused-wildcard-import,wildcard-import
+from ..db.models import *  # pylint: disable=unused-wildcard-import,wildcard-import
 
 app = FastAPI(
     title="Tvali API",
