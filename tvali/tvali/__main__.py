@@ -1,6 +1,11 @@
+"""Tvali main module."""
+
 import argparse
+import logging
 import asyncio
 from redis.asyncio import Redis
+
+logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser()
 
