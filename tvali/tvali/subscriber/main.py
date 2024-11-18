@@ -48,8 +48,3 @@ async def listen(redis_client: Redis, channel: str):
                 await db.commit()
         else:
             logger.error(message)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    asyncio.run(listen(Redis(host="redis", port=6379, db=0), "tvali"))
