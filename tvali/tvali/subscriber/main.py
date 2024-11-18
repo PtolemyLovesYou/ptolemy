@@ -2,7 +2,6 @@
 
 import logging
 import json
-import asyncio
 from redis.asyncio import Redis
 from ..db import models, session
 from ..utils.record import get_record_class
