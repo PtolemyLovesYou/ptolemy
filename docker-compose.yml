@@ -13,6 +13,21 @@ services:
       - tvali
     depends_on:
       - postgres
+      - redis
+  publisher:
+    build:
+      context: ./tvali
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./tvali:/app
+    networks:
+      - tvali
+    depends_on:
+      - postgres
+      - redis
+    command: python3 -m tvali publisher
   postgres:
     image: postgres:17
     env_file:
@@ -21,6 +36,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres:/var/lib/postgresql
+    networks:
+      - tvali
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
     networks:
       - tvali
 

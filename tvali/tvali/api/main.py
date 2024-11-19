@@ -3,10 +3,10 @@
 from fastapi import FastAPI
 from .core.lifespan import lifespan
 from .routes.health import router as health_router
-from .routes.external.router import router as external_router
+from .routes.publish.router import router as publish_router
 
 # import all models so they actually get created
-from .db.models import *  # pylint: disable=unused-wildcard-import,wildcard-import
+from ..db.models import *  # pylint: disable=unused-wildcard-import,wildcard-import
 
 app = FastAPI(
     title="Tvali API",
@@ -17,4 +17,4 @@ app = FastAPI(
 )
 
 app.include_router(health_router)
-app.include_router(external_router)
+app.include_router(publish_router)

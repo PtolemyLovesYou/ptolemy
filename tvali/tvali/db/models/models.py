@@ -2,7 +2,7 @@
 
 from typing import List
 import uuid
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 from .core import (
     Event,
@@ -41,6 +41,11 @@ class SystemEvent(Event):
         back_populates="system_event",
         cascade="all, delete-orphan",
     )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(), nullable=True, default=uuid.uuid4
+    )
+    parent_id: Mapped[uuid.UUID] = synonym("workspace_id")
 
 
 class SystemRuntime(EventRuntime):

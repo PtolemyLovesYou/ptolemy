@@ -3,7 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from ..db.session import engine, Base
+from ...db.session import engine, Base
 
 logger = logging.getLogger(__name__)
 
