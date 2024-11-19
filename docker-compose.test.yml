@@ -42,6 +42,7 @@ services:
     depends_on:
       - postgres
       - tvali
+      - redis
     command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html --profile
   postgres:
     image: postgres:17
