@@ -7,8 +7,7 @@ from typing import List, Dict, Any
 from redis.asyncio import Redis
 from sqlalchemy.exc import SQLAlchemyError
 from ..db import models, session
-from ..utils.record import get_record_class
-from ..utils import LogType, Tier
+from ..utils import LogType, Tier, Record
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +57,11 @@ class BatchProcessor:
         try:
             async with session.get_db() as db:
                 for record_data in self.batch:
-                    record = get_record_class(
-                        LogType(record_data["log_type"]), Tier(record_data["tier"])
+                    record = Record.build(
+                        LogType(record_data["log_type"]),
+                        Tier(record_data["tier"]),
                     )(**record_data["record"])
+
                     model = models.DB_OBJ_MAP[record_data["log_type"]][
                         record_data["tier"]
                     ]

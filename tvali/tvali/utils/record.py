@@ -2,7 +2,7 @@
 
 from typing import Optional, Generic, TypeVar, Any, ClassVar, Self, Literal
 import uuid
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model, validate_call
 from tvali.utils import ID, Timestamp, Parameters, LogType, Tier
 
 T = TypeVar("T")
@@ -18,31 +18,53 @@ class Record(BaseModel):
     id: ID = Field(default_factory=uuid.uuid4)
 
     @classmethod
-    def tier(
+    @validate_call
+    def build(
         cls,
+        log_type: LogType,
         tier: Tier,
         parent_id_alias: Literal[
-            'always',
-            'on_validation',
-            'on_serialization', 'never'
-            ] = 'on_serialization'
-        ) -> type[Self]:
+            "always", "on_validation", "on_serialization", "never"
+        ] = "on_serialization",
+    ) -> type[Self]:
         """Tier."""
-        t = tier.parent or "workspace" if tier == Tier.SYSTEM else tier
+        if log_type == LogType.EVENT:
+            ltype = Event
+        elif log_type == LogType.RUNTIME:
+            ltype = Runtime
+        elif log_type == LogType.INPUT:
+            ltype = Input
+        elif log_type == LogType.OUTPUT:
+            ltype = Output
+        elif log_type == LogType.FEEDBACK:
+            ltype = Feedback
+        elif log_type == LogType.METADATA:
+            ltype = Metadata
+        else:
+            raise ValueError(f"Unknown log type {log_type}")
+
+        if tier == Tier.SYSTEM:
+            if log_type == LogType.EVENT:
+                t = "workspace_id"
+            else:
+                t = f"{tier}_event_id"
+        else:
+            if log_type == LogType.EVENT:
+                t = f"{tier.parent}_event_id"
+            else:
+                t = f"{tier}_event_id"
 
         kwargs = {"TIER": (ClassVar[Tier], tier)}
 
-        if parent_id_alias == 'on_validation':
-            kwargs['parent_id'] = (ID, Field(validation_alias=f"{t}_event_id"))
-        if parent_id_alias == 'on_serialization':
-            kwargs['parent_id'] = (ID, Field(serialization_alias=f"{t}_event_id"))
-        if parent_id_alias == 'always':
-            kwargs['parent_id'] = (ID, Field(alias=f"{t}_event_id"))
+        if parent_id_alias == "on_validation":
+            kwargs["parent_id"] = (ID, Field(validation_alias=t))
+        if parent_id_alias == "on_serialization":
+            kwargs["parent_id"] = (ID, Field(serialization_alias=t))
+        if parent_id_alias == "always":
+            kwargs["parent_id"] = (ID, Field(alias=t))
 
         model = create_model(
-            f"{cls.LOGTYPE.capitalize()}[{tier}]",
-            __base__=cls,
-            **kwargs
+            f"{log_type.capitalize()}[{tier}]", __base__=ltype, **kwargs
         )
 
         return model
@@ -69,7 +91,7 @@ class Event(Record):
         if self.TIER.child is None:
             raise ValueError(f"Cannot spawn child of tier {self.TIER}")
 
-        return self.tier(self.TIER.child)(
+        return Record.build(LogType.EVENT, self.TIER.child)(
             parent_id=self.id,
             name=name,
             parameters=parameters,
@@ -118,32 +140,3 @@ class Metadata(_IO[str]):
     """Metadata class."""
 
     LOGTYPE = LogType.METADATA
-
-
-def get_record_class(log_type: LogType, tier: Tier) -> type[Record]:
-    """
-    Get the Record class for the given log type and tier.
-
-    Args:
-        log_type: Type of log.
-        tier: Tier of log.
-
-    Returns:
-        type[Record]: Record class for the given log type and tier.
-    """
-    if log_type == LogType.EVENT:
-        ltype = Event
-    elif log_type == LogType.RUNTIME:
-        ltype = Runtime
-    elif log_type == LogType.INPUT:
-        ltype = Input
-    elif log_type == LogType.OUTPUT:
-        ltype = Output
-    elif log_type == LogType.FEEDBACK:
-        ltype = Feedback
-    elif log_type == LogType.METADATA:
-        ltype = Metadata
-    else:
-        raise ValueError(f"Unknown log type {log_type}")
-
-    return ltype.tier(tier)

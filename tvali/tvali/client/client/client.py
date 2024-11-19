@@ -1,8 +1,8 @@
 """Redis handler."""
 
 from typing import List
-import asyncio
 from redis.asyncio import Redis
+import aiohttp
 from pydantic import BaseModel, computed_field, field_serializer
 from ..core import TvaliBase
 from ...utils import Record
@@ -10,8 +10,9 @@ from ...utils import Record
 redis_client = Redis(host="localhost", port=6379)
 
 
-class RedisMessage(BaseModel):
+class TvaliMessage(BaseModel):
     """Redis message."""
+
     record: Record
 
     @computed_field
@@ -32,12 +33,19 @@ class RedisMessage(BaseModel):
         return value.model_dump()
 
 
-class RedisTvali(TvaliBase):
-    """Redis handler for Tvali."""
+class Tvali(TvaliBase):
+    """Tvali."""
 
     async def push_records(self, records: List[Record]) -> None:
-        records = [RedisMessage(record=r).model_dump_json() for r in records]
-        print(records)
-        return await asyncio.gather(
-            *map(lambda i: redis_client.publish("tvali", i), records)
-        )
+        body = [
+            {"tier": r.TIER, "log_type": r.LOGTYPE, "record": r.model_dump()}
+            for r in records
+        ]
+        async with aiohttp.ClientSession("http://localhost:8000") as session:
+            async with session.post("/publish", json=body) as response:
+                if response.status != 200:
+                    raise ValueError(
+                        f"Failed to push records to Redis: {await response.text()}"
+                    )
+
+                await response.json()

@@ -17,6 +17,7 @@ from ..utils import (
     Metadata,
     Parameters,
     Tier,
+    LogType,
 )
 
 WORKSPACE_ID = uuid.uuid4()
@@ -82,7 +83,7 @@ class TvaliBase(BaseModel, ABC):
             Self: A new instance of the handler class.
         """
         return cls(
-            event=Event.tier(Tier.SYSTEM)(
+            event=Record.build(LogType.EVENT, Tier.SYSTEM)(
                 parent_id=WORKSPACE_ID,
                 name=name,
                 parameters=parameters,
@@ -123,7 +124,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Inputs already set")
 
             self._inputs = [
-                Input.tier(self.tier)(
+                Record.build(LogType.INPUT, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -136,7 +137,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Outputs already set")
 
             self._outputs = [
-                Output.tier(self.tier)(
+                Record.build(LogType.OUTPUT, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -149,7 +150,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Feedback already set")
 
             self._feedback = [
-                Feedback.tier(self.tier)(
+                Record.build(LogType.FEEDBACK, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -162,7 +163,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Metadata already set")
 
             self._metadata = [
-                Metadata.tier(self.tier)(
+                Record.build(LogType.METADATA, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -195,7 +196,7 @@ class TvaliBase(BaseModel, ABC):
         if self._runtime is not None:
             raise ValueError("Runtime already set")
 
-        self._runtime = Runtime.tier(self.tier)(
+        self._runtime = Record.build(LogType.RUNTIME, self.tier)(
             parent_id=self.event.id,
             start_time=start_time,
             end_time=end_time,

@@ -22,3 +22,6 @@ POSTGRES_PASSWORD = get_env("POSTGRES_PASSWORD")
 POSTGRES_DB = get_env("POSTGRES_DB")
 POSTGRES_HOST = get_env("POSTGRES_HOST")
 POSTGRES_PORT = get_env("POSTGRES_PORT", return_type=int)
+
+REDIS_HOST = get_env("REDIS_HOST")
+REDIS_PORT = get_env("REDIS_PORT", return_type=int)
