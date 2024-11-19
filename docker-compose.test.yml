@@ -13,7 +13,7 @@ services:
       - tvali
     depends_on:
       - postgres
-  tvali_worker:
+  publisher:
     build:
       context: ./tvali
       dockerfile: Dockerfile
@@ -26,7 +26,7 @@ services:
     depends_on:
       - postgres
       - redis
-    command: python3 -m tvali subscriber
+    command: python3 -m tvali publisher
   tvali_test:
     build:
       context: ./tvali
@@ -42,7 +42,7 @@ services:
     depends_on:
       - postgres
       - tvali
-      - redis
+      - publisher
     command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html --profile
   postgres:
     image: postgres:17

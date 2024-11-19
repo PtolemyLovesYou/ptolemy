@@ -14,7 +14,7 @@ services:
     depends_on:
       - postgres
       - redis
-  tvali_worker:
+  publisher:
     build:
       context: ./tvali
       dockerfile: Dockerfile
@@ -27,7 +27,7 @@ services:
     depends_on:
       - postgres
       - redis
-    command: python3 -m tvali subscriber
+    command: python3 -m tvali publisher
   postgres:
     image: postgres:17
     env_file:
