@@ -1,3 +1,3 @@
 """Redis client."""
 
-from .client import Tvali
+from .core import Tvali
