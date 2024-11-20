@@ -1,6 +1,7 @@
 """Publish routes."""
 
 from typing import List, Union
+import asyncio
 from pydantic import BaseModel, model_validator
 from fastapi import APIRouter, HTTPException
 from redis.asyncio import Redis
@@ -86,18 +87,14 @@ async def publish(records: List[PublishRequest], poll: bool = False) -> List[int
     Raises:
         HTTPException: If `poll` is True and any record fails to publish to Redis.
     """
-    async with client.pipeline() as pipe:
-        for i in records:
-            result = await pipe.publish("tvali", i.model_dump_json())
-            print(result)
-
-    results = await pipe.execute()
+    results = await asyncio.gather(
+        *[client.publish("tvali", i.model_dump_json()) for i in records]
+    )
 
     if poll:
         if not all(i == 1 for i in results):
             raise HTTPException(
-                status_code=500,
-                detail="Failed to push records to Redis"
+                status_code=500, detail="Failed to push records to Redis"
             )
 
     return [i.record.id for i in records]

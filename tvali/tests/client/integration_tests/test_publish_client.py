@@ -1,4 +1,5 @@
 """Test publish."""
+
 import pytest
 from tvali.client import Tvali
 
@@ -9,6 +10,7 @@ test_inputs = {
     "metadata": {"quuux": "quuuux"},
 }
 
+
 @pytest.mark.asyncio
 async def test_publish():
     """
@@ -16,8 +18,8 @@ async def test_publish():
     The system, subsystem, component, and subcomponent all log inputs, outputs, feedback, and metadata.
     """
     sys = Tvali.trace(
-    'foo',
-    parameters={"foo": "bar"},
+        "foo",
+        parameters={"foo": "bar"},
     )
 
     async with sys:
