@@ -4,7 +4,7 @@ from typing import List
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from .types import (
-    get_event_resolver,
+    event_resolver_factory,
     SystemEvent,
     SubsystemEvent,
     ComponentEvent,
@@ -18,22 +18,22 @@ class Query:
     """Query."""
 
     system_events: List[SystemEvent] = strawberry.field(
-        get_event_resolver(Tier.SYSTEM),
+        event_resolver_factory(Tier.SYSTEM),
         graphql_type=List[SystemEvent],
     )
 
     subsystem_events: List[SubsystemEvent] = strawberry.field(
-        get_event_resolver(Tier.SUBSYSTEM),
+        event_resolver_factory(Tier.SUBSYSTEM),
         graphql_type=List[SubsystemEvent],
     )
 
     component_events: List[ComponentEvent] = strawberry.field(
-        get_event_resolver(Tier.COMPONENT),
+        event_resolver_factory(Tier.COMPONENT),
         graphql_type=List[ComponentEvent],
     )
 
     subcomponent_events: List[SubcomponentEvent] = strawberry.field(
-        get_event_resolver(Tier.SUBCOMPONENT),
+        event_resolver_factory(Tier.SUBCOMPONENT),
         graphql_type=List[SubcomponentEvent],
     )
 

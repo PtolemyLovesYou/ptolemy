@@ -1,11 +1,12 @@
 """Strawberry types."""
 
-from typing import Optional, List, ClassVar, Callable
+from typing import Optional, List, ClassVar, Callable, Union
 from datetime import datetime
 import strawberry
 from strawberry.scalars import JSON, ID
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
+from .crud import get_objects
 from .filter import EventFilter, IOFilter, MetadataFilter
 from ....db import models, session
 from ....utils import Tier, LogType
@@ -70,32 +71,30 @@ async def metadata_resolver(
     root: strawberry.Parent["Event"],
     filters: Optional[MetadataFilter] = None,
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
 ) -> List[Metadata]:
+    """
+    Resolve metadata for a given event.
+
+    This resolver fetches metadata objects associated with the given event
+    from the database, applying optional filters, limits, and offsets.
+
+    :param root: The parent event for which metadata is to be resolved.
+    :type root: strawberry.Parent["Event"]
+    :param filters: Optional filters to apply when fetching metadata.
+    :type filters: Optional[MetadataFilter]
+    :param limit: The maximum number of metadata objects to return, default is 20.
+    :type limit: int
+    :param offset: The number of metadata objects to skip before starting to collect the result set.
+    :type offset: int
+    :return: A list of Metadata objects associated with the event.
+    :rtype: List[Metadata]
+    """
     model = models.DB_OBJ_MAP[LogType.METADATA][root.TIER]
 
-    query = (
-        select(model)
-        .limit(limit)
-        .offset(offset)
-        .order_by(model.created_at.asc())
-        )
-
-    filters_ = [model.parent_id == root.id]
-
-    if filters:
-        filters_ += [
-            getattr(model, k) == v
-            for k, v in filters.__dict__.items()
-            if v != strawberry.UNSET
-        ]
-
-        query = query.filter(*filters_)
-
-    async with session.get_db() as db:
-        result = await db.execute(query)
-
-    objs = result.scalars().all()
+    objs: List[models.EventMetadata] = await get_objects(
+        model, filters=filters, limit=limit, offset=offset, parent_id=root.id
+    )
 
     return [
         Metadata(
@@ -107,32 +106,36 @@ async def metadata_resolver(
         for obj in objs
     ]
 
-def get_io_resolver(log_type: LogType) -> List[IOJSON]:
-    async def wrapper(
+
+def io_resolver_factory(log_type: LogType) -> List[IOJSON]:
+    """
+    Creates an IO resolver for a specific log type.
+
+    This function returns an asynchronous resolver that fetches IO objects
+    (Input, Output, or Feedback) associated with a given event from the database
+    according to the specified log type. The resolver supports filtering,
+    limiting, and offsetting of the results.
+
+    :param log_type: The type of IO log to resolve (Input, Output, or Feedback).
+    :type log_type: LogType
+    :return: An asynchronous resolver function that returns a list of IOJSON objects.
+    :rtype: Callable[[strawberry.Parent["Event"], Optional[IOFilter], Optional[int], Optional[int]], List[IOJSON]]
+    :raises ValueError: If an unsupported log type is provided.
+    """
+
+    async def io_resolver(
         root: strawberry.Parent["Event"],
         filters: Optional[IOFilter] = None,
-        limit: int = 20,
-        offset: int = 0
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> List[IOJSON]:
         model = models.DB_OBJ_MAP[log_type][root.TIER]
 
-        query = select(model).limit(limit).offset(offset).order_by(model.created_at.asc())
-
-        filters_ = [model.parent_id == root.id]
-
-        if filters:
-            filters_ += [
-                getattr(model, k) == v
-                for k, v in filters.__dict__.items()
-                if v != strawberry.UNSET
-            ]
-
-            query = query.filter(*filters_)
-
-        async with session.get_db() as db:
-            result = await db.execute(query)
-
-        objs = result.scalars().all()
+        objs: list[
+            Union[models.EventInput, models.EventOutput, models.EventFeedback]
+        ] = await get_objects(
+            model, filters=filters, limit=limit, offset=offset, parent_id=root.id
+        )
 
         if log_type == LogType.INPUT:
             log_cls = Input
@@ -153,7 +156,7 @@ def get_io_resolver(log_type: LogType) -> List[IOJSON]:
             for obj in objs
         ]
 
-    return wrapper
+    return io_resolver
 
 
 @strawberry.type
@@ -166,6 +169,7 @@ class Runtime(Record):
     end_time: Timestamp  # type: ignore
     error_type: Optional[str] = None
     error_content: Optional[str] = None
+
 
 @strawberry.interface
 class Event(Record):
@@ -182,11 +186,10 @@ class Event(Record):
     async def runtime(self) -> Optional[Runtime]:
         """Get the runtime for this event."""
         model = models.DB_OBJ_MAP[LogType.RUNTIME][self.TIER]
-        async with session.get_db() as db:
-            result = await db.execute(select(model).where(model.parent_id == self.id))
-
         try:
-            obj = result.scalars().one()
+            obj: models.EventRuntime = await get_objects(
+                model, parent_id=self.id, mode="one", limit=1
+            )
         except NoResultFound:
             return None
 
@@ -200,43 +203,38 @@ class Event(Record):
         )
 
     inputs = strawberry.field(
-        resolver=get_io_resolver(LogType.INPUT), graphql_type=List[Input]
+        resolver=io_resolver_factory(LogType.INPUT), graphql_type=List[Input]
     )
     outputs = strawberry.field(
-        resolver=get_io_resolver(LogType.OUTPUT), graphql_type=List[Output]
+        resolver=io_resolver_factory(LogType.OUTPUT), graphql_type=List[Output]
     )
     feedback = strawberry.field(
-        resolver=get_io_resolver(LogType.FEEDBACK), graphql_type=List[Feedback]
+        resolver=io_resolver_factory(LogType.FEEDBACK), graphql_type=List[Feedback]
     )
-    metadata = strawberry.field(
-        resolver=metadata_resolver, graphql_type=List[Metadata]
-    )
+    metadata = strawberry.field(resolver=metadata_resolver, graphql_type=List[Metadata])
 
 
-def get_children_resolver(child_type: Event) -> Callable[[Event], List[Event]]:
-    async def resolver(
+def children_resolver_factory(child_type: Event) -> Callable[[Event], List[Event]]:
+    """
+    Generate a resolver for fetching child events of a given event.
+
+    This factory function takes in the type of the child event and returns a
+    resolver function that can be used in strawberry to fetch the child events
+    for a given event. The resolver takes in the parent event, optional filters,
+    limits, and offsets, and returns a list of child events.
+    """
+
+    async def children_resolver(
         root: strawberry.Parent[Event],
         filters: Optional[EventFilter] = None,
-        limit: int = 20,
-        offset: int = 0
-        ) -> List[Event]:
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> List[Event]:
         model = models.DB_OBJ_MAP[LogType.EVENT][root.TIER.child]
 
-        query = select(model).limit(limit).offset(offset).order_by(model.created_at.asc())
-
-        if filters:
-            filters = [
-                getattr(model, i) == j
-                for i, j in filters.__dict__.items()
-                if j != strawberry.UNSET
-            ] + [model.parent_id == root.id]
-
-            query = query.filter(*filters)
-
-        async with session.get_db() as db:
-            result = await db.execute(select(model).filter(model.parent_id == root.id))
-
-        objs = result.scalars().all()
+        objs: List[models.Event] = await get_objects(
+            model, filters=filters, limit=limit, offset=offset, parent_id=root.id
+        )
 
         return [
             child_type(
@@ -250,7 +248,7 @@ def get_children_resolver(child_type: Event) -> Callable[[Event], List[Event]]:
             for obj in objs
         ]
 
-    return resolver
+    return children_resolver
 
 
 @strawberry.type
@@ -267,7 +265,7 @@ class ComponentEvent(Event):
     TIER = Tier.COMPONENT
 
     subcomponent_events = strawberry.field(
-        get_children_resolver(SubcomponentEvent),
+        children_resolver_factory(SubcomponentEvent),
         graphql_type=List[SubcomponentEvent],
     )
 
@@ -279,7 +277,7 @@ class SubsystemEvent(Event):
     TIER = Tier.SUBSYSTEM
 
     component_events = strawberry.field(
-        get_children_resolver(ComponentEvent),
+        children_resolver_factory(ComponentEvent),
         graphql_type=List[ComponentEvent],
     )
 
@@ -291,7 +289,7 @@ class SystemEvent(Event):
     TIER = Tier.SYSTEM
 
     subsystem_events = strawberry.field(
-        get_children_resolver(SubsystemEvent),
+        children_resolver_factory(SubsystemEvent),
         graphql_type=List[SubsystemEvent],
     )
 
@@ -304,7 +302,7 @@ STRAWBERRY_TIER_MAP = {
 }
 
 
-def get_event_resolver(tier: Tier) -> Callable[..., List[Event]]:
+def event_resolver_factory(tier: Tier) -> Callable[..., List[Event]]:
     """
     Get a resolver for the given tier's events.
 
@@ -314,26 +312,33 @@ def get_event_resolver(tier: Tier) -> Callable[..., List[Event]]:
     :rtype: Callable[..., List[E]]
     """
 
-    async def resolver(filters: Optional[EventFilter] = None, limit: int = 20, offset: int = 0) -> List[Event]:
+    async def event_resolver(
+        filters: Optional[EventFilter] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> List[Event]:
         model = models.DB_OBJ_MAP[LogType.EVENT][tier]
 
-        query = select(model).limit(limit).offset(offset).order_by(model.created_at.asc())
+        query = select(model).order_by(model.created_at.asc())
+
+        if limit:
+            query = query.limit(limit)
+        if offset:
+            query = query.offset(offset)
 
         if filters:
-            query = (
-                query.filter(
+            query = query.filter(
                 *[
                     getattr(model, i) == j
                     for i, j in filters.__dict__.items()
                     if j != strawberry.UNSET
-                    ]
-                )
+                ]
             )
 
         async with session.get_db() as db:
             result = await db.execute(query)
 
-            objs = result.scalars().all()
+            objs: List[models.Event] = result.scalars().all()
 
         return [
             STRAWBERRY_TIER_MAP[tier](
@@ -347,4 +352,4 @@ def get_event_resolver(tier: Tier) -> Callable[..., List[Event]]:
             for obj in objs
         ]
 
-    return resolver
+    return event_resolver
