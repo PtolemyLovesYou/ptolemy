@@ -92,7 +92,7 @@ async def publish(records: List[PublishRequest], poll: bool = False) -> List[int
     )
 
     if poll:
-        if not all(i == 1 for i in results):
+        if not all(results):
             raise HTTPException(
                 status_code=500, detail="Failed to push records to Redis"
             )
