@@ -9,6 +9,7 @@ Parameters = Dict[str, Any]  # pylint: disable=invalid-name
 
 T = TypeVar("T")
 
+
 def _validate_json(v: Dict[str, Any]) -> bool:
     if v is None:
         return True
@@ -41,11 +42,13 @@ def _validate_id(v: Union[UUID, str]) -> UUID:
 
 ID = Annotated[UUID, BeforeValidator(_validate_id), PlainSerializer(_serialize_id)]
 
+
 class IOSerializable(RootModel[T]):
     """IO Serializable."""
+
     root: T
 
-    @field_validator('root', mode='before')
+    @field_validator("root", mode="before")
     @classmethod
     def validate_json(cls, v: T) -> T:
         """Validate json."""

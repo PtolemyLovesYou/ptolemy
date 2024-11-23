@@ -48,6 +48,4 @@ class Tvali(TvaliBase):
                         f"Failed to push records to Redis: {await response.text()}"
                     ) from e
 
-                response = await response.json()
-                if not all(record.id.hex == r for r, record in zip(response, records)):
-                    raise ValueError("Failed to push records to Redis")
+                await response.json()

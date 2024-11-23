@@ -165,7 +165,7 @@ class Runtime(Record):
 
     LOGTYPE = LogType.RUNTIME
 
-    start_time: Optional[Timestamp] = None # type: ignore
+    start_time: Optional[Timestamp] = None  # type: ignore
     end_time: Optional[Timestamp] = None  # type: ignore
     error_type: Optional[str] = None
     error_content: Optional[str] = None

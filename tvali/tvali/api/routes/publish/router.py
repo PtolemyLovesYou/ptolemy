@@ -1,9 +1,10 @@
-"""Publish routes."""
+"""Publish routes for Redis Streams."""
 
-from typing import List, Union
+from typing import List, Union, Optional
 import asyncio
+from datetime import datetime
 from pydantic import BaseModel, model_validator
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from redis.asyncio import Redis
 from ....utils import (
     Record,
@@ -15,7 +16,6 @@ from ....utils import (
     Feedback,
     Metadata,
     Runtime,
-    ID,
 )
 
 router = APIRouter(
@@ -24,77 +24,210 @@ router = APIRouter(
 )
 
 client = Redis(host="redis", port=6379, db=0)
+DEFAULT_STREAM = "tvali_stream"
+MAX_STREAM_LENGTH = 1000000  # Maximum number of messages to keep in stream
 
 
 class PublishRequest(BaseModel):
     """
-    Publish request.
+    Publish request for Redis Streams.
 
-    Tier and log type are required to determine
-    which Record model to create.
-
-    The record field is required to be a Record
-    model of the correct type or a dictionary
-    with the data to create the Record model.
+    Attributes:
+        tier: Service tier
+        log_type: Type of log record
+        record: The actual record data
+        stream_key: Optional custom stream key
     """
 
     tier: Tier
     log_type: LogType
-
     record: Union[Event, Input, Output, Feedback, Metadata, Runtime]
+    stream_key: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
     def validate_record(cls, values: dict) -> dict:
         """
-        Validate the record field.
+        Validate and build the record field.
 
-        If the record field is a dictionary,
-        create the Record model from the
-        dictionary.
+        Args:
+            values: Dictionary containing the request data
 
-        If the record field is a Record
-        model, just return it.
-
-        If the record field is neither a
-        dictionary or a Record model,
-        raise a ValueError.
+        Returns:
+            dict: Validated and processed request data
         """
         tier = values.get("tier")
         log_type = values.get("log_type")
         record = values.get("record")
+        stream_key = values.get("stream_key", DEFAULT_STREAM)
 
         if isinstance(record, dict):
             record_parsed = Record.build(log_type, tier)(**record)
         else:
             record_parsed = record
 
-        return {"tier": tier, "log_type": log_type, "record": record_parsed}
+        return {
+            "tier": tier,
+            "log_type": log_type,
+            "record": record_parsed,
+            "stream_key": stream_key,
+        }
 
 
-@router.post("/", status_code=201, response_model=List[ID])
-async def publish(records: List[PublishRequest], poll: bool = False) -> List[int]:
+class StreamInfo(BaseModel):
+    """Stream information response model."""
+
+    length: int
+    first_entry_id: str
+    last_entry_id: str
+    consumer_groups: List[dict]
+
+
+@router.post("/", status_code=201, response_model=List[dict])
+async def publish(
+    records: List[PublishRequest],
+    max_len: Optional[int] = Query(
+        None,
+        description="Maximum length of stream after adding new messages",
+    ),
+    approximate: bool = Query(
+        True,
+        description="Use approximate maximum length for better performance",
+    ),
+) -> List[dict]:
     """
-    Publish records to Redis.
+    Publish records to Redis Stream.
 
     Args:
-        records (List[PublishRequest]): List of records to be published.
-        poll (bool): Flag to check if all records are successfully published. Defaults to False.
+        records: List of records to be published
+        max_len: Optional maximum length of the stream
+        approximate: Whether to use approximate max length
 
     Returns:
-        List[int]: List of publish results for each record.
+        List of dictionaries containing record IDs and stream message IDs
 
     Raises:
-        HTTPException: If `poll` is True and any record fails to publish to Redis.
+        HTTPException: If publishing to Redis Stream fails
     """
-    results = await asyncio.gather(
-        *[client.publish("tvali", i.model_dump_json()) for i in records]
-    )
 
-    if poll:
-        if not all(results):
-            raise HTTPException(
-                status_code=500, detail="Failed to push records to Redis"
+    async def publish_record(record: PublishRequest) -> dict:
+        try:
+            # Prepare message data
+            message_data = {
+                "data": record.model_dump_json(),
+                "timestamp": str(datetime.now().timestamp()),
+            }
+
+            # Add to stream with optional maximum length
+            stream_id = await client.xadd(
+                name=record.stream_key or DEFAULT_STREAM,
+                fields=message_data,
+                maxlen=max_len or MAX_STREAM_LENGTH,
+                approximate=approximate,
             )
 
-    return [i.record.id for i in records]
+            return {
+                "record_id": record.record.id,
+                "stream_id": stream_id.decode("utf-8"),
+                "stream_key": record.stream_key or DEFAULT_STREAM,
+            }
+
+        except Exception as e:  # pylint: disable=broad-except
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to publish record to Redis Stream: {str(e)}",
+            ) from e
+
+    results = await asyncio.gather(*[publish_record(record) for record in records])
+    return results
+
+
+@router.get("/stream/{stream_key}", response_model=StreamInfo)
+async def get_stream_info(stream_key: str = DEFAULT_STREAM) -> StreamInfo:
+    """
+    Get information about a stream.
+
+    Args:
+        stream_key: Name of the stream
+
+    Returns:
+        StreamInfo object containing stream details
+
+    Raises:
+        HTTPException: If stream doesn't exist or other Redis errors
+    """
+    try:
+        # Get stream length
+        length = await client.xlen(stream_key)
+
+        if length == 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Stream '{stream_key}' is empty or doesn't exist",
+            )
+
+        # Get first and last entry IDs
+        first = await client.xrange(stream_key, count=1)
+        last = await client.xrevrange(stream_key, count=1)
+
+        # Get consumer group information
+        groups = await client.xinfo_groups(stream_key)
+        group_info = [
+            {
+                "name": group[b"name"].decode("utf-8"),
+                "consumers": group[b"consumers"],
+                "pending": group[b"pending"],
+                "last_delivered_id": group[b"last-delivered-id"].decode("utf-8"),
+            }
+            for group in groups
+        ]
+
+        return StreamInfo(
+            length=length,
+            first_entry_id=first[0][0].decode("utf-8"),
+            last_entry_id=last[0][0].decode("utf-8"),
+            consumer_groups=group_info,
+        )
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get stream info: {str(e)}",
+        ) from e
+
+
+@router.delete("/stream/{stream_key}")
+async def trim_stream(
+    stream_key: str,
+    max_len: int = Query(..., gt=0),
+    approximate: bool = Query(True),
+) -> dict:
+    """
+    Trim a stream to a maximum length.
+
+    Args:
+        stream_key: Name of the stream to trim
+        max_len: Maximum number of messages to keep
+        approximate: Whether to use approximate trimming
+
+    Returns:
+        Dictionary containing the number of messages removed
+
+    Raises:
+        HTTPException: If trimming fails
+    """
+    try:
+        removed = await client.xtrim(
+            name=stream_key,
+            maxlen=max_len,
+            approximate=approximate,
+        )
+        return {"removed_messages": removed}
+
+    except Exception as e:  # pylint: disable=broad-except
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to trim stream: {str(e)}",
+        ) from e

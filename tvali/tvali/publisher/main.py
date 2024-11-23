@@ -1,9 +1,9 @@
-"""Subscription model with MS-based batching."""
+"""Subscription model with MS-based batching using Redis Streams."""
 
 import logging
 import json
 import asyncio
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from redis.asyncio import Redis
 from sqlalchemy.exc import SQLAlchemyError
 from ..db import models, session
@@ -12,11 +12,10 @@ from ..utils import LogType, Tier, Record
 logger = logging.getLogger(__name__)
 
 
-class BatchProcessor:
+class StreamBatchProcessor:
     """
-    A batch processor that accumulates records and flushes them to the database
-    when certain conditions are met, such as reaching a maximum batch size or
-    exceeding a maximum wait time.
+    A batch processor that uses Redis Streams to reliably process records in batches.
+    Supports consumer groups for scalability and exactly-once processing.
 
     Attributes:
         batch (List[Dict[str, Any]]): A list to hold the accumulated records.
@@ -24,45 +23,114 @@ class BatchProcessor:
         max_wait_time_ms (int): Maximum time to wait before flushing smaller batches.
         flush_timeout_ms (int): Maximum total time allowed for batch processing.
         lock (asyncio.Lock): A lock to ensure thread-safe operations.
+        consumer_name (str): Unique identifier for this consumer instance.
+        consumer_group (str): Name of the consumer group.
     """
 
     def __init__(
         self,
+        redis_client: Redis,
+        stream_key: str,
+        consumer_group: str,
+        consumer_name: str,
         max_batch_size: int = 100,
         max_wait_time_ms: int = 5000,
         flush_timeout_ms: int = 10000,
     ):
         """
-        Initialize the batch processor with configurable parameters.
+        Initialize the stream batch processor with configurable parameters.
 
         Args:
+            redis_client (Redis): Redis client instance.
+            stream_key (str): Name of the Redis stream.
+            consumer_group (str): Name of the consumer group.
+            consumer_name (str): Unique identifier for this consumer.
             max_batch_size (int): Maximum number of records to accumulate before flushing.
             max_wait_time_ms (int): Maximum time to wait before flushing smaller batches.
             flush_timeout_ms (int): Maximum total time allowed for batch processing.
         """
+        self.redis = redis_client
+        self.stream_key = stream_key
+        self.consumer_group = consumer_group
+        self.consumer_name = consumer_name
         self.batch: List[Dict[str, Any]] = []
+        self.pending_ids: List[str] = []
         self.max_batch_size = max_batch_size
         self.max_wait_time_ms = max_wait_time_ms
         self.flush_timeout_ms = flush_timeout_ms
         self.lock = asyncio.Lock()
 
-    async def add_record(self, record_data: Dict[str, Any]):
+    async def initialize(self):
         """
-        Add a record to the batch, potentially triggering a flush.
+        Initialize the Redis Stream and consumer group.
+        Creates the consumer group if it doesn't exist.
+        """
+        try:
+            # Create consumer group, using $ as start ID (only new messages)
+            # MKSTREAM creates the stream if it doesn't exist
+            await self.redis.xgroup_create(
+                name=self.stream_key,
+                groupname=self.consumer_group,
+                mkstream=True,
+                id="$",
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            if "BUSYGROUP" not in str(e):  # Ignore if group already exists
+                raise
+
+    async def process_pending(self):
+        """
+        Process any pending messages that weren't acknowledged in previous sessions.
+        """
+        while True:
+            pending = await self.redis.xpending_range(
+                name=self.stream_key,
+                groupname=self.consumer_group,
+                min="-",
+                max="+",
+                count=self.max_batch_size,
+                consumername=self.consumer_name,
+            )
+
+            if not pending:
+                break
+
+            message_ids = [p["message_id"] for p in pending]
+            messages = await self.redis.xclaim(
+                name=self.stream_key,
+                groupname=self.consumer_group,
+                consumername=self.consumer_name,
+                min_idle_time=self.max_wait_time_ms,
+                message_ids=message_ids,
+            )
+
+            for message_id, fields in messages:
+                await self._process_message(message_id, fields)
+
+    async def _process_message(self, message_id: str, fields: Dict[str, Any]):
+        """
+        Process a single message from the stream.
 
         Args:
-            record_data (Dict[str, Any]): Record to be added to batch.
+            message_id (str): ID of the message in the stream.
+            fields (Dict[str, Any]): Message fields containing the record data.
         """
-        async with self.lock:
-            self.batch.append(record_data)
+        try:
+            data = json.loads(fields[b"data"].decode("utf-8"))
+            async with self.lock:
+                self.batch.append(data)
+                self.pending_ids.append(message_id)
 
-            # Flush if batch size reached
-            if len(self.batch) >= self.max_batch_size:
-                await self._flush_batch()
+                if len(self.batch) >= self.max_batch_size:
+                    await self._flush_batch()
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            logger.error("Invalid message format: %s", e)
+            # Acknowledge invalid messages to prevent reprocessing
+            await self.redis.xack(self.stream_key, self.consumer_group, message_id)
 
     async def _flush_batch(self):
         """
-        Flush accumulated records to the database.
+        Flush accumulated records to the database and acknowledge processed messages.
         """
         if not self.batch:
             return
@@ -82,10 +150,20 @@ class BatchProcessor:
                     db.add(obj)
 
                 await db.commit()
+
+                # Acknowledge all processed messages
+                for message_id in self.pending_ids:
+                    await self.redis.xack(
+                        self.stream_key, self.consumer_group, message_id
+                    )
+
                 logger.info("Batch processed: %s records", len(self.batch))
                 self.batch.clear()
+                self.pending_ids.clear()
+
         except SQLAlchemyError as e:
             logger.error("Batch processing error: %s", e)
+            # Don't clear batch or pending_ids on error - will retry on next flush
 
     async def start_background_flush(self):
         """
@@ -97,20 +175,48 @@ class BatchProcessor:
                 if self.batch:
                     await self._flush_batch()
 
+    async def process_stream(self):
+        """
+        Main processing loop that reads from the Redis Stream.
+        """
+        while True:
+            try:
+                # Read new messages
+                messages = await self.redis.xreadgroup(
+                    groupname=self.consumer_group,
+                    consumername=self.consumer_name,
+                    streams={self.stream_key: ">"},
+                    count=self.max_batch_size,
+                    block=self.max_wait_time_ms,
+                )
+
+                if messages:
+                    stream_messages = messages[0][1]
+                    for message_id, fields in stream_messages:
+                        await self._process_message(message_id, fields)
+
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error("Error processing stream: %s", e)
+                await asyncio.sleep(1)  # Prevent tight error loop
+
 
 async def listen(
     redis_client: Redis,
-    channel: str,
+    stream_key: str,
+    consumer_group: str = "batch_processor_group",
+    consumer_name: Optional[str] = None,
     max_batch_size: int = 100,
     max_wait_time_ms: int = 5000,
     flush_timeout_ms: int = 10000,
 ):
     """
-    Enhanced listener with MS-based batching support.
+    Enhanced listener with Redis Streams support.
 
     Args:
-        redis_client (Redis): Redis client for pub/sub.
-        channel (str): Channel to subscribe to.
+        redis_client (Redis): Redis client instance.
+        stream_key (str): Name of the Redis stream to consume from.
+        consumer_group (str): Name of the consumer group.
+        consumer_name (str, optional): Unique consumer name. Defaults to None.
         max_batch_size (int): Maximum records per batch.
         max_wait_time_ms (int): Maximum wait time for batch.
         flush_timeout_ms (int): Maximum total processing time.
@@ -119,23 +225,24 @@ async def listen(
     async with session.engine.begin() as conn:
         await conn.run_sync(session.Base.metadata.create_all)
 
-    batch_processor = BatchProcessor(
+    if consumer_name is None:
+        consumer_name = f"consumer-{asyncio.current_task().get_name()}"
+
+    processor = StreamBatchProcessor(
+        redis_client=redis_client,
+        stream_key=stream_key,
+        consumer_group=consumer_group,
+        consumer_name=consumer_name,
         max_batch_size=max_batch_size,
         max_wait_time_ms=max_wait_time_ms,
         flush_timeout_ms=flush_timeout_ms,
     )
 
+    await processor.initialize()
+    await processor.process_pending()  # Process any pending messages first
+
     # Start background flush task
-    asyncio.create_task(batch_processor.start_background_flush())
+    asyncio.create_task(processor.start_background_flush())
 
-    pubsub = redis_client.pubsub()
-    await pubsub.subscribe(channel)
-    logger.info("Subscribed to %s. Waiting for messages...", channel)
-
-    async for message in pubsub.listen():
-        try:
-            if message["type"] == "message":
-                data = json.loads(message["data"].decode("utf-8"))
-                await batch_processor.add_record(data)
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.error("Invalid message format: %s", e)
+    # Start main processing loop
+    await processor.process_stream()

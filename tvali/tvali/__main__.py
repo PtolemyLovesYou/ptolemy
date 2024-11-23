@@ -19,4 +19,4 @@ if __name__ == "__main__":
     if args.command == "publisher":
         from tvali.publisher.main import listen
 
-        asyncio.run(listen(Redis(host="redis", port=6379, db=0), "tvali"))
+        asyncio.run(listen(Redis(host="redis", port=6379, db=0), "tvali_stream"))
