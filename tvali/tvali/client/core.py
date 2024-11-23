@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import traceback as tb
 import uuid
 from datetime import datetime
-from pydantic import PrivateAttr, BaseModel
+from pydantic import Field, BaseModel, ConfigDict, computed_field
 
 from ..utils import (
     Record,
@@ -28,16 +28,45 @@ VERSION = "0.0.1"
 
 class TvaliBase(BaseModel, ABC):
     """Handler."""
+    model_config = ConfigDict(validate_assignment=True)
 
     event: Event
 
-    _start_time: datetime = PrivateAttr(default=None)
+    runtime_: Runtime = Field(default=None)
+    inputs_: List[Input] = Field(default=None, exclude=True)
+    outputs_: List[Output] = Field(default=None, exclude=True)
+    feedback_: List[Feedback] = Field(default=None, exclude=True)
+    metadata_: List[Metadata] = Field(default=None, exclude=True)
 
-    _runtime: Runtime = PrivateAttr(default=None)
-    _inputs: List[Input] = PrivateAttr(default=None)
-    _outputs: List[Output] = PrivateAttr(default=None)
-    _feedback: List[Feedback] = PrivateAttr(default=None)
-    _metadata: List[Metadata] = PrivateAttr(default=None)
+    @computed_field
+    @property
+    def runtime(self) -> Runtime:
+        """Runtime."""
+        return self.runtime_
+
+    @computed_field
+    @property
+    def inputs(self) -> List[Input]:
+        """Inputs."""
+        return self.inputs_
+
+    @computed_field
+    @property
+    def outputs(self) -> List[Output]:
+        """Outputs."""
+        return self.outputs_
+
+    @computed_field
+    @property
+    def feedback(self) -> List[Feedback]:
+        """Feedback."""
+        return self.feedback_
+
+    @computed_field
+    @property
+    def metadata(self) -> List[Metadata]:
+        """Metadata."""
+        return self.metadata_
 
     @property
     def tier(self) -> Tier:
@@ -121,10 +150,10 @@ class TvaliBase(BaseModel, ABC):
             raise ValueError("Event not set.")
 
         if inputs:
-            if self._inputs is not None:
+            if self.inputs_ is not None:
                 raise ValueError("Inputs already set")
 
-            self._inputs = [
+            self.inputs_ = [
                 Record.build(LogType.INPUT, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
@@ -136,10 +165,10 @@ class TvaliBase(BaseModel, ABC):
             ]
 
         if outputs:
-            if self._outputs is not None:
+            if self.outputs_ is not None:
                 raise ValueError("Outputs already set")
 
-            self._outputs = [
+            self.outputs_ = [
                 Record.build(LogType.OUTPUT, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
@@ -151,10 +180,10 @@ class TvaliBase(BaseModel, ABC):
             ]
 
         if feedback:
-            if self._feedback is not None:
+            if self.feedback_ is not None:
                 raise ValueError("Feedback already set")
 
-            self._feedback = [
+            self.feedback_ = [
                 Record.build(LogType.FEEDBACK, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
@@ -166,10 +195,10 @@ class TvaliBase(BaseModel, ABC):
             ]
 
         if metadata:
-            if self._metadata is not None:
+            if self.metadata_ is not None:
                 raise ValueError("Metadata already set")
 
-            self._metadata = [
+            self.metadata_ = [
                 Record.build(LogType.METADATA, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
@@ -190,18 +219,18 @@ class TvaliBase(BaseModel, ABC):
         Raises:
             ValueError: If the runtime has already started or ended.
         """
-        if self._runtime is None:
-            self._runtime = Record.build(LogType.RUNTIME, self.tier)(
+        if self.runtime_ is None:
+            self.runtime_ = Record.build(LogType.RUNTIME, self.tier)(
                 parent_id=self.event.id
             )
         else:
-            if self._runtime.start_time is not None:
+            if self.runtime_.start_time is not None:
                 raise ValueError("Runtime already started")
 
-            if self._runtime.end_time is not None:
+            if self.runtime_.end_time is not None:
                 raise ValueError("Runtime already ended")
 
-        self._runtime.start_time = datetime.now()
+        self.runtime_.start_time = datetime.now()
 
     def end(self) -> None:
         """
@@ -213,46 +242,13 @@ class TvaliBase(BaseModel, ABC):
         Raises:
             ValueError: If the runtime has not been started or has already ended.
         """
-        if self._runtime is None:
+        if self.runtime_ is None:
             raise ValueError("Runtime not started")
 
-        if self._runtime.end_time is not None:
+        if self.runtime_.end_time is not None:
             raise ValueError("Runtime already ended")
 
-        self._runtime.end_time = datetime.now()
-
-    def runtime(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        error_type: Optional[str] = None,
-        error_content: Optional[str] = None,
-    ):
-        """
-        Set runtime information for the event.
-
-        Args:
-            start_time (datetime): The start time of the event.
-            end_time (datetime): The end time of the event.
-            error_type (Optional[str]): The type of error that occurred during the event.
-            error_content (Optional[str]): The content of the error that occurred during the event.
-
-        Raises:
-            ValueError: If the event is not set or if the runtime has already been set.
-        """
-        if self.event is None:
-            raise ValueError("Event not set")
-
-        if self._runtime is not None:
-            raise ValueError("Runtime already set")
-
-        self._runtime = Record.build(LogType.RUNTIME, self.tier)(
-            parent_id=self.event.id,
-            start_time=start_time,
-            end_time=end_time,
-            error_type=error_type,
-            error_content=error_content,
-        )
+        self.runtime_.end_time = datetime.now()
 
     async def __aenter__(self):
         await self.push_event()
@@ -263,8 +259,8 @@ class TvaliBase(BaseModel, ABC):
         self.end()
 
         if exc_type is not None:
-            self._runtime.error_type = exc_type.__name__
-            self._runtime.error_content = tb.format_exc()
+            self.runtime_.error_type = exc_type.__name__
+            self.runtime_.error_content = tb.format_exc()
 
         await self.push_io()
 
@@ -276,11 +272,11 @@ class TvaliBase(BaseModel, ABC):
         """Push IO."""
         await self.push_records(
             [
-                self._runtime,
-                *(self._inputs or []),
-                *(self._outputs or []),
-                *(self._feedback or []),
-                *(self._metadata or []),
+                self.runtime_,
+                *(self.inputs_ or []),
+                *(self.outputs_ or []),
+                *(self.feedback_ or []),
+                *(self.metadata_ or []),
             ]
         )
 

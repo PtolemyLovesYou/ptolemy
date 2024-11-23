@@ -1,0 +1,10 @@
+query getEvent($Id: ID) {
+    systemEvents(filters: {id: $Id}) {
+        parentId
+        id
+        name
+        parameters
+        version
+        environment
+    }
+}

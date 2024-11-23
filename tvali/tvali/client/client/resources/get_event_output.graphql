@@ -1,0 +1,11 @@
+query getEventOutput($Id: ID) {
+    systemEvents(filters: {id: $Id}) {
+        outputs {
+            ... on Output {
+                id
+                fieldName
+                fieldValue
+            }
+        }
+    }
+}

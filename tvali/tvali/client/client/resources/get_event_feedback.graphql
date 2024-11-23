@@ -1,0 +1,11 @@
+query getEventFeedback($Id: ID) {
+    systemEvents(filters: {id: $Id}) {
+        feedback {
+            ... on Feedback {
+                id
+                fieldName
+                fieldValue
+            }
+        }
+    }
+}

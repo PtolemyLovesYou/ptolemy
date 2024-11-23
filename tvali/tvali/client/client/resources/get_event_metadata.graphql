@@ -1,0 +1,11 @@
+query getEventMetadata($Id: ID) {
+    systemEvents(filters: {id: $Id}) {
+        metadata {
+            ... on Metadata {
+                id
+                fieldName
+                fieldValue
+            }
+        }
+    }
+}

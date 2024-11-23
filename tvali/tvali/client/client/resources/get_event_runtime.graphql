@@ -1,0 +1,13 @@
+query getEventRuntime($Id: ID) {
+    systemEvents(filters: {id: $Id}) {
+        runtime {
+            ... on Runtime {
+                id
+                startTime
+                endTime
+                errorType
+                errorContent
+            }
+        }
+    }
+}
