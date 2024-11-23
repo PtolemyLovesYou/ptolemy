@@ -41,7 +41,12 @@ class Tvali(TvaliBase):
         ]
         async with aiohttp.ClientSession(os.getenv("TVALI_API_URL")) as session:
             async with session.post("/publish/?poll=true", json=body) as response:
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except aiohttp.ClientResponseError as e:
+                    raise ValueError(
+                        f"Failed to push records to Redis: {await response.text()}"
+                    ) from e
 
                 response = await response.json()
                 if not all(record.id.hex == r for r, record in zip(response, records)):

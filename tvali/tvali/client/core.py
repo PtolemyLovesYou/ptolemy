@@ -18,6 +18,7 @@ from ..utils import (
     Parameters,
     Tier,
     LogType,
+    IOSerializable
 )
 
 WORKSPACE_ID = uuid.uuid4()
@@ -129,7 +130,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in inputs.items()
+                for field_name, field_value in IOSerializable[Dict[str, Any]](inputs).root.items()
             ]
 
         if outputs:
@@ -142,7 +143,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in outputs.items()
+                for field_name, field_value in IOSerializable[Dict[str, Any]](outputs).root.items()
             ]
 
         if feedback:
@@ -155,7 +156,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in feedback.items()
+                for field_name, field_value in IOSerializable[Dict[str, Any]](feedback).root.items()
             ]
 
         if metadata:
@@ -168,8 +169,49 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in metadata.items()
+                for field_name, field_value in IOSerializable[Dict[str, str]](metadata).root.items()
             ]
+
+    def start(self) -> None:
+        """
+        Initialize the runtime for the event.
+
+        If the runtime has not been set, create a new RUNTIME record and set the start time to the current datetime.
+        If the runtime has already started or ended, raise a ValueError.
+
+        Raises:
+            ValueError: If the runtime has already started or ended.
+        """
+        if self._runtime is None:
+            self._runtime = Record.build(LogType.RUNTIME, self.tier)(
+                parent_id=self.event.id
+            )
+        else:
+            if self._runtime.start_time is not None:
+                raise ValueError("Runtime already started")
+
+            if self._runtime.end_time is not None:
+                raise ValueError("Runtime already ended")
+
+        self._runtime.start_time = datetime.now()
+
+    def end(self) -> None:
+        """
+        End the runtime for the event.
+
+        If the runtime has not been started, raise a ValueError.
+        If the runtime has already ended, raise a ValueError.
+
+        Raises:
+            ValueError: If the runtime has not been started or has already ended.
+        """
+        if self._runtime is None:
+            raise ValueError("Runtime not started")
+
+        if self._runtime.end_time is not None:
+            raise ValueError("Runtime already ended")
+
+        self._runtime.end_time = datetime.now()
 
     def runtime(
         self,
@@ -205,29 +247,25 @@ class TvaliBase(BaseModel, ABC):
         )
 
     async def __aenter__(self):
-        await self.push_records([self.event])
-        if self._start_time is not None:
-            raise ValueError("Runtime already started")
+        await self.push_event()
 
-        self._start_time = datetime.now()
+        self.start()
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        end_time = datetime.now()
+        self.end()
 
-        if exc_type is None:
-            error_type = None
-            error_content = None
-        else:
-            error_type = exc_type.__name__
-            error_content = tb.format_exc()
+        if exc_type is not None:
+            self._runtime.error_type = exc_type.__name__
+            self._runtime.error_content = tb.format_exc()
 
-        self.runtime(
-            self._start_time,
-            end_time,
-            error_type=error_type,
-            error_content=error_content,
-        )
+        await self.push_io()
 
+    async def push_event(self):
+        """Push event."""
+        await self.push_records([self.event])
+
+    async def push_io(self):
+        """Push IO."""
         await self.push_records(
             [
                 self._runtime,
