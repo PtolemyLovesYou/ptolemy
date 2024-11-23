@@ -37,8 +37,8 @@ class EventRuntime(EventTable):
 
     __abstract__ = True
 
-    start_time: Mapped[DateTime] = mapped_column(DateTime(), nullable=False)
-    end_time: Mapped[DateTime] = mapped_column(DateTime(), nullable=False)
+    start_time: Mapped[DateTime] = mapped_column(DateTime(), nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime(), nullable=True)
     error_type: Mapped[str] = mapped_column(String(), nullable=True)
     error_content: Mapped[str] = mapped_column(String(), nullable=True)
 

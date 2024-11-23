@@ -3,7 +3,7 @@
 from typing import Optional, Generic, TypeVar, Any, ClassVar, Self, Literal
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
-from tvali.utils import ID, Timestamp, Parameters, LogType, Tier
+from tvali.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
 
 T = TypeVar("T")
 
@@ -76,7 +76,7 @@ class Event(Record):
     LOGTYPE = LogType.EVENT
 
     name: str
-    parameters: Optional[Parameters] = Field(default=None)
+    parameters: Optional[IOSerializable[Parameters]] = Field(default=None)
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
     version: Optional[str] = Field(min_length=1, max_length=16, default=None)
 
@@ -105,8 +105,8 @@ class Runtime(Record):
 
     LOGTYPE = LogType.RUNTIME
 
-    start_time: Timestamp
-    end_time: Timestamp
+    start_time: Optional[Timestamp] = Field(default=None)
+    end_time: Optional[Timestamp] = Field(default=None)
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
 

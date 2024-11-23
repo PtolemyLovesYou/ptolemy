@@ -18,6 +18,7 @@ from ..utils import (
     Parameters,
     Tier,
     LogType,
+    IOSerializable
 )
 
 WORKSPACE_ID = uuid.uuid4()
@@ -129,7 +130,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in inputs.items()
+                for field_name, field_value in IOSerializable[Dict[str, Any]](inputs).root.items()
             ]
 
         if outputs:
@@ -142,7 +143,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in outputs.items()
+                for field_name, field_value in IOSerializable[Dict[str, Any]](outputs).root.items()
             ]
 
         if feedback:
@@ -155,7 +156,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in feedback.items()
+                for field_name, field_value in IOSerializable[Dict[str, Any]](feedback).root.items()
             ]
 
         if metadata:
@@ -168,7 +169,7 @@ class TvaliBase(BaseModel, ABC):
                     field_name=field_name,
                     field_value=field_value,
                 )
-                for field_name, field_value in metadata.items()
+                for field_name, field_value in IOSerializable[Dict[str, str]](metadata).root.items()
             ]
 
     def runtime(
