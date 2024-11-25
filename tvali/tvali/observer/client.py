@@ -20,9 +20,8 @@ async def push_records(
     """Push records."""
     stub = observer_grpc.ObserverStub(channel or get_grpc_channel())
 
-    rec = await stub.Publish(
+    await stub.Publish(
         observer.PublishRequest(  # pylint: disable=no-member
             records=[r.proto() for r in records]
         )
     )
-    print(rec)

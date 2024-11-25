@@ -20,8 +20,8 @@ async fn get_client() -> redis::Client {
     redis::Client::open(format!("redis://{host}:{port}")).expect("Failed to create Redis client")
 }
 
-async fn publish_record(record: &Record) -> Result<RecordPublishJob, redis::RedisError> {
-    let client = get_client().await;
+// Rust server side (publishing):
+async fn publish_record(client: &redis::Client, record: &Record) -> Result<RecordPublishJob, redis::RedisError> {
     let mut conn = client.get_multiplexed_async_connection().await?;
 
     let timestamp = SystemTime::now()
@@ -32,18 +32,11 @@ async fn publish_record(record: &Record) -> Result<RecordPublishJob, redis::Redi
     
     let data = record.encode_to_vec();
 
-    // Convert data to a map of strings as required by Redis
-    let mut field_map = HashMap::new();
-    field_map.insert("data", data.iter()
-        .map(|b| format!("{:02x}", b))
-        .collect::<String>());
-    field_map.insert("timestamp", timestamp);
-
-    // Convert HashMap into Vec of tuples for xadd
-    let fields: Vec<(&str, &str)> = field_map
-        .iter()
-        .map(|(k, v)| (*k, v.as_str()))
-        .collect();
+    // Store raw bytes directly in Redis
+    let fields = vec![
+        ("data", data.as_slice()),
+        ("timestamp", timestamp.as_bytes()),
+    ];
 
     let stream_key: String = conn.xadd(
         DEFAULT_STREAM,
@@ -51,7 +44,6 @@ async fn publish_record(record: &Record) -> Result<RecordPublishJob, redis::Redi
         &fields,
     ).await?;
 
-    // Trim the stream using StreamMaxlen
     let _: () = conn.xtrim(
         DEFAULT_STREAM, 
         StreamMaxlen::Approx(MAX_STREAM_LENGTH)
@@ -72,6 +64,7 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
+        let client = get_client().await;
         let records = request.into_inner().records;
         
         let mut jobs = Vec::new();
@@ -79,7 +72,7 @@ impl Observer for MyObserver {
         let mut error_message = String::new();
 
         for record in records {
-            match publish_record(&record).await {
+            match publish_record(&client, &record).await {
                 Ok(job) => jobs.push(job),
                 Err(e) => {
                     had_error = true;
