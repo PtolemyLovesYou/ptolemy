@@ -19,6 +19,7 @@ from ..utils import (
     Tier,
     LogType,
     IOSerializable,
+    get_record_type,
 )
 
 WORKSPACE_ID = uuid.uuid4()
@@ -114,7 +115,7 @@ class TvaliBase(BaseModel, ABC):
             Self: A new instance of the handler class.
         """
         return cls(
-            event=Record.build(LogType.EVENT, Tier.SYSTEM)(
+            event=get_record_type(LogType.EVENT, Tier.SYSTEM)(
                 parent_id=WORKSPACE_ID,
                 name=name,
                 parameters=parameters,
@@ -155,7 +156,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Inputs already set")
 
             self.inputs_ = [
-                Record.build(LogType.INPUT, self.tier)(
+                get_record_type(LogType.INPUT, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -170,7 +171,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Outputs already set")
 
             self.outputs_ = [
-                Record.build(LogType.OUTPUT, self.tier)(
+                get_record_type(LogType.OUTPUT, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -185,7 +186,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Feedback already set")
 
             self.feedback_ = [
-                Record.build(LogType.FEEDBACK, self.tier)(
+                get_record_type(LogType.FEEDBACK, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -200,7 +201,7 @@ class TvaliBase(BaseModel, ABC):
                 raise ValueError("Metadata already set")
 
             self.metadata_ = [
-                Record.build(LogType.METADATA, self.tier)(
+                get_record_type(LogType.METADATA, self.tier)(
                     parent_id=self.event.id,
                     field_name=field_name,
                     field_value=field_value,
@@ -221,7 +222,7 @@ class TvaliBase(BaseModel, ABC):
             ValueError: If the runtime has already started or ended.
         """
         if self.runtime_ is None:
-            self.runtime_ = Record.build(LogType.RUNTIME, self.tier)(
+            self.runtime_ = get_record_type(LogType.RUNTIME, self.tier)(
                 parent_id=self.event.id
             )
         else:

@@ -64,7 +64,7 @@ class Record(BaseModel):
         Returns:
             Record: An instance of the Record class corresponding to the proto record.
         """
-        built_cls = Record.build(
+        built_cls = get_record_type(
             LogType.from_proto(proto.log_type),
             Tier.from_proto(proto.tier),
         )
@@ -174,7 +174,7 @@ class Event(Record):
         if self.TIER.child is None:
             raise ValueError(f"Cannot spawn child of tier {self.TIER}")
 
-        return Record.build(LogType.EVENT, self.TIER.child)(
+        return get_record_type(LogType.EVENT, self.TIER.child)(
             parent_id=self.id,
             name=name,
             parameters=parameters,
@@ -264,3 +264,12 @@ class Metadata(Record):
 
     def proto_dict(self) -> dict:
         return self.model_dump(exclude=["id", "parent_id"])
+
+RECORD_MAP = {
+    tier: {log_type: Record.build(log_type, tier) for log_type in LogType}
+    for tier in Tier
+}
+
+def get_record_type(log_type: LogType, tier: Tier) -> type[Record]:
+    """Get record type."""
+    return RECORD_MAP[tier][log_type]

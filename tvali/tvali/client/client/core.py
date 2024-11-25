@@ -8,7 +8,7 @@ from pydantic import BaseModel, computed_field, field_serializer
 from . import resources
 from .grpc import push_records
 from ..core import TvaliBase
-from ...utils import Record, LogType, Tier
+from ...utils import Record, LogType, Tier, get_record_type
 
 
 def get_gql_query(name: str) -> str:
@@ -51,7 +51,7 @@ async def _gql(query_name: str, variables: dict):
 async def _get_event_by_id(id_: str) -> Record:
     data = await _gql("get_event", {"Id": id_})
     data = data["data"]["systemEvents"][0]
-    return Record.build(LogType.EVENT, Tier.SYSTEM)(
+    return get_record_type(LogType.EVENT, Tier.SYSTEM)(
         parent_id=data["parentId"],
         id=data["id"],
         name=data["name"],
@@ -65,7 +65,7 @@ async def _get_event_input_by_id(id_: str) -> List[Record]:
     data = await _gql("get_event_input", {"Id": id_})
     data = data["data"]["systemEvents"][0]["inputs"]
     return [
-        Record.build(LogType.INPUT, Tier.SYSTEM)(
+        get_record_type(LogType.INPUT, Tier.SYSTEM)(
             parent_id=id_,
             id=d["id"],
             field_name=d["fieldName"],
@@ -79,7 +79,7 @@ async def _get_event_output_by_id(id_: str) -> List[Record]:
     data = await _gql("get_event_output", {"Id": id_})
     data = data["data"]["systemEvents"][0]["outputs"]
     return [
-        Record.build(LogType.OUTPUT, Tier.SYSTEM)(
+        get_record_type(LogType.OUTPUT, Tier.SYSTEM)(
             parent_id=id_,
             id=d["id"],
             field_name=d["fieldName"],
@@ -93,7 +93,7 @@ async def _get_event_feedback_by_id(id_: str) -> List[Record]:
     data = await _gql("get_event_feedback", {"Id": id_})
     data = data["data"]["systemEvents"][0]["feedback"]
     return [
-        Record.build(LogType.FEEDBACK, Tier.SYSTEM)(
+        get_record_type(LogType.FEEDBACK, Tier.SYSTEM)(
             parent_id=id_,
             id=d["id"],
             field_name=d["fieldName"],
@@ -107,7 +107,7 @@ async def _get_event_metadata_by_id(id_: str) -> List[Record]:
     data = await _gql("get_event_metadata", {"Id": id_})
     data = data["data"]["systemEvents"][0]["metadata"]
     return [
-        Record.build(LogType.METADATA, Tier.SYSTEM)(
+        get_record_type(LogType.METADATA, Tier.SYSTEM)(
             parent_id=id_,
             id=d["id"],
             field_name=d["fieldName"],
@@ -120,7 +120,7 @@ async def _get_event_metadata_by_id(id_: str) -> List[Record]:
 async def _get_event_runtime_by_id(id_: str) -> Record:
     data = await _gql("get_event_runtime", {"Id": id_})
     data = data["data"]["systemEvents"][0]["runtime"]
-    return Record.build(LogType.RUNTIME, Tier.SYSTEM)(
+    return get_record_type(LogType.RUNTIME, Tier.SYSTEM)(
         parent_id=id_,
         id=data["id"],
         start_time=data["startTime"],
