@@ -6,8 +6,8 @@ from importlib.resources import read_text
 import aiohttp
 from pydantic import BaseModel, computed_field, field_serializer
 from . import resources
+from .grpc import push_records
 from ..core import TvaliBase
-from ...observer.client import push_records
 from ...utils import Record, LogType, Tier
 
 

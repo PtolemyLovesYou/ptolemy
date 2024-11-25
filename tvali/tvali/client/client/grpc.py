@@ -3,8 +3,8 @@
 from typing import Optional, List
 import os
 from grpc import aio as grpc
-from ..utils import Record
-from ..proto import observer_pb2 as observer, observer_pb2_grpc as observer_grpc
+from ...utils import Record
+from ...proto import observer_pb2 as observer, observer_pb2_grpc as observer_grpc
 
 
 def get_grpc_channel() -> grpc.Channel:
