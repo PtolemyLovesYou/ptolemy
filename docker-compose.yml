@@ -44,6 +44,12 @@ services:
       - "6379:6379"
     networks:
       - tvali
+  redisinsight:
+    image: redis/redisinsight
+    ports:
+      - "5540:5540"
+    networks:
+      - tvali
 
 volumes:
   postgres:
