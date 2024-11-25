@@ -1,7 +1,6 @@
 """Subscription model with MS-based batching using Redis Streams."""
 
 import logging
-import json
 import asyncio
 from typing import List, Dict, Any, Optional
 from redis.asyncio import Redis
@@ -12,6 +11,8 @@ from ..proto import observer_pb2 as observer
 from ..utils import Record
 
 logger = logging.getLogger(__name__)
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class StreamBatchProcessor:
@@ -118,16 +119,47 @@ class StreamBatchProcessor:
             fields (Dict[str, Any]): Message fields containing the record data.
         """
         try:
-            data = observer.Record()  # pylint: disable=no-member
-            data.ParseFromString(fields[b"data"])
-            async with self.lock:
-                self.batch.append(Record.from_proto(data))
-                self.pending_ids.append(message_id)
+            # Add debug logging
+            logger.debug("Received message ID: %s", message_id)
+            logger.debug("Fields: %s", fields)
 
-                if len(self.batch) >= self.max_batch_size:
-                    await self._flush_batch()
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
-            logger.error("Invalid message format: %s", e)
+            if b"data" not in fields:
+                logger.error("No 'data' field in message fields")
+                await self.redis.xack(self.stream_key, self.consumer_group, message_id)
+                return
+
+            data = observer.Record() # pylint: disable=no-member
+            raw_data = fields[b"data"]
+
+            # Add debug logging for the raw data
+            logger.debug("Raw data length: %d bytes", len(raw_data))
+            logger.debug("Raw data type: %s", type(raw_data))
+            
+            try:
+                # If the data is a string, encode it to bytes first
+                if isinstance(raw_data, str):
+                    raw_data = raw_data.encode('utf-8')
+                
+                data.ParseFromString(raw_data)
+                logger.debug("Successfully parsed protobuf message: %s", data)
+                
+                async with self.lock:
+                    record = Record.from_proto(data)
+                    logger.debug("Converted to record: %s", record)
+                    self.batch.append(record)
+                    self.pending_ids.append(message_id)
+
+                    if len(self.batch) >= self.max_batch_size:
+                        await self._flush_batch()
+                        
+            except Exception as parse_error:
+                logger.error("Failed to parse protobuf message: %s", parse_error)
+                # Log the raw data in hex for debugging
+                logger.debug("Raw data (hex): %s", raw_data.hex())
+                raise
+                
+        except Exception as e: # pylint: disable=broad-except
+            logger.error("Error processing message: %s", e)
             # Acknowledge invalid messages to prevent reprocessing
             await self.redis.xack(self.stream_key, self.consumer_group, message_id)
 
@@ -235,7 +267,7 @@ async def listen(
     )
 
     await processor.initialize()
-    await processor.process_pending()  # Process any pending messages first
+    # await processor.process_pending()  # Process any pending messages first
 
     # Start background flush task
     asyncio.create_task(processor.start_background_flush())

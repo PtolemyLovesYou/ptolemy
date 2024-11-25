@@ -1,0 +1,17 @@
+[package]
+name = "observer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tonic = "0.12.3"
+prost = "*"
+tokio = { version = "1.41.1", features = ["full"] }
+redis = { version = "*", features = ["streams", "tokio-comp", "aio", "connection-manager"] }
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[build-dependencies]
+tonic-build = "0.12.3"
