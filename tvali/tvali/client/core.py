@@ -28,6 +28,7 @@ VERSION = "0.0.1"
 
 class TvaliBase(BaseModel, ABC):
     """Handler."""
+
     model_config = ConfigDict(validate_assignment=True)
 
     event: Event

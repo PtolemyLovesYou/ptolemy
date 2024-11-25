@@ -21,7 +21,7 @@ enum LogType {
     RUNTIME = 2;
     INPUT = 3;
     OUTPUT = 4;
-    TIER = 5;
+    FEEDBACK = 5;
     METADATA = 6;
 }
 
