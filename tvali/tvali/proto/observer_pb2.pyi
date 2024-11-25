@@ -52,13 +52,28 @@ class PublishRequest(_message.Message):
     ) -> None: ...
 
 class PublishResponse(_message.Message):
-    __slots__ = ("successful", "message")
+    __slots__ = ("successful", "jobs", "message")
     SUCCESSFUL_FIELD_NUMBER: _ClassVar[int]
+    JOBS_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     successful: bool
+    jobs: _containers.RepeatedCompositeFieldContainer[RecordPublishJob]
     message: str
     def __init__(
-        self, successful: bool = ..., message: _Optional[str] = ...
+        self,
+        successful: bool = ...,
+        jobs: _Optional[_Iterable[_Union[RecordPublishJob, _Mapping]]] = ...,
+        message: _Optional[str] = ...,
+    ) -> None: ...
+
+class RecordPublishJob(_message.Message):
+    __slots__ = ("id", "stream_key")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    STREAM_KEY_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    stream_key: str
+    def __init__(
+        self, id: _Optional[str] = ..., stream_key: _Optional[str] = ...
     ) -> None: ...
 
 class Record(_message.Message):

@@ -1,20 +1,9 @@
 """Publish routes for Redis Streams."""
 
-from typing import List, Union, Optional
-from pydantic import BaseModel, model_validator
+from typing import List
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Query
 from redis.asyncio import Redis
-from ....utils import (
-    Record,
-    Tier,
-    LogType,
-    Event,
-    Input,
-    Output,
-    Feedback,
-    Metadata,
-    Runtime,
-)
 
 router = APIRouter(
     prefix="/publish",
@@ -24,52 +13,6 @@ router = APIRouter(
 client = Redis(host="redis", port=6379, db=0)
 DEFAULT_STREAM = "tvali_stream"
 MAX_STREAM_LENGTH = 1000000  # Maximum number of messages to keep in stream
-
-
-class PublishRequest(BaseModel):
-    """
-    Publish request for Redis Streams.
-
-    Attributes:
-        tier: Service tier
-        log_type: Type of log record
-        record: The actual record data
-        stream_key: Optional custom stream key
-    """
-
-    tier: Tier
-    log_type: LogType
-    record: Union[Event, Input, Output, Feedback, Metadata, Runtime]
-    stream_key: Optional[str] = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_record(cls, values: dict) -> dict:
-        """
-        Validate and build the record field.
-
-        Args:
-            values: Dictionary containing the request data
-
-        Returns:
-            dict: Validated and processed request data
-        """
-        tier = values.get("tier")
-        log_type = values.get("log_type")
-        record = values.get("record")
-        stream_key = values.get("stream_key", DEFAULT_STREAM)
-
-        if isinstance(record, dict):
-            record_parsed = Record.build(log_type, tier)(**record)
-        else:
-            record_parsed = record
-
-        return {
-            "tier": tier,
-            "log_type": log_type,
-            "record": record_parsed,
-            "stream_key": stream_key,
-        }
 
 
 class StreamInfo(BaseModel):

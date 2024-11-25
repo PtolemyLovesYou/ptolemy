@@ -12,18 +12,25 @@ DEFAULT_STREAM = "tvali_stream"
 MAX_STREAM_LENGTH = 1000000  # Maximum number of messages to keep in stream
 
 
-async def publish_record(record: ob.Record) -> str:  # pylint: disable=no-member
+async def publish_record(
+    record: ob.Record, # pylint: disable=no-member
+) -> ob.RecordPublishJob:  # pylint: disable=no-member
     """Publish record."""
     message_data = {
         "data": record.SerializeToString(),
         "timestamp": str(datetime.now().timestamp()),
     }
 
-    return await client.xadd(
+    stream_key = await client.xadd(
         name=DEFAULT_STREAM,
         fields=message_data,
         maxlen=MAX_STREAM_LENGTH,
         approximate=True,
+    )
+
+    return ob.RecordPublishJob(  # pylint: disable=no-member
+        id=record.id,
+        stream_key=stream_key,
     )
 
 
@@ -35,10 +42,12 @@ class ObserverServicer(ob_grpc.ObserverServicer):
         request: ob.PublishRequest,  # pylint: disable=no-member
         context: grpc.ServicerContext,
     ) -> ob.PublishResponse:  # pylint: disable=no-member
-        await asyncio.gather(*[publish_record(r) for r in request.records])
+        jobs = await asyncio.gather(*[publish_record(r) for r in request.records])
 
         return ob.PublishResponse(  # pylint: disable=no-member
-            successful=True, message=""
+            successful=True,
+            message="",
+            jobs=jobs,
         )
 
 

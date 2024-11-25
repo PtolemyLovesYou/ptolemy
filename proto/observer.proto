@@ -12,7 +12,13 @@ message PublishRequest {
 
 message PublishResponse {
     bool successful = 1;
-    optional string message = 2;
+    repeated RecordPublishJob jobs = 2;
+    optional string message = 3;
+}
+
+message RecordPublishJob {
+    string id = 1;
+    string stream_key = 2;
 }
 
 enum LogType {
