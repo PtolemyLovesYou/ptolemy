@@ -10,6 +10,7 @@ compile-protobuf:
 		--pyi_out=tvali/tvali/proto \
 		--grpc_python_out=tvali/tvali/proto \
 		proto/observer.proto
+	cp proto/observer.proto observer/proto/observer.proto
 
 .PHONY: run
 run:
