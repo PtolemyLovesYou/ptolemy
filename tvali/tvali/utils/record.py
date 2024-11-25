@@ -155,7 +155,7 @@ class Event(Record):
         return {
             "name": record.name,
             "parameters": (
-                IOSerializable[Parameters].validate_json(record.parameters)
+                IOSerializable[Parameters].model_validate_json(record.parameters)
                 if record.parameters
                 else None
             ),
@@ -219,7 +219,7 @@ class _IO(Record):
     def proto_args(cls, record: observer.Record) -> dict:  # pylint: disable=no-member
         return {
             "field_name": record.field_name,
-            "field_value": IOSerializable[Any].validate_json(record.field_value),
+            "field_value": IOSerializable[Any].model_validate_json(record.field_value),
         }
 
     def proto_dict(self) -> dict:
