@@ -4,6 +4,7 @@ from typing import Optional, Generic, TypeVar, Any, ClassVar, Self, Literal
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from tvali.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
+from ..proto import observer_pb2 as observer
 
 T = TypeVar("T")
 
@@ -16,6 +17,53 @@ class Record(BaseModel):
 
     parent_id: ID
     id: ID = Field(default_factory=uuid.uuid4)
+
+    def proto_dict(self) -> dict:
+        """
+        Convert the record instance to a dictionary representation suitable for proto serialization.
+
+        Returns:
+            dict: A dictionary containing the fields of the record formatted for proto.
+        """
+        raise NotImplementedError("Method not implemented!")
+
+    def proto(self) -> observer.Record:  # pylint: disable=no-member
+        """
+        Get the proto Record for this record.
+
+        Returns:
+            observer.Record: The proto record.
+        """
+        return observer.Record(  # pylint: disable=no-member
+            tier=self.TIER.proto(),
+            log_type=self.LOGTYPE.proto(),
+            **self.model_dump(include=["id", "parent_id"]),
+            **self.proto_dict(),
+        )
+
+    @classmethod
+    def from_proto(cls, proto: observer.Record) -> Self:  # pylint: disable=no-member
+        """
+        Convert a proto Record to a Record instance.
+
+        Args:
+            proto (observer.Record): The proto record to convert.
+
+        Returns:
+            Record: An instance of the Record class corresponding to the proto record.
+        """
+        record_cls = cls.build(
+            LogType.from_proto(proto.log_type),
+            Tier.from_proto(proto.tier),
+        )
+
+        return record_cls(
+            **{
+                i.name: j
+                for i, j in proto.ListFields()
+                if i.name not in ["log_type", "tier"]
+            }
+        )
 
     @classmethod
     @validate_call
@@ -80,6 +128,18 @@ class Event(Record):
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
     version: Optional[str] = Field(min_length=1, max_length=16, default=None)
 
+    def proto_dict(self) -> dict:
+        data = self.model_dump(
+            include=["name", "environment", "version"], exclude_none=True
+        )
+
+        if self.parameters is not None:
+            data["parameters"] = (
+                self.parameters.model_dump_json()
+            )  # pylint: disable=no-member
+
+        return data
+
     def spawn(
         self,
         name: str,
@@ -110,12 +170,24 @@ class Runtime(Record):
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
 
+    def proto_dict(self) -> dict:
+        return self.model_dump(
+            exclude_none=True,
+            include=["start_time", "end_time", "error_type", "error_content"],
+        )
+
 
 class _IO(Record, Generic[T]):
     """IO base class."""
 
     field_name: str
-    field_value: T
+    field_value: IOSerializable[T]
+
+    def proto_dict(self) -> dict:
+        return {
+            "field_name": self.field_name,
+            "field_value": self.field_value.model_dump_json(),
+        }
 
 
 class Input(_IO[Any]):
@@ -136,7 +208,13 @@ class Feedback(_IO[Any]):
     LOGTYPE = LogType.FEEDBACK
 
 
-class Metadata(_IO[str]):
-    """Metadata class."""
+class Metadata(Record):
+    """Metadata."""
 
     LOGTYPE = LogType.METADATA
+
+    field_name: str
+    field_value: str
+
+    def proto_dict(self) -> dict:
+        return self.model_dump()
