@@ -6,8 +6,10 @@ import asyncio
 from typing import List, Dict, Any, Optional
 from redis.asyncio import Redis
 from sqlalchemy.exc import SQLAlchemyError
+
 from ..db import models, session
-from ..utils import LogType, Tier, Record
+from ..proto import observer_pb2 as observer
+from ..utils import Record
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ class StreamBatchProcessor:
         self.stream_key = stream_key
         self.consumer_group = consumer_group
         self.consumer_name = consumer_name
-        self.batch: List[Dict[str, Any]] = []
+        self.batch: List[Record] = []
         self.pending_ids: List[str] = []
         self.max_batch_size = max_batch_size
         self.max_wait_time_ms = max_wait_time_ms
@@ -116,9 +118,10 @@ class StreamBatchProcessor:
             fields (Dict[str, Any]): Message fields containing the record data.
         """
         try:
-            data = json.loads(fields[b"data"].decode("utf-8"))
+            data = observer.Record()  # pylint: disable=no-member
+            data.ParseFromString(fields[b"data"])
             async with self.lock:
-                self.batch.append(data)
+                self.batch.append(Record.from_proto(data))
                 self.pending_ids.append(message_id)
 
                 if len(self.batch) >= self.max_batch_size:
@@ -137,15 +140,8 @@ class StreamBatchProcessor:
 
         try:
             async with session.get_db() as db:
-                for record_data in self.batch:
-                    record = Record.build(
-                        LogType(record_data["log_type"]),
-                        Tier(record_data["tier"]),
-                    )(**record_data["record"])
-
-                    model = models.DB_OBJ_MAP[record_data["log_type"]][
-                        record_data["tier"]
-                    ]
+                for record in self.batch:
+                    model = models.DB_OBJ_MAP[record.LOGTYPE][record.TIER]
                     obj = model(**record.model_dump(exclude_none=True))
                     db.add(obj)
 

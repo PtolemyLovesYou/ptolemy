@@ -2,6 +2,15 @@
 format:
 	black tvali
 
+.PHONY: compile-protobuf
+compile-protobuf:
+	python3 -m grpc_tools.protoc \
+		-Iproto/ \
+		--python_out=tvali/tvali/proto \
+		--pyi_out=tvali/tvali/proto \
+		--grpc_python_out=tvali/tvali/proto \
+		proto/observer.proto
+
 .PHONY: run
 run:
 	docker compose up --remove-orphans

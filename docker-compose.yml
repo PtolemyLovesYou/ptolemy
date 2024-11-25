@@ -28,6 +28,22 @@ services:
       - postgres
       - redis
     command: python3 -m tvali publisher
+  observer:
+    build:
+      context: ./tvali
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./tvali:/app
+    networks:
+      - tvali
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgres
+      - redis
+    command: python3 -m tvali observer
   postgres:
     image: postgres:17
     env_file:
