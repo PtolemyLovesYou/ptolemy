@@ -4,19 +4,11 @@ from typing import List
 import os
 from importlib.resources import read_text
 import aiohttp
-import grpc.aio as grpc
 from pydantic import BaseModel, computed_field, field_serializer
 from . import resources
 from ..core import TvaliBase
-from ...proto import observer_pb2 as observer, observer_pb2_grpc as observer_grpc
+from ...observer.client import push_records
 from ...utils import Record, LogType, Tier
-
-
-def get_grpc_channel() -> grpc.Channel:
-    """Get gRPC channel."""
-    return grpc.insecure_channel(
-        f"{os.getenv("OBSERVER_HOST")}:{os.getenv('OBSERVER_PORT')}"
-    )
 
 
 def get_gql_query(name: str) -> str:
@@ -154,10 +146,4 @@ class Tvali(TvaliBase):
         )
 
     async def push_records(self, records: List[Record]) -> None:
-        stub = observer_grpc.ObserverStub(get_grpc_channel())
-
-        await stub.Publish(
-            observer.PublishRequest(  # pylint: disable=no-member
-                records=[r.proto() for r in records]
-            )
-        )
+        return await push_records(records)

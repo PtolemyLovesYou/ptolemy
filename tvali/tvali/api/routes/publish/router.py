@@ -1,8 +1,6 @@
 """Publish routes for Redis Streams."""
 
 from typing import List, Union, Optional
-import asyncio
-from datetime import datetime
 from pydantic import BaseModel, model_validator
 from fastapi import APIRouter, HTTPException, Query
 from redis.asyncio import Redis
@@ -81,65 +79,6 @@ class StreamInfo(BaseModel):
     first_entry_id: str
     last_entry_id: str
     consumer_groups: List[dict]
-
-
-@router.post("/", status_code=201, response_model=List[dict])
-async def publish(
-    records: List[PublishRequest],
-    max_len: Optional[int] = Query(
-        None,
-        description="Maximum length of stream after adding new messages",
-    ),
-    approximate: bool = Query(
-        True,
-        description="Use approximate maximum length for better performance",
-    ),
-) -> List[dict]:
-    """
-    Publish records to Redis Stream.
-
-    Args:
-        records: List of records to be published
-        max_len: Optional maximum length of the stream
-        approximate: Whether to use approximate max length
-
-    Returns:
-        List of dictionaries containing record IDs and stream message IDs
-
-    Raises:
-        HTTPException: If publishing to Redis Stream fails
-    """
-
-    async def publish_record(record: PublishRequest) -> dict:
-        try:
-            # Prepare message data
-            message_data = {
-                "data": record.model_dump_json(),
-                "timestamp": str(datetime.now().timestamp()),
-            }
-
-            # Add to stream with optional maximum length
-            stream_id = await client.xadd(
-                name=record.stream_key or DEFAULT_STREAM,
-                fields=message_data,
-                maxlen=max_len or MAX_STREAM_LENGTH,
-                approximate=approximate,
-            )
-
-            return {
-                "record_id": record.record.id,
-                "stream_id": stream_id.decode("utf-8"),
-                "stream_key": record.stream_key or DEFAULT_STREAM,
-            }
-
-        except Exception as e:  # pylint: disable=broad-except
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to publish record to Redis Stream: {str(e)}",
-            ) from e
-
-    results = await asyncio.gather(*[publish_record(record) for record in records])
-    return results
 
 
 @router.get("/stream/{stream_key}", response_model=StreamInfo)
