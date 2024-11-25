@@ -13,20 +13,6 @@ services:
       - tvali
     depends_on:
       - postgres
-  publisher:
-    build:
-      context: ./tvali
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    volumes:
-      - ./tvali:/app
-    networks:
-      - tvali
-    depends_on:
-      - postgres
-      - redis
-    command: python3 -m tvali publisher
   observer:
     build:
       context: ./observer

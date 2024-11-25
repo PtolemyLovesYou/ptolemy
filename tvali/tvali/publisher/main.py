@@ -128,21 +128,21 @@ class StreamBatchProcessor:
                 await self.redis.xack(self.stream_key, self.consumer_group, message_id)
                 return
 
-            data = observer.Record() # pylint: disable=no-member
+            data = observer.Record()  # pylint: disable=no-member
             raw_data = fields[b"data"]
 
             # Add debug logging for the raw data
             logger.debug("Raw data length: %d bytes", len(raw_data))
             logger.debug("Raw data type: %s", type(raw_data))
-            
+
             try:
                 # If the data is a string, encode it to bytes first
                 if isinstance(raw_data, str):
-                    raw_data = raw_data.encode('utf-8')
-                
+                    raw_data = raw_data.encode("utf-8")
+
                 data.ParseFromString(raw_data)
                 logger.debug("Successfully parsed protobuf message: %s", data)
-                
+
                 async with self.lock:
                     record = Record.from_proto(data)
                     logger.debug("Converted to record: %s", record)
@@ -151,14 +151,14 @@ class StreamBatchProcessor:
 
                     if len(self.batch) >= self.max_batch_size:
                         await self._flush_batch()
-                        
+
             except Exception as parse_error:
                 logger.error("Failed to parse protobuf message: %s", parse_error)
                 # Log the raw data in hex for debugging
                 logger.debug("Raw data (hex): %s", raw_data.hex())
                 raise
-                
-        except Exception as e: # pylint: disable=broad-except
+
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error processing message: %s", e)
             # Acknowledge invalid messages to prevent reprocessing
             await self.redis.xack(self.stream_key, self.consumer_group, message_id)
@@ -249,10 +249,6 @@ async def listen(
         max_wait_time_ms (int): Maximum wait time for batch.
         flush_timeout_ms (int): Maximum total processing time.
     """
-    logger.info("Creating db tables...")
-    async with session.engine.begin() as conn:
-        await conn.run_sync(session.Base.metadata.create_all)
-
     if consumer_name is None:
         consumer_name = f"consumer-{asyncio.current_task().get_name()}"
 
