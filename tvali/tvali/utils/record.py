@@ -263,4 +263,4 @@ class Metadata(Record):
         }
 
     def proto_dict(self) -> dict:
-        return self.model_dump()
+        return self.model_dump(exclude=["id", "parent_id"])
