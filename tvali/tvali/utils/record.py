@@ -1,12 +1,10 @@
 """Record base class."""
 
-from typing import Optional, Generic, TypeVar, Any, ClassVar, Self, Literal
+from typing import Optional, Any, ClassVar, Self, Literal
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from tvali.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
 from ..proto import observer_pb2 as observer
-
-T = TypeVar("T")
 
 
 class Record(BaseModel):
@@ -27,6 +25,20 @@ class Record(BaseModel):
         """
         raise NotImplementedError("Method not implemented!")
 
+    @classmethod
+    def proto_args(cls, record: observer.Record) -> dict:  # pylint: disable=no-member
+        """
+        Get a dictionary of arguments to pass to the proto Record constructor
+        from a proto Record.
+
+        Args:
+            record (observer.Record): The proto record to extract arguments from.
+
+        Returns:
+            dict: A dictionary of arguments to pass to the proto Record constructor.
+        """
+        raise NotImplementedError("Method not implemented!")
+
     def proto(self) -> observer.Record:  # pylint: disable=no-member
         """
         Get the proto Record for this record.
@@ -41,8 +53,8 @@ class Record(BaseModel):
             **self.proto_dict(),
         )
 
-    @classmethod
-    def from_proto(cls, proto: observer.Record) -> Self:  # pylint: disable=no-member
+    @staticmethod
+    def from_proto(proto: observer.Record) -> Self:  # pylint: disable=no-member
         """
         Convert a proto Record to a Record instance.
 
@@ -52,17 +64,15 @@ class Record(BaseModel):
         Returns:
             Record: An instance of the Record class corresponding to the proto record.
         """
-        record_cls = cls.build(
+        built_cls = Record.build(
             LogType.from_proto(proto.log_type),
             Tier.from_proto(proto.tier),
         )
 
-        return record_cls(
-            **{
-                i.name: j
-                for i, j in proto.ListFields()
-                if i.name not in ["log_type", "tier"]
-            }
+        return built_cls(
+            parent_id=proto.parent_id,
+            id=proto.id,
+            **built_cls.proto_args(proto),
         )
 
     @classmethod
@@ -135,10 +145,23 @@ class Event(Record):
 
         if self.parameters is not None:
             data["parameters"] = (
-                self.parameters.model_dump_json()
-            )  # pylint: disable=no-member
+                self.parameters.model_dump_json()  # pylint: disable=no-member
+            )
 
         return data
+
+    @classmethod
+    def proto_args(cls, record: observer.Record) -> dict:  # pylint: disable=no-member
+        return {
+            "name": record.name,
+            "parameters": (
+                IOSerializable[Parameters].validate_json(record.parameters)
+                if record.parameters
+                else None
+            ),
+            "environment": record.environment,
+            "version": record.version,
+        }
 
     def spawn(
         self,
@@ -170,6 +193,15 @@ class Runtime(Record):
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
 
+    @classmethod
+    def proto_args(cls, record: observer.Record) -> dict:  # pylint: disable=no-member
+        return {
+            "start_time": record.start_time,
+            "end_time": record.end_time,
+            "error_type": record.error_type,
+            "error_content": record.error_content,
+        }
+
     def proto_dict(self) -> dict:
         return self.model_dump(
             exclude_none=True,
@@ -177,11 +209,18 @@ class Runtime(Record):
         )
 
 
-class _IO(Record, Generic[T]):
+class _IO(Record):
     """IO base class."""
 
     field_name: str
-    field_value: IOSerializable[T]
+    field_value: IOSerializable[Any]
+
+    @classmethod
+    def proto_args(cls, record: observer.Record) -> dict:  # pylint: disable=no-member
+        return {
+            "field_name": record.field_name,
+            "field_value": IOSerializable[Any].validate_json(record.field_value),
+        }
 
     def proto_dict(self) -> dict:
         return {
@@ -190,19 +229,19 @@ class _IO(Record, Generic[T]):
         }
 
 
-class Input(_IO[Any]):
+class Input(_IO):
     """Input class."""
 
     LOGTYPE = LogType.INPUT
 
 
-class Output(_IO[Any]):
+class Output(_IO):
     """Output class."""
 
     LOGTYPE = LogType.OUTPUT
 
 
-class Feedback(_IO[Any]):
+class Feedback(_IO):
     """Feedback class."""
 
     LOGTYPE = LogType.FEEDBACK
@@ -215,6 +254,13 @@ class Metadata(Record):
 
     field_name: str
     field_value: str
+
+    @classmethod
+    def proto_args(cls, record: observer.Record) -> dict:  # pylint: disable=no-member
+        return {
+            "field_name": record.field_name,
+            "field_value": record.field_value,
+        }
 
     def proto_dict(self) -> dict:
         return self.model_dump()
