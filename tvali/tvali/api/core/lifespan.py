@@ -1,6 +1,7 @@
 """Lifespan function."""
 
 import logging
+import os
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -19,6 +20,6 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.create_task(listen(Redis(host="redis", port=6379, db=0), "tvali_stream"))
+    asyncio.create_task(listen(Redis(host="redis", port=6379, db=0), os.getenv("OBSERVER_STREAM")))
 
     yield
