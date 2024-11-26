@@ -45,45 +45,41 @@ impl Observer for MyObserver {
     ) -> Result<Response<PublishResponse>, Status> {
         let mut conn = self.pool.get().await
             .map_err(|e| Status::internal(format!("Failed to get Redis connection from pool: {}", e)))?;
-        let records = request.into_inner().records;
         
         let mut jobs = Vec::new();
         let had_error = false;
         let error_message = String::new();
 
-        for record in records {
-            let timestamp = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-                .to_string();
-            
-            let data = record.encode_to_vec();
+        let data = request.into_inner().encode_to_vec();
 
-            // Store raw bytes directly in Redis
-            let fields = vec![
-                ("data", data.as_slice()),
-                ("timestamp", timestamp.as_bytes()),
-            ];
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis()
+            .to_string();
 
-            let stream_key: String = conn.xadd(
-                DEFAULT_STREAM,
-                "*",
-                &fields,
-            ).await.map_err(|e| Status::internal(format!("Failed to add record to Redis stream: {}", e)))?;            
+        let fields = vec![
+            ("data", data.as_slice()),
+            ("timestamp", timestamp.as_bytes()),
+        ];
 
-            let _: () = conn.xtrim(
+        let stream_key: String = conn.xadd(
+            DEFAULT_STREAM,
+            "*",
+            &fields,
+        ).await.map_err(|e| Status::internal(format!("Failed to add record to Redis stream: {}", e)))?; 
+
+        let _: () = conn.xtrim(
                 DEFAULT_STREAM, 
                 StreamMaxlen::Approx(MAX_STREAM_LENGTH)
             ).await.map_err(|e| Status::internal(format!("Failed to trim Redis stream: {}", e)))?;
 
-            let job = RecordPublishJob {
-                id: record.id.clone(),
-                stream_key,
-            };
+        let job = RecordPublishJob {
+            id: timestamp,
+            stream_key,
+        };
 
-            jobs.push(job);
-        }
+        jobs.push(job); 
 
         let reply = PublishResponse {
             successful: !had_error,

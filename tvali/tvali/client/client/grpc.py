@@ -17,9 +17,7 @@ async def get_grpc_channel() -> AsyncGenerator[grpc.Channel, None]:
         yield f
 
 
-async def push_records(
-    records: List[Record]
-) -> None:
+async def push_records(records: List[Record]) -> None:
     """Push records."""
     async with get_grpc_channel() as channel:
         stub = observer_grpc.ObserverStub(channel)

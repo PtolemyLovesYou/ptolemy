@@ -2,6 +2,7 @@
 
 import logging
 import asyncio
+import itertools
 from typing import List, Dict, Any, Optional
 from redis.asyncio import Redis
 from sqlalchemy.exc import SQLAlchemyError
@@ -56,7 +57,7 @@ class StreamBatchProcessor:
         self.stream_key = stream_key
         self.consumer_group = consumer_group
         self.consumer_name = consumer_name
-        self.batch: List[Record] = []
+        self.batch: List[observer.PublishRequest] = []  # pylint: disable=no-member
         self.pending_ids: List[str] = []
         self.max_batch_size = max_batch_size
         self.max_wait_time_ms = max_wait_time_ms
@@ -128,7 +129,7 @@ class StreamBatchProcessor:
                 await self.redis.xack(self.stream_key, self.consumer_group, message_id)
                 return
 
-            data = observer.Record()  # pylint: disable=no-member
+            data = observer.PublishRequest()  # pylint: disable=no-member
             raw_data = fields[b"data"]
 
             # Add debug logging for the raw data
@@ -144,12 +145,10 @@ class StreamBatchProcessor:
                 logger.debug("Successfully parsed protobuf message: %s", data)
 
                 async with self.lock:
-                    record = Record.from_proto(data)
-                    logger.debug("Converted to record: %s", record)
-                    self.batch.append(record)
+                    self.batch.append(data)
                     self.pending_ids.append(message_id)
 
-                    if len(self.batch) >= self.max_batch_size:
+                    if sum(len(r.records) for r in self.batch) >= self.max_batch_size:
                         await self._flush_batch()
 
             except Exception as parse_error:
@@ -172,11 +171,17 @@ class StreamBatchProcessor:
 
         try:
             async with session.get_db() as db:
-                for record in self.batch:
+                records = [
+                    Record.from_proto(rec)
+                    for rec in itertools.chain(*[r.records for r in self.batch])
+                ]
+                objs = []
+                for record in records:
                     model = models.DB_OBJ_MAP[record.LOGTYPE][record.TIER]
                     obj = model(**record.model_dump(exclude_none=True))
-                    db.add(obj)
+                    objs.append(obj)
 
+                db.add_all(objs)
                 await db.commit()
 
                 # Acknowledge all processed messages

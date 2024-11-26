@@ -54,7 +54,7 @@ class Record(BaseModel):
         )
 
     @staticmethod
-    def from_proto(proto: observer.Record) -> Self:  # pylint: disable=no-member
+    def from_proto(proto: observer.Record) -> "Record":  # pylint: disable=no-member
         """
         Convert a proto Record to a Record instance.
 
@@ -265,10 +265,12 @@ class Metadata(Record):
     def proto_dict(self) -> dict:
         return self.model_dump(exclude=["id", "parent_id"])
 
+
 RECORD_MAP = {
     tier: {log_type: Record.build(log_type, tier) for log_type in LogType}
     for tier in Tier
 }
+
 
 def get_record_type(log_type: LogType, tier: Tier) -> type[Record]:
     """Get record type."""
