@@ -1,3 +1,5 @@
+use bb8::Pool;
+use bb8_redis::RedisConnectionManager;
 use prost::Message;
 use redis::{AsyncCommands, streams::StreamMaxlen};
 use tonic::{transport::Server, Request, Response, Status};
@@ -12,15 +14,28 @@ pub mod observer {
     tonic::include_proto!("observer");
 }
 
-async fn get_client() -> redis::Client {
+type RedisPool = Pool<RedisConnectionManager>;
+
+async fn create_pool() -> RedisPool {
     let host = std::env::var("REDIS_HOST").expect("REDIS_HOST must be set");
     let port = std::env::var("REDIS_PORT").expect("REDIS_PORT must be set");
 
-    redis::Client::open(format!("redis://{host}:{port}")).expect("Failed to create Redis client")
+    let manager = RedisConnectionManager::new(format!("redis://{host}:{port}"))
+        .expect("Failed to create Redis connection manager");
+    Pool::builder().build(manager).await.expect("Failed to create Redis connection pool")
 }
 
-#[derive(Debug, Default)]
-pub struct MyObserver {}
+#[derive(Debug)]
+pub struct MyObserver {
+    pool: RedisPool,
+}
+
+impl MyObserver {
+    pub async fn new() -> Self {
+        let pool = create_pool().await;
+        Self { pool }
+    }
+}
 
 #[tonic::async_trait]
 impl Observer for MyObserver {
@@ -28,15 +43,13 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
-        let client = get_client().await;
-        let mut conn = client.get_multiplexed_async_connection()
-            .await
-            .map_err(|e| Status::internal(format!("Failed to get Redis connection: {}", e)))?;
+        let mut conn = self.pool.get().await
+            .map_err(|e| Status::internal(format!("Failed to get Redis connection from pool: {}", e)))?;
         let records = request.into_inner().records;
         
         let mut jobs = Vec::new();
-        let mut had_error = false;
-        let mut error_message = String::new();
+        let had_error = false;
+        let error_message = String::new();
 
         for record in records {
             let timestamp = SystemTime::now()
@@ -85,7 +98,7 @@ impl Observer for MyObserver {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::]:50051".parse()?;
-    let observer = MyObserver::default();
+    let observer = MyObserver::new().await;
 
     println!("Observer server listening on {}", addr);
 
