@@ -10,6 +10,7 @@ class QueryFilter:
     """Query filter."""
 
     id: Optional[ID] = strawberry.UNSET
+    parent_id: Optional[ID] = strawberry.UNSET
 
 
 @strawberry.input

@@ -51,6 +51,18 @@ services:
       - "5540:5540"
     networks:
       - tvali
+  frontend:
+    build:
+      context: ./tvali-streamlit
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./tvali-streamlit:/app
+    networks:
+      - tvali
 
 volumes:
   postgres:
