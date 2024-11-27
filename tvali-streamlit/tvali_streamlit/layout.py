@@ -1,5 +1,6 @@
 """Layout components."""
 import streamlit as st
+import pandas as pd
 
 def get_sidebar():
     """Get sidebar."""
@@ -14,9 +15,8 @@ def get_sidebar():
 
 def get_df_container():
     """Get df container."""
-    df_container = st.dataframe({}, use_container_width=True, height=256+64)
-    with df_container:
-        pass
+    df = pd.DataFrame({})
+    st.dataframe(df, use_container_width=True, height=256+64)
 
 def get_main_container():
     """Get main container."""
