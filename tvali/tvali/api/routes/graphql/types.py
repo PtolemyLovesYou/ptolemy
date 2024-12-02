@@ -316,6 +316,7 @@ def event_resolver_factory(tier: Tier) -> Callable[..., List[Event]]:
         filters: Optional[EventFilter] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
+        parent_id: Optional[str] = None,
     ) -> List[Event]:
         model = models.DB_OBJ_MAP[LogType.EVENT][tier]
 
@@ -326,14 +327,17 @@ def event_resolver_factory(tier: Tier) -> Callable[..., List[Event]]:
         if offset:
             query = query.offset(offset)
 
+        filters_ = [
+            getattr(model, i) == j
+            for i, j in filters.__dict__.items()
+            if j != strawberry.UNSET
+        ]
+
+        if parent_id:
+            filters_ += [model.parent_id == parent_id]
+
         if filters:
-            query = query.filter(
-                *[
-                    getattr(model, i) == j
-                    for i, j in filters.__dict__.items()
-                    if j != strawberry.UNSET
-                ]
-            )
+            query = query.filter(*filters_)
 
         async with session.get_db() as db:
             result = await db.execute(query)

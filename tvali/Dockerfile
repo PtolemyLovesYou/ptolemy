@@ -36,7 +36,9 @@ RUN poetry install \
     --no-root \
     --no-interaction \
     --no-ansi \
-    $(if [ "$ENV" = "DEV" ]; then echo "--with dev --all-extras"; else "-E api"; fi)
+    $(if [ "$ENV" = "DEV" ]; then echo "--with dev --all-extras"; else "-E api -E streamlit"; fi)
+
+RUN $(if [ "$ENV" = "DEV" ]; then echo "pip install jupyterlab"; else ""; fi)
 
 # Runtime
 FROM python:3.12.6-slim-bookworm AS runtime
