@@ -326,13 +326,13 @@ def event_resolver_factory(tier: Tier) -> Callable[..., List[Event]]:
             query = query.limit(limit)
         if offset:
             query = query.offset(offset)
-        
+
         filters_ = [
             getattr(model, i) == j
             for i, j in filters.__dict__.items()
             if j != strawberry.UNSET
         ]
-        
+
         if parent_id:
             filters_ += [model.parent_id == parent_id]
 
