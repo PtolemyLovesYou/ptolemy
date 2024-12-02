@@ -146,10 +146,7 @@ def get_layout_columns():
         if "data" not in st.session_state:
             st.session_state["data"] = asyncio.run(get_event_objects())
 
-        if sql_mode:
-            get_dataframe(pd.DataFrame({}))
-        else:
-            get_dataframe(st.session_state["data"])
+        get_dataframe(st.session_state["data"])
 
         with main_container:
             if sql_mode:
