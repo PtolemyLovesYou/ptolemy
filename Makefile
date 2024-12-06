@@ -1,14 +1,14 @@
 .PHONY: format
 format:
-	black tvali
+	black ptolemy
 
 .PHONY: compile-protobuf
 compile-protobuf:
 	python3 -m grpc_tools.protoc \
-		-Iproto/ \
-		--python_out=tvali/tvali/proto \
-		--pyi_out=tvali/tvali/proto \
-		--grpc_python_out=tvali/tvali/proto \
+		-I. \
+		--python_out=ptolemy/ \
+		--pyi_out=ptolemy/ \
+		--grpc_python_out=ptolemy/ \
 		proto/observer.proto
 	cp proto/observer.proto observer/proto/observer.proto
 
@@ -21,7 +21,7 @@ test:
 	docker compose \
 		-f docker-compose.test.yml \
 		up \
-		--exit-code-from tvali_test \
+		--exit-code-from ptolemy_test \
 		--remove-orphans
 
 .PHONY: build-test
@@ -29,6 +29,6 @@ build-test:
 	docker compose \
 		-f docker-compose.test.yml \
 		up \
-		--exit-code-from tvali_test \
+		--exit-code-from ptolemy_test \
 		--force-recreate \
 		--build

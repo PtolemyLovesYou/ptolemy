@@ -1,16 +1,16 @@
 services:
-  tvali:
+  ptolemy:
     build:
-      context: ./tvali
+      context: ./ptolemy
       dockerfile: Dockerfile
     env_file:
       - .env
     ports:
       - "8000:8000"
     volumes:
-      - ./tvali:/app
+      - ./ptolemy:/app
     networks:
-      - tvali
+      - ptolemy
     depends_on:
       - postgres
   observer:
@@ -23,27 +23,27 @@ services:
       - ./observer:/app
       - ./proto:/app/proto
     networks:
-      - tvali
+      - ptolemy
     ports:
       - "50051:50051"
     depends_on:
       - redis
-  tvali_test:
+  ptolemy_test:
     build:
-      context: ./tvali
+      context: ./ptolemy
       dockerfile: Dockerfile
     env_file:
       - .env
     ports:
       - "8001:8000"
     volumes:
-      - ./tvali:/app
+      - ./ptolemy:/app
     networks:
-      - tvali
+      - ptolemy
     depends_on:
       - postgres
-      - tvali
-    command: python3 -m pytest . --force-sugar -vvv --cov=tvali --cov-report=html --profile
+      - ptolemy
+    command: python3 -m pytest . --force-sugar -vvv --cov=ptolemy --cov-report=html --profile
   postgres:
     image: postgres:17
     env_file:
@@ -53,18 +53,18 @@ services:
     volumes:
       - postgres:/var/lib/postgresql
     networks:
-      - tvali
+      - ptolemy
   redis:
     image: redis
     ports:
       - "6379:6379"
     networks:
-      - tvali
+      - ptolemy
 
 volumes:
   postgres:
     driver: local
 
 networks:
-  tvali:
+  ptolemy:
     driver: bridge

@@ -1,5 +1,5 @@
 # Profiling
-tvali/prof
+ptolemy/prof
 *.prof
 
 # Jupyter notebooks
