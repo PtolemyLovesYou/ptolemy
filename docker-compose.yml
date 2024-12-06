@@ -60,30 +60,48 @@ services:
       - "6379:6379"
     networks:
       - ptolemy
+    volumes:
+      - redis:/data
   redisinsight:
     image: redis/redisinsight
     ports:
       - "5540:5540"
     networks:
       - ptolemy
+    volumes:
+      - redisinsight:/data
   vector:
     image: timberio/vector:0.43.0-alpine
     ports:
       - "8686:8686"
     networks:
       - ptolemy
+    env_file:
+      - .env
     volumes:
       - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
       - ./vector/observer.desc:/etc/vector/observer.desc:ro
+    depends_on:
+      - observer
+      - clickhouse
+      - redis
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     ports:
       - "8123:8123"
     networks:
       - ptolemy
+    volumes:
+      - clickhouse:/var/lib/clickhouse
 
 volumes:
   postgres:
+    driver: local
+  clickhouse:
+    driver: local
+  redis:
+    driver: local
+  redisinsight:
     driver: local
 
 networks:

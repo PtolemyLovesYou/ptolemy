@@ -1,7 +1,7 @@
 sources:
   redis-observer:
     type: redis
-    key: ptolemy_stream
+    key: ptolemy_event
     data_type: channel
     url: redis://redis:6379
     decoding:
@@ -23,4 +23,5 @@ sinks:
       - "redis-observer"
     type: clickhouse
     endpoint: http://clickhouse:8123
-    table: test_table
+    table: ${PTOLEMY_CLICKHOUSE_RECORDS_TABLE:-records}
+    database: ${PTOLEMY_CLICKHOUSE_DATABASE:-ptolemy}

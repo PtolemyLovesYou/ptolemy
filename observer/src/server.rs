@@ -1,16 +1,11 @@
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use prost::Message;
-use redis::{
-    AsyncCommands,
-    // streams::StreamMaxlen
-};
+use redis::AsyncCommands;
 use tonic::{transport::Server, Request, Response, Status};
 use observer::{PublishRequest, PublishResponse, RecordPublishJob};
 use observer::observer_server::{Observer, ObserverServer};
-// use std::time::{SystemTime, UNIX_EPOCH};
 
-// const MAX_STREAM_LENGTH: usize = 1000000;
 
 pub mod observer {
     tonic::include_proto!("observer");
