@@ -18,3 +18,9 @@ sinks:
     target: stderr
     encoding:
       codec: json
+  clickhouse:
+    inputs:
+      - "redis-observer"
+    type: clickhouse
+    endpoint: http://clickhouse:8123
+    table: test_table

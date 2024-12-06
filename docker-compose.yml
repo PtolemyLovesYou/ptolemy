@@ -66,19 +66,6 @@ services:
       - "5540:5540"
     networks:
       - ptolemy
-  jupyter:
-    build:
-      context: ./ptolemy
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./ptolemy:/app
-    networks:
-      - ptolemy
-    command: python3 -m jupyter lab --allow-root --ip=0.0.0.0
   vector:
     image: timberio/vector:0.43.0-alpine
     ports:
@@ -88,6 +75,12 @@ services:
     volumes:
       - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
       - ./vector/observer.desc:/etc/vector/observer.desc:ro
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+    networks:
+      - ptolemy
 
 volumes:
   postgres:
