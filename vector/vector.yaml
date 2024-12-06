@@ -1,0 +1,20 @@
+sources:
+  redis-observer:
+    type: redis
+    key: ptolemy_stream
+    data_type: channel
+    url: redis://redis:6379
+    decoding:
+      codec: protobuf
+      protobuf:
+        desc_file: "/etc/vector/observer.desc"
+        message_type: "observer.Record"
+
+sinks:
+  out:
+    inputs:
+      - "redis-observer"
+    type: "console"
+    target: stderr
+    encoding:
+      codec: json

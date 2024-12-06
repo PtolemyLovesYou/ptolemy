@@ -79,6 +79,15 @@ services:
     networks:
       - ptolemy
     command: python3 -m jupyter lab --allow-root --ip=0.0.0.0
+  vector:
+    image: timberio/vector:0.43.0-alpine
+    ports:
+      - "8686:8686"
+    networks:
+      - ptolemy
+    volumes:
+      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ./vector/observer.desc:/etc/vector/observer.desc:ro
 
 volumes:
   postgres:

@@ -11,6 +11,7 @@ compile-protobuf:
 		--grpc_python_out=ptolemy/ \
 		proto/observer.proto
 	cp proto/observer.proto observer/proto/observer.proto
+	protoc -I. -o vector/observer.desc proto/observer.proto
 
 .PHONY: run
 run:
