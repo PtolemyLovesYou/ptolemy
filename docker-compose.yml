@@ -113,6 +113,8 @@ services:
       - ./goose:/app
     networks:
       - ptolemy
+    depends_on:
+      - clickhouse
 
 volumes:
   postgres:
