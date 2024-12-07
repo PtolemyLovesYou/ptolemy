@@ -33,3 +33,7 @@ build-test:
 		--exit-code-from ptolemy_test \
 		--force-recreate \
 		--build
+
+.PHONY: goose
+goose:
+	docker compose exec goose sh
