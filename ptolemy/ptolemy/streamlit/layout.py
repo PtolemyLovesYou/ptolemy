@@ -12,8 +12,8 @@ from .crud import (
     get_event_details,
     get_tier_event_names,
     get_tier_environments,
-    get_tier_versions
-    )
+    get_tier_versions,
+)
 from ..utils import Tier, LogType
 
 
@@ -27,7 +27,7 @@ def get_filters(sql_mode: bool):
         else:
             # Tier slider
             st.session_state["filter.tier"] = st.select_slider(
-                "TIER", options=[*Tier], value=Tier.SYSTEM, label_visibility='collapsed'
+                "TIER", options=[*Tier], value=Tier.SYSTEM, label_visibility="collapsed"
             )
 
             # Name slider
@@ -37,8 +37,9 @@ def get_filters(sql_mode: bool):
 
             # Environment slider
             st.session_state["filter.environment"] = st.pills(
-                "ENVIRONMENT", options=asyncio.run(get_tier_environments()),
-                selection_mode='single'
+                "ENVIRONMENT",
+                options=asyncio.run(get_tier_environments()),
+                selection_mode="single",
             )
 
             # Version slider
@@ -90,6 +91,7 @@ def get_dataframe(df: pd.DataFrame):
     else:
         st.session_state["event_id"] = None
 
+
 def get_event_info() -> dict:
     """Get event information."""
     eis = st.session_state["event_info_selection"]
@@ -106,6 +108,7 @@ def get_event_info() -> dict:
 
     raise ValueError(f"Invalid event info selection: {eis}")
 
+
 def get_main_container():
     """Get main container."""
     event_info_column, record_info_column = st.columns([0.45, 0.55])
@@ -117,8 +120,8 @@ def get_main_container():
                     "Event Info",
                     options=["PARAMS", "INPUTS", "OUTPUTS", "FEEDBACK", "METADATA"],
                     default="PARAMS",
-                    label_visibility='collapsed',
-                    selection_mode='single'
+                    label_visibility="collapsed",
+                    selection_mode="single",
                 )
 
                 st.json(get_event_info())

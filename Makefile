@@ -1,6 +1,7 @@
 .PHONY: format
 format:
-	black ptolemy
+	black ptolemy \
+		--exclude '\s*_pb2(_grpc)?.py(i)?'
 
 .PHONY: compile-protobuf
 compile-protobuf:
