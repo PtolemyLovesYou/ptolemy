@@ -14,7 +14,9 @@ select
     environment,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 1 and log_type = 1;
+where tier = 1 and log_type = 1
+SETTINGS
+    enable_json_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_event_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_event as
 select
@@ -26,7 +28,9 @@ select
     environment,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 2 and log_type = 1;
+where tier = 2 and log_type = 1
+SETTINGS
+    enable_json_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.component_event_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.component_event as
 select
@@ -38,7 +42,9 @@ select
     environment,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 3 and log_type = 1;
+where tier = 3 and log_type = 1
+SETTINGS
+    enable_json_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_event_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_event as
 select
@@ -50,7 +56,9 @@ select
     environment,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 4 and log_type = 1;
+where tier = 4 and log_type = 1
+SETTINGS
+    enable_json_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.system_runtime_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.system_runtime as
 select
@@ -108,7 +116,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 1 and log_type = 3;
+where tier = 1 and log_type = 3
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_input_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_input as
 select
@@ -118,7 +128,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 2 and log_type = 3;
+where tier = 2 and log_type = 3
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.component_input_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.component_input as
 select
@@ -128,7 +140,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 3 and log_type = 3;
+where tier = 3 and log_type = 3
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_input_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_input as
 select
@@ -138,7 +152,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 4 and log_type = 3;
+where tier = 4 and log_type = 3
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.system_output_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.system_output as
 select
@@ -148,7 +164,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 1 and log_type = 4;
+where tier = 1 and log_type = 4
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_output_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_output as
 select
@@ -158,7 +176,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 2 and log_type = 4;
+where tier = 2 and log_type = 4
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.component_output_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.component_output as
 select
@@ -168,7 +188,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 3 and log_type = 4;
+where tier = 3 and log_type = 4
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_output_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_output as
 select
@@ -178,7 +200,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 4 and log_type = 4;
+where tier = 4 and log_type = 4
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.system_feedback_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.system_feedback as
 select
@@ -188,7 +212,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 1 and log_type = 5;
+where tier = 1 and log_type = 5
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_feedback_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_feedback as
 select
@@ -198,7 +224,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 2 and log_type = 5;
+where tier = 2 and log_type = 5
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.component_feedback_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.component_feedback as
 select
@@ -208,7 +236,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 3 and log_type = 5;
+where tier = 3 and log_type = 5
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_feedback_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_feedback as
 select
@@ -218,7 +248,9 @@ select
     field_value::Dynamic as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.records
-where tier = 4 and log_type = 5;
+where tier = 4 and log_type = 5
+SETTINGS
+    enable_dynamic_type = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.system_metadata_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.system_metadata as
 select
