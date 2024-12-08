@@ -1,41 +1,44 @@
 """Router."""
 
-from typing import List
+from typing import Any
+import pandas as pd
 import strawberry
-from strawberry.fastapi import GraphQLRouter
-from .types import (
-    event_resolver_factory,
-    SystemEvent,
-    SubsystemEvent,
-    ComponentEvent,
-    SubcomponentEvent,
-)
-from ....utils import Tier
+from strawberry.fastapi import GraphQLRouter, BaseContext
+import clickhouse_connect as click
+from clickhouse_connect.driver.asyncclient import AsyncClient
 
+class GraphQLContext(BaseContext):
+    """Context class."""
+    def __init__(self, connection: AsyncClient) -> None:
+        super().__init__()
+
+        self.conn = connection
+
+async def get_context():
+    """Get context."""
+    conn = None
+
+    try:
+        conn = await click.create_async_client(
+            host="clickhouse",
+            port=8123,
+            database="ptolemy"
+        )
+        return GraphQLContext(conn)
+    finally:
+        if conn is not None:
+            conn.close()
 
 @strawberry.type
 class Query:
     """Query."""
 
-    system_events: List[SystemEvent] = strawberry.field(
-        event_resolver_factory(Tier.SYSTEM),
-        graphql_type=List[SystemEvent],
-    )
+    @strawberry.field
+    async def query(self, info: strawberry.Info[GraphQLContext, Any], query: str) -> str:
+        """Execute a query."""
+        results: pd.DataFrame = await info.context.conn.query_df(query)
 
-    subsystem_events: List[SubsystemEvent] = strawberry.field(
-        event_resolver_factory(Tier.SUBSYSTEM),
-        graphql_type=List[SubsystemEvent],
-    )
-
-    component_events: List[ComponentEvent] = strawberry.field(
-        event_resolver_factory(Tier.COMPONENT),
-        graphql_type=List[ComponentEvent],
-    )
-
-    subcomponent_events: List[SubcomponentEvent] = strawberry.field(
-        event_resolver_factory(Tier.SUBCOMPONENT),
-        graphql_type=List[SubcomponentEvent],
-    )
+        return results.to_json(orient="records")
 
     @strawberry.field
     def health(self) -> str:
@@ -49,4 +52,5 @@ router = GraphQLRouter(
     schema,
     path="/graphql",
     tags=["graphql"],
+    context_getter=get_context,
 )

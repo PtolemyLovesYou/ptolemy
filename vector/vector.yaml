@@ -1,0 +1,27 @@
+sources:
+  redis-observer:
+    type: redis
+    key: ptolemy_event
+    data_type: channel
+    url: redis://redis:6379
+    decoding:
+      codec: protobuf
+      protobuf:
+        desc_file: "/etc/vector/observer.desc"
+        message_type: "observer.Record"
+
+sinks:
+  out:
+    inputs:
+      - "redis-observer"
+    type: "console"
+    target: stderr
+    encoding:
+      codec: json
+  clickhouse:
+    inputs:
+      - "redis-observer"
+    type: clickhouse
+    endpoint: http://clickhouse:8123
+    table: ${PTOLEMY_CLICKHOUSE_RECORDS_TABLE:-records}
+    database: ${PTOLEMY_CLICKHOUSE_DATABASE:-ptolemy}

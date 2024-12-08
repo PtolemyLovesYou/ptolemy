@@ -1,5 +1,6 @@
 services:
   ptolemy:
+    container_name: ptolemy
     build:
       context: ./ptolemy
       dockerfile: Dockerfile
@@ -15,6 +16,7 @@ services:
       - postgres
       - redis
   app:
+    container_name: app
     build:
       context: ./ptolemy
       dockerfile: Dockerfile
@@ -30,6 +32,7 @@ services:
       - ptolemy
     command: python3 -m streamlit run streamlit_app.py
   observer:
+    container_name: observer
     build:
       context: ./observer
       dockerfile: Dockerfile
@@ -45,6 +48,7 @@ services:
     depends_on:
       - redis
   postgres:
+    container_name: postgres
     image: postgres:17
     env_file:
       - .env
@@ -55,33 +59,71 @@ services:
     networks:
       - ptolemy
   redis:
+    container_name: redis
     image: redis
     ports:
       - "6379:6379"
     networks:
       - ptolemy
+    volumes:
+      - redis:/data
   redisinsight:
+    container_name: redisinsight
     image: redis/redisinsight
     ports:
       - "5540:5540"
     networks:
       - ptolemy
-  jupyter:
+    volumes:
+      - redisinsight:/data
+  vector:
+    container_name: vector
+    image: timberio/vector:0.43.0-alpine
+    ports:
+      - "8686:8686"
+    networks:
+      - ptolemy
+    env_file:
+      - .env
+    volumes:
+      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ./vector/observer.desc:/etc/vector/observer.desc:ro
+    depends_on:
+      - observer
+      - clickhouse
+      - redis
+  clickhouse:
+    container_name: clickhouse
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    networks:
+      - ptolemy
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+  goose:
+    container_name: goose
     build:
-      context: ./ptolemy
+      context: ./goose
       dockerfile: Dockerfile
     env_file:
       - .env
-    ports:
-      - "8888:8888"
     volumes:
-      - ./ptolemy:/app
+      - ./goose:/app
     networks:
       - ptolemy
-    command: python3 -m jupyter lab --allow-root --ip=0.0.0.0
+    depends_on:
+      - clickhouse
 
 volumes:
   postgres:
+    driver: local
+  clickhouse:
+    driver: local
+  redis:
+    driver: local
+  redisinsight:
     driver: local
 
 networks:

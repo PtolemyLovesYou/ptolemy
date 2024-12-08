@@ -1,13 +1,11 @@
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use prost::Message;
-use redis::{AsyncCommands, streams::StreamMaxlen};
+use redis::AsyncCommands;
 use tonic::{transport::Server, Request, Response, Status};
 use observer::{PublishRequest, PublishResponse, RecordPublishJob};
 use observer::observer_server::{Observer, ObserverServer};
-use std::time::{SystemTime, UNIX_EPOCH};
 
-const MAX_STREAM_LENGTH: usize = 1000000;
 
 pub mod observer {
     tonic::include_proto!("observer");
@@ -51,41 +49,32 @@ impl Observer for MyObserver {
         let mut conn = self.pool.get().await
             .map_err(|e| Status::internal(format!("Failed to get Redis connection from pool: {}", e)))?;
 
-        let had_error = false;
-        let error_message = String::new();
+        let mut had_error = false;
+        let mut error_message = String::new();
+        let mut jobs = Vec::new();
 
-        let data = request
-            .into_inner()
-            .encode_to_vec();
+        for record in request.into_inner().records {
+            let data = record.encode_to_vec();
 
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-            .to_string();
+            let stream_key: String = match conn.publish(
+                &self.observer_stream,
+                &data,
+            ).await {
+                Ok(key) => key,
+                Err(e) => {
+                    had_error = true;
+                    error_message = format!("Failed to add record to Redis stream: {}", e);
+                    continue;
+                }
+            };
 
-        let fields = vec![
-            ("data", data.as_slice()),
-            ("timestamp", timestamp.as_bytes()),
-        ];
+            let job = RecordPublishJob {
+                id: record.id,
+                stream_key,
+            };
 
-        let stream_key: String = conn.xadd(
-            &self.observer_stream,
-            "*",
-            &fields,
-        ).await.map_err(|e| Status::internal(format!("Failed to add record to Redis stream: {}", e)))?; 
-
-        let _: () = conn.xtrim(
-                &self.observer_stream, 
-                StreamMaxlen::Approx(MAX_STREAM_LENGTH)
-            ).await.map_err(|e| Status::internal(format!("Failed to trim Redis stream: {}", e)))?;
-
-        let job = RecordPublishJob {
-            id: timestamp,
-            stream_key,
-        };
-
-        let jobs = vec![job];
+            jobs.push(job);
+        }
 
         let reply = PublishResponse {
             successful: !had_error,

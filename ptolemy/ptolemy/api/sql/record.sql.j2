@@ -1,0 +1,10 @@
+SELECT
+    {%- for col in columns %}
+    {{ col }}{% if not loop.last %},{% endif %}
+    {%- endfor %}
+FROM {{ tier }}_{{ log_type }}
+{%- if filters %}
+WHERE
+    {{ filters }}
+{%- endif %}
+LIMIT {{ offset }}, {{ limit }}

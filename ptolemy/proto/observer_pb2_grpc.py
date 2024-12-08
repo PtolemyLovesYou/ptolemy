@@ -5,7 +5,7 @@ import warnings
 
 from proto import observer_pb2 as proto_dot_observer__pb2
 
-GRPC_GENERATED_VERSION = '1.68.1'
+GRPC_GENERATED_VERSION = '1.68.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
