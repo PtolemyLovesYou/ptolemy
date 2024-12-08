@@ -5,7 +5,7 @@ import functools
 from importlib import resources
 import jinja2 as j2
 from pydantic import BaseModel, PrivateAttr, RootModel
-from . import sql
+from ... import sql
 from ....utils import Tier, LogType
 
 DEFAULT_LIMIT = 100
