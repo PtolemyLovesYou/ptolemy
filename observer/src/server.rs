@@ -50,9 +50,9 @@ impl Observer for MyObserver {
         let pool = self.pool.clone();
         let observer_stream = self.observer_stream.clone();
 
+        // spawn publish task
         tokio::spawn(
             async move {
-                // get a connection
                 let mut conn = match pool.get().await {
                     Ok(conn) => conn,
                     Err(e) => {
@@ -61,16 +61,13 @@ impl Observer for MyObserver {
                     }
                 };
 
-                // initiate a pipeline
                 let mut pipeline = pipe();
 
-                // add commands to pipeline
                 for record in records {
                     let encoded_vector = record.encode_to_vec();
                     pipeline.cmd("PUBLISH").arg(&observer_stream).arg(encoded_vector).ignore();
                 }
 
-                // run pipeline
                 let _results: Vec<String> = match pipeline.query_async(&mut *conn).await {
                     Ok(items) => items,
                     Err(e) => {
