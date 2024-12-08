@@ -1,7 +1,5 @@
 """Router."""
 
-from typing import Any
-import pandas as pd
 import strawberry
 from strawberry.fastapi import GraphQLRouter, BaseContext
 import clickhouse_connect as click
@@ -32,13 +30,6 @@ async def get_context():
 @strawberry.type
 class Query:
     """Query."""
-
-    @strawberry.field
-    async def query(self, info: strawberry.Info[GraphQLContext, Any], query: str) -> str:
-        """Execute a query."""
-        results: pd.DataFrame = await info.context.conn.query_df(query)
-
-        return results.to_json(orient="records")
 
     @strawberry.field
     def health(self) -> str:

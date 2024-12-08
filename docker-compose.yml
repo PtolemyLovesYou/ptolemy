@@ -15,22 +15,6 @@ services:
     depends_on:
       - postgres
       - redis
-  app:
-    container_name: app
-    build:
-      context: ./ptolemy
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - "8501:8501"
-    volumes:
-      - ./ptolemy:/app
-    networks:
-      - ptolemy
-    depends_on:
-      - ptolemy
-    command: python3 -m streamlit run streamlit_app.py
   observer:
     container_name: observer
     build:

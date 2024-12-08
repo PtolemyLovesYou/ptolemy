@@ -5,9 +5,6 @@ from .core.lifespan import lifespan
 from .routes.health import router as health_router
 from .routes.graphql.router import router as graphql_router
 
-# import all models so they actually get created
-from ..db.models import *  # pylint: disable=unused-wildcard-import,wildcard-import
-
 app = FastAPI(
     title="Ptolemy API",
     description="Ptolemy API",

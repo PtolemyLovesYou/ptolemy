@@ -58,6 +58,7 @@ class IOSerializable(RootModel[T]):
         return v
 
     def serialize(self) -> Any:
+        """Serialize for protobuf."""
         if self.root is None or isinstance(self.root, (str, int, float, bool)):
             return self.model_dump()
 
