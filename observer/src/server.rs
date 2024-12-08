@@ -1,7 +1,7 @@
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use prost::Message;
-use redis::cmd;
+use redis::pipe;
 use tonic::{transport::Server, Request, Response, Status};
 use observer::{PublishRequest, PublishResponse};
 use observer::observer_server::{Observer, ObserverServer};
@@ -11,7 +11,7 @@ pub mod observer {
     tonic::include_proto!("observer");
 }
 
-fn default_stream() -> String {
+fn publish_stream() -> String {
     std::env::var("OBSERVER_STREAM").expect("OBSERVER_STREAM must be set")
 }
 
@@ -34,7 +34,7 @@ pub struct MyObserver {
 impl MyObserver {
     pub async fn new() -> Self {
         let pool = create_pool().await;
-        let observer_stream = default_stream();
+        let observer_stream = publish_stream();
         Self { pool, observer_stream }
     }
 }
@@ -52,6 +52,7 @@ impl Observer for MyObserver {
 
         tokio::spawn(
             async move {
+                // get a connection
                 let mut conn = match pool.get().await {
                     Ok(conn) => conn,
                     Err(e) => {
@@ -60,18 +61,25 @@ impl Observer for MyObserver {
                     }
                 };
 
-                for record in records {
-                    let data = record.encode_to_vec();
+                // initiate a pipeline
+                let mut pipeline = pipe();
 
-                    let _reply: String = cmd("PUBLISH")
-                        .arg(&observer_stream)
-                        .arg(data)
-                        .query_async(&mut *conn)
-                        .await
-                        .unwrap();
-                    }
+                // add commands to pipeline
+                for record in records {
+                    let encoded_vector = record.encode_to_vec();
+                    pipeline.cmd("PUBLISH").arg(&observer_stream).arg(encoded_vector).ignore();
                 }
-            );
+
+                // run pipeline
+                let _results: Vec<String> = match pipeline.query_async(&mut *conn).await {
+                    Ok(items) => items,
+                    Err(e) => {
+                        println!("Failed to query: {}", e);
+                        return;
+                    }
+                };
+            }
+        );
 
         let reply = PublishResponse {
             successful: true,
