@@ -57,6 +57,11 @@ class IOSerializable(RootModel[T]):
 
         return v
 
+    def serialize(self) -> Any:
+        if self.root is None or isinstance(self.root, (str, int, float, bool)):
+            return self.model_dump()
+
+        return self.model_dump_json()
 
 def _serialize_timestamp(v: datetime) -> str:
     return v.isoformat()

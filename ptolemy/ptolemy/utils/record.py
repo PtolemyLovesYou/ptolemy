@@ -225,7 +225,7 @@ class _IO(Record):
     def proto_dict(self) -> dict:
         return {
             "field_name": self.field_name,
-            "field_value": self.field_value.model_dump_json(),
+            "field_value": self.field_value.serialize(),
         }
 
 
