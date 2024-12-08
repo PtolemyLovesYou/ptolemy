@@ -1,9 +1,9 @@
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use prost::Message;
-use redis::AsyncCommands;
+use redis::cmd;
 use tonic::{transport::Server, Request, Response, Status};
-use observer::{PublishRequest, PublishResponse, RecordPublishJob};
+use observer::{PublishRequest, PublishResponse};
 use observer::observer_server::{Observer, ObserverServer};
 
 
@@ -11,24 +11,23 @@ pub mod observer {
     tonic::include_proto!("observer");
 }
 
-type RedisPool = Pool<RedisConnectionManager>;
-
 fn default_stream() -> String {
     std::env::var("OBSERVER_STREAM").expect("OBSERVER_STREAM must be set")
 }
 
-async fn create_pool() -> RedisPool {
+async fn create_pool() -> Pool<RedisConnectionManager> {
     let host = std::env::var("REDIS_HOST").expect("REDIS_HOST must be set");
     let port = std::env::var("REDIS_PORT").expect("REDIS_PORT must be set");
 
     let manager = RedisConnectionManager::new(format!("redis://{host}:{port}"))
         .expect("Failed to create Redis connection manager");
+
     Pool::builder().build(manager).await.expect("Failed to create Redis connection pool")
 }
 
 #[derive(Debug)]
 pub struct MyObserver {
-    pool: RedisPool,
+    pool: Pool<RedisConnectionManager>,
     observer_stream: String
 }
 
@@ -46,40 +45,32 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
-        let mut conn = self.pool.get().await
-            .map_err(|e| Status::internal(format!("Failed to get Redis connection from pool: {}", e)))?;
 
-        let mut had_error = false;
-        let mut error_message = String::new();
-        let mut jobs = Vec::new();
+        let records = request.into_inner().records;
+        let pool = self.pool.clone();
+        let observer_stream = self.observer_stream.clone();
 
-        for record in request.into_inner().records {
-            let data = record.encode_to_vec();
+        tokio::spawn(
+            async move {
+                let mut conn = pool.get().await.unwrap();
 
-            let stream_key: String = match conn.publish(
-                &self.observer_stream,
-                &data,
-            ).await {
-                Ok(key) => key,
-                Err(e) => {
-                    had_error = true;
-                    error_message = format!("Failed to add record to Redis stream: {}", e);
-                    continue;
+                for record in records {
+                    let data = record.encode_to_vec();
+
+                    let _reply: String = cmd("PUBLISH")
+                        .arg(&observer_stream)
+                        .arg(data)
+                        .query_async(&mut *conn)
+                        .await
+                        .unwrap();
+                    }
                 }
-            };
-
-            let job = RecordPublishJob {
-                id: record.id,
-                stream_key,
-            };
-
-            jobs.push(job);
-        }
+            );
 
         let reply = PublishResponse {
-            successful: !had_error,
-            jobs,
-            message: Some(if had_error { error_message } else { "Success".to_string() }),
+            successful: true,
+            jobs: Vec::new(),
+            message: Some("Success".to_string()),
         };
 
         Ok(Response::new(reply))
