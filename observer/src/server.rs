@@ -52,7 +52,13 @@ impl Observer for MyObserver {
 
         tokio::spawn(
             async move {
-                let mut conn = pool.get().await.unwrap();
+                let mut conn = match pool.get().await {
+                    Ok(conn) => conn,
+                    Err(e) => {
+                        println!("Failed to get Redis connection from pool: {}", e);
+                        return;
+                    }
+                };
 
                 for record in records {
                     let data = record.encode_to_vec();
