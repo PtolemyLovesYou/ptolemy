@@ -4,11 +4,14 @@ WORKDIR /app
 
 ENV GOOSE_MIGRATION_DIR=/app/migrations
 
-COPY ./migrations .
-COPY ./go.mod .
-COPY ./go.sum .
+RUN apk update && \
+    apk upgrade && \
+    apk add bash && \
+    rm -rf /var/cache/apk/*
 
-# install go dependencies
-RUN go mod download
+ADD https://github.com/pressly/goose/releases/download/v3.23.0/goose_linux_x86_64 /bin/goose
+RUN chmod +x /bin/goose
+
+COPY ./migrations .
 
 CMD ["tail", "-f", "/dev/null"]
