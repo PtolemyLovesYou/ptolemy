@@ -5,6 +5,7 @@ diesel::table! {
         id -> Uuid,
         #[max_length = 128]
         name -> Varchar,
+        description -> Nullable<Varchar>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
