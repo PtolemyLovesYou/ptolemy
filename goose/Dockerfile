@@ -2,7 +2,8 @@ FROM golang:1.23-alpine
 
 WORKDIR /app
 
-ENV GOOSE_MIGRATION_DIR=/app/migrations
+# set default clickhouse
+ENV DB=clickhouse
 
 RUN apk update && \
     apk upgrade && \
@@ -12,6 +13,6 @@ RUN apk update && \
 ADD https://github.com/pressly/goose/releases/download/v3.23.0/goose_linux_x86_64 /bin/goose
 RUN chmod +x /bin/goose
 
-COPY ./migrations .
+COPY . .
 
-CMD ["tail", "-f", "/dev/null"]
+CMD ["source", "/app/configure.sh", "&&", "sh"]

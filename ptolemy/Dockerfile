@@ -16,14 +16,6 @@ ENV PYTHONFAULTHANDLER=1 \
     POETRY_HOME='/usr/local' \
     POETRY_VERSION=1.8.4
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    software-properties-common \
-    git \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN pip install -U pip setuptools && \
     pip install "poetry==${POETRY_VERSION}"
 
@@ -36,14 +28,11 @@ RUN poetry install \
     --no-root \
     --no-interaction \
     --no-ansi \
-    $(if [ "$ENV" = "DEV" ]; then echo "--with dev --all-extras"; else "-E api -E streamlit"; fi)
+    --all-extras \
+    $(if [ "$ENV" = "DEV" ]; then echo "--with dev"; fi)
 
 # Runtime
 FROM python:3.12.6-slim-bookworm AS runtime
-
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
 
 # Final image
 FROM runtime
@@ -53,5 +42,3 @@ WORKDIR /app
 COPY --from=build /usr/local /usr/local
 
 COPY . .
-
-CMD ["uvicorn", "ptolemy.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

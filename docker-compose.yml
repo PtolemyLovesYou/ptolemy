@@ -1,15 +1,15 @@
 services:
-  ptolemy:
-    container_name: ptolemy
+  api:
+    container_name: api
     build:
-      context: ./ptolemy
+      context: ./api
       dockerfile: Dockerfile
     env_file:
       - .env
     ports:
       - "8000:8000"
     volumes:
-      - ./ptolemy:/app
+      - ./api:/app
     networks:
       - ptolemy
     depends_on:
@@ -107,8 +107,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    ports:
-      - "8001:8000"
     volumes:
       - ./ptolemy:/app
     networks:

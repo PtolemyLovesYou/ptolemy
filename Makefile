@@ -37,4 +37,8 @@ build-test:
 
 .PHONY: goose
 goose:
-	docker compose exec goose sh
+	docker compose exec -e DB=clickhouse goose /bin/bash
+
+.PHONY: diesel
+diesel:
+	docker compose exec api /bin/bash -c "source /app/configure.sh && /bin/bash"
