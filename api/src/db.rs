@@ -47,9 +47,9 @@ impl DBConfig {
         )
     }
 
-    async fn conn_pool(&self) {
+    async fn conn_pool(&self) -> Pool<AsyncPgConnection> {
         let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(self.db_url());
 
-        Pool::builder().build(config).await.unwrap();
+        Pool::builder().build(config).await.expect("Failed to create connection manager.")
     }
 }
