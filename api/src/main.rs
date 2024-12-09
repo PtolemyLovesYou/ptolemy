@@ -3,6 +3,8 @@ use axum::{
     Router,
 };
 
+use api::db::DBConfig;
+
 pub struct ApiConfig {
     host: String,
     port: String,
@@ -27,6 +29,13 @@ impl ApiConfig {
     }
 }
 
+async fn ping_db() -> String {
+    let pool = DBConfig::new().conn_pool().await;
+    let mut conn = pool.get().await;
+
+    "Database works <3".to_string()
+}
+
 /// Creates a base router for the Ptolemy API with default routes.
 /// 
 /// This router includes the following routes:
@@ -38,6 +47,7 @@ fn base_router() -> Router {
     Router::new()
         .route("/", get(|| async { "Ptolemy API is up and running <3" }))
         .route("/ping", get(|| async { "Pong!" }))
+        .route("/ping_db", get(|| async { ping_db().await }))
 }
 
 /// Main entry point for the Ptolemy API server.
