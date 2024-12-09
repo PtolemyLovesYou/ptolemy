@@ -22,11 +22,11 @@ impl ApiConfig {
 
 #[tokio::main]
 async fn main() {
-    // build our application with a single route
+    // build application
     let app = Router::new().route("/", get(|| async { "Hello, World!" }));
     let api_config = ApiConfig::new();
 
-    // run our app with hyper, listening globally on port 3000
+    // run with hyper
     let server_url = format!("{}:{}", api_config.host, api_config.port);
     let listener = tokio::net::TcpListener::bind(server_url).await.unwrap();
     axum::serve(listener, app).await.unwrap();
