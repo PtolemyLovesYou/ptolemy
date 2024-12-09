@@ -60,6 +60,7 @@ services:
       - ptolemy
     volumes:
       - redisinsight:/data
+    profiles: ["dev"]
   vector:
     container_name: vector
     image: timberio/vector:0.43.0-alpine
@@ -99,6 +100,24 @@ services:
       - ptolemy
     depends_on:
       - clickhouse
+    profiles: ["dev"]
+  ptolemy_test:
+    build:
+      context: ./ptolemy
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./ptolemy:/app
+    networks:
+      - ptolemy
+    depends_on:
+      - postgres
+      - ptolemy
+    command: python3 -m pytest . --force-sugar -vvv --cov=ptolemy --cov-report=html --profile
+    profiles: ["dev"]
 
 volumes:
   postgres:
