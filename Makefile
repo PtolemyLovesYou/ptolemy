@@ -35,6 +35,10 @@ build-test:
 		--force-recreate \
 		--build
 
-.PHONY: goose
-goose:
-	docker compose exec goose sh
+.PHONY: goose-clickhouse
+goose-clickhouse:
+	docker compose exec -e DB=clickhouse goose sh
+
+.PHONY: goose-postgres
+goose-postgres:
+	docker compose exec -e DB=postgres goose sh
