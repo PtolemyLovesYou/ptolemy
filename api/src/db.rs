@@ -7,6 +7,15 @@ pub struct DBConfig {
 }
 
 impl DBConfig {
+    /// Returns a new instance of `DBConfig` by reading the configuration from environment variables.
+    ///
+    /// The following environment variables must be set:
+    ///
+    /// - `POSTGRES_HOST`
+    /// - `POSTGRES_PORT`
+    /// - `POSTGRES_USER`
+    /// - `POSTGRES_PASSWORD`
+    /// - `POSTGRES_DB`
     fn new (&self) -> DBConfig {
         let postgres_host = std::env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set.");
         let postgres_port = std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set.");
