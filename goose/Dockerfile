@@ -2,8 +2,8 @@ FROM golang:1.23-alpine
 
 WORKDIR /app
 
-# set default postgres
-ENV DB=postgres
+# set default clickhouse
+ENV DB=clickhouse
 
 RUN apk update && \
     apk upgrade && \

@@ -38,7 +38,3 @@ build-test:
 .PHONY: goose-clickhouse
 goose-clickhouse:
 	docker compose exec -e DB=clickhouse goose sh
-
-.PHONY: goose-postgres
-goose-postgres:
-	docker compose exec -e DB=postgres goose sh
