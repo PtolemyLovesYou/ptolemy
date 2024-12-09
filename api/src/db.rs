@@ -1,5 +1,6 @@
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::bb8::Pool;
+use diesel_async::AsyncPgConnection;
 
 pub struct DBConfig {
     postgres_host: String,
@@ -46,9 +47,9 @@ impl DBConfig {
         )
     }
 
-    async fn conn_pool(&self) -> Pool {
-        let config = AsyncDieselConnectionManager::<diesel_async::AsyncPgConnection>::new(self.db_url());
+    async fn conn_pool(&self) {
+        let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(self.db_url());
 
-        Pool::builder().build(config).await
+        Pool::builder().build(config).await.unwrap();
     }
 }
