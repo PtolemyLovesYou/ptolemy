@@ -14,29 +14,31 @@ COPY Cargo.toml Cargo.lock ./
 
 # Create a dummy main.rs to build dependencies
 RUN mkdir src && \
-    echo "fn main() {}" > src/serve.rs && \
-    cargo build --bin serve --release && \
-    rm -f target/release/deps/serve*
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --bin api --release && \
+    rm -f target/release/deps/api*
 
 # Now copy the real source code
 COPY . .
 
 # Build the actual binary
-RUN cargo build --bin serve --release
+RUN cargo build --bin api --release
 
 # Runtime stage
 FROM debian:bookworm-slim
+
+ENV RUST_LOG=info
 
 # Create a directory for the app
 WORKDIR /usr/local/bin
 
 # Copy the binary from builder stage - note the explicit path
-COPY --from=builder /app/target/release/serve ./serve
+COPY --from=builder /app/target/release/api ./api
 
 # Create a non-root user
 RUN useradd -m -u 1001 appuser && \
-    chown -R appuser:appuser /usr/local/bin/serve
+    chown -R appuser:appuser /usr/local/bin/api
 USER appuser
 
 # Execute the binary using full path
-CMD ["/usr/local/bin/serve"]
+CMD ["/usr/local/bin/api"]
