@@ -1,5 +1,6 @@
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::bb8::Pool;
+use diesel_async::AsyncPgConnection;
 
 pub struct DBConfig {
     postgres_host: String,
@@ -19,7 +20,7 @@ impl DBConfig {
     /// - `POSTGRES_USER`
     /// - `POSTGRES_PASSWORD`
     /// - `POSTGRES_DB`
-    fn new (&self) -> DBConfig {
+    pub fn new() -> DBConfig {
         let postgres_host = std::env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set.");
         let postgres_port = std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set.");
         let postgres_user = std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
@@ -46,9 +47,10 @@ impl DBConfig {
         )
     }
 
-    async fn conn_pool(&self) -> Pool {
-        let config = AsyncDieselConnectionManager::<diesel_async::AsyncPgConnection>::new(self.db_url());
+    pub async fn conn_pool(&self) -> Pool<AsyncPgConnection> {
+        // todo: this needs error handling
+        let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(self.db_url());
 
-        Pool::builder().build(config).await
+        Pool::builder().build(config).await.unwrap()
     }
 }
