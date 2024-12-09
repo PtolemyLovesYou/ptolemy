@@ -13,5 +13,3 @@ ADD https://github.com/pressly/goose/releases/download/v3.23.0/goose_linux_x86_6
 RUN chmod +x /bin/goose
 
 COPY ./migrations .
-
-CMD ["tail", "-f", "/dev/null"]
