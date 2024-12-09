@@ -1,7 +1,8 @@
 -- Your SQL goes here
-CREATE TABLE workspace (
+create table workspace (
     id UUID not null PRIMARY KEY,
-    name Varchar(128) not null,
+    name varchar(128) not null,
+    description varchar,
     created_at timestamp default now() not null,
     updated_at timestamp default now() not null
 );
