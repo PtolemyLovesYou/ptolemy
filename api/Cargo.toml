@@ -1,0 +1,16 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "api"
+path = "src/main.rs"
+
+[dependencies]
+axum = "0.7.9"
+diesel = { version = "2.2.6", features = ["postgres"] }
+hyper = "1.5.1"
+serde = "1.0.215"
+serde_json = "1.0.133"
+tokio = { version = "1.42.0", features = ["full"] }
