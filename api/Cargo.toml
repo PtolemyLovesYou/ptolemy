@@ -11,6 +11,7 @@ path = "src/main.rs"
 axum = "0.7.9"
 bb8 = "0.8.6"
 chrono = "0.4.39"
+clickhouse = "0.13.1"
 diesel = { version = "2.2.6", features = ["postgres", "chrono", "uuid"] }
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
 env_logger = "0.11.5"
@@ -20,3 +21,6 @@ serde = "1.0.215"
 serde_json = "1.0.133"
 tokio = { version = "1.42.0", features = ["full"] }
 uuid = {version = "1.11.0", features = ["serde", "v7"] }
+
+[dev-dependencies]
+clickhouse = { version = "0.13.1", features = ["test-util"] }
