@@ -3,11 +3,15 @@ FROM rust:1.82-slim-bookworm as builder
 
 WORKDIR /app
 
-# Install only necessary build dependencies
+# Install necessary build dependencies including PostgreSQL client libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         protobuf-compiler \
+        libpq-dev \
         && rm -rf /var/lib/apt/lists/*
+
+# Install diesel CLI
+RUN cargo install diesel_cli --no-default-features --features postgres
 
 # Copy only files needed for dependency resolution first
 COPY Cargo.toml Cargo.lock ./
@@ -29,15 +33,24 @@ FROM debian:bookworm-slim
 
 ENV RUST_LOG=info
 
-# Create a directory for the app
-WORKDIR /usr/local/bin
+# Install runtime dependencies for PostgreSQL
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libpq5 \
+        && rm -rf /var/lib/apt/lists/*
 
-# Copy the binary from builder stage - note the explicit path
-COPY --from=builder /app/target/release/api ./api
+# Create a directory for the app
+WORKDIR /app
+
+# Copy both the api binary and diesel CLI from builder stage
+COPY --from=builder /app/target/release/api /usr/local/bin/api
+COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
+
+COPY setup.sh /app/setup.sh
 
 # Create a non-root user
 RUN useradd -m -u 1001 appuser && \
-    chown -R appuser:appuser /usr/local/bin/api
+    chown -R appuser:appuser /usr/local/bin/api /usr/local/bin/diesel
 USER appuser
 
 # Execute the binary using full path

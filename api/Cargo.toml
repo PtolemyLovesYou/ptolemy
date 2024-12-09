@@ -10,7 +10,6 @@ path = "src/main.rs"
 [dependencies]
 axum = "0.7.9"
 diesel = { version = "2.2.6", features = ["postgres"] }
-diesel_cli = { version = "2.2.6", features = ["postgres"] }
 env_logger = "0.11.5"
 hyper = "1.5.1"
 log = "0.4.22"
