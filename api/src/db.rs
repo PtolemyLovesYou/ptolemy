@@ -1,3 +1,6 @@
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use diesel_async::pooled_connection::bb8::Pool;
+
 pub struct DBConfig {
     postgres_host: String,
     postgres_port: String,
@@ -30,5 +33,22 @@ impl DBConfig {
             postgres_password: postgres_password,
             postgres_db: postgres_db
         }
+    }
+
+    fn db_url(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/{}",
+            self.postgres_user,
+            self.postgres_password,
+            self.postgres_host,
+            self.postgres_port,
+            self.postgres_db
+        )
+    }
+
+    async fn conn_pool(&self) -> Pool {
+        let config = AsyncDieselConnectionManager::<diesel_async::AsyncPgConnection>::new(self.db_url());
+
+        Pool::builder().build(config).await
     }
 }

@@ -46,7 +46,7 @@ WORKDIR /app
 COPY --from=builder /app/target/release/api /usr/local/bin/api
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 
-COPY setup.sh /app/setup.sh
+COPY configure.sh /app/configure.sh
 
 # Create a non-root user
 RUN useradd -m -u 1001 appuser && \
