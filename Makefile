@@ -18,23 +18,6 @@ compile-protobuf:
 run:
 	docker compose up --remove-orphans
 
-.PHONY: test
-test:
-	docker compose \
-		-f docker-compose.test.yml \
-		up \
-		--exit-code-from ptolemy_test \
-		--remove-orphans
-
-.PHONY: build-test
-build-test:
-	docker compose \
-		-f docker-compose.test.yml \
-		up \
-		--exit-code-from ptolemy_test \
-		--force-recreate \
-		--build
-
 .PHONY: goose
 goose:
 	docker compose exec -e DB=clickhouse goose /bin/bash
