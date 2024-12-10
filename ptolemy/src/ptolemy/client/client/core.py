@@ -6,7 +6,6 @@ from importlib.resources import read_text
 import aiohttp
 from pydantic import BaseModel, computed_field, field_serializer
 from . import resources
-from .grpc import push_records
 from ..core import PtolemyBase
 from ...utils import Record, LogType, Tier, get_record_type
 
@@ -146,4 +145,4 @@ class Ptolemy(PtolemyBase):
         )
 
     async def push_records(self, records: List[Record]) -> None:
-        return await push_records(records)
+        """Push records."""
