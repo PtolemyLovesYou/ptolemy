@@ -101,21 +101,6 @@ services:
     depends_on:
       - clickhouse
     profiles: ["dev"]
-  ptolemy_test:
-    build:
-      context: ./ptolemy
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    volumes:
-      - ./ptolemy:/app
-    networks:
-      - ptolemy
-    depends_on:
-      - postgres
-      - ptolemy
-    command: python3 -m pytest . --force-sugar -vvv --cov=ptolemy --cov-report=html --profile
-    profiles: ["dev"]
 
 volumes:
   postgres:

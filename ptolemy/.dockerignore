@@ -1,8 +1,0 @@
-.git/
-__pycache__/
-**/__pycache__/
-*.py[cod]
-*$py.class
-htmlcov/
-prof/
-.pytest_cache/
