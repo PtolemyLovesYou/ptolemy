@@ -10,9 +10,16 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.11.10",
     "clickhouse-connect>=0.8.9",
-    "grpcio-tools>=1.68.1",
 ]
 
+[project.scripts]
+ptolemy = "ptolemy:main"
+
+[tool.maturin]
+module-name = "ptolemy._core"
+python-packages = ["ptolemy"]
+python-source = "src"
+
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
