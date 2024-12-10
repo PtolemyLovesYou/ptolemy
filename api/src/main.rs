@@ -31,7 +31,7 @@ impl ApiConfig {
 
 async fn ping_db() -> String {
     let pool = DBConfig::new().conn_pool().await;
-    let mut conn = pool.get().await;
+    let mut _conn = pool.get().await;
 
     "Database works <3".to_string()
 }
