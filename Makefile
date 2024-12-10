@@ -5,13 +5,7 @@ format:
 
 .PHONY: compile-protobuf
 compile-protobuf:
-	python3 -m grpc_tools.protoc \
-		-I. \
-		--python_out=ptolemy/ \
-		--pyi_out=ptolemy/ \
-		--grpc_python_out=ptolemy/ \
-		-o vector/observer.desc \
-		proto/observer.proto
+	cp proto/observer.proto ptolemy/proto/observer.proto
 	cp proto/observer.proto observer/proto/observer.proto
 
 .PHONY: run
