@@ -31,21 +31,35 @@ class Ptolemy(BaseModel):
 
     _start_time: datetime = PrivateAttr(default=None)
     _end_time: datetime = PrivateAttr(default=None)
-    _error_type: str = PrivateAttr(default=None)
-    _error_content: str = PrivateAttr(default=None)
 
     engine: Engine = Field(default_factory=PtolemyEngine)
     workspace_id: ID
 
     def start(self) -> Self:
+        """
+        Start a runtime.
+
+        Raises:
+            ValueError: If already started.
+        """
         if self._start_time is not None:
             raise ValueError('Already started')
         self._start_time = datetime.now()
         return self
 
-    def end(self) -> Self:
+    def stop(self) -> Self:
+        """
+        stop a runtime.
+
+        Raises:
+            ValueError: If already ended.
+
+        Returns:
+            Self: The Ptolemy instance.
+        """
         if self._end_time is not None:
             raise ValueError('Already ended')
+
         self._end_time = datetime.now()
         return self
 
@@ -56,8 +70,9 @@ class Ptolemy(BaseModel):
         self.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        # End runtime if not already ended
         if self._end_time is None:
-            self.end()
+            self.stop()
 
         error_type = None
         error_content = None
