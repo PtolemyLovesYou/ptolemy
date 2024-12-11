@@ -1,6 +1,6 @@
 # Install with Docker Compose
 
-Ptolemy is an open-source, free tool. Below is a guide on how to deploy Ptolemy on your local machine with Docker.
+Ptolemy is an open-source, free tool with several different deployment options. Below is a quickstart guide on how to deploy Ptolemy on your local machine with Docker.
 
 ## Deploy with Docker
 
