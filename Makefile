@@ -1,17 +1,11 @@
 .PHONY: format
 format:
 	black ptolemy \
-		--exclude '\s*_pb2(_grpc)?.py(i)?'
+		--exclude '\s*\.venv\s*'
 
 .PHONY: compile-protobuf
 compile-protobuf:
-	python3 -m grpc_tools.protoc \
-		-I. \
-		--python_out=ptolemy/ \
-		--pyi_out=ptolemy/ \
-		--grpc_python_out=ptolemy/ \
-		-o vector/observer.desc \
-		proto/observer.proto
+	cp proto/observer.proto ptolemy/proto/observer.proto
 	cp proto/observer.proto observer/proto/observer.proto
 
 .PHONY: run
