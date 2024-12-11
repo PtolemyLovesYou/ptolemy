@@ -1,12 +1,14 @@
 """Record base class."""
 
 from typing import Optional, Any, ClassVar, Self, Literal
+from abc import ABC, abstractmethod
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from ptolemy.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
+from .._core import RecordBuilder, ProtoRecord # pylint: disable=no-name-in-module
 
 
-class Record(BaseModel):
+class Record(BaseModel, ABC):
     """Record base class."""
 
     LOGTYPE: ClassVar[LogType]
@@ -67,6 +69,10 @@ class Record(BaseModel):
 
         return model
 
+    @abstractmethod
+    def proto(self) -> ProtoRecord:
+        """Convert to rust-backend protobuf."""
+
 
 class Event(Record):
     """Event class."""
@@ -97,6 +103,17 @@ class Event(Record):
             version=version,
         )
 
+    def proto(self) -> ProtoRecord:
+        return RecordBuilder().event(
+            tier=self.TIER.value,
+            parent_id=self.parent_id,
+            id=self.id,
+            name=self.name,
+            parameters=self.parameters.model_dump_json() if self.parameters else None,
+            version=self.version,
+            environment=self.environment,
+        )
+
 
 class Runtime(Record):
     """Runtime class."""
@@ -108,12 +125,42 @@ class Runtime(Record):
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
 
+    def proto(self) -> ProtoRecord:
+        return RecordBuilder().runtime(
+            tier=self.TIER.value,
+            parent_id=self.parent_id,
+            start_time=self.start_time.isoformat(),
+            end_time=self.end_time.isoformat(),
+            error_type=self.error_type,
+            error_content=self.error_content,
+        )
+
 
 class _IO(Record):
     """IO base class."""
 
     field_name: str
     field_value: IOSerializable[Any]
+
+    def proto(self) -> ProtoRecord:
+        builder = RecordBuilder()
+
+        if self.LOGTYPE == LogType.INPUT:
+            fn = builder.input
+        elif self.LOGTYPE == LogType.OUTPUT:
+            fn = builder.output
+        elif self.LOGTYPE == LogType.FEEDBACK:
+            fn = builder.feedback
+        else:
+            raise ValueError(f"Unexpected log type {self.LOGTYPE}")
+
+        return fn(
+            tier=self.TIER.value,
+            parent_id=self.parent_id,
+            id=self.id,
+            field_name=self.field_name,
+            field_value=self.field_value.model_dump_json(),
+        )
 
 
 class Input(_IO):
@@ -141,6 +188,15 @@ class Metadata(Record):
 
     field_name: str
     field_value: str
+
+    def proto(self) -> ProtoRecord:
+        return RecordBuilder().metadata(
+            tier=self.TIER.value,
+            parent_id=self.parent_id,
+            id=self.id,
+            field_name=self.field_name,
+            field_value=self.field_value,
+        )
 
 
 RECORD_MAP = {
