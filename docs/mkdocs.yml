@@ -27,7 +27,7 @@ edit_uri: edit/main/docs/
 nav:
   - Home: index.md
   - Getting Started:
-    - Installation: getting_started/installation.md
+    - Install with Docker Compose: getting_started/installation_docker_compose.md
   - Concepts:
     - Introduction: concepts/introduction.md
   - API Reference:
