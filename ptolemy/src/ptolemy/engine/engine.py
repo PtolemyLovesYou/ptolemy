@@ -1,6 +1,6 @@
 """Engine abstract class."""
 
-from typing import Iterable
+from typing import Iterable, List
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 
@@ -11,7 +11,7 @@ class Engine(BaseModel, ABC):
     """Engine abstract class."""
 
     @abstractmethod
-    def push_records(self, records: Iterable[Record]):
+    def push_records(self, records: List[Record]):
         """Push records."""
 
     @abstractmethod

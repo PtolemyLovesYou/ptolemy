@@ -9,7 +9,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     name,
-    parameters::JSON,
+    CAST(COALESCE(parameters, '{}') as JSON) as parameters,
     version,
     environment,
     created_at
@@ -23,7 +23,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     name,
-    parameters::JSON,
+    CAST(COALESCE(parameters, '{}') as JSON) as parameters,
     version,
     environment,
     created_at
@@ -37,7 +37,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     name,
-    parameters::JSON,
+    CAST(COALESCE(parameters, '{}') as JSON) as parameters,
     version,
     environment,
     created_at
@@ -51,7 +51,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     name,
-    parameters::JSON,
+    CAST(COALESCE(parameters, '{}') as JSON) as parameters,
     version,
     environment,
     created_at

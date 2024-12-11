@@ -2,6 +2,7 @@
 
 from typing import Optional, Any, ClassVar, Self, Literal
 from abc import ABC, abstractmethod
+import json
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from ptolemy.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
@@ -90,7 +91,7 @@ class Event(Record):
             parent_id=self.parent_id.hex,
             id=self.id.hex,
             name=self.name,
-            parameters=self.parameters.model_dump_json() if self.parameters else None,
+            parameters=self.parameters.model_dump_json() if self.parameters else '{}',
             version=self.version,
             environment=self.environment,
         )
