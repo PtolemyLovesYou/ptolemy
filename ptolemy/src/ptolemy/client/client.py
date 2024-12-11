@@ -1,1 +1,0 @@
-"""Ptolemy client."""
