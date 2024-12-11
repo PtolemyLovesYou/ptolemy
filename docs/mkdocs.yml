@@ -18,7 +18,7 @@ theme:
     - navigation.instant
     - search.suggest
     - navigation.tabs
-    - navigation.tabs.sticky
+    # - navigation.tabs.sticky
 
 repo_name: PtolemyLovesYou/ptolemy
 repo_url: https://github.com/PtolemyLovesYou/ptolemy
@@ -27,12 +27,40 @@ edit_uri: edit/main/docs/
 nav:
   - Home: index.md
   - Getting Started:
-    - Installation: getting_started/installation.md
+    - Introduction: getting_started/index.md
+    - Install with Docker Compose: getting_started/installation_docker_compose.md
+    - Configuration: getting_started/configuration.md
+    - Building Documentation: getting_started/building_documentation.md
   - Concepts:
     - Introduction: concepts/introduction.md
+  - Guides:
+    - Introduction: guides/index.md
   - API Reference:
     - Introduction: api_reference/introduction.md
-  - Integrations: integrations.md
+  - Integrations:
+    - integrations.md
+  - Contributing:
+    - Introduction: contributing/index.md
+    - Code of Conduct: contributing/code_of_conduct.md
+    - Core Maintainers: contributing/core_maintainers.md
 
 plugins:
   - search
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/.icons
+
+extra:
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.

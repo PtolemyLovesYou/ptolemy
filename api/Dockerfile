@@ -32,6 +32,8 @@ RUN cargo build --bin api --release
 FROM debian:bookworm-slim
 
 ENV RUST_LOG=info
+ENV PTOLEMY_API_HOST=0.0.0.0
+ENV PTOLEMY_API_PORT=8684
 
 # Install runtime dependencies for PostgreSQL
 RUN apt-get update && \
