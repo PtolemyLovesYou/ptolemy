@@ -1,0 +1,43 @@
+{
+    "tier": "SYSTEM",
+    "event" : {
+        "id": "5bf96102-3968-471e-bdd9-fb952ca38a92",
+        "parent_id": "69a3943b-c3ea-4f95-ae96-470d93910c14",
+        "name": "MyComponent",
+        "parameters": {
+            "model_used": "gpt-4",
+            "model_parameters": {
+                "temperature": 0.3,
+                "max_tokens": 1024
+            },
+            "my_param_1": "my_value_1"
+        },
+        "version": "3.2.1",
+        "environment": "PROD"
+    },
+    "runtime": {
+        "start_time": "2024-12-11T16:12:37.561243",
+        "end_time":  "2024-12-11T16:12:50.231619",
+        "error_type": "ValueError",
+        "error_content": "Traceback (most recent call last):\n  File \"/var/folders/r9/ss_mz0hj02d1fdh7r_n1xz140000gn/T/ipykernel_85156/1149682197.py\", line 4, in <module>\n    raise ValueError(\"foo\")\nValueError: foo"
+    },
+    "inputs": {
+        "input1": "value1",
+        "input2": 123,
+        "input3": true,
+        "input4": {
+            "key1": "value1",
+            "key2": "value2",
+            "key3": {
+                "key1": "value1",
+                "key2": 1
+            }
+        },
+        "code_snippet": "print('Hello, world!')",
+        "log_form_input": "Lorem markdownum iacent [tulit adhuc et](http://fatorumturis.net/inpediunt)\npostquam, Proreus, montibus. Stratoque quoniam inmensi [et quot\nreppulit](http://nec.io/tamen-protesilae.html). Ionium surgit et calidumque\nmihi: hic stipitis circum pater manus deciperetur cacumine sensit ereptus.\nConcavat rima adest inde nubes flumina disiecit prius, simulacra suae!\n\n1. Oculis iussae pariterque quippe Auroram simplex\n2. Condidit unde filia Stymphalide mihi habenas\n3. Nisi numina rapit ales tollens\n\nImagine verum meminisse liquerat laborant in amem staret tandem flectere tendit.\nNato forum puta numinis amantem iuvencae tonitrumque nemus puerique meruisse,\nsub freta Tegeaea minima unaque est acrior **decidit**, navit. Mixtum ore est\nnatam Caeneus.\n\n## Nec finge nec\n\nVana in iam dicere. Vix ergo sustinet neget est probatum hostis sidera caeruleus\nme osse ira nec ipsumque.\n\n    xmlCadSocket = 4 + 54;\n    var ppgaClipboardApache = cache_media_copyright.party_sku(point_file_leak) -\n            4 + 3 / -2 + laser_baseband;\n    var tiff_type_vertical = intelligence.pinterest(1, graphicBrowser(3 + null,\n            kde_rss_parity(360104), vaporware_screenshot_prompt -\n            applicationType));\n\nMagnis tum passim Calydona sed pedes cervum sedant, fecundaque, alios sucis\nferebat incendia colorem soceri? Ait nigra qualem lacusque adsum, referam Iulo.\nUbi ceris qui longa paventem illic requiescit Phoenicas alis Acrisium matrum ex\nponit credas inmeritam rebus, quandoquidem. Atque an mota animum quod vaccam\npoterit dare ille nullique?\n"
+        },
+    "metadata": {
+        "customer_id": "d60abcb9-ed57-4d33-9253-44ff236e5dcd",
+        "workspace_id": "e2b8a3e5-1a6b-4a8f-8f65-5f4f8e9d6e1d"
+    }
+}

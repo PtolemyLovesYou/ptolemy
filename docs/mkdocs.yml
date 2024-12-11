@@ -1,0 +1,37 @@
+site_name: Ptolemy
+site_url: http://localhost:8000
+
+theme:
+  name: material
+  logo: img/logo.svg
+  favicon: img/favicon.ico
+  palette:
+    scheme: slate
+    primary: deep orange
+    accent: deep orange
+  font:
+    text: IBM Plex Mono
+    code: IBM Plex Mono
+  icon:
+    repo: fontawesome/brands/github-alt
+  features:
+    - navigation.instant
+    - search.suggest
+    - navigation.tabs
+
+repo_name: PtolemyLovesYou/ptolemy
+repo_url: https://github.com/PtolemyLovesYou/ptolemy
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting_started/installation.md
+  - Concepts:
+    - Introduction: concepts/introduction.md
+  - API Reference:
+    - Introduction: api_reference/introduction.md
+  - Integrations: integrations.md
+
+plugins:
+  - search
