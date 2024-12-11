@@ -2,7 +2,6 @@
 
 from typing import Optional, Any, ClassVar, Self, Literal
 from abc import ABC, abstractmethod
-import json
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from ptolemy.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
