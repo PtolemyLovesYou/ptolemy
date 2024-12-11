@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from ptolemy.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
-from .._core import RecordBuilder, ProtoRecord # pylint: disable=no-name-in-module
+from .._core import RecordBuilder, ProtoRecord  # pylint: disable=no-name-in-module
 
 
 class Record(BaseModel, ABC):

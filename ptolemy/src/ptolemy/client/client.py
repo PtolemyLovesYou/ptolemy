@@ -1,4 +1,5 @@
 """Client."""
+
 from typing import List, Self, Optional, Any, Annotated
 from datetime import datetime
 import traceback as tb
@@ -15,11 +16,13 @@ from ..utils import (
     Feedback,
     Metadata,
     get_record_type,
-    ID
-    )
+    ID,
+)
+
 
 class Ptolemy(BaseModel):
     """Ptolemy client."""
+
     _tier: Tier = PrivateAttr(default=None)
 
     _event: Event = PrivateAttr(default=None)
@@ -43,7 +46,7 @@ class Ptolemy(BaseModel):
             ValueError: If already started.
         """
         if self._start_time is not None:
-            raise ValueError('Already started')
+            raise ValueError("Already started")
         self._start_time = datetime.now()
         return self
 
@@ -58,14 +61,14 @@ class Ptolemy(BaseModel):
             Self: The Ptolemy instance.
         """
         if self._end_time is not None:
-            raise ValueError('Already ended')
+            raise ValueError("Already ended")
 
         self._end_time = datetime.now()
         return self
 
     def __enter__(self):
         if self._start_time is not None:
-            raise ValueError('Already started')
+            raise ValueError("Already started")
 
         self.engine.queue([self._event])
 
@@ -87,26 +90,26 @@ class Ptolemy(BaseModel):
             start_time=self._start_time,
             end_time=self._end_time,
             error_type=error_type,
-            error_content=error_content
+            error_content=error_content,
         )
 
-        self.engine.queue( # pylint: disable=no-member
+        self.engine.queue(  # pylint: disable=no-member
             [
                 self._runtime,
                 *(self._inputs or []),
                 *(self._outputs or []),
                 *(self._feedback or []),
-                *(self._metadata or [])
+                *(self._metadata or []),
             ]
         )
 
         if self._tier == Tier.SYSTEM:
-            self.engine.flush() # pylint: disable=no-member
+            self.engine.flush()  # pylint: disable=no-member
 
     def tier(self, tier: Tier) -> Self:
         """Set tier."""
         if self._tier is not None:
-            raise ValueError('Tier already set')
+            raise ValueError("Tier already set")
         self._tier = tier
         return self
 
@@ -115,14 +118,14 @@ class Ptolemy(BaseModel):
         name: str,
         parameters: Optional[dict] = None,
         version: Optional[str] = None,
-        environment: Optional[str] = None
-        ) -> 'Ptolemy':
+        environment: Optional[str] = None,
+    ) -> "Ptolemy":
         """Spawn a child log."""
         if self._tier is None:
-            raise ValueError('Tier not set')
+            raise ValueError("Tier not set")
 
         if self._tier.child is None:
-            raise ValueError(f'Cannot spawn child of tier {self._tier}')
+            raise ValueError(f"Cannot spawn child of tier {self._tier}")
 
         return (
             Ptolemy(engine=self.engine, workspace_id=self.workspace_id)
@@ -132,17 +135,17 @@ class Ptolemy(BaseModel):
                 parameters=parameters,
                 version=version,
                 environment=environment,
-                parent_id=self._event.id
+                parent_id=self._event.id,
             )
-            )
+        )
 
     def trace(
         self,
         name: str,
         parameters: Optional[dict] = None,
         version: Optional[str] = None,
-        environment: Optional[str] = None
-        ) -> 'Ptolemy':
+        environment: Optional[str] = None,
+    ) -> "Ptolemy":
         """Start a new trace."""
         return (
             Ptolemy(engine=self.engine, workspace_id=self.workspace_id)
@@ -152,9 +155,9 @@ class Ptolemy(BaseModel):
                 name=name,
                 parameters=parameters,
                 version=version,
-                environment=environment
-                )
+                environment=environment,
             )
+        )
 
     def event(
         self,
@@ -163,7 +166,7 @@ class Ptolemy(BaseModel):
         version: Optional[str] = None,
         environment: Optional[str] = None,
         parent_id: ID = None,
-        ) -> Self:
+    ) -> Self:
         """
         Set the event.
 
@@ -180,10 +183,10 @@ class Ptolemy(BaseModel):
             ValueError: If the event is already set.
         """
         if self._event is not None:
-            raise ValueError('Event already set')
+            raise ValueError("Event already set")
 
         if self._tier != Tier.SYSTEM and parent_id is None:
-            raise ValueError('Parent ID is required for non-system events')
+            raise ValueError("Parent ID is required for non-system events")
 
         event_cls: Event = get_record_type(LogType.EVENT, self._tier)
         self._event = event_cls(
@@ -191,8 +194,8 @@ class Ptolemy(BaseModel):
             name=name,
             parameters=parameters,
             version=version,
-            environment=environment
-            )
+            environment=environment,
+        )
 
         return self
 
@@ -201,8 +204,8 @@ class Ptolemy(BaseModel):
         start_time: datetime,
         end_time: datetime,
         error_type: Optional[str] = None,
-        error_content: Optional[str] = None
-        ) -> Self:
+        error_content: Optional[str] = None,
+    ) -> Self:
         """
         Set the runtime for the event.
 
@@ -223,10 +226,10 @@ class Ptolemy(BaseModel):
             ValueError: If the runtime has already been set.
         """
         if self._event is None:
-            raise ValueError('Event not set')
+            raise ValueError("Event not set")
 
         if self._runtime is not None:
-            raise ValueError('Runtime already set')
+            raise ValueError("Runtime already set")
 
         runtime_cls: Runtime = get_record_type(LogType.RUNTIME, self._tier)
         self._runtime = runtime_cls(
@@ -234,8 +237,8 @@ class Ptolemy(BaseModel):
             start_time=start_time,
             end_time=end_time,
             error_type=error_type,
-            error_content=error_content
-            )
+            error_content=error_content,
+        )
         return self
 
     def inputs(self, **kwargs: Any) -> Self:
@@ -251,19 +254,16 @@ class Ptolemy(BaseModel):
         :return: The Ptolemy client object.
         """
         if self._event is None:
-            raise ValueError('Event not set')
+            raise ValueError("Event not set")
 
         if self._inputs is not None:
-            raise ValueError('Inputs already set')
+            raise ValueError("Inputs already set")
 
         inputs_cls: Input = get_record_type(LogType.INPUT, self._tier)
 
         self._inputs = [
-            inputs_cls(
-                parent_id=self._event.id,
-                field_name=k,
-                field_value=v
-                ) for k, v in kwargs.items()
+            inputs_cls(parent_id=self._event.id, field_name=k, field_value=v)
+            for k, v in kwargs.items()
         ]
         return self
 
@@ -288,19 +288,16 @@ class Ptolemy(BaseModel):
             ValueError: If the outputs are already set.
         """
         if self._event is None:
-            raise ValueError('Event not set')
+            raise ValueError("Event not set")
 
         if self._outputs is not None:
-            raise ValueError('Outputs already set')
+            raise ValueError("Outputs already set")
 
         outputs_cls: Output = get_record_type(LogType.OUTPUT, self._tier)
 
         self._outputs = [
-            outputs_cls(
-                parent_id=self._event.id,
-                field_name=k,
-                field_value=v
-                ) for k, v in kwargs.items()
+            outputs_cls(parent_id=self._event.id, field_name=k, field_value=v)
+            for k, v in kwargs.items()
         ]
         return self
 
@@ -316,19 +313,16 @@ class Ptolemy(BaseModel):
         once will raise a ValueError.
         """
         if self._event is None:
-            raise ValueError('Event not set')
+            raise ValueError("Event not set")
 
         if self._feedback is not None:
-            raise ValueError('Feedback already set')
+            raise ValueError("Feedback already set")
 
         feedback_cls: Feedback = get_record_type(LogType.FEEDBACK, self._tier)
 
         self._feedback = [
-            feedback_cls(
-                parent_id=self._event.id,
-                field_name=k,
-                field_value=v
-                ) for k, v in kwargs.items()
+            feedback_cls(parent_id=self._event.id, field_name=k, field_value=v)
+            for k, v in kwargs.items()
         ]
         return self
 
@@ -351,19 +345,16 @@ class Ptolemy(BaseModel):
             ValueError: If the metadata is already set.
         """
         if self._event is None:
-            raise ValueError('Event not set')
+            raise ValueError("Event not set")
 
         if self._metadata is not None:
-            raise ValueError('Metadata already set')
+            raise ValueError("Metadata already set")
 
         metadata_cls: Metadata = get_record_type(LogType.METADATA, self._tier)
 
         self._metadata = [
-            metadata_cls(
-                parent_id=self._event.id,
-                field_name=k,
-                field_value=v
-                ) for k, v in kwargs.items()
+            metadata_cls(parent_id=self._event.id, field_name=k, field_value=v)
+            for k, v in kwargs.items()
         ]
 
         return self
