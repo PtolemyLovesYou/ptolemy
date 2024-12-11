@@ -91,7 +91,7 @@ class Event(Record):
             parent_id=self.parent_id.hex,
             id=self.id.hex,
             name=self.name,
-            parameters=self.parameters.model_dump_json() if self.parameters else '{}',
+            parameters=self.parameters.model_dump_json() if self.parameters else None,
             version=self.version,
             environment=self.environment,
         )

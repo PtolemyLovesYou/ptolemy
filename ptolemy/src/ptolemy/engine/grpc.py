@@ -25,7 +25,6 @@ class PtolemyEngine(Engine):
 
     def push_records(self, records: List[Record]):
         """Push records to the client."""
-        print('publishing records')
         self._client.publish_records(records)
 
     def queue(self, records: Iterable[Record]):
@@ -33,9 +32,7 @@ class PtolemyEngine(Engine):
         for record in records:
             self._queue.put_nowait(record)
 
-        print('finished queuing')
         if not self._queue.empty() and self._queue.qsize() >= self.batch_size:
-            print('flushing')
             self.flush()
 
     def flush(self):
@@ -54,5 +51,4 @@ class PtolemyEngine(Engine):
                 break
 
         if records_to_send:
-            print('sending records', len(records_to_send))
             self.push_records(records_to_send)

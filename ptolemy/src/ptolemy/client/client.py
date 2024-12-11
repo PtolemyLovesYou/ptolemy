@@ -66,6 +66,8 @@ class Ptolemy(BaseModel):
     def __enter__(self):
         if self._start_time is not None:
             raise ValueError('Already started')
+        
+        self.engine.queue([self._event])
 
         self.start()
 
@@ -90,7 +92,6 @@ class Ptolemy(BaseModel):
 
         self.engine.queue( # pylint: disable=no-member
             [
-                self._event,
                 self._runtime,
                 *(self._inputs or []),
                 *(self._outputs or []),
