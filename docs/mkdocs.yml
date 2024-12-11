@@ -18,6 +18,7 @@ theme:
     - navigation.instant
     - search.suggest
     - navigation.tabs
+    - navigation.tabs.sticky
 
 repo_name: PtolemyLovesYou/ptolemy
 repo_url: https://github.com/PtolemyLovesYou/ptolemy
