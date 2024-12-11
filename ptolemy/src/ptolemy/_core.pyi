@@ -7,24 +7,41 @@ class ProtoRecord: ...
 
 class RecordBuilder:
     def __init__(self) -> None: ...
-
     @staticmethod
-    def event(tier: str, parent_id: str, id: str, name: str, parameters: str | None, version: str | None, environment: str | None) -> ProtoRecord: ...
-
+    def event(
+        tier: str,
+        parent_id: str,
+        id: str,
+        name: str,
+        parameters: str | None,
+        version: str | None,
+        environment: str | None,
+    ) -> ProtoRecord: ...
     @staticmethod
-    def runtime(tier: str, parent_id: str, start_time: str, end_time: str, error_type: str | None, error_content: str | None) -> ProtoRecord: ...
-
+    def runtime(
+        tier: str,
+        parent_id: str,
+        start_time: str,
+        end_time: str,
+        error_type: str | None,
+        error_content: str | None,
+    ) -> ProtoRecord: ...
     @staticmethod
-    def input(tier: str, parent_id: str, id: str, field_name: str, field_value: str) -> ProtoRecord: ...
-
+    def input(
+        tier: str, parent_id: str, id: str, field_name: str, field_value: str
+    ) -> ProtoRecord: ...
     @staticmethod
-    def output(tier: str, parent_id: str, id: str, field_name: str, field_value: str) -> ProtoRecord: ...
-
+    def output(
+        tier: str, parent_id: str, id: str, field_name: str, field_value: str
+    ) -> ProtoRecord: ...
     @staticmethod
-    def feedback(tier: str, parent_id: str, id: str, field_name: str, field_value: str) -> ProtoRecord: ...
-
+    def feedback(
+        tier: str, parent_id: str, id: str, field_name: str, field_value: str
+    ) -> ProtoRecord: ...
     @staticmethod
-    def metadata(tier: str, parent_id: str, id: str, field_name: str, field_value: str) -> ProtoRecord: ...
+    def metadata(
+        tier: str, parent_id: str, id: str, field_name: str, field_value: str
+    ) -> ProtoRecord: ...
 
 class BlockingObserverClient:
     def __init__(self) -> None: ...

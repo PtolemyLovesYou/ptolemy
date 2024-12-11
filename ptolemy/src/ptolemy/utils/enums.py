@@ -3,6 +3,7 @@
 from typing import Optional
 from enum import StrEnum
 
+
 class LogType(StrEnum):
     """Log types."""
 
@@ -12,6 +13,7 @@ class LogType(StrEnum):
     OUTPUT = "output"
     FEEDBACK = "feedback"
     METADATA = "metadata"
+
 
 class Tier(StrEnum):
     """Tiers."""

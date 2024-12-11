@@ -64,6 +64,7 @@ class IOSerializable(RootModel[T]):
 
         return self.model_dump_json()
 
+
 def _serialize_timestamp(v: datetime) -> str:
     return v.isoformat()
 
