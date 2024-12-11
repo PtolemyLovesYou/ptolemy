@@ -1,5 +1,5 @@
 """Client."""
-from typing import List, Self, Optional, Any
+from typing import List, Self, Optional, Any, Annotated
 from datetime import datetime
 import traceback as tb
 from pydantic import BaseModel, PrivateAttr, Field
@@ -32,7 +32,7 @@ class Ptolemy(BaseModel):
     _start_time: datetime = PrivateAttr(default=None)
     _end_time: datetime = PrivateAttr(default=None)
 
-    engine: Engine = Field(default_factory=PtolemyEngine)
+    engine: Annotated[Engine, Field(default_factory=PtolemyEngine)]
     workspace_id: ID
 
     def start(self) -> Self:
@@ -66,7 +66,7 @@ class Ptolemy(BaseModel):
     def __enter__(self):
         if self._start_time is not None:
             raise ValueError('Already started')
-        
+
         self.engine.queue([self._event])
 
         self.start()
