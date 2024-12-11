@@ -84,30 +84,11 @@ class Event(Record):
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
     version: Optional[str] = Field(min_length=1, max_length=16, default=None)
 
-    def spawn(
-        self,
-        name: str,
-        parameters: Optional[Parameters] = None,
-        environment: Optional[str] = None,
-        version: Optional[str] = None,
-    ) -> "Event":
-        """Spawn a new event as a child of this event."""
-        if self.TIER.child is None:
-            raise ValueError(f"Cannot spawn child of tier {self.TIER}")
-
-        return get_record_type(LogType.EVENT, self.TIER.child)(
-            parent_id=self.id,
-            name=name,
-            parameters=parameters,
-            environment=environment,
-            version=version,
-        )
-
     def proto(self) -> ProtoRecord:
         return RecordBuilder().event(
             tier=self.TIER.value,
-            parent_id=self.parent_id,
-            id=self.id,
+            parent_id=self.parent_id.hex,
+            id=self.id.hex,
             name=self.name,
             parameters=self.parameters.model_dump_json() if self.parameters else None,
             version=self.version,
@@ -128,7 +109,8 @@ class Runtime(Record):
     def proto(self) -> ProtoRecord:
         return RecordBuilder().runtime(
             tier=self.TIER.value,
-            parent_id=self.parent_id,
+            parent_id=self.parent_id.hex,
+            id=self.id.hex,
             start_time=self.start_time.isoformat(),
             end_time=self.end_time.isoformat(),
             error_type=self.error_type,
@@ -156,8 +138,8 @@ class _IO(Record):
 
         return fn(
             tier=self.TIER.value,
-            parent_id=self.parent_id,
-            id=self.id,
+            parent_id=self.parent_id.hex,
+            id=self.id.hex,
             field_name=self.field_name,
             field_value=self.field_value.model_dump_json(),
         )
@@ -192,8 +174,8 @@ class Metadata(Record):
     def proto(self) -> ProtoRecord:
         return RecordBuilder().metadata(
             tier=self.TIER.value,
-            parent_id=self.parent_id,
-            id=self.id,
+            parent_id=self.parent_id.hex,
+            id=self.id.hex,
             field_name=self.field_name,
             field_value=self.field_value,
         )
