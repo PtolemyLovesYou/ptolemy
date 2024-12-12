@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.11.10",
     "clickhouse-connect>=0.8.9",
+    "pydantic>=2.10.3",
     "tenacity>=9.0.0",
 ]
 
