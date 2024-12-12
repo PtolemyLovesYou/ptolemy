@@ -4,6 +4,7 @@ ptolemy/prof
 
 # DS Stores
 *.DS_Store
+**/.DS_Store
 
 # Jupyter notebooks
 test.ipynb
