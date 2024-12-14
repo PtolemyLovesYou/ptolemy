@@ -1,5 +1,5 @@
-use diesel::prelude::*;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use uuid::Uuid;
 
 #[derive(Queryable, Selectable)]
@@ -10,5 +10,5 @@ pub struct Workspace {
     name: String,
     description: Option<String>,
     created_at: NaiveDateTime,
-    updated_at: NaiveDateTime
+    updated_at: NaiveDateTime,
 }

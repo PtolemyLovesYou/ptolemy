@@ -1,5 +1,5 @@
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::bb8::Pool;
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
 
 pub struct DBConfig {
@@ -7,7 +7,7 @@ pub struct DBConfig {
     postgres_port: String,
     postgres_user: String,
     postgres_password: String,
-    postgres_db: String
+    postgres_db: String,
 }
 
 impl DBConfig {
@@ -24,7 +24,8 @@ impl DBConfig {
         let postgres_host = std::env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set.");
         let postgres_port = std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set.");
         let postgres_user = std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
-        let postgres_password = std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
+        let postgres_password =
+            std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
         let postgres_db = std::env::var("POSTGRES_DB").expect("POSTGRES_DB must be set.");
 
         DBConfig {
@@ -32,7 +33,7 @@ impl DBConfig {
             postgres_port: postgres_port,
             postgres_user: postgres_user,
             postgres_password: postgres_password,
-            postgres_db: postgres_db
+            postgres_db: postgres_db,
         }
     }
 

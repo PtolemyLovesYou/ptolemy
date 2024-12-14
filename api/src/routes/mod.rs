@@ -1,2 +1,2 @@
-pub mod workspace;
 pub mod graphql;
+pub mod workspace;

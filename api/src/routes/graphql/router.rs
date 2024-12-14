@@ -1,14 +1,12 @@
 use axum::{
-    Router,
-    routing::{on, MethodFilter, get},
     extract::State,
+    routing::{get, on, MethodFilter},
+    Router,
 };
-use std::sync::Arc;
 use clickhouse::Client;
-use juniper::{
-    RootNode, EmptySubscription, EmptyMutation, graphql_object
-};
-use juniper_axum::{extract::JuniperRequest, response::JuniperResponse, graphiql};
+use juniper::{graphql_object, EmptyMutation, EmptySubscription, RootNode};
+use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
+use std::sync::Arc;
 
 use crate::routes::graphql::client::ClickhouseConfig;
 
@@ -39,7 +37,8 @@ impl Query {
     }
 }
 
-type Schema = RootNode<'static, Query, EmptyMutation<GraphQLContext>, EmptySubscription<GraphQLContext>>;
+type Schema =
+    RootNode<'static, Query, EmptyMutation<GraphQLContext>, EmptySubscription<GraphQLContext>>;
 
 // Define an AppState struct to hold both schema and context
 #[derive(Clone)]
@@ -57,16 +56,20 @@ async fn graphql_handler(
 }
 
 pub async fn graphql_router() -> Router {
-    let schema = Arc::new(Schema::new(Query, EmptyMutation::new(), EmptySubscription::new()));
+    let schema = Arc::new(Schema::new(
+        Query,
+        EmptyMutation::new(),
+        EmptySubscription::new(),
+    ));
     let context = Arc::new(GraphQLContext::new().await);
-    
-    let state = AppState {
-        schema,
-        context,
-    };
+
+    let state = AppState { schema, context };
 
     Router::new()
-        .route("/", on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler))
+        .route(
+            "/",
+            on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
+        )
         .route("/graphiql", get(graphiql("/graphql", None)))
         .with_state(state)
 }

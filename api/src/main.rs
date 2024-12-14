@@ -1,7 +1,4 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use api::db::DBConfig;
 use api::routes::graphql::router::graphql_router;
@@ -38,7 +35,7 @@ async fn ping_db() -> String {
 }
 
 /// Creates a base router for the Ptolemy API with default routes.
-/// 
+///
 /// This router includes the following routes:
 /// - GET `/`: Returns a welcome message indicating that the API is running.
 /// - GET `/ping`: Returns a "Pong!" message for a basic health check.
