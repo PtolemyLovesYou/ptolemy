@@ -1,7 +1,9 @@
 use axum::{routing::get, Router};
 
-use api::routes::graphql::router::graphql_router;
 use api::config::ApiConfig;
+use api::routes::graphql::router::graphql_router;
+use api::routes::workspace::workspace_router;
+use api::state::AppState;
 
 async fn ping_db() -> String {
     let pool = ApiConfig::new().postgres_conn_pool().await;
@@ -40,11 +42,13 @@ async fn main() {
     env_logger::init();
 
     let config = ApiConfig::new();
+    let shared_state = AppState::new(&config).await;
 
     // build application
     let app = Router::new()
         .nest("/", base_router().await)
-        .nest("/graphql", graphql_router(&config).await);
+        .nest("/graphql", graphql_router(&config).await)
+        .nest("/workspace", workspace_router(shared_state).await);
 
     // run with hyper
     let server_url = format!("0.0.0.0:{}", config.port);

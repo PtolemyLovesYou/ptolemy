@@ -1,7 +1,7 @@
+use clickhouse::Client;
 use diesel_async::pooled_connection::bb8::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
-use clickhouse::Client;
 
 pub struct ApiConfig {
     pub port: String,
@@ -11,7 +11,7 @@ pub struct ApiConfig {
     postgres_user: String,
     postgres_password: String,
     postgres_db: String,
-    
+
     clickhouse_url: String,
 }
 
@@ -40,7 +40,7 @@ impl ApiConfig {
             postgres_user,
             postgres_password,
             postgres_db,
-            clickhouse_url
+            clickhouse_url,
         }
     }
 

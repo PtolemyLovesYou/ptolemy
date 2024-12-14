@@ -10,7 +10,7 @@ path = "src/main.rs"
 [dependencies]
 axum = "0.7.9"
 bb8 = "0.8.6"
-chrono = "0.4.39"
+chrono = { version = "0.4.39", features=["serde"] }
 clickhouse = {version = "0.13.1", features = ["uuid", "time"]}
 diesel = { version = "2.2.6", features = ["postgres", "chrono", "uuid"] }
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }

@@ -1,14 +1,24 @@
-use chrono::NaiveDateTime;
+use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workspace {
-    id: Uuid,
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    #[serde(with = "ts_microseconds")]
+    pub created_at: NaiveDateTime,
+    #[serde(with = "ts_microseconds")]
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Insertable, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::workspace)]
+pub struct WorkspaceCreate {
     name: String,
     description: Option<String>,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
 }
