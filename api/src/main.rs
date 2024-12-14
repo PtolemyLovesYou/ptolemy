@@ -4,6 +4,7 @@ use axum::{
 };
 
 use api::db::DBConfig;
+use api::routes::graphql::router::graphql_router;
 
 pub struct ApiConfig {
     host: String,
@@ -43,7 +44,7 @@ async fn ping_db() -> String {
 /// - GET `/ping`: Returns a "Pong!" message for a basic health check.
 ///
 /// Returns a `Router` configured with the specified routes.
-fn base_router() -> Router {
+async fn base_router() -> Router {
     Router::new()
         .route("/", get(|| async { "Ptolemy API is up and running <3" }))
         .route("/ping", get(|| async { "Pong!" }))
@@ -67,7 +68,8 @@ async fn main() {
 
     // build application
     let app = Router::new()
-        .merge(base_router());
+        .nest("/", base_router().await)
+        .nest("/graphql", graphql_router().await);
 
     let api_config = ApiConfig::new();
 

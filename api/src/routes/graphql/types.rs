@@ -28,9 +28,9 @@ struct Runtime {
     id: Uuid,
     #[serde(with = "clickhouse::serde::uuid")]
     parent_id: Uuid,
-    #[serde(with = "clickhouse::serde::time::datetime64::nanos")]
+    #[serde(with = "clickhouse::serde::time::datetime64::micros")]
     start_time: OffsetDateTime,
-    #[serde(with = "clickhouse::serde::time::datetime64::nanos")]
+    #[serde(with = "clickhouse::serde::time::datetime64::micros")]
     end_time: OffsetDateTime,
     error_type: Option<String>,
     error_content: Option<String>

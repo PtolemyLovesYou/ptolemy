@@ -31,8 +31,9 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input (
     tier Enum('UNDECLARED_TIER' = 0, 'SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4) NOT NULL,
     parent_id String NOT NULL,
     id String NOT NULL,
-    field_name String,
-    field_value Variant(String, Decimal64(18), Bool, UUID, JSON),
+    field_name String NOT NULL,
+    field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
+    is_json Bool NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
@@ -40,8 +41,9 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output (
     tier Enum('UNDECLARED_TIER' = 0, 'SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4) NOT NULL,
     parent_id String NOT NULL,
     id String NOT NULL,
-    field_name String,
-    field_value Variant(String, Decimal64(18), Bool, UUID, JSON),
+    field_name String NOT NULL,
+    field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
+    is_json Bool NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
@@ -49,8 +51,9 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback (
     tier Enum('UNDECLARED_TIER' = 0, 'SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4) NOT NULL,
     parent_id String NOT NULL,
     id String NOT NULL,
-    field_name String,
-    field_value Variant(String, Decimal64(18), Bool, UUID, JSON),
+    field_name String NOT NULL,
+    field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
+    is_json Bool NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
@@ -58,8 +61,8 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__metadata (
     tier Enum('UNDECLARED_TIER' = 0, 'SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4) NOT NULL,
     parent_id String NOT NULL,
     id String NOT NULL,
-    field_name String,
-    field_value String,
+    field_name String NOT NULL,
+    field_value String NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
