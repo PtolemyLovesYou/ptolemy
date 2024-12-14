@@ -10,12 +10,21 @@ compile-protobuf:
 
 .PHONY: run
 run:
-	docker compose up --remove-orphans
+	docker compose \
+		--profile dev \
+		up
 
 .PHONY: goose
 goose:
-	docker compose exec -e DB=clickhouse goose /bin/bash -c "source /app/configure.sh && /bin/bash"
+	docker compose \
+		exec \
+		-e DB=clickhouse \
+		goose \
+		/bin/bash -c "source /app/configure.sh && /bin/bash"
 
 .PHONY: diesel
 diesel:
-	docker compose exec api /bin/bash -c "source /app/configure.sh && /bin/bash"
+	docker compose \
+		exec \
+		api \
+		/bin/bash -c "source /app/configure.sh && /bin/bash"
