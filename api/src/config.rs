@@ -1,39 +1,46 @@
 use diesel_async::pooled_connection::bb8::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
+use clickhouse::Client;
 
-pub struct DBConfig {
+pub struct ApiConfig {
+    pub port: String,
+
     postgres_host: String,
     postgres_port: String,
     postgres_user: String,
     postgres_password: String,
     postgres_db: String,
+    
+    clickhouse_url: String,
 }
 
-impl DBConfig {
-    /// Returns a new instance of `DBConfig` by reading the configuration from environment variables.
+impl ApiConfig {
+    /// Constructs a new `ApiConfig` instance by retrieving the host and port
+    /// from the environment variables `PTOLEMY_API_HOST` and `PTOLEMY_API_PORT`.
     ///
-    /// The following environment variables must be set:
+    /// # Panics
     ///
-    /// - `POSTGRES_HOST`
-    /// - `POSTGRES_PORT`
-    /// - `POSTGRES_USER`
-    /// - `POSTGRES_PASSWORD`
-    /// - `POSTGRES_DB`
-    pub fn new() -> DBConfig {
+    /// This function will panic if the environment variables `PTOLEMY_API_HOST`
+    /// or `PTOLEMY_API_PORT` are not set.
+    pub fn new() -> ApiConfig {
+        let port = std::env::var("PTOLEMY_API_PORT").expect("API_PORT must be set.");
         let postgres_host = std::env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set.");
         let postgres_port = std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set.");
         let postgres_user = std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
         let postgres_password =
             std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
         let postgres_db = std::env::var("POSTGRES_DB").expect("POSTGRES_DB must be set.");
+        let clickhouse_url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
 
-        DBConfig {
-            postgres_host: postgres_host,
-            postgres_port: postgres_port,
-            postgres_user: postgres_user,
-            postgres_password: postgres_password,
-            postgres_db: postgres_db,
+        ApiConfig {
+            port,
+            postgres_host,
+            postgres_port,
+            postgres_user,
+            postgres_password,
+            postgres_db,
+            clickhouse_url
         }
     }
 
@@ -48,10 +55,17 @@ impl DBConfig {
         )
     }
 
-    pub async fn conn_pool(&self) -> Pool<AsyncPgConnection> {
+    pub async fn postgres_conn_pool(&self) -> Pool<AsyncPgConnection> {
         // todo: this needs error handling
         let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(self.db_url());
 
         Pool::builder().build(config).await.unwrap()
+    }
+
+    pub async fn clickhouse_client(&self) -> Client {
+        Client::default()
+            .with_url(self.clickhouse_url.clone())
+            .with_option("enable_json_type", "1")
+            .with_option("enable_variant_type", "1")
     }
 }
