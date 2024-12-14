@@ -1,7 +1,7 @@
-use chrono::{NaiveDateTime, naive::serde::ts_microseconds};
+use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::workspace)]

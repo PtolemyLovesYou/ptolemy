@@ -1,8 +1,8 @@
 use axum::{routing::get, Router};
 
+use api::config::ApiConfig;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
-use api::config::ApiConfig;
 use api::state::AppState;
 
 async fn ping_db() -> String {

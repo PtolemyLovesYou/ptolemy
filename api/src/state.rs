@@ -1,6 +1,6 @@
+use crate::config::ApiConfig;
 use diesel_async::pooled_connection::bb8::Pool;
 use diesel_async::AsyncPgConnection;
-use crate::config::ApiConfig;
 
 #[derive(Clone)]
 pub struct AppState {
