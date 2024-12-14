@@ -1,17 +1,17 @@
-site_name: ""
-site_url: http://localhost:8000
+site_name: "Ptolemy"
+site_url: http://docs.ptolemy.dev
 
 theme:
   name: material
-  logo: img/logo.svg
+  logo: img/logomark-white.svg
   favicon: img/favicon.ico
   palette:
     scheme: slate
-    primary: deep orange
-    accent: deep orange
+    primary: custom
+    accent: custom
   font:
-    text: IBM Plex Mono
-    code: IBM Plex Mono
+    text: B612
+    code: B612 Mono
   icon:
     repo: fontawesome/brands/github-alt
   features:
@@ -26,7 +26,8 @@ repo_url: https://github.com/PtolemyLovesYou/ptolemy
 edit_uri: edit/main/docs/
 
 nav:
-  - Home: index.md
+  - Home:
+    - index.md
   - Getting Started:
     - Introduction: getting_started/index.md
     - Install with Docker Compose: getting_started/installation_docker_compose.md
@@ -72,3 +73,5 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+extra_css:
+  - stylesheets/extra.css
