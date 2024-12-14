@@ -46,10 +46,8 @@ async fn main() {
         .nest("/", base_router().await)
         .nest("/graphql", graphql_router(&config).await);
 
-    let api_config = ApiConfig::new();
-
     // run with hyper
-    let server_url = format!("0.0.0.0:{}", api_config.port);
+    let server_url = format!("0.0.0.0:{}", config.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
     log::info!("Serving at {}", &server_url);
     axum::serve(listener, app).await.unwrap();
