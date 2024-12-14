@@ -14,7 +14,7 @@ run:
 
 .PHONY: goose
 goose:
-	docker compose exec -e DB=clickhouse goose /bin/bash
+	docker compose exec -e DB=clickhouse goose /bin/bash -c "source /app/configure.sh && /bin/bash"
 
 .PHONY: diesel
 diesel:
