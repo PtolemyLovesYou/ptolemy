@@ -1,4 +1,5 @@
 use axum::{routing::get, Router};
+use std::sync::Arc;
 
 use api::config::ApiConfig;
 use api::routes::graphql::router::graphql_router;
@@ -42,13 +43,13 @@ async fn main() {
     env_logger::init();
 
     let config = ApiConfig::new();
-    let shared_state = AppState::new(&config).await;
+    let shared_state = Arc::new(AppState::new(&config).await);
 
     // build application
     let app = Router::new()
         .nest("/", base_router().await)
         .nest("/graphql", graphql_router(&config).await)
-        .nest("/workspace", workspace_router(shared_state).await);
+        .nest("/workspace", workspace_router(&shared_state).await);
 
     // run with hyper
     let server_url = format!("0.0.0.0:{}", config.port);

@@ -1,8 +1,6 @@
-use crate::models::{Workspace, WorkspaceCreate};
-use crate::schema::workspace;
-use crate::state::AppState;
+use std::sync::Arc;
 use axum::{
-    extract::{Path, State},
+    extract::Path,
     http::StatusCode,
     routing::{delete, get, post},
     Json, Router,
@@ -11,9 +9,12 @@ use diesel::prelude::*;
 use diesel::SelectableHelper;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
+use crate::models::{Workspace, WorkspaceCreate};
+use crate::schema::workspace;
+use crate::state::AppState;
 
 async fn create_workspace(
-    State(state): State<AppState>,
+    state: Arc<AppState>,
     Json(workspace): Json<WorkspaceCreate>,
 ) -> Result<(StatusCode, Json<Workspace>), StatusCode> {
     let mut conn = match state.pg_pool.get().await {
@@ -39,7 +40,7 @@ async fn create_workspace(
 }
 
 async fn get_workspace(
-    State(state): State<AppState>,
+    state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Workspace>, StatusCode> {
     use crate::schema::workspace::dsl::*;
@@ -65,7 +66,7 @@ async fn get_workspace(
 }
 
 async fn delete_workspace(
-    State(state): State<AppState>,
+    state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
     use crate::schema::workspace::dsl::*;
@@ -89,10 +90,32 @@ async fn delete_workspace(
     }
 }
 
-pub async fn workspace_router(state: AppState) -> Router {
+pub async fn workspace_router(state: &Arc<AppState>) -> Router {
     Router::new()
-        .route("/", post(create_workspace))
-        .route("/:workspace_id", delete(delete_workspace))
-        .route("/:workspace_id", get(get_workspace))
-        .with_state(state)
+        .route(
+            "/",
+            post(
+                {
+                    let shared_state = Arc::clone(state);
+                    move |workspace| create_workspace(shared_state, workspace)
+                },
+            )
+        )
+        .route(
+            "/:workspace_id", 
+            delete(
+                {
+                    let shared_state = Arc::clone(state);
+                    move |workspace_id| delete_workspace(shared_state, workspace_id)
+                }
+            )
+        )
+        .route(
+            "/:workspace_id", get(
+                {
+                    let shared_state = Arc::clone(state);
+                    move |workspace_id| get_workspace(shared_state, workspace_id)
+                }
+            )
+        )
 }
