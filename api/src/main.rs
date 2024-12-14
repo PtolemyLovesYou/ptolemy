@@ -1,34 +1,10 @@
 use axum::{routing::get, Router};
 
-use api::db::DBConfig;
 use api::routes::graphql::router::graphql_router;
-
-pub struct ApiConfig {
-    host: String,
-    port: String,
-}
-
-impl ApiConfig {
-    /// Constructs a new `ApiConfig` instance by retrieving the host and port
-    /// from the environment variables `PTOLEMY_API_HOST` and `PTOLEMY_API_PORT`.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if the environment variables `PTOLEMY_API_HOST`
-    /// or `PTOLEMY_API_PORT` are not set.
-    fn new() -> ApiConfig {
-        let host = std::env::var("PTOLEMY_API_HOST").expect("API_HOST must be set.");
-        let port = std::env::var("PTOLEMY_API_PORT").expect("API_PORT must be set.");
-
-        ApiConfig {
-            host: host,
-            port: port,
-        }
-    }
-}
+use api::config::ApiConfig;
 
 async fn ping_db() -> String {
-    let pool = DBConfig::new().conn_pool().await;
+    let pool = ApiConfig::new().postgres_conn_pool().await;
     let mut _conn = pool.get().await;
 
     "Database works <3".to_string()
@@ -63,15 +39,15 @@ async fn base_router() -> Router {
 async fn main() {
     env_logger::init();
 
+    let config = ApiConfig::new();
+
     // build application
     let app = Router::new()
         .nest("/", base_router().await)
-        .nest("/graphql", graphql_router().await);
-
-    let api_config = ApiConfig::new();
+        .nest("/graphql", graphql_router(&config).await);
 
     // run with hyper
-    let server_url = format!("{}:{}", api_config.host, api_config.port);
+    let server_url = format!("0.0.0.0:{}", config.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
     log::info!("Serving at {}", &server_url);
     axum::serve(listener, app).await.unwrap();

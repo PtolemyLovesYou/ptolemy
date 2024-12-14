@@ -8,15 +8,15 @@ use juniper::{graphql_object, EmptyMutation, EmptySubscription, RootNode};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use std::sync::Arc;
 
-use crate::routes::graphql::client::ClickhouseConfig;
+use crate::config::ApiConfig;
 
 pub struct GraphQLContext {
     client: Client,
 }
 
 impl GraphQLContext {
-    pub async fn new() -> Self {
-        let client = ClickhouseConfig::new().get_client().await;
+    pub async fn new(config: &ApiConfig) -> Self {
+        let client = config.clickhouse_client().await;
         GraphQLContext { client }
     }
 }
@@ -55,13 +55,13 @@ async fn graphql_handler(
     JuniperResponse(result)
 }
 
-pub async fn graphql_router() -> Router {
+pub async fn graphql_router(config: &ApiConfig) -> Router {
     let schema = Arc::new(Schema::new(
         Query,
         EmptyMutation::new(),
         EmptySubscription::new(),
     ));
-    let context = Arc::new(GraphQLContext::new().await);
+    let context = Arc::new(GraphQLContext::new(config).await);
 
     let state = AppState { schema, context };
 
