@@ -1,11 +1,13 @@
 use axum::{
     Router,
-    routing::post,
-    extract::State,
+    routing::{post, delete},
+    extract::{State, Path},
     Json,
     http::StatusCode,
 };
+use uuid::Uuid;
 use diesel_async::RunQueryDsl;
+use diesel::prelude::*;
 use diesel::SelectableHelper;
 use crate::state::AppState;
 use crate::schema::workspace;
@@ -33,8 +35,30 @@ async fn create_workspace(State(state): State<AppState>, Json(workspace): Json<W
         }
 }
 
+async fn delete_workspace(State(state): State<AppState>, Path(workspace_id): Path<Uuid>) -> Result<StatusCode, StatusCode> {
+    use crate::schema::workspace::dsl::*;
+    let mut conn = match state.pg_pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            log::error!("Failed to get database connection: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    };
+
+    match diesel::delete(workspace.filter(id.eq(workspace_id)))
+        .execute(&mut conn)
+        .await {
+            Ok(_) => Ok(StatusCode::NO_CONTENT),
+            Err(e) => {
+                log::error!("Failed to delete workspace: {}", e);
+                return Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        }
+}
+
 pub async fn workspace_router(state: AppState) -> Router {
     Router::new()
         .route("/", post(create_workspace))
+        .route("/:workspace_id", delete(delete_workspace))
         .with_state(state)
 }
