@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/struct.proto";
+
 package observer;
 
 service Observer {
@@ -48,7 +50,7 @@ message Record {
 
     // event
     optional string name = 5;
-    optional string parameters = 6;
+    optional google.protobuf.Value parameters = 6;
     optional string version = 7;
     optional string environment = 8;
 
@@ -60,5 +62,5 @@ message Record {
 
     // input/output/feedback/metadata
     optional string field_name = 13;
-    optional string field_value = 14;
+    optional google.protobuf.Value field_value = 14;
 }
