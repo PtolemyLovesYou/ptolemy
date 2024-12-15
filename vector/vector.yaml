@@ -42,7 +42,7 @@ transforms:
       - log_type_router.event
     source: |-
       if !is_nullish(.parameters) {
-        .parameters = parse_json!(.parameters)
+        .parameters = parse_json!(.parameters.string_value)
       } else {
         del(.parameters)
       }

@@ -54,7 +54,7 @@ pub struct ProtoRecord {
     parent_id: String,
     id: String,
     name: Option<String>,
-    parameters: Option<String>,
+    parameters: Option<JsonSerializable>,
     version: Option<String>,
     environment: Option<String>,
     start_time: Option<String>,
@@ -91,8 +91,8 @@ impl ProtoRecord {
         self
     }
 
-    pub fn parameters(mut self, parameters: String) -> Self {
-        self.parameters = Some(parameters);
+    pub fn parameters(mut self, parameters: Option<JsonSerializable>) -> Self {
+        self.parameters = parameters;
         self
     }
 
@@ -143,7 +143,10 @@ impl ProtoRecord {
             parent_id: self.parent_id,
             id: self.id,
             name: self.name,
-            parameters: self.parameters,
+            parameters: match self.parameters {
+                None => None,
+                Some(value) => json_serializable_to_value(&Some(value))
+            },
             version: self.version,
             environment: self.environment,
             start_time: self.start_time,
@@ -171,7 +174,7 @@ impl RecordBuilder {
 
     #[pyo3(signature = (tier, parent_id, id, name, parameters=None, version=None, environment=None))]
     #[staticmethod]
-    pub fn event(tier: &str, parent_id: String, id: String, name: String, parameters: Option<String>, version: Option<String>, environment: Option<String>) -> ProtoRecord {
+    pub fn event(tier: &str, parent_id: String, id: String, name: String, parameters: Option<JsonSerializable>, version: Option<String>, environment: Option<String>) -> ProtoRecord {
         ProtoRecord::new(
             detect_tier(tier),
             LogType::Event,
@@ -179,7 +182,7 @@ impl RecordBuilder {
             id
         )
         .name(name)
-        .parameters(parameters.unwrap_or_default())
+        .parameters(parameters)
         .version(version.unwrap_or_default())
         .environment(environment.unwrap_or_default())
     }

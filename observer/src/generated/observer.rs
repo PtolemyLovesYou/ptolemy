@@ -33,8 +33,8 @@ pub struct Record {
     /// event
     #[prost(string, optional, tag = "5")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "6")]
-    pub parameters: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "6")]
+    pub parameters: ::core::option::Option<::prost_types::Value>,
     #[prost(string, optional, tag = "7")]
     pub version: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "8")]

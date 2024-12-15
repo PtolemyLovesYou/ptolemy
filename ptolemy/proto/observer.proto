@@ -50,7 +50,7 @@ message Record {
 
     // event
     optional string name = 5;
-    optional string parameters = 6;
+    optional google.protobuf.Value parameters = 6;
     optional string version = 7;
     optional string environment = 8;
 
