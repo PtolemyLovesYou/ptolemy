@@ -12,6 +12,8 @@ RUN apt-get update && \
 # Copy only files needed for dependency resolution first
 COPY Cargo.toml Cargo.lock ./
 
+ENV BUILD_PROTOBUFS=0
+
 # Create a dummy main.rs to build dependencies
 RUN mkdir src && \
     echo "fn main() {}" > src/server.rs && \

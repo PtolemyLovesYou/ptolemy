@@ -7,6 +7,7 @@ format:
 compile-protobuf:
 	cp proto/observer.proto ptolemy/proto/observer.proto
 	cp proto/observer.proto observer/proto/observer.proto
+	protoc -I. --include_imports -o ./vector/observer.desc ./proto/observer.proto
 
 .PHONY: run
 run:

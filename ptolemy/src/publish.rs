@@ -1,9 +1,11 @@
-use observer::{PublishRequest, PublishResponse, Record, Tier, LogType};
-use observer::observer_client::ObserverClient;
+use std::collections::BTreeMap;
+use prost_types::value::Kind;
+use prost_types::{ListValue, Struct, Value};
+use crate::generated::observer::{PublishRequest, PublishResponse, Record, Tier, LogType, observer_client::ObserverClient};
 use tonic::transport::Channel;
 use pyo3::prelude::*;
 
-pub mod ClientConfig {
+pub mod client_config {
     pub struct ObserverConfig {
         pub host: String,
         pub port: String
@@ -20,10 +22,6 @@ pub mod ClientConfig {
             format!("http://{}:{}", self.host, self.port)
         }
     }
-}
-
-pub mod observer {
-    tonic::include_proto!("observer");
 }
 
 pub fn detect_log_type(log_type: &str) -> LogType {
@@ -64,7 +62,7 @@ pub struct ProtoRecord {
     error_type: Option<String>,
     error_content: Option<String>,
     field_name: Option<String>,
-    field_value: Option<String>,
+    field_value: Option<JsonSerializable>,
 }
 
 
@@ -133,7 +131,7 @@ impl ProtoRecord {
         self
     }
 
-    pub fn field_value(mut self, field_value: String) -> Self {
+    pub fn field_value(mut self, field_value: JsonSerializable) -> Self {
         self.field_value = Some(field_value);
         self
     }
@@ -153,7 +151,10 @@ impl ProtoRecord {
             error_type: self.error_type,
             error_content: self.error_content,
             field_name: self.field_name,
-            field_value: self.field_value,
+            field_value: match self.field_value {
+                None => None,
+                Some(value) => json_serializable_to_value(&Some(value))
+            },
         }
     }
 }
@@ -200,7 +201,7 @@ impl RecordBuilder {
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
     #[staticmethod]
-    pub fn input(tier: &str, parent_id: String, id: String, field_name: String, field_value: String) -> ProtoRecord {
+    pub fn input(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
         ProtoRecord::new(
             detect_tier(tier),
             LogType::Input,
@@ -212,7 +213,7 @@ impl RecordBuilder {
     }
 
     #[staticmethod]
-    pub fn output(tier: &str, parent_id: String, id: String, field_name: String, field_value: String) -> ProtoRecord {
+    pub fn output(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
         ProtoRecord::new(
             detect_tier(tier),
             LogType::Output,
@@ -225,7 +226,7 @@ impl RecordBuilder {
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
     #[staticmethod]
-    pub fn feedback(tier: &str, parent_id: String, id: String, field_name: String, field_value: String) -> ProtoRecord {
+    pub fn feedback(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
         ProtoRecord::new(
             detect_tier(tier),
             LogType::Feedback,
@@ -237,7 +238,7 @@ impl RecordBuilder {
     }
 
     #[staticmethod]
-    pub fn metadata(tier: &str, parent_id: String, id: String, field_name: String, field_value: String) -> ProtoRecord {
+    pub fn metadata(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
         ProtoRecord::new(
             detect_tier(tier),
             LogType::Metadata,
@@ -256,7 +257,7 @@ pub struct BlockingObserverClient {
 }
 
 impl BlockingObserverClient {
-    pub fn connect(config: ClientConfig::ObserverConfig) -> Result<BlockingObserverClient, Box<dyn std::error::Error>> {
+    pub fn connect(config: client_config::ObserverConfig) -> Result<BlockingObserverClient, Box<dyn std::error::Error>> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
@@ -286,7 +287,7 @@ impl BlockingObserverClient {
 impl BlockingObserverClient {
     #[new]
     pub fn new() -> Self {
-        let config = ClientConfig::ObserverConfig::new();
+        let config = client_config::ObserverConfig::new();
         BlockingObserverClient::connect(config).unwrap()
     }
 
@@ -294,7 +295,7 @@ impl BlockingObserverClient {
         let records = records.iter().map(|r| r.clone().proto()).collect();
 
         let success = match self.publish_request(records) {
-            Ok(response) => true,
+            Ok(_) => true,
             Err(e) => {
                 println!("Error publishing records: {}", e);
                 false
@@ -302,5 +303,53 @@ impl BlockingObserverClient {
         };
 
         success
+    }
+}
+
+#[derive(FromPyObject, Clone, Debug)]
+pub enum JsonSerializable {
+    String(String),
+    Int(isize),
+    Float(f64),
+    Bool(bool),
+    Dict(BTreeMap<String, Option<JsonSerializable>>),
+    List(Vec<Option<JsonSerializable>>)
+}
+
+fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> {
+    match json {
+        Some(JsonSerializable::String(s)) => Some(Value {
+            kind: Some(Kind::StringValue(s.clone())),
+        }),
+        Some(JsonSerializable::Int(i)) => Some(Value {
+            kind: Some(Kind::NumberValue(*i as f64)),
+        }),
+        Some(JsonSerializable::Float(f)) => Some(Value {
+            kind: Some(Kind::NumberValue(*f)),
+        }),
+        Some(JsonSerializable::Bool(b)) => Some(Value {
+            kind: Some(Kind::BoolValue(*b)),
+        }),
+        Some(JsonSerializable::Dict(d)) => {
+            let mut fields = BTreeMap::new();
+            for (k, v) in d {
+                if let Some(value) = json_serializable_to_value(v) {
+                    fields.insert(k.clone(), value);
+                }
+            }
+            Some(Value {
+                kind: Some(Kind::StructValue(Struct { fields })),
+            })
+        }
+        Some(JsonSerializable::List(l)) => {
+            let values: Vec<Value> = l
+                .iter()
+                .filter_map(|v| json_serializable_to_value(v))
+                .collect();
+            Some(Value {
+                kind: Some(Kind::ListValue(ListValue { values })),
+            })
+        }
+        None => None,
     }
 }

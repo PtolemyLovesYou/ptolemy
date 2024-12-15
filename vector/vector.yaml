@@ -60,7 +60,7 @@ transforms:
     inputs:
       - log_type_router.input
     source: |-
-      .field_value = parse_json!(.field_value)
+      .field_value = parse_json!(.field_value.string_value)
       del(.log_type)
 
   output_parsed:
@@ -68,7 +68,7 @@ transforms:
     inputs:
       - log_type_router.output
     source: |-
-      .field_value = parse_json!(.field_value)
+      .field_value = parse_json!(.field_value.string_value)
       del(.log_type)
 
   feedback_parsed:
@@ -76,7 +76,7 @@ transforms:
     inputs:
       - log_type_router.feedback
     source: |-
-      .field_value = parse_json!(.field_value)
+      .field_value = parse_json!(.field_value.string_value)
       del(.log_type)
 
   metadata_parsed:
@@ -84,6 +84,7 @@ transforms:
     inputs:
       - log_type_router.metadata
     source: |-
+      .field_value = parse_json!(.field_value.string_value)
       del(.log_type)
 
 sinks:

@@ -3,13 +3,8 @@ use bb8_redis::RedisConnectionManager;
 use prost::Message;
 use redis::pipe;
 use tonic::{transport::Server, Request, Response, Status};
-use observer::{PublishRequest, PublishResponse};
-use observer::observer_server::{Observer, ObserverServer};
-
-
-pub mod observer {
-    tonic::include_proto!("observer");
-}
+use observer::observer::{PublishRequest, PublishResponse};
+use observer::observer::observer_server::{Observer, ObserverServer};
 
 fn publish_stream() -> String {
     std::env::var("OBSERVER_STREAM").expect("OBSERVER_STREAM must be set")

@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import List
 
-def hello_from_bin() -> str: ...
-
 class ProtoRecord: ...
 
 class RecordBuilder:

@@ -10,6 +10,7 @@ tokio = { version = "1.41.1", features = ["full"] }
 redis = { version = "*", features = ["streams", "tokio-comp", "aio", "connection-manager"] }
 bb8 = "0.8.6"
 bb8-redis = "0.17.0"
+prost-types = "0.13.4"
 
 [[bin]]
 name = "server"
