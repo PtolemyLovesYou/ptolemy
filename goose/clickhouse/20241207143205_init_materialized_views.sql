@@ -106,7 +106,7 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
+    
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 1
@@ -119,7 +119,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 2;
@@ -130,7 +129,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 3;
@@ -141,7 +139,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 4;
@@ -152,7 +149,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 1;
@@ -163,7 +159,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 2;
@@ -174,7 +169,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 3;
@@ -185,7 +179,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 4;
@@ -196,7 +189,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 1;
@@ -207,7 +199,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 2;
@@ -218,7 +209,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 3;
@@ -229,7 +219,6 @@ select
     toUUID(id) as id,
     field_name,
     field_value,
-    is_json,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 4;

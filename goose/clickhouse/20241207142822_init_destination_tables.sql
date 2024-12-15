@@ -96,7 +96,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.system_input (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -105,7 +104,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_input (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -114,7 +112,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.component_input (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -123,7 +120,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_input (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -132,7 +128,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.system_output (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -141,7 +136,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_output (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -150,7 +144,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.component_output (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -159,7 +152,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_output (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -168,7 +160,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.system_feedback (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -177,7 +168,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_feedback (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -186,7 +176,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.component_feedback (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 
@@ -195,7 +184,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.subcomponent_feedback (
     id UUID NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(6) NOT NULL
 ) engine = MergeTree order by (parent_id, id, created_at);
 

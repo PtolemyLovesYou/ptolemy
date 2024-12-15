@@ -33,7 +33,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input (
     id String NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
@@ -43,7 +42,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output (
     id String NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
@@ -53,7 +51,6 @@ create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback (
     id String NOT NULL,
     field_name String NOT NULL,
     field_value Variant(String, Decimal64(18), Bool, UUID, JSON) NOT NULL,
-    is_json Bool NOT NULL,
     created_at DateTime64(9) default now64()
 ) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
