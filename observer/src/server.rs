@@ -1,8 +1,12 @@
-use clickhouse::{Client, insert::Insert};
+use clickhouse::{
+    Client,
+    // insert::Insert
+};
 use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
-use observer::observer::{PublishRequest, PublishResponse, Record};
+use observer::observer::{PublishRequest, PublishResponse};
 use observer::observer::observer_server::{Observer, ObserverServer};
+use observer::parser::RecordRow;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
@@ -80,7 +84,18 @@ impl Observer for MyObserver {
 
         log::info!("Received {} records", records.len());
 
-        let client = Arc::new(self.ch_pool.clone());
+        let _client = Arc::new(self.ch_pool.clone());
+
+        for rec in records {
+            match RecordRow::from_record(&rec) {
+                Ok(rec) => {
+                    log::info!("Record parsed: {:#?}", rec);
+                },
+                Err(e) => {
+                    log::error!("Error parsing object: {:#?}", e);
+                }
+            }
+        }
 
         // spawn publish task
         // tokio::spawn(
