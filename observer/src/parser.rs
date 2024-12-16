@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::collections::BTreeMap;
+use serde_json::{Value, Map};
 use uuid::Uuid;
 use clickhouse::Row;
 use prost_types::value::Kind;
@@ -295,20 +295,12 @@ impl Metadata {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 enum FieldValueVariant {
     String(String),
     Int(i64),
     Float(f64),
     Bool(bool)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum IOVariant {
-    String(String),
-    Int(i64),
-    Float(f64),
-    Bool(bool),
-    Json(String),
 }
 
 #[derive(Debug, serde_repr::Serialize_repr, serde_repr::Deserialize_repr, PartialEq)]
@@ -380,17 +372,30 @@ fn parse_io(value: &Option<prost_types::Value>) -> Result<(FieldValueVariant, bo
         None => { return Err(ParseError::MissingField); }
     };
 
-    let io_variant = match unpack_proto_value(some_value) {
+    let serde_value = match unpack_proto_value(some_value) {
         Some(s) => s,
         None => { return Err(ParseError::UnexpectedNull); }
     };
 
-    match io_variant {
-        IOVariant::String(s) => Ok((FieldValueVariant::String(s.to_string()), false)),
-        IOVariant::Int(i) => Ok((FieldValueVariant::Int(i), false)),
-        IOVariant::Float(f) => Ok((FieldValueVariant::Float(f), false)),
-        IOVariant::Bool(b) => Ok((FieldValueVariant::Bool(b), false)),
-        IOVariant::Json(s) => Ok((FieldValueVariant::String(s.to_string()), true))
+    match serde_value {
+        Value::String(s) => Ok((FieldValueVariant::String(s.to_string()), false)),
+        Value::Number(n) => {
+            if n.is_i64() {
+                Ok((FieldValueVariant::Int(n.as_i64().unwrap()), false))
+            } else {
+                Ok((FieldValueVariant::Float(n.as_f64().unwrap()), false))
+            }
+        },
+        Value::Bool(b) => Ok((FieldValueVariant::Bool(b), false)),
+        Value::Object(o) => {
+            let json = serde_json::to_string(&o).unwrap();
+            Ok((FieldValueVariant::String(json), true))
+        },
+        Value::Array(a) => {
+            let json = serde_json::to_string(&a).unwrap();
+            Ok((FieldValueVariant::String(json), true))
+        },
+        _ => Err(ParseError::UnexpectedNull)
     }
 }
 
@@ -411,39 +416,49 @@ fn parse_metadata(value: &Option<prost_types::Value>) -> Result<String, ParseErr
     }
 }
 
-fn unpack_proto_value(value: &prost_types::Value) -> Option<IOVariant> {
+fn unpack_proto_value(value: &prost_types::Value) -> Option<Value> {
     match &value.kind {
-        Some(Kind::StringValue(s)) => Some(IOVariant::String(s.clone())),
+        Some(Kind::StringValue(s)) => Some(Value::String(s.clone())),
 
         Some(Kind::NumberValue(n)) => {
-            // Check if the number is an integer
             if n.fract() == 0.0 && *n >= isize::MIN as f64 && *n <= isize::MAX as f64 {
-                Some(IOVariant::Int(*n as i64))
+                Some(Value::Number(serde_json::Number::from(*n as i64)))
             } else {
-                Some(IOVariant::Float(*n))
+                Some(Value::Number(serde_json::Number::from_f64(*n).unwrap()))
             }
         },
 
-        Some(Kind::BoolValue(b)) => Some(IOVariant::Bool(*b)),
+
+        Some(Kind::BoolValue(b)) => Some(Value::Bool(*b)),
 
         Some(Kind::StructValue(struct_value)) => {
-            let mut map = BTreeMap::new();
+            let mut map = Map::new();
             for (k, v) in &struct_value.fields {
-                map.insert(k.clone(), unpack_proto_value(v));
+                let value = match unpack_proto_value(v) {
+                    Some(v) => v,
+                    None => Value::Null
+                };
+
+                map.insert(k.clone(), value);
             }
-            Some(IOVariant::Json(serde_json::to_string(&map).unwrap()))
+            Some(Value::Object(map))
         },
 
         Some(Kind::ListValue(list_value)) => {
-            let vec: Vec<Option<IOVariant>> = list_value.values
-                .iter()
-                .map(|v| unpack_proto_value(v))
-                .collect();
+            let mut vec = Vec::new();
+            for v in &list_value.values {
+                let val = match unpack_proto_value(v) {
+                    Some(v) => v,
+                    None => Value::Null
+                };
 
-            Some(IOVariant::Json(serde_json::to_string(&vec).unwrap()))
+                vec.push(val);
+            }
+
+            Some(Value::Array(vec))
         },
 
-        Some(Kind::NullValue(_)) => None,
+        Some(Kind::NullValue(_)) => Some(Value::Null),
 
         None => None,
     }

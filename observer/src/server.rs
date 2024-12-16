@@ -89,7 +89,7 @@ impl Observer for MyObserver {
         for rec in records {
             match RecordRow::from_record(&rec) {
                 Ok(rec) => {
-                    log::info!("Record parsed: {:#?}", rec);
+                    log::info!("Record parsed: {:#?}", &rec);
                 },
                 Err(e) => {
                     log::error!("Error parsing object: {:#?}", e);
