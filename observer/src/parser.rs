@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 use uuid::Uuid;
 use clickhouse::Row;
 use prost_types::value::Kind;
-use prost_types::Value;
 use crate::observer::{Record, Tier, LogType};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -358,7 +357,7 @@ pub enum ParseError {
     UnexpectedNull,
 }
 
-fn parse_parameters(value: &Option<Value>) -> Result<Option<String>, ParseError> {
+fn parse_parameters(value: &Option<prost_types::Value>) -> Result<Option<String>, ParseError> {
     let some_value = match value {
         Some(value) => value,
         None => { return Ok(None); }
@@ -375,7 +374,7 @@ fn parse_parameters(value: &Option<Value>) -> Result<Option<String>, ParseError>
     }
 }
 
-fn parse_io(value: &Option<Value>) -> Result<(FieldValueVariant, bool), ParseError> {
+fn parse_io(value: &Option<prost_types::Value>) -> Result<(FieldValueVariant, bool), ParseError> {
     let some_value = match value {
         Some(value) => value,
         None => { return Err(ParseError::MissingField); }
@@ -402,7 +401,7 @@ fn parse_uuid(value: &str) -> Result<Uuid, ParseError> {
     }
 }
 
-fn parse_metadata(value: &Option<Value>) -> Result<String, ParseError> {
+fn parse_metadata(value: &Option<prost_types::Value>) -> Result<String, ParseError> {
     match &value {
         Some(value) => match &value.kind {
             Some(Kind::StringValue(s)) => Ok(s.clone()),
@@ -412,7 +411,7 @@ fn parse_metadata(value: &Option<Value>) -> Result<String, ParseError> {
     }
 }
 
-fn unpack_proto_value(value: &Value) -> Option<IOVariant> {
+fn unpack_proto_value(value: &prost_types::Value) -> Option<IOVariant> {
     match &value.kind {
         Some(Kind::StringValue(s)) => Some(IOVariant::String(s.clone())),
 
