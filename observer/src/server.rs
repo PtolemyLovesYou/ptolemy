@@ -3,7 +3,6 @@ use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
 use observer::observer::{PublishRequest, PublishResponse, Record};
 use observer::observer::observer_server::{Observer, ObserverServer};
-use observer::parser::RecordRow;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
@@ -28,47 +27,47 @@ impl MyObserver {
 }
 
 
-async fn insert_rows(client: Arc<Client>, records: Vec<Record>) -> bool {
-    let cloned_client = client.clone();
+// async fn insert_rows(client: Arc<Client>, records: Vec<Record>) -> bool {
+//     let cloned_client = client.clone();
 
-    let mut insert: Insert<RecordRow> = match cloned_client.insert("stg__records") {
-        Ok(i) => i,
-        Err(e) => {
-            log::error!("Error creating insert obj: {:#?}", e);
-            return false
-        }
-    };
+//     let mut insert: Insert<RecordRow> = match cloned_client.insert("stg__records") {
+//         Ok(i) => i,
+//         Err(e) => {
+//             log::error!("Error creating insert obj: {:#?}", e);
+//             return false
+//         }
+//     };
 
-    for rec in records {
-        match RecordRow::from_record(&rec).await {
-            Ok(rec) => {
-                match insert.write(&rec).await {
-                    Ok(_) => {
-                        continue
-                    },
-                    Err(e) => {
-                        log::error!("Error parsing object: {:#?}", e);
-                        continue
-                    }
-                }
-            },
-            Err(e) => {
-                log::error!("Error parsing object: {:#?}", e);
-                continue
-            }
-        }
-    }
+//     for rec in records {
+//         match RecordRow::from_record(&rec).await {
+//             Ok(rec) => {
+//                 match insert.write(&rec).await {
+//                     Ok(_) => {
+//                         continue
+//                     },
+//                     Err(e) => {
+//                         log::error!("Error parsing object: {:#?}", e);
+//                         continue
+//                     }
+//                 }
+//             },
+//             Err(e) => {
+//                 log::error!("Error parsing object: {:#?}", e);
+//                 continue
+//             }
+//         }
+//     }
 
-    match insert.end().await {
-        Ok(_) => {
-            return true
-        },
-        Err(e) => {
-            log::error!("Error sending object: {:#?}", e);
-            return false
-        }
-    }
-}
+//     match insert.end().await {
+//         Ok(_) => {
+//             return true
+//         },
+//         Err(e) => {
+//             log::error!("Error sending object: {:#?}", e);
+//             return false
+//         }
+//     }
+// }
 
 #[tonic::async_trait]
 impl Observer for MyObserver {
@@ -84,9 +83,9 @@ impl Observer for MyObserver {
         let client = Arc::new(self.ch_pool.clone());
 
         // spawn publish task
-        tokio::spawn(
-            insert_rows(client, records)
-        );
+        // tokio::spawn(
+        //     insert_rows(client, records)
+        // );
 
         let reply = PublishResponse {
             successful: true,

@@ -7,113 +7,79 @@ use prost_types::Value;
 use crate::observer::{Record, Tier, LogType};
 
 #[derive(Debug, Serialize, Deserialize, Row)]
-pub struct RecordRow {
+pub struct Event {
     tier: RecordTier,
     log_type: RecordLogType,
     #[serde(with = "clickhouse::serde::uuid")]
     parent_id: Uuid,
     #[serde(with = "clickhouse::serde::uuid")]
     id: Uuid,
-
-    // Event fields
-    name: Option<String>,
-    parameters: Option<String>,
-    version: Option<String>,
-    environment: Option<String>,
-
-    // Runtime fields
-    start_time: Option<String>,
-    end_time: Option<String>,
-    error_type: Option<String>,
-    error_content: Option<String>,
-
-    // IO Fields
-    field_name: Option<String>,
-    field_value_str: Option<String>,
-    field_value_int: Option<i64>,
-    field_value_float: Option<f64>,
-    field_value_bool: Option<bool>,
-    field_value_json: Option<String>
+    name: String,
+    parameters: String,
+    version: String,
+    environment: String,
 }
 
-impl RecordRow {
-    pub async fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let tier = protobuf_to_clickhouse_tier(record.tier()).await?;
-        let log_type = protobuf_to_clickhouse_log_type(record.log_type()).await?;
-        let id = Uuid::parse_str(&record.id).map_err(|_| ParseError::InvalidUuid)?;
-        let parent_id = Uuid::parse_str(&record.parent_id).map_err(|_| ParseError::InvalidUuid)?;
+#[derive(Debug, Serialize, Deserialize, Row)]
+pub struct Runtime {
+    tier: RecordTier,
+    log_type: RecordLogType,
+    #[serde(with = "clickhouse::serde::uuid")]
+    parent_id: Uuid,
+    #[serde(with = "clickhouse::serde::uuid")]
+    id: Uuid,
+    start_time: String,
+    end_time: String,
+    error_type: String,
+    error_content: String,
+}
 
-        let name: Option<String> = match &log_type {
-            RecordLogType::Event => Some(record.name().to_string()),
-            _ => None,
-        };
+#[derive(Debug, Serialize, Deserialize, Row)]
+pub struct Input {
+    tier: RecordTier,
+    log_type: RecordLogType,
+    #[serde(with = "clickhouse::serde::uuid")]
+    parent_id: Uuid,
+    #[serde(with = "clickhouse::serde::uuid")]
+    id: Uuid,
+    field_name: String,
+    field_value: IOVariant,
+}
 
-        let parameters: Option<String> = match &log_type {
-            RecordLogType::Event => parse_parameters(&record.parameters)?,
-            _ => None,
-        };
+#[derive(Debug, Serialize, Deserialize, Row)]
+pub struct Output {
+    tier: RecordTier,
+    log_type: RecordLogType,
+    #[serde(with = "clickhouse::serde::uuid")]
+    parent_id: Uuid,
+    #[serde(with = "clickhouse::serde::uuid")]
+    id: Uuid,
+    field_name: String,
+    field_value: IOVariant,
+}
 
-        let version: Option<String> = match &log_type {
-            RecordLogType::Event => Some(record.version().to_string()),
-            _ => None,
-        };
+#[derive(Debug, Serialize, Deserialize, Row)]
+pub struct Feedback {
+    tier: RecordTier,
+    log_type: RecordLogType,
+    #[serde(with = "clickhouse::serde::uuid")]
+    parent_id: Uuid,
+    #[serde(with = "clickhouse::serde::uuid")]
+    id: Uuid,
+    field_name: String,
+    field_value: IOVariant,
+}
 
-        let environment: Option<String> = match &log_type {
-            RecordLogType::Event => Some(record.environment().to_string()),
-            _ => None,
-        };
-
-        let start_time: Option<String> = match &log_type {
-            RecordLogType::Runtime => Some(record.start_time().to_string()),
-            _ => None,
-        };
-
-        let end_time: Option<String> = match &log_type {
-            RecordLogType::Runtime => Some(record.end_time().to_string()),
-            _ => None,
-        };
-
-        let error_type: Option<String> = match &log_type {
-            RecordLogType::Runtime => Some(record.error_type().to_string()),
-            _ => None,
-        };
-
-        let error_content: Option<String> = match &log_type {
-            RecordLogType::Runtime => Some(record.error_content().to_string()),
-            _ => None,
-        };
-
-        let field_name: Option<String> = match &log_type {
-            RecordLogType::Input => Some(record.field_name().to_string()),
-            RecordLogType::Output => Some(record.field_name().to_string()),
-            RecordLogType::Feedback => Some(record.field_name().to_string()),
-            RecordLogType::Metadata => Some(record.field_name().to_string()),
-            _ => None,
-        };
-
-        Ok(
-            RecordRow {
-                tier,
-                log_type,
-                parent_id,
-                id,
-                name,
-                parameters,
-                version,
-                environment,
-                start_time,
-                end_time,
-                error_type,
-                error_content,
-                field_name,
-                field_value_str: None,
-                field_value_int: None,
-                field_value_float: None,
-                field_value_bool: None,
-                field_value_json: None,
-            }
-        )
-    }
+#[derive(Debug, Serialize, Deserialize, Row)]
+pub struct Metadata {
+    tier: RecordTier,
+    log_type: RecordLogType,
+    #[serde(with = "clickhouse::serde::uuid")]
+    parent_id: Uuid,
+    #[serde(with = "clickhouse::serde::uuid")]
+    id: Uuid,
+    field_name: String,
+    field_value: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -159,22 +125,6 @@ async fn protobuf_to_clickhouse_tier(tier: Tier) -> Result<RecordTier, ParseErro
     };
 
     Ok(parsed_tier)
-}
-
-async fn protobuf_to_clickhouse_log_type(log_type: LogType) -> Result<RecordLogType, ParseError> {
-    let parsed_log_type = match log_type {
-        LogType::Event => RecordLogType::Event,
-        LogType::Runtime => RecordLogType::Runtime,
-        LogType::Input => RecordLogType::Input,
-        LogType::Output => RecordLogType::Output,
-        LogType::Feedback => RecordLogType::Feedback,
-        LogType::Metadata => RecordLogType::Metadata,
-        LogType::UndeclaredLogType => {
-            return Err(ParseError::UndefinedLogType)
-        }
-    };
-
-    Ok(parsed_log_type)
 }
 
 #[derive(Debug)]
