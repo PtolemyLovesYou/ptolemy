@@ -90,7 +90,7 @@ class Event(Record):
             parent_id=self.parent_id.hex,
             id=self.id.hex,
             name=self.name,
-            parameters=self.parameters.model_dump_json() if self.parameters else None,
+            parameters=self.parameters.model_dump() if self.parameters is not None else None,
             version=self.version,
             environment=self.environment,
         )
@@ -141,7 +141,7 @@ class _IO(Record):
             parent_id=self.parent_id.hex,
             id=self.id.hex,
             field_name=self.field_name,
-            field_value=self.field_value.model_dump_json(),
+            field_value=self.field_value.model_dump(),
         )
 
 

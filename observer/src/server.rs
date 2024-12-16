@@ -1,36 +1,25 @@
-use bb8::Pool;
-use bb8_redis::RedisConnectionManager;
-use prost::Message;
-use redis::pipe;
+use clickhouse::Client;
 use tonic::{transport::Server, Request, Response, Status};
 use observer::observer::{PublishRequest, PublishResponse};
 use observer::observer::observer_server::{Observer, ObserverServer};
 
-fn publish_stream() -> String {
-    std::env::var("OBSERVER_STREAM").expect("OBSERVER_STREAM must be set")
+async fn create_ch_client() -> Client {
+    let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
+    Client::default()
+        .with_url(url)
+        .with_option("enable_json_type", "1")
+        .with_option("enable_variant_type", "1")
+        .with_option("async_insert", "1")
 }
 
-async fn create_pool() -> Pool<RedisConnectionManager> {
-    let host = std::env::var("REDIS_HOST").expect("REDIS_HOST must be set");
-    let port = std::env::var("REDIS_PORT").expect("REDIS_PORT must be set");
-
-    let manager = RedisConnectionManager::new(format!("redis://{host}:{port}"))
-        .expect("Failed to create Redis connection manager");
-
-    Pool::builder().build(manager).await.expect("Failed to create Redis connection pool")
-}
-
-#[derive(Debug)]
 pub struct MyObserver {
-    pool: Pool<RedisConnectionManager>,
-    observer_stream: String
+    ch_pool: Client,
 }
 
 impl MyObserver {
     pub async fn new() -> Self {
-        let pool = create_pool().await;
-        let observer_stream = publish_stream();
-        Self { pool, observer_stream }
+        let ch_pool = create_ch_client().await;
+        Self { ch_pool }
     }
 }
 
@@ -42,35 +31,14 @@ impl Observer for MyObserver {
     ) -> Result<Response<PublishResponse>, Status> {
 
         let records = request.into_inner().records;
-        let pool = self.pool.clone();
-        let observer_stream = self.observer_stream.clone();
 
         // spawn publish task
         tokio::spawn(
             async move {
-                let mut conn = match pool.get().await {
-                    Ok(conn) => conn,
-                    Err(e) => {
-                        println!("Failed to get Redis connection from pool: {}", e);
-                        return;
-                    }
-                };
-
-                let mut pipeline = pipe();
-
                 for record in records {
-                    let encoded_vector = record.encode_to_vec();
-                    pipeline.cmd("PUBLISH").arg(&observer_stream).arg(encoded_vector).ignore();
-                }
-
-                let _results: Vec<String> = match pipeline.query_async(&mut *conn).await {
-                    Ok(items) => items,
-                    Err(e) => {
-                        println!("Failed to query: {}", e);
-                        return;
+                    log::info!("Publishing record: {:#?}", record);
                     }
-                };
-            }
+                }
         );
 
         let reply = PublishResponse {
@@ -85,6 +53,8 @@ impl Observer for MyObserver {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+
     let addr = "[::]:50051".parse()?;
     let observer = MyObserver::new().await;
 
