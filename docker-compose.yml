@@ -61,22 +61,6 @@ services:
     volumes:
       - redisinsight:/data
     profiles: ["dev"]
-  vector:
-    container_name: vector
-    image: timberio/vector:0.43.0-alpine
-    ports:
-      - "8686:8686"
-    networks:
-      - ptolemy
-    env_file:
-      - .env
-    volumes:
-      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
-      - ./vector/observer.desc:/etc/vector/observer.desc:ro
-    depends_on:
-      - observer
-      - clickhouse
-      - redis
   clickhouse:
     container_name: clickhouse
     image: clickhouse/clickhouse-server:latest
