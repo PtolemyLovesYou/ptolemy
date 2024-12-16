@@ -59,7 +59,7 @@ select
     toDateTime64(start_time, 9) as start_time,
     toDateTime64(end_time, 9) as end_time,
     error_type,
-    error_value,
+    error_content,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__runtime
 where tier = 1;
@@ -71,7 +71,7 @@ select
     toDateTime64(start_time, 9) as start_time,
     toDateTime64(end_time, 9) as end_time,
     error_type,
-    error_value,
+    error_content,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__runtime
 where tier = 2;
@@ -83,7 +83,7 @@ select
     toDateTime64(start_time, 9) as start_time,
     toDateTime64(end_time, 9) as end_time,
     error_type,
-    error_value,
+    error_content,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__runtime
 where tier = 3;
@@ -95,7 +95,7 @@ select
     toDateTime64(start_time, 9) as start_time,
     toDateTime64(end_time, 9) as end_time,
     error_type,
-    error_value,
+    error_content,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__runtime
 where tier = 4;
@@ -105,20 +105,25 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
-    
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
-where tier = 1
-SETTINGS
-    enable_variant_type = 1;
+where tier = 1;
 
 create materialized view ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_input_mv to ${PTOLEMY_CLICKHOUSE_DATABASE}.subsystem_input as
 select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 2;
@@ -128,7 +133,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 3;
@@ -138,7 +147,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input
 where tier = 4;
@@ -148,7 +161,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 1;
@@ -158,7 +175,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 2;
@@ -168,7 +189,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 3;
@@ -178,7 +203,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output
 where tier = 4;
@@ -188,7 +217,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 1;
@@ -198,7 +231,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 2;
@@ -208,7 +245,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 3;
@@ -218,7 +259,11 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    if(
+        is_json = 1,
+        field_value::String::JSON::Variant(String, Int64, Float64, Bool, JSON),
+        field_value::Variant(String, Int64, Float64, Bool, JSON)
+        ) as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback
 where tier = 4;
@@ -228,7 +273,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    field_value::String as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__metadata
 where tier = 1;
@@ -238,7 +283,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    field_value::String as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__metadata
 where tier = 2;
@@ -248,7 +293,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    field_value::String as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__metadata
 where tier = 3;
@@ -258,7 +303,7 @@ select
     toUUID(parent_id) as parent_id,
     toUUID(id) as id,
     field_name,
-    field_value,
+    field_value::String as field_value,
     created_at
 from ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__metadata
 where tier = 4;

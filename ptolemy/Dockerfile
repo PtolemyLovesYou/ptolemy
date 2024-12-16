@@ -17,6 +17,7 @@ ENV BUILD_PROTOBUFS=0
 # Create a dummy main.rs to build dependencies
 RUN mkdir src && \
     echo "fn main() {}" > src/server.rs && \
+    echo "fn main() {}" > src/lib.rs && \
     cargo build --bin server --release && \
     rm -f target/release/deps/server*
 

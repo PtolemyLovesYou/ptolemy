@@ -15,4 +15,4 @@ RUN chmod +x /bin/goose
 
 COPY . .
 
-CMD ["source", "/app/configure.sh", "&&", "sh"]
+CMD ["tail", "-f", "/dev/null"]

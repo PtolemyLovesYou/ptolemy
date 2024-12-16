@@ -20,7 +20,7 @@ ptolemy = "ptolemy:main"
 [tool.maturin]
 module-name = "ptolemy._core"
 python-packages = ["ptolemy"]
-python-source = "python"
+python-source = "src"
 strip = true
 
 [build-system]
