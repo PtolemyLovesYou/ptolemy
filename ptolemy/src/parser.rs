@@ -3,7 +3,7 @@ use serde_json::{Value, Map};
 use uuid::Uuid;
 use clickhouse::Row;
 use prost_types::value::Kind;
-use crate::observer::{Record, Tier, LogType};
+use crate::generated::observer::{Record, Tier, LogType};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum RecordRow {

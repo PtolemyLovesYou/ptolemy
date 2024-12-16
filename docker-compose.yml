@@ -17,13 +17,12 @@ services:
   observer:
     container_name: observer
     build:
-      context: ./observer
+      context: ./ptolemy
       dockerfile: Dockerfile
     env_file:
       - .env
     volumes:
-      - ./observer:/app
-      - ./proto:/app/proto
+      - ./ptolemy:/app
     networks:
       - ptolemy
     ports:

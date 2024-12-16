@@ -4,9 +4,18 @@ use clickhouse::{
 };
 use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
-use observer::observer::{PublishRequest, PublishResponse};
-use observer::observer::observer_server::{Observer, ObserverServer};
-use observer::parser::RecordRow;
+use crate::generated::observer::{
+    PublishRequest,
+    PublishResponse,
+    observer_server::{
+        Observer,
+        ObserverServer,
+    }
+};
+use parser::RecordRow;
+
+pub mod generated;
+pub mod parser;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
