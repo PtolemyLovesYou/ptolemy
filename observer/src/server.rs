@@ -2,6 +2,7 @@ use clickhouse::Client;
 use tonic::{transport::Server, Request, Response, Status};
 use observer::observer::{PublishRequest, PublishResponse};
 use observer::observer::observer_server::{Observer, ObserverServer};
+use observer::parser::parse_record;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
@@ -32,13 +33,26 @@ impl Observer for MyObserver {
 
         let records = request.into_inner().records;
 
+        log::info!("Received {} records", records.len());
+
+        let _client = self.ch_pool.clone();
+
         // spawn publish task
         tokio::spawn(
             async move {
                 for record in records {
                     log::info!("Publishing record: {:#?}", record);
-                    }
+                    let _parsed_record = match parse_record(&record).await {
+                        Ok(parsed_record) => {
+                            log::debug!("Successfully parsed record: {:#?}", parsed_record);
+                        },
+                        Err(err) => {
+                            log::error!("Error parsing record: {:#?}", err);
+                            continue;
+                        }
+                    };
                 }
+            }
         );
 
         let reply = PublishResponse {

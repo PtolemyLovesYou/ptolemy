@@ -14,7 +14,6 @@ services:
       - ptolemy
     depends_on:
       - postgres
-      - redis
   observer:
     container_name: observer
     build:
@@ -30,7 +29,7 @@ services:
     ports:
       - "50051:50051"
     depends_on:
-      - redis
+      - clickhouse
   postgres:
     container_name: postgres
     image: postgres:17
@@ -42,25 +41,6 @@ services:
       - postgres:/var/lib/postgresql
     networks:
       - ptolemy
-  redis:
-    container_name: redis
-    image: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - ptolemy
-    volumes:
-      - redis:/data
-  redisinsight:
-    container_name: redisinsight
-    image: redis/redisinsight
-    ports:
-      - "5540:5540"
-    networks:
-      - ptolemy
-    volumes:
-      - redisinsight:/data
-    profiles: ["dev"]
   clickhouse:
     container_name: clickhouse
     image: clickhouse/clickhouse-server:latest
@@ -90,10 +70,6 @@ volumes:
   postgres:
     driver: local
   clickhouse:
-    driver: local
-  redis:
-    driver: local
-  redisinsight:
     driver: local
 
 networks:

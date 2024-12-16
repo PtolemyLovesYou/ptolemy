@@ -1,12 +1,16 @@
 use serde::{Serialize, Deserialize};
+use std::collections::BTreeMap;
 use uuid::Uuid;
 use clickhouse::Row;
+use prost_types::value::Kind;
+use prost_types::Value;
 use crate::observer::{Record, Tier, LogType};
 
 #[derive(Debug, Serialize, Deserialize)]
 enum IOVariant {
     String(String),
-    I64(i64),
+    Int(i64),
+    Float(f64),
     Bool(bool),
     #[serde(with = "clickhouse::serde::uuid")]
     Uuid(Uuid),
@@ -27,20 +31,26 @@ pub struct Event {
 }
 
 impl Event {
-    async fn from_record(record: Record) -> Result<Self, ParseError> {
+    async fn from_record(record: &Record) -> Result<Self, ParseError> {
         let event = Event {
             tier: protobuf_to_clickhouse_tier(record.tier()).await?,
             parent_id: Uuid::parse_str(&record.parent_id).map_err(|_| ParseError::InvalidUuid)?,
             id: Uuid::parse_str(&record.id).map_err(|_| ParseError::InvalidUuid)?,
-            name: match record.name {
-                Some(name) => name,
+            name: match &record.name {
+                Some(name) => name.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                 }
             },
             parameters: None,
-            version: record.version,
-            environment: record.environment
+            version: match &record.version {
+                Some(version) => Some(version.to_string()),
+                None => None
+            },
+            environment: match &record.environment {
+                Some(environment) => Some(environment.to_string()),
+                None => None
+            }
         };
 
         Ok(event)
@@ -61,25 +71,31 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    async fn from_record(record: Record) -> Result<Self, ParseError> {
+    async fn from_record(record: &Record) -> Result<Self, ParseError> {
         let runtime = Runtime {
             tier: protobuf_to_clickhouse_tier(record.tier()).await?,
             parent_id: Uuid::parse_str(&record.parent_id).unwrap(),
             id: Uuid::parse_str(&record.id).unwrap(),
-            start_time: match record.start_time {
-                Some(start_time) => start_time,
+            start_time: match &record.start_time {
+                Some(start_time) => start_time.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                 }
             },
-            end_time: match record.end_time {
-                Some(end_time) => end_time,
+            end_time: match &record.end_time {
+                Some(end_time) => end_time.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                 }
             },
-            error_type: record.error_type,
-            error_value: record.error_content
+            error_type: match &record.error_type {
+                Some(error_type) => Some(error_type.to_string()),
+                None => None
+            },
+            error_value: match &record.error_content {
+                Some(error_content) => Some(error_content.to_string()),
+                None => None
+            }
         };
 
         Ok(runtime)
@@ -98,19 +114,19 @@ pub struct Input {
 }
 
 impl Input {
-    async fn from_record(record: Record) -> Result<Self, ParseError> {
+    async fn from_record(record: &Record) -> Result<Self, ParseError> {
         let inp = Input {
             tier: protobuf_to_clickhouse_tier(record.tier()).await?,
             parent_id: Uuid::parse_str(&record.parent_id).unwrap(),
             id: Uuid::parse_str(&record.id).unwrap(),
-            field_name: match record.field_name {
-                Some(field_name) => field_name,
+            field_name: match &record.field_name {
+                Some(field_name) => field_name.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                     }
                 },
-            field_value: match record.field_value {
-                Some(_field_value) => IOVariant::String("OUTPUT_VAL".to_string()),
+            field_value: match &record.field_value {
+                Some(field_value) => parse_io(field_value)?,
                 None => {
                     return Err(ParseError::MissingField)
                 }
@@ -133,19 +149,19 @@ pub struct Output {
 }
 
 impl Output {
-    async fn from_record(record: Record) -> Result<Self, ParseError> {
+    async fn from_record(record: &Record) -> Result<Self, ParseError> {
         let outp = Output {
             tier: protobuf_to_clickhouse_tier(record.tier()).await?,
             parent_id: Uuid::parse_str(&record.parent_id).unwrap(),
             id: Uuid::parse_str(&record.id).unwrap(),
-            field_name: match record.field_name {
-                Some(field_name) => field_name,
+            field_name: match &record.field_name {
+                Some(field_name) => field_name.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                     }
                 },
-            field_value: match record.field_value {
-                Some(_field_value) => IOVariant::String("OUTPUT_VAL".to_string()),
+            field_value: match &record.field_value {
+                Some(field_value) => parse_io(field_value)?,
                 None => {
                     return Err(ParseError::MissingField)
                 }
@@ -168,19 +184,19 @@ pub struct Feedback {
 }
 
 impl Feedback {
-    async fn from_record(record: Record) -> Result<Self, ParseError> {
+    async fn from_record(record: &Record) -> Result<Self, ParseError> {
         let feedback = Feedback {
             tier: protobuf_to_clickhouse_tier(record.tier()).await?,
             parent_id: Uuid::parse_str(&record.parent_id).unwrap(),
             id: Uuid::parse_str(&record.id).unwrap(),
-            field_name: match record.field_name {
-                Some(field_name) => field_name,
+            field_name: match &record.field_name {
+                Some(field_name) => field_name.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                     }
                 },
-            field_value: match record.field_value {
-                Some(_field_value) => IOVariant::String("OUTPUT_VAL".to_string()),
+            field_value: match &record.field_value {
+                Some(field_value) => parse_io(field_value)?,
                 None => {
                     return Err(ParseError::MissingField)
                 }
@@ -203,19 +219,19 @@ pub struct Metadata {
 }
 
 impl Metadata {
-    async fn from_record(record: Record) -> Result<Self, ParseError> {
+    async fn from_record(record: &Record) -> Result<Self, ParseError> {
         let metadata = Metadata {
             tier: protobuf_to_clickhouse_tier(record.tier()).await?,
             parent_id: Uuid::parse_str(&record.parent_id).unwrap(),
             id: Uuid::parse_str(&record.id).unwrap(),
-            field_name: match record.field_name {
-                Some(field_name) => field_name,
+            field_name: match &record.field_name {
+                Some(field_name) => field_name.to_string(),
                 None => {
                     return Err(ParseError::MissingField)
                 }
             },
-            field_value: match record.field_value {
-                Some(_field_value) => "OUTPUT_VAL".to_string(),
+            field_value: match &record.field_value {
+                Some(field_value) => parse_metadata(field_value)?,
                 None => {
                     return Err(ParseError::MissingField)
                 }
@@ -251,6 +267,7 @@ async fn protobuf_to_clickhouse_tier(tier: Tier) -> Result<RecordTier, ParseErro
     Ok(parsed_tier)
 }
 
+#[derive(Debug)]
 pub enum ClickhouseLogRecord {
     Event(Event),
     Runtime(Runtime),
@@ -260,14 +277,16 @@ pub enum ClickhouseLogRecord {
     Metadata(Metadata)
 }
 
+#[derive(Debug)]
 pub enum ParseError {
     UndefinedLogType,
     UndefinedTier,
     MissingField,
     InvalidUuid,
+    InvalidType
 }
 
-pub async fn parse_record(record: Record) -> Result<ClickhouseLogRecord, ParseError> {
+pub async fn parse_record(record: &Record) -> Result<ClickhouseLogRecord, ParseError> {
     match record.log_type() {
         LogType::Event => Ok(ClickhouseLogRecord::Event(Event::from_record(record).await?)),
         LogType::Runtime => Ok(ClickhouseLogRecord::Runtime(Runtime::from_record(record).await?)),
@@ -276,5 +295,58 @@ pub async fn parse_record(record: Record) -> Result<ClickhouseLogRecord, ParseEr
         LogType::Feedback => Ok(ClickhouseLogRecord::Feedback(Feedback::from_record(record).await?)),
         LogType::Metadata => Ok(ClickhouseLogRecord::Metadata(Metadata::from_record(record).await?)),
         _ => Err(ParseError::UndefinedLogType)
+    }
+}
+
+fn parse_io(value: &Value) -> Result<IOVariant, ParseError> {
+    match value_to_json_serializable(value) {
+        Some(v) => Ok(v),
+        None => Err(ParseError::MissingField)
+    }
+}
+
+fn parse_metadata(value: &Value) -> Result<String, ParseError> {
+    // if value_to_json_serializable return string, Ok(), else error
+    match value_to_json_serializable(&value) {
+        Some(IOVariant::String(s)) => Ok(s),
+        _ => Err(ParseError::InvalidType)
+    }
+}
+
+fn value_to_json_serializable(value: &Value) -> Option<IOVariant> {
+    match &value.kind {
+        Some(Kind::StringValue(s)) => Some(IOVariant::String(s.clone())),
+
+        Some(Kind::NumberValue(n)) => {
+            // Check if the number is an integer
+            if n.fract() == 0.0 && *n >= isize::MIN as f64 && *n <= isize::MAX as f64 {
+                Some(IOVariant::Int(*n as i64))
+            } else {
+                Some(IOVariant::Float(*n))
+            }
+        },
+
+        Some(Kind::BoolValue(b)) => Some(IOVariant::Bool(*b)),
+
+        Some(Kind::StructValue(struct_value)) => {
+            let mut map = BTreeMap::new();
+            for (k, v) in &struct_value.fields {
+                map.insert(k.clone(), value_to_json_serializable(v));
+            }
+            Some(IOVariant::Json(serde_json::to_string(&map).unwrap()))
+        },
+
+        Some(Kind::ListValue(list_value)) => {
+            let vec: Vec<Option<IOVariant>> = list_value.values
+                .iter()
+                .map(|v| value_to_json_serializable(v))
+                .collect();
+
+            Some(IOVariant::Json(serde_json::to_string(&vec).unwrap()))
+        },
+
+        Some(Kind::NullValue(_)) => None,
+
+        None => None,
     }
 }
