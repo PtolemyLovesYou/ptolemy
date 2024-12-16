@@ -1,16 +1,19 @@
-use clickhouse::Client;
+use clickhouse::{Client, insert::Insert};
+use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
-use observer::observer::{PublishRequest, PublishResponse};
+use observer::observer::{PublishRequest, PublishResponse, Record};
 use observer::observer::observer_server::{Observer, ObserverServer};
-use observer::parser::parse_record;
+use observer::parser::RecordRow;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
     Client::default()
         .with_url(url)
+        .with_database("ptolemy")
         .with_option("enable_json_type", "1")
         .with_option("enable_variant_type", "1")
         .with_option("async_insert", "1")
+        .with_option("wait_for_async_insert", "1")
 }
 
 pub struct MyObserver {
@@ -21,6 +24,49 @@ impl MyObserver {
     pub async fn new() -> Self {
         let ch_pool = create_ch_client().await;
         Self { ch_pool }
+    }
+}
+
+
+async fn insert_rows(client: Arc<Client>, records: Vec<Record>) -> bool {
+    let cloned_client = client.clone();
+
+    let mut insert: Insert<RecordRow> = match cloned_client.insert("stg__records") {
+        Ok(i) => i,
+        Err(e) => {
+            log::error!("Error creating insert obj: {:#?}", e);
+            return false
+        }
+    };
+
+    for rec in records {
+        match RecordRow::from_record(&rec).await {
+            Ok(rec) => {
+                match insert.write(&rec).await {
+                    Ok(_) => {
+                        continue
+                    },
+                    Err(e) => {
+                        log::error!("Error parsing object: {:#?}", e);
+                        continue
+                    }
+                }
+            },
+            Err(e) => {
+                log::error!("Error parsing object: {:#?}", e);
+                continue
+            }
+        }
+    }
+
+    match insert.end().await {
+        Ok(_) => {
+            return true
+        },
+        Err(e) => {
+            log::error!("Error sending object: {:#?}", e);
+            return false
+        }
     }
 }
 
@@ -35,24 +81,11 @@ impl Observer for MyObserver {
 
         log::info!("Received {} records", records.len());
 
-        let _client = self.ch_pool.clone();
+        let client = Arc::new(self.ch_pool.clone());
 
         // spawn publish task
         tokio::spawn(
-            async move {
-                for record in records {
-                    log::info!("Publishing record: {:#?}", record);
-                    let _parsed_record = match parse_record(&record).await {
-                        Ok(parsed_record) => {
-                            log::debug!("Successfully parsed record: {:#?}", parsed_record);
-                        },
-                        Err(err) => {
-                            log::error!("Error parsing record: {:#?}", err);
-                            continue;
-                        }
-                    };
-                }
-            }
+            insert_rows(client, records)
         );
 
         let reply = PublishResponse {

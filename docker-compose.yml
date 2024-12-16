@@ -51,6 +51,7 @@ services:
       - ptolemy
     volumes:
       - clickhouse:/var/lib/clickhouse
+      - ./clickhouse/config.d:/etc/clickhouse-server/config.d
   goose:
     container_name: goose
     build:

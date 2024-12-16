@@ -5,38 +5,73 @@
 
 create database if not exists ${PTOLEMY_CLICKHOUSE_DATABASE};
 
-create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__records (
-    -- Universal fields
-    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4) NOT NULL,
-    log_type Enum('EVENT' = 1, 'RUNTIME' = 2, 'INPUT' = 3, 'OUTPUT' = 4, 'FEEDBACK' = 5, 'METADATA' = 6) NOT NULL,
-    parent_id String NOT NULL,
-    id String NOT NULL,
-
-    -- Event fields
+create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__event (
+    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4),
+    parent_id UUID,
+    id UUID,
     name String,
     parameters JSON,
     version String,
     environment String,
+    created_at DateTime64(6) default now64()
 
-    -- Runtime fields
+) ENGINE = MergeTree() ORDER BY (tier, created_at);
+
+create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__runtime (
+    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4),
+    parent_id UUID,
+    id UUID,
     start_time String,
     end_time String,
     error_type String,
-    error_value String,
+    error_content String,
+    created_at DateTime64(6) default now64()
 
-    -- IO field_name
+) ENGINE = MergeTree() ORDER BY (tier, created_at);
+
+create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__input (
+    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4),
+    parent_id UUID,
+    id UUID,
     field_name String,
+    field_value Variant(String, Int64, Float64, Bool, JSON),
+    created_at DateTime64(6) default now64()
 
-    -- Variant field values (for Input, Output, Feedback)
-    field_value_var Variant(String, Int64, Float64, Bool, UUID, JSON),
+) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
-    -- Metadata fields
-    field_value_str String,
+create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__output (
+    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4),
+    parent_id UUID,
+    id UUID,
+    name String,
+    parameters JSON,
+    version String,
+    environment String,
+    field_name String,
+    field_value Variant(String, Int64, Float64, Bool, JSON),
+    created_at DateTime64(6) default now64()
 
-    -- Created at field
-    created_at DateTime64(9) default now64()
+) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
-) ENGINE = MergeTree() ORDER BY (log_type, tier, created_at);
+create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__feedback (
+    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4),
+    parent_id UUID,
+    id UUID,
+    field_name String,
+    field_value Variant(String, Int64, Float64, Bool, JSON),
+    created_at DateTime64(6) default now64()
+
+) ENGINE = MergeTree() ORDER BY (tier, created_at);
+
+create or replace table ${PTOLEMY_CLICKHOUSE_DATABASE}.stg__metadata (
+    tier Enum('SYSTEM' = 1, 'SUBSYSTEM' = 2, 'COMPONENT' = 3, 'SUBCOMPONENT' = 4),
+    parent_id UUID,
+    id UUID,
+    field_name String,
+    field_value Variant(String, Int64, Float64, Bool, JSON),
+    created_at DateTime64(6) default now64()
+
+) ENGINE = MergeTree() ORDER BY (tier, created_at);
 
 -- #####################################################################
 
