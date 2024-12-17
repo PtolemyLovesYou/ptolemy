@@ -1,0 +1,15 @@
+{%- set tiers = ["system", "subsystem", "component", "subcomponent"] -%}
+
+{% for tier in tiers | reverse %}
+drop table {{ tier }}_runtime;
+{% for io in ["input", "output", "feedback"] %}
+drop table {{ tier }}_{{ io }}_str;
+drop table {{ tier }}_{{ io }}_int;
+drop table {{ tier }}_{{ io }}_float;
+drop table {{ tier }}_{{ io }}_bool;
+drop table {{ tier }}_{{ io }}_json;
+drop table {{ tier }}_{{ io }}_key;
+{% endfor %}
+drop table {{ tier }}_metadata;
+drop table {{ tier }}_event;
+{% endfor %}

@@ -1,0 +1,73 @@
+{%- set tiers = ["system", "subsystem", "component", "subcomponent"] -%}
+{%- set parents = [
+    "workspace",
+    "system_event",
+    "subsystem_event",
+    "component_event",
+    "subcomponent_event"
+    ] -%}
+
+{% for tier in tiers %}
+create table {{ tier }}_event (
+    id uuid primary key,
+    parent_id uuid not null references {{ parents[loop.index] }}(id),
+    name varchar not null,
+    parameters json,
+    version varchar(16),
+    environment varchar(8)
+);
+
+create table {{ tier }}_runtime (
+    id uuid primary key,
+    parent_id uuid not null references {{ tier }}_event(id),
+    start_time timestamp(6) not null,
+    end_time timestamp(6) not null,
+    error_type varchar,
+    error_value varchar
+);
+
+{% for io in ["input", "output", "feedback"] %}
+create table {{ tier }}_{{ io }}_key (
+    id uuid primary key references {{ tier }}_event(id),
+    parent_id uuid not null,
+    field_name varchar not null
+);
+
+create table {{ tier }}_{{ io }}_str (
+    id uuid primary key default gen_random_uuid(),
+    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
+    field_value varchar not null
+);
+
+create table {{ tier }}_{{ io }}_int (
+    id uuid primary key default gen_random_uuid(),
+    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
+    field_value int8 not null
+);
+
+create table {{ tier }}_{{ io }}_float (
+    id uuid primary key default gen_random_uuid(),
+    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
+    field_value float8 not null
+);
+
+create table {{ tier }}_{{ io }}_bool (
+    id uuid primary key default gen_random_uuid(),
+    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
+    field_value bool not null
+);
+
+create table {{ tier }}_{{ io }}_json (
+    id uuid primary key default gen_random_uuid(),
+    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
+    field_value json not null
+);
+{% endfor %}
+
+create table {{ tier }}_metadata (
+    id uuid primary key,
+    parent_id uuid not null references {{ tier }}_event(id),
+    field_name varchar not null,
+    field_value varchar not null
+);
+{% endfor %}
