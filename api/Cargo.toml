@@ -8,19 +8,19 @@ name = "api"
 path = "src/main.rs"
 
 [dependencies]
-axum = "0.7.9"
-bb8 = "0.8.6"
-chrono = { version = "0.4.39", features=["serde"] }
-clickhouse = {version = "0.13.1", features = ["uuid", "time"]}
-diesel = { version = "2.2.6", features = ["postgres", "chrono", "uuid"] }
-diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
-env_logger = "0.11.5"
-hyper = "1.5.1"
-juniper = "0.16.1"
-juniper_axum = "0.1.1"
-log = "0.4.22"
-serde = {version = "1.0.215", features = ["derive"] }
-serde_json = "1.0.133"
-time = "0.3.37"
-tokio = { version = "1.42.0", features = ["full"] }
-uuid = {version = "1.11.0", features = ["serde", "v7"] }
+axum = { workspace = true }
+bb8 = { workspace = true }
+chrono = { workspace = true }
+clickhouse = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+env_logger = { workspace = true }
+hyper = { workspace = true }
+juniper = { workspace = true }
+juniper_axum = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }
