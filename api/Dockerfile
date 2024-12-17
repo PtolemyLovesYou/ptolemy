@@ -75,6 +75,8 @@ RUN chmod +x /usr/local/bin/api \
 USER appuser
 
 ENV API_PORT=8000
+ENV GOOSE_DRIVER=clickhouse
+ENV GOOSE_MIGRATION_DIR=/app/migrations/goose
 
 WORKDIR /app
 
