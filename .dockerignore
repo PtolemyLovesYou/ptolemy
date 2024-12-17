@@ -1,0 +1,6 @@
+target/
+.venv/
+docs/
+assets/
+clickhouse/
+goose/

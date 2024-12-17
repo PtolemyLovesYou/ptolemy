@@ -1,28 +1,29 @@
 services:
-  api:
-    container_name: api
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - "8684:8684"
-    volumes:
-      - ./api:/app
-    networks:
-      - ptolemy
-    depends_on:
-      - postgres
+  # api:
+  #   container_name: api
+  #   build:
+  #     context: ./api
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "8684:8684"
+  #   volumes:
+  #     - ./api:/app
+  #   networks:
+  #     - ptolemy
+  #   depends_on:
+  #     - postgres
   observer:
     container_name: observer
     build:
-      context: ./ptolemy
       dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: observer
     env_file:
       - .env
-    volumes:
-      - ./ptolemy:/app
+    # volumes:
+    #   - ./ptolemy:/app
     networks:
       - ptolemy
     ports:
