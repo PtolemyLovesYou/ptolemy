@@ -1,38 +1,17 @@
-use clickhouse::{
-    Client,
-    // insert::Insert
-};
-use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use ptolemy_core::generated::observer::{
     PublishRequest,
     PublishResponse,
     observer_server::Observer,
 };
-use crate::ch_models::RecordRow;
 
-async fn create_ch_client() -> Client {
-    let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
-    Client::default()
-        .with_url(url)
-        .with_database("ptolemy")
-        .with_option("enable_json_type", "1")
-        .with_option("enable_variant_type", "1")
-        .with_option("async_insert", "1")
-        .with_option("wait_for_async_insert", "1")
-}
-
-pub struct MyObserver {
-    ch_pool: Client,
-}
+pub struct MyObserver {}
 
 impl MyObserver {
     pub async fn new() -> Self {
-        let ch_pool = create_ch_client().await;
-        Self { ch_pool }
+        Self {}
     }
 }
-
 
 // async fn insert_rows(client: Arc<Client>, records: Vec<Record>) -> bool {
 //     let cloned_client = client.clone();
@@ -87,18 +66,16 @@ impl Observer for MyObserver {
 
         log::info!("Received {} records", records.len());
 
-        let _client = Arc::new(self.ch_pool.clone());
-
-        for rec in records {
-            match RecordRow::from_record(&rec) {
-                Ok(rec) => {
-                    log::info!("Record parsed: {:#?}", &rec);
-                },
-                Err(e) => {
-                    log::error!("Error parsing object: {:#?}", e);
-                }
-            }
-        }
+        // for rec in records {
+        //     match RecordRow::from_record(&rec) {
+        //         Ok(rec) => {
+        //             log::info!("Record parsed: {:#?}", &rec);
+        //         },
+        //         Err(e) => {
+        //             log::error!("Error parsing object: {:#?}", e);
+        //         }
+        //     }
+        // }
 
         // spawn publish task
         // tokio::spawn(
