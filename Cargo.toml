@@ -1,0 +1,20 @@
+[workspace]
+members = [
+    "ptolemy",
+    "api"
+, "ptolemy-core", "observer"]
+resolver = "2"
+
+[workspace.dependencies]
+tonic = "0.12.3"
+prost = "*"
+tokio = { version = "1.41.1", features = ["full"] }
+log = "0.4.22"
+env_logger = "0.11.5"
+tonic-types = "0.12.3"
+prost-types = "0.13.4"
+clickhouse = { version = "0.13.1", features = ["uuid", "time"] }
+serde = {version = "1.0.216", features = ["derive"] }
+serde_repr = "0.1.19"
+uuid = "1.11.0"
+serde_json = "1.0.133"

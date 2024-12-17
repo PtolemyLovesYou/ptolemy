@@ -4,7 +4,7 @@ use clickhouse::{
 };
 use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
-use crate::generated::observer::{
+use ptolemy_core::generated::observer::{
     PublishRequest,
     PublishResponse,
     observer_server::{
@@ -12,10 +12,9 @@ use crate::generated::observer::{
         ObserverServer,
     }
 };
-use parser::RecordRow;
+use models::RecordRow;
 
-pub mod generated;
-pub mod parser;
+pub mod models;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");

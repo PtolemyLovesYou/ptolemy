@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
-use crate::generated::observer::{PublishRequest, PublishResponse, Record, Tier, LogType, observer_client::ObserverClient};
+use ptolemy_core::generated::observer::{PublishRequest, PublishResponse, Record, Tier, LogType, observer_client::ObserverClient};
 use tonic::transport::Channel;
 use pyo3::prelude::*;
 
