@@ -1,8 +1,16 @@
 [workspace]
 members = [
     "ptolemy",
-    "api"
-, "ptolemy-core", "observer"]
+    "api",
+    "ptolemy-core",
+    "observer"
+    ]
+
+default-members = [
+    "api",
+    "ptolemy-core",
+    "observer"
+]
 resolver = "2"
 
 [workspace.dependencies]
