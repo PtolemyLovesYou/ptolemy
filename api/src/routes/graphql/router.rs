@@ -3,21 +3,17 @@ use axum::{
     routing::{get, on, MethodFilter},
     Router,
 };
-use clickhouse::Client;
 use juniper::{graphql_object, EmptyMutation, EmptySubscription, RootNode};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use std::sync::Arc;
 
 use crate::config::ApiConfig;
 
-pub struct GraphQLContext {
-    client: Client,
-}
+pub struct GraphQLContext { }
 
 impl GraphQLContext {
-    pub async fn new(config: &ApiConfig) -> Self {
-        let client = config.clickhouse_client().await;
-        GraphQLContext { client }
+    pub async fn new(_config: &ApiConfig) -> Self {
+        GraphQLContext { }
     }
 }
 
@@ -29,11 +25,8 @@ pub struct Query;
 #[graphql_object]
 #[graphql(context = GraphQLContext)]
 impl Query {
-    async fn ping(ctx: &GraphQLContext) -> String {
-        match ctx.client.query("SELECT 1").execute().await {
-            Ok(()) => "Pong!".to_string(),
-            Err(err) => err.to_string(),
-        }
+    async fn ping(_ctx: &GraphQLContext) -> String {
+        "Pong!".to_string()
     }
 }
 

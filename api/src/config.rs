@@ -1,4 +1,3 @@
-use clickhouse::Client;
 use diesel_async::pooled_connection::bb8::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
@@ -11,8 +10,6 @@ pub struct ApiConfig {
     postgres_user: String,
     postgres_password: String,
     postgres_db: String,
-
-    clickhouse_url: String,
 }
 
 impl ApiConfig {
@@ -30,7 +27,6 @@ impl ApiConfig {
         let postgres_password =
             std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
         let postgres_db = std::env::var("POSTGRES_DB").expect("POSTGRES_DB must be set.");
-        let clickhouse_url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
 
         ApiConfig {
             port,
@@ -39,7 +35,6 @@ impl ApiConfig {
             postgres_user,
             postgres_password,
             postgres_db,
-            clickhouse_url,
         }
     }
 
@@ -59,12 +54,5 @@ impl ApiConfig {
         let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(self.db_url());
 
         Pool::builder().build(config).await.unwrap()
-    }
-
-    pub async fn clickhouse_client(&self) -> Client {
-        Client::default()
-            .with_url(self.clickhouse_url.clone())
-            .with_option("enable_json_type", "1")
-            .with_option("enable_variant_type", "1")
     }
 }
