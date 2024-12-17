@@ -111,10 +111,16 @@ dependencies = [
  "juniper",
  "juniper_axum",
  "log",
+ "prost",
+ "prost-types",
+ "ptolemy-core",
  "serde",
  "serde_json",
+ "serde_repr",
  "time",
  "tokio",
+ "tonic",
+ "tonic-types",
  "uuid",
 ]
 
@@ -1315,25 +1321,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aedf0a2d09c573ed1d8d85b30c119153926a2b36dce0ab28322c09a117a4683e"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "observer"
-version = "0.1.0"
-dependencies = [
- "clickhouse",
- "env_logger",
- "log",
- "prost",
- "prost-types",
- "ptolemy-core",
- "serde",
- "serde_json",
- "serde_repr",
- "tokio",
- "tonic",
- "tonic-types",
- "uuid",
 ]
 
 [[package]]

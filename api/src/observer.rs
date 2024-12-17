@@ -3,18 +3,13 @@ use clickhouse::{
     // insert::Insert
 };
 use std::sync::Arc;
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{Request, Response, Status};
 use ptolemy_core::generated::observer::{
     PublishRequest,
     PublishResponse,
-    observer_server::{
-        Observer,
-        ObserverServer,
-    }
+    observer_server::Observer,
 };
-use models::RecordRow;
-
-pub mod models;
+use crate::ch_models::RecordRow;
 
 async fn create_ch_client() -> Client {
     let url = std::env::var("CLICKHOUSE_URL").expect("CLICKHOUSE_URL must be set");
@@ -118,21 +113,4 @@ impl Observer for MyObserver {
 
         Ok(Response::new(reply))
     }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    env_logger::init();
-
-    let addr = "[::]:50051".parse()?;
-    let observer = MyObserver::new().await;
-
-    println!("Observer server listening on {}", addr);
-
-    Server::builder()
-        .add_service(ObserverServer::new(observer))
-        .serve(addr)
-        .await?;
-
-    Ok(())
 }

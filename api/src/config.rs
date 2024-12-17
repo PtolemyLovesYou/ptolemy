@@ -17,14 +17,13 @@ pub struct ApiConfig {
 
 impl ApiConfig {
     /// Constructs a new `ApiConfig` instance by retrieving the host and port
-    /// from the environment variables `PTOLEMY_API_HOST` and `PTOLEMY_API_PORT`.
+    /// from the environment variables`API_PORT`.
     ///
     /// # Panics
     ///
-    /// This function will panic if the environment variables `PTOLEMY_API_HOST`
-    /// or `PTOLEMY_API_PORT` are not set.
+    /// This function will panic if the environment variables `API_PORT` is not set.
     pub fn new() -> ApiConfig {
-        let port = std::env::var("PTOLEMY_API_PORT").expect("API_PORT must be set.");
+        let port = std::env::var("API_PORT").expect("API_PORT must be set.");
         let postgres_host = std::env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set.");
         let postgres_port = std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set.");
         let postgres_user = std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
