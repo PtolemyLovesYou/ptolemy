@@ -719,6 +719,7 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(component_event -> subsystem_event (parent_id));
 diesel::joinable!(component_feedback_bool -> component_feedback_key (value_id));
 diesel::joinable!(component_feedback_float -> component_feedback_key (value_id));
 diesel::joinable!(component_feedback_int -> component_feedback_key (value_id));
@@ -739,6 +740,7 @@ diesel::joinable!(component_output_json -> component_output_key (value_id));
 diesel::joinable!(component_output_key -> component_event (id));
 diesel::joinable!(component_output_str -> component_output_key (value_id));
 diesel::joinable!(component_runtime -> component_event (parent_id));
+diesel::joinable!(subcomponent_event -> component_event (parent_id));
 diesel::joinable!(subcomponent_feedback_bool -> subcomponent_feedback_key (value_id));
 diesel::joinable!(subcomponent_feedback_float -> subcomponent_feedback_key (value_id));
 diesel::joinable!(subcomponent_feedback_int -> subcomponent_feedback_key (value_id));
@@ -759,6 +761,7 @@ diesel::joinable!(subcomponent_output_json -> subcomponent_output_key (value_id)
 diesel::joinable!(subcomponent_output_key -> subcomponent_event (id));
 diesel::joinable!(subcomponent_output_str -> subcomponent_output_key (value_id));
 diesel::joinable!(subcomponent_runtime -> subcomponent_event (parent_id));
+diesel::joinable!(subsystem_event -> system_event (parent_id));
 diesel::joinable!(subsystem_feedback_bool -> subsystem_feedback_key (value_id));
 diesel::joinable!(subsystem_feedback_float -> subsystem_feedback_key (value_id));
 diesel::joinable!(subsystem_feedback_int -> subsystem_feedback_key (value_id));
@@ -779,6 +782,7 @@ diesel::joinable!(subsystem_output_json -> subsystem_output_key (value_id));
 diesel::joinable!(subsystem_output_key -> subsystem_event (id));
 diesel::joinable!(subsystem_output_str -> subsystem_output_key (value_id));
 diesel::joinable!(subsystem_runtime -> subsystem_event (parent_id));
+diesel::joinable!(system_event -> workspace (parent_id));
 diesel::joinable!(system_feedback_bool -> system_feedback_key (value_id));
 diesel::joinable!(system_feedback_float -> system_feedback_key (value_id));
 diesel::joinable!(system_feedback_int -> system_feedback_key (value_id));

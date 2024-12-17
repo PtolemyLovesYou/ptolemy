@@ -10,7 +10,7 @@
 {% for tier in tiers %}
 create table {{ tier }}_event (
     id uuid primary key,
-    parent_id uuid not null references {{ parents[loop.index] }}(id),
+    parent_id uuid not null references {{ parents[loop.index0] }}(id),
     name varchar not null,
     parameters json,
     version varchar(16),

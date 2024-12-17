@@ -1,6 +1,6 @@
 create table system_event (
 id uuid primary key,
-parent_id uuid not null references system_event(id),
+parent_id uuid not null references workspace(id),
 name varchar not null,
 parameters json,
 version varchar(16),
@@ -112,7 +112,7 @@ field_value varchar not null
 );
 create table subsystem_event (
 id uuid primary key,
-parent_id uuid not null references subsystem_event(id),
+parent_id uuid not null references system_event(id),
 name varchar not null,
 parameters json,
 version varchar(16),
@@ -224,7 +224,7 @@ field_value varchar not null
 );
 create table component_event (
 id uuid primary key,
-parent_id uuid not null references component_event(id),
+parent_id uuid not null references subsystem_event(id),
 name varchar not null,
 parameters json,
 version varchar(16),
@@ -336,7 +336,7 @@ field_value varchar not null
 );
 create table subcomponent_event (
 id uuid primary key,
-parent_id uuid not null references subcomponent_event(id),
+parent_id uuid not null references component_event(id),
 name varchar not null,
 parameters json,
 version varchar(16),
