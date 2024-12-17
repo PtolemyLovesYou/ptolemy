@@ -44,8 +44,8 @@ RUN cargo build --bin api --release
 # Runtime stage
 FROM debian:bookworm-slim
 
-ARG SERVICE_NAME
-ENV SERVICE_NAME=api
+# set default clickhouse
+ENV DB=clickhouse
 
 # Install runtime dependencies for PostgreSQL
 RUN apt-get update && \
@@ -60,11 +60,16 @@ WORKDIR /usr/local/bin
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 COPY --from=builder /app/target/release/api /usr/local/bin/api
 
+# Add Goose binary
+ADD https://github.com/pressly/goose/releases/download/v3.23.0/goose_linux_x86_64 /bin/goose
+
 # Create a non-root user
 RUN useradd -m -u 1001 appuser
 
 # Chown the binary
 RUN chmod +x /usr/local/bin/api \
+    && chmod +x /bin/goose \
+    && chown appuser:appuser /bin/goose \
     && chown appuser:appuser /usr/local/bin/api
 
 USER appuser

@@ -36,20 +36,6 @@ services:
     volumes:
       - clickhouse:/var/lib/clickhouse
       - ./clickhouse/config.d:/etc/clickhouse-server/config.d
-  goose:
-    container_name: goose
-    build:
-      context: ./goose
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    volumes:
-      - ./goose:/app
-    networks:
-      - ptolemy
-    depends_on:
-      - clickhouse
-    profiles: ["dev"]
 
 volumes:
   postgres:
