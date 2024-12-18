@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use std::sync::Arc;
 
 use api::config::ApiConfig;
-use api::observer::MyObserver;
+use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
 use api::state::AppState;
