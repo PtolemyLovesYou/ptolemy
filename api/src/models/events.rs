@@ -129,62 +129,31 @@ macro_rules! create_io {
             }
 
             pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: FieldValue) -> Self {
-                match field_value {
-                    FieldValue::String(s) => Self {
-                        id,
-                        parent_id,
-                        field_name,
-                        field_value_str: Some(s),
-                        field_value_int: None,
-                        field_value_float: None,
-                        field_value_bool: None,
-                        field_value_json: None,
-                        field_value_type: FieldValueTypeEnum::String,
-                    },
-                    FieldValue::Int(i) => Self {
-                        id,
-                        parent_id,
-                        field_name,
-                        field_value_str: None,
-                        field_value_int: Some(i),
-                        field_value_float: None,
-                        field_value_bool: None,
-                        field_value_json: None,
-                        field_value_type: FieldValueTypeEnum::Int,
-                    },
-                    FieldValue::Float(f) => Self {
-                        id,
-                        parent_id,
-                        field_name,
-                        field_value_str: None,
-                        field_value_int: None,
-                        field_value_float: Some(f),
-                        field_value_bool: None,
-                        field_value_json: None,
-                        field_value_type: FieldValueTypeEnum::Float,
-                    },
-                    FieldValue::Bool(b) => Self {
-                        id,
-                        parent_id,
-                        field_name,
-                        field_value_str: None,
-                        field_value_int: None,
-                        field_value_float: None,
-                        field_value_bool: Some(b),
-                        field_value_json: None,
-                        field_value_type: FieldValueTypeEnum::Bool,
-                    },
-                    FieldValue::Json(j) => Self {
-                        id,
-                        parent_id,
-                        field_name,
-                        field_value_str: None,
-                        field_value_int: None,
-                        field_value_float: None,
-                        field_value_bool: None,
-                        field_value_json: Some(j),
-                        field_value_type: FieldValueTypeEnum::Json,
-                    },
+                let (
+                    field_value_type,
+                    field_value_str,
+                    field_value_int,
+                    field_value_float,
+                    field_value_bool,
+                    field_value_json,
+                ) = match field_value {
+                    FieldValue::String(s) => (FieldValueTypeEnum::String, Some(s), None, None, None, None),
+                    FieldValue::Int(i) => (FieldValueTypeEnum::Int, None, Some(i), None, None, None),
+                    FieldValue::Float(f) => (FieldValueTypeEnum::Float, None, None, Some(f), None, None),
+                    FieldValue::Bool(b) => (FieldValueTypeEnum::Bool, None, None, None, Some(b), None),
+                    FieldValue::Json(j) => (FieldValueTypeEnum::Json, None, None, None, None, Some(j))
+                };
+
+                Self {
+                    id,
+                    parent_id,
+                    field_name,
+                    field_value_str,
+                    field_value_int,
+                    field_value_float,
+                    field_value_bool,
+                    field_value_json,
+                    field_value_type
                 }
             }
         }
