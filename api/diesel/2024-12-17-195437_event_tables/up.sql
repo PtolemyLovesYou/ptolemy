@@ -24,7 +24,7 @@ field_value_int int8,
 field_value_float float8,
 field_value_bool bool,
 field_value_json json,
-field_value_type field_value_type
+field_value_type field_value_type not null
 );
 create table system_metadata (
 id uuid primary key,
@@ -57,7 +57,7 @@ field_value_int int8,
 field_value_float float8,
 field_value_bool bool,
 field_value_json json,
-field_value_type field_value_type
+field_value_type field_value_type not null
 );
 create table subsystem_metadata (
 id uuid primary key,
@@ -90,7 +90,7 @@ field_value_int int8,
 field_value_float float8,
 field_value_bool bool,
 field_value_json json,
-field_value_type field_value_type
+field_value_type field_value_type not null
 );
 create table component_metadata (
 id uuid primary key,
@@ -123,7 +123,7 @@ field_value_int int8,
 field_value_float float8,
 field_value_bool bool,
 field_value_json json,
-field_value_type field_value_type
+field_value_type field_value_type not null
 );
 create table subcomponent_metadata (
 id uuid primary key,

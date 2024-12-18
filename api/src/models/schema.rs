@@ -32,7 +32,7 @@ diesel::table! {
         field_value_float -> Nullable<Float8>,
         field_value_bool -> Nullable<Bool>,
         field_value_json -> Nullable<Json>,
-        field_value_type -> Nullable<FieldValueType>,
+        field_value_type -> FieldValueType,
     }
 }
 
@@ -82,7 +82,7 @@ diesel::table! {
         field_value_float -> Nullable<Float8>,
         field_value_bool -> Nullable<Bool>,
         field_value_json -> Nullable<Json>,
-        field_value_type -> Nullable<FieldValueType>,
+        field_value_type -> FieldValueType,
     }
 }
 
@@ -132,7 +132,7 @@ diesel::table! {
         field_value_float -> Nullable<Float8>,
         field_value_bool -> Nullable<Bool>,
         field_value_json -> Nullable<Json>,
-        field_value_type -> Nullable<FieldValueType>,
+        field_value_type -> FieldValueType,
     }
 }
 
@@ -182,7 +182,7 @@ diesel::table! {
         field_value_float -> Nullable<Float8>,
         field_value_bool -> Nullable<Bool>,
         field_value_json -> Nullable<Json>,
-        field_value_type -> Nullable<FieldValueType>,
+        field_value_type -> FieldValueType,
     }
 }
 
