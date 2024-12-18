@@ -1,19 +1,25 @@
+use crate::models::enums::FieldValueTypeEnum;
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
+use ptolemy_core::generated::observer::{LogType, Record, Tier};
+use ptolemy_core::parser::{
+    parse_io, parse_metadata, parse_parameters, parse_uuid, FieldValue, ParseError,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use ptolemy_core::generated::observer::{Record, Tier, LogType};
-use ptolemy_core::parser::{parse_uuid, parse_io, ParseError, parse_parameters, FieldValue, parse_metadata};
-use crate::models::enums::FieldValueTypeEnum;
 
 pub trait EventTable {
-    fn from_record(record: &Record) -> Result<Self, ParseError> where Self: Sized;
+    fn from_record(record: &Record) -> Result<Self, ParseError>
+    where
+        Self: Sized;
 }
 
 fn parse_timestamp(timestamp: &Option<String>) -> Result<NaiveDateTime, ParseError> {
     let ts = match timestamp {
         Some(ts) => ts,
-        None => { return Err(ParseError::MissingField);}
+        None => {
+            return Err(ParseError::MissingField);
+        }
     };
 
     match NaiveDateTime::parse_from_str(&ts, "%Y-%m-%dT%H:%M:%S%.6f") {
@@ -39,8 +45,22 @@ macro_rules! create_event {
         }
 
         impl $name {
-            pub fn new(id: Uuid, parent_id: Uuid, name: String, parameters: Option<serde_json::Value>, version: Option<String>, environment: Option<String>) -> Self {
-                Self { id, parent_id, name, parameters, version, environment }
+            pub fn new(
+                id: Uuid,
+                parent_id: Uuid,
+                name: String,
+                parameters: Option<serde_json::Value>,
+                version: Option<String>,
+                environment: Option<String>,
+            ) -> Self {
+                Self {
+                    id,
+                    parent_id,
+                    name,
+                    parameters,
+                    version,
+                    environment,
+                }
             }
         }
 
@@ -79,8 +99,22 @@ macro_rules! create_runtime {
         }
 
         impl $name {
-            pub fn new(id: Uuid, parent_id: Uuid, start_time: NaiveDateTime, end_time: NaiveDateTime, error_type: Option<String>, error_value: Option<String>) -> Self {
-                Self { id, parent_id, start_time, end_time, error_type, error_value }
+            pub fn new(
+                id: Uuid,
+                parent_id: Uuid,
+                start_time: NaiveDateTime,
+                end_time: NaiveDateTime,
+                error_type: Option<String>,
+                error_value: Option<String>,
+            ) -> Self {
+                Self {
+                    id,
+                    parent_id,
+                    start_time,
+                    end_time,
+                    error_type,
+                    error_value,
+                }
             }
         }
 
@@ -120,15 +154,24 @@ macro_rules! create_io {
         impl $name {
             pub fn field_value(&self) -> FieldValue {
                 match self.field_value_type {
-                    FieldValueTypeEnum::String => FieldValue::String(self.field_value_str.clone().unwrap()),
+                    FieldValueTypeEnum::String => {
+                        FieldValue::String(self.field_value_str.clone().unwrap())
+                    }
                     FieldValueTypeEnum::Int => FieldValue::Int(self.field_value_int.unwrap()),
                     FieldValueTypeEnum::Float => FieldValue::Float(self.field_value_float.unwrap()),
                     FieldValueTypeEnum::Bool => FieldValue::Bool(self.field_value_bool.unwrap()),
-                    FieldValueTypeEnum::Json => FieldValue::Json(self.field_value_json.clone().unwrap()),
+                    FieldValueTypeEnum::Json => {
+                        FieldValue::Json(self.field_value_json.clone().unwrap())
+                    }
                 }
             }
 
-            pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: FieldValue) -> Self {
+            pub fn new(
+                id: Uuid,
+                parent_id: Uuid,
+                field_name: String,
+                field_value: FieldValue,
+            ) -> Self {
                 let (
                     field_value_type,
                     field_value_str,
@@ -137,11 +180,21 @@ macro_rules! create_io {
                     field_value_bool,
                     field_value_json,
                 ) = match field_value {
-                    FieldValue::String(s) => (FieldValueTypeEnum::String, Some(s), None, None, None, None),
-                    FieldValue::Int(i) => (FieldValueTypeEnum::Int, None, Some(i), None, None, None),
-                    FieldValue::Float(f) => (FieldValueTypeEnum::Float, None, None, Some(f), None, None),
-                    FieldValue::Bool(b) => (FieldValueTypeEnum::Bool, None, None, None, Some(b), None),
-                    FieldValue::Json(j) => (FieldValueTypeEnum::Json, None, None, None, None, Some(j))
+                    FieldValue::String(s) => {
+                        (FieldValueTypeEnum::String, Some(s), None, None, None, None)
+                    }
+                    FieldValue::Int(i) => {
+                        (FieldValueTypeEnum::Int, None, Some(i), None, None, None)
+                    }
+                    FieldValue::Float(f) => {
+                        (FieldValueTypeEnum::Float, None, None, Some(f), None, None)
+                    }
+                    FieldValue::Bool(b) => {
+                        (FieldValueTypeEnum::Bool, None, None, None, Some(b), None)
+                    }
+                    FieldValue::Json(j) => {
+                        (FieldValueTypeEnum::Json, None, None, None, None, Some(j))
+                    }
                 };
 
                 Self {
@@ -153,7 +206,7 @@ macro_rules! create_io {
                     field_value_float,
                     field_value_bool,
                     field_value_json,
-                    field_value_type
+                    field_value_type,
                 }
             }
         }
@@ -170,7 +223,7 @@ macro_rules! create_io {
                 Ok(rec)
             }
         }
-    }
+    };
 }
 
 macro_rules! create_metadata {
@@ -257,33 +310,65 @@ impl EventRow {
     pub fn from_record(record: &Record) -> Result<EventRow, ParseError> {
         let record = match (record.tier(), record.log_type()) {
             // System
-            (Tier::System, LogType::Event) => EventRow::SystemEvent(SystemEvent::from_record(record)?),
-            (Tier::System, LogType::Runtime) => EventRow::SystemRuntime(SystemRuntime::from_record(record)?),
-            (Tier::System, LogType::Input | LogType::Output | LogType::Feedback ) => EventRow::SystemIO(SystemIO::from_record(record)?),
-            (Tier::System, LogType::Metadata) => EventRow::SystemMetadata(SystemMetadata::from_record(record)?),
-            
+            (Tier::System, LogType::Event) => {
+                EventRow::SystemEvent(SystemEvent::from_record(record)?)
+            }
+            (Tier::System, LogType::Runtime) => {
+                EventRow::SystemRuntime(SystemRuntime::from_record(record)?)
+            }
+            (Tier::System, LogType::Input | LogType::Output | LogType::Feedback) => {
+                EventRow::SystemIO(SystemIO::from_record(record)?)
+            }
+            (Tier::System, LogType::Metadata) => {
+                EventRow::SystemMetadata(SystemMetadata::from_record(record)?)
+            }
+
             // Subsystem
-            (Tier::Subsystem, LogType::Event) => EventRow::SubsystemEvent(SubsystemEvent::from_record(record)?),
-            (Tier::Subsystem, LogType::Runtime) => EventRow::SubsystemRuntime(SubsystemRuntime::from_record(record)?),
-            (Tier::Subsystem, LogType::Input | LogType::Output | LogType::Feedback) => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
-            (Tier::Subsystem, LogType::Metadata) => EventRow::SubsystemMetadata(SubsystemMetadata::from_record(record)?),
+            (Tier::Subsystem, LogType::Event) => {
+                EventRow::SubsystemEvent(SubsystemEvent::from_record(record)?)
+            }
+            (Tier::Subsystem, LogType::Runtime) => {
+                EventRow::SubsystemRuntime(SubsystemRuntime::from_record(record)?)
+            }
+            (Tier::Subsystem, LogType::Input | LogType::Output | LogType::Feedback) => {
+                EventRow::SubsystemIO(SubsystemIO::from_record(record)?)
+            }
+            (Tier::Subsystem, LogType::Metadata) => {
+                EventRow::SubsystemMetadata(SubsystemMetadata::from_record(record)?)
+            }
 
             // Component
-            (Tier::Component, LogType::Event) => EventRow::ComponentEvent(ComponentEvent::from_record(record)?),
-            (Tier::Component, LogType::Runtime) => EventRow::ComponentRuntime(ComponentRuntime::from_record(record)?),
-            (Tier::Component, LogType::Input | LogType::Output | LogType::Feedback) => EventRow::ComponentIO(ComponentIO::from_record(record)?),
-            (Tier::Component, LogType::Metadata) => EventRow::ComponentMetadata(ComponentMetadata::from_record(record)?),
+            (Tier::Component, LogType::Event) => {
+                EventRow::ComponentEvent(ComponentEvent::from_record(record)?)
+            }
+            (Tier::Component, LogType::Runtime) => {
+                EventRow::ComponentRuntime(ComponentRuntime::from_record(record)?)
+            }
+            (Tier::Component, LogType::Input | LogType::Output | LogType::Feedback) => {
+                EventRow::ComponentIO(ComponentIO::from_record(record)?)
+            }
+            (Tier::Component, LogType::Metadata) => {
+                EventRow::ComponentMetadata(ComponentMetadata::from_record(record)?)
+            }
 
             // Subcomponent
-            (Tier::Subcomponent, LogType::Event) => EventRow::SubcomponentEvent(SubcomponentEvent::from_record(record)?),
-            (Tier::Subcomponent, LogType::Runtime) => EventRow::SubcomponentRuntime(SubcomponentRuntime::from_record(record)?),
-            (Tier::Subcomponent, LogType::Input | LogType::Output | LogType::Feedback) => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
-            (Tier::Subcomponent, LogType::Metadata) => EventRow::SubcomponentMetadata(SubcomponentMetadata::from_record(record)?),
+            (Tier::Subcomponent, LogType::Event) => {
+                EventRow::SubcomponentEvent(SubcomponentEvent::from_record(record)?)
+            }
+            (Tier::Subcomponent, LogType::Runtime) => {
+                EventRow::SubcomponentRuntime(SubcomponentRuntime::from_record(record)?)
+            }
+            (Tier::Subcomponent, LogType::Input | LogType::Output | LogType::Feedback) => {
+                EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?)
+            }
+            (Tier::Subcomponent, LogType::Metadata) => {
+                EventRow::SubcomponentMetadata(SubcomponentMetadata::from_record(record)?)
+            }
 
             (Tier::UndeclaredTier, _) => {
                 log::error!("Got a record with an undeclared tier: {:#?}", record);
                 return Err(ParseError::UndefinedTier);
-            },
+            }
 
             (_, LogType::UndeclaredLogType) => {
                 log::error!("Got a record with an undeclared log type: {:#?}", record);

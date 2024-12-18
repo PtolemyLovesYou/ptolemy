@@ -1,9 +1,7 @@
-use tonic::{Request, Response, Status};
 use ptolemy_core::generated::observer::{
-    PublishRequest,
-    PublishResponse,
-    observer_server::Observer,
+    observer_server::Observer, PublishRequest, PublishResponse,
 };
+use tonic::{Request, Response, Status};
 
 pub struct MyObserver {}
 
@@ -61,7 +59,6 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
-
         let records = request.into_inner().records;
 
         log::info!("Received {} records", records.len());

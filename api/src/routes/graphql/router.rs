@@ -9,11 +9,11 @@ use std::sync::Arc;
 
 use crate::config::ApiConfig;
 
-pub struct GraphQLContext { }
+pub struct GraphQLContext {}
 
 impl GraphQLContext {
     pub async fn new(_config: &ApiConfig) -> Self {
-        GraphQLContext { }
+        GraphQLContext {}
     }
 }
 

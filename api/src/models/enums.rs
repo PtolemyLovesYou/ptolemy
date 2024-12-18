@@ -1,8 +1,11 @@
-use diesel::{FromSqlRow, AsExpression, {pg::Pg, pg::PgValue}};
+use crate::models::schema::sql_types::FieldValueType;
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
+use diesel::{
+    AsExpression, FromSqlRow,
+    {pg::Pg, pg::PgValue},
+};
 use serde::{Deserialize, Serialize};
-use crate::models::schema::sql_types::FieldValueType;
 use std::io::Write;
 
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
@@ -16,7 +19,10 @@ pub enum FieldValueTypeEnum {
 }
 
 impl Serialize for FieldValueTypeEnum {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
         serializer.serialize_str(match *self {
             FieldValueTypeEnum::String => "str",
             FieldValueTypeEnum::Int => "int",
@@ -28,7 +34,10 @@ impl Serialize for FieldValueTypeEnum {
 }
 
 impl<'de> Deserialize<'de> for FieldValueTypeEnum {
-    fn deserialize<D>(deserializer: D) -> Result<FieldValueTypeEnum, D::Error> where D: serde::Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<FieldValueTypeEnum, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
         let s = String::deserialize(deserializer)?;
         match s.as_str() {
             "str" => Ok(FieldValueTypeEnum::String),
@@ -36,7 +45,10 @@ impl<'de> Deserialize<'de> for FieldValueTypeEnum {
             "float" => Ok(FieldValueTypeEnum::Float),
             "bool" => Ok(FieldValueTypeEnum::Bool),
             "json" => Ok(FieldValueTypeEnum::Json),
-            _ => Err(serde::de::Error::unknown_variant(s.as_str(), &["str", "int", "float", "bool", "json"])),
+            _ => Err(serde::de::Error::unknown_variant(
+                s.as_str(),
+                &["str", "int", "float", "bool", "json"],
+            )),
         }
     }
 }

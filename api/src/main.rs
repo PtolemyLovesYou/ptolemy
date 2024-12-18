@@ -2,13 +2,13 @@ use axum::{routing::get, Router};
 use std::sync::Arc;
 
 use api::config::ApiConfig;
+use api::observer::MyObserver;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
 use api::state::AppState;
-use api::observer::MyObserver;
+use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
-use ptolemy_core::generated::observer::observer_server::ObserverServer;
 
 async fn ping_db() -> String {
     let pool = ApiConfig::new().postgres_conn_pool().await;
@@ -58,7 +58,7 @@ async fn main() -> Result<(), ApiError> {
     // gRPC server setup
     let grpc_addr = "[::]:50051".parse().unwrap();
     let observer = MyObserver::new().await;
-    
+
     // Axum server setup
     let app = Router::new()
         .nest("/", base_router().await)
@@ -67,7 +67,7 @@ async fn main() -> Result<(), ApiError> {
 
     let server_url = format!("0.0.0.0:{}", config.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
-    
+
     println!("Observer server listening on {}", grpc_addr);
     log::info!("Axum server serving at {}", &server_url);
 
@@ -83,8 +83,8 @@ async fn main() -> Result<(), ApiError> {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     log::error!("gRPC server error: {}", e);
-                    return Err(ApiError::APIError)
-                },
+                    return Err(ApiError::APIError);
+                }
             }
         },
         // Axum server
@@ -93,8 +93,8 @@ async fn main() -> Result<(), ApiError> {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     log::error!("Axum server error: {}", e);
-                    return Err(ApiError::GRPCError)
-                },
+                    return Err(ApiError::GRPCError);
+                }
             }
         }
     )?;
