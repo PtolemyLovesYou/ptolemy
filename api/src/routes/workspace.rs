@@ -6,10 +6,9 @@ use axum::{
     Json, Router,
 };
 use diesel::prelude::*;
-use diesel::SelectableHelper;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
-use crate::models::{Workspace, WorkspaceCreate};
+use crate::models::workspace::{Workspace, WorkspaceCreate};
 use crate::schema::workspace;
 use crate::state::AppState;
 
