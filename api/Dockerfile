@@ -60,23 +60,16 @@ WORKDIR /usr/local/bin
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 COPY --from=builder /app/target/release/api /usr/local/bin/api
 
-# Add Goose binary
-ADD https://github.com/pressly/goose/releases/download/v3.23.0/goose_linux_x86_64 /bin/goose
-
 # Create a non-root user
 RUN useradd -m -u 1001 appuser
 
 # Chown the binary
 RUN chmod +x /usr/local/bin/api \
-    && chmod +x /bin/goose \
-    && chown appuser:appuser /bin/goose \
     && chown appuser:appuser /usr/local/bin/api
 
 USER appuser
 
 ENV API_PORT=8000
-ENV GOOSE_DRIVER=clickhouse
-ENV GOOSE_MIGRATION_DIR=/app/migrations/goose
 
 WORKDIR /app
 

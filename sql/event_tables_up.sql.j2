@@ -7,10 +7,11 @@
     "subcomponent_event"
     ] -%}
 
+create type field_value_type as enum ('str', 'int', 'float', 'bool', 'json');
 {% for tier in tiers %}
 create table {{ tier }}_event (
     id uuid primary key,
-    parent_id uuid not null references {{ parents[loop.index0] }}(id),
+    parent_id uuid not null references {{ parents[loop.index0] }}(id) on delete cascade,
     name varchar not null,
     parameters json,
     version varchar(16),
@@ -19,54 +20,28 @@ create table {{ tier }}_event (
 
 create table {{ tier }}_runtime (
     id uuid primary key,
-    parent_id uuid not null references {{ tier }}_event(id),
+    parent_id uuid not null references {{ tier }}_event(id) on delete cascade,
     start_time timestamp(6) not null,
     end_time timestamp(6) not null,
     error_type varchar,
     error_value varchar
 );
 
-{% for io in ["input", "output", "feedback"] %}
-create table {{ tier }}_{{ io }}_key (
-    id uuid primary key references {{ tier }}_event(id),
-    parent_id uuid not null,
-    field_name varchar not null
+create table {{ tier }}_io (
+    id uuid primary key,
+    parent_id uuid not null references {{ tier }}_event(id) on delete cascade,
+    field_name varchar,
+    field_value_str varchar,
+    field_value_int int8,
+    field_value_float float8,
+    field_value_bool bool,
+    field_value_json json,
+    field_value_type field_value_type
 );
-
-create table {{ tier }}_{{ io }}_str (
-    id uuid primary key default gen_random_uuid(),
-    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
-    field_value varchar not null
-);
-
-create table {{ tier }}_{{ io }}_int (
-    id uuid primary key default gen_random_uuid(),
-    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
-    field_value int8 not null
-);
-
-create table {{ tier }}_{{ io }}_float (
-    id uuid primary key default gen_random_uuid(),
-    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
-    field_value float8 not null
-);
-
-create table {{ tier }}_{{ io }}_bool (
-    id uuid primary key default gen_random_uuid(),
-    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
-    field_value bool not null
-);
-
-create table {{ tier }}_{{ io }}_json (
-    id uuid primary key default gen_random_uuid(),
-    value_id uuid not null references {{ tier }}_{{ io }}_key(id),
-    field_value json not null
-);
-{% endfor %}
 
 create table {{ tier }}_metadata (
     id uuid primary key,
-    parent_id uuid not null references {{ tier }}_event(id),
+    parent_id uuid not null references {{ tier }}_event(id) on delete cascade,
     field_name varchar not null,
     field_value varchar not null
 );
