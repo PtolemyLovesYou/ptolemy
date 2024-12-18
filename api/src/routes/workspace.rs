@@ -9,7 +9,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 use crate::models::workspace::{Workspace, WorkspaceCreate};
-use crate::schema::workspace;
+use crate::models::schema::workspace;
 use crate::state::AppState;
 
 async fn create_workspace(
@@ -42,7 +42,7 @@ async fn get_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Workspace>, StatusCode> {
-    use crate::schema::workspace::dsl::*;
+    use crate::models::schema::workspace::dsl::*;
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
@@ -68,7 +68,7 @@ async fn delete_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    use crate::schema::workspace::dsl::*;
+    use crate::models::schema::workspace::dsl::*;
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {

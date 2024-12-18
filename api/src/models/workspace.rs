@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = crate::schema::workspace)]
+#[diesel(table_name = crate::models::schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workspace {
     pub id: Uuid,
@@ -17,7 +17,7 @@ pub struct Workspace {
 }
 
 #[derive(Insertable, Serialize, Deserialize)]
-#[diesel(table_name = crate::schema::workspace)]
+#[diesel(table_name = crate::models::schema::workspace)]
 pub struct WorkspaceCreate {
     name: String,
     description: Option<String>,
