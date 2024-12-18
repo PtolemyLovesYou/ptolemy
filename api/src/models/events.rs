@@ -255,112 +255,42 @@ pub enum EventRow {
 
 impl EventRow {
     pub fn from_record(record: &Record) -> Result<EventRow, ParseError> {
-        let rec = match record.tier() {
-            Tier::System => {
-                match record.log_type() {
-                    LogType::Event => EventRow::SystemEvent(SystemEvent::from_record(record)?),
-                    LogType::Runtime => EventRow::SystemRuntime(SystemRuntime::from_record(record)?),
-                    LogType::Input => EventRow::SystemIO(SystemIO::from_record(record)?),
-                    LogType::Output => EventRow::SystemIO(SystemIO::from_record(record)?),
-                    LogType::Feedback => EventRow::SystemIO(SystemIO::from_record(record)?),
-                    LogType::Metadata => EventRow::SystemMetadata(SystemMetadata::from_record(record)?),
-                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
-                }
+        let record = match (record.tier(), record.log_type()) {
+            // System
+            (Tier::System, LogType::Event) => EventRow::SystemEvent(SystemEvent::from_record(record)?),
+            (Tier::System, LogType::Runtime) => EventRow::SystemRuntime(SystemRuntime::from_record(record)?),
+            (Tier::System, LogType::Input | LogType::Output | LogType::Feedback ) => EventRow::SystemIO(SystemIO::from_record(record)?),
+            (Tier::System, LogType::Metadata) => EventRow::SystemMetadata(SystemMetadata::from_record(record)?),
+            
+            // Subsystem
+            (Tier::Subsystem, LogType::Event) => EventRow::SubsystemEvent(SubsystemEvent::from_record(record)?),
+            (Tier::Subsystem, LogType::Runtime) => EventRow::SubsystemRuntime(SubsystemRuntime::from_record(record)?),
+            (Tier::Subsystem, LogType::Input | LogType::Output | LogType::Feedback) => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
+            (Tier::Subsystem, LogType::Metadata) => EventRow::SubsystemMetadata(SubsystemMetadata::from_record(record)?),
+
+            // Component
+            (Tier::Component, LogType::Event) => EventRow::ComponentEvent(ComponentEvent::from_record(record)?),
+            (Tier::Component, LogType::Runtime) => EventRow::ComponentRuntime(ComponentRuntime::from_record(record)?),
+            (Tier::Component, LogType::Input | LogType::Output | LogType::Feedback) => EventRow::ComponentIO(ComponentIO::from_record(record)?),
+            (Tier::Component, LogType::Metadata) => EventRow::ComponentMetadata(ComponentMetadata::from_record(record)?),
+
+            // Subcomponent
+            (Tier::Subcomponent, LogType::Event) => EventRow::SubcomponentEvent(SubcomponentEvent::from_record(record)?),
+            (Tier::Subcomponent, LogType::Runtime) => EventRow::SubcomponentRuntime(SubcomponentRuntime::from_record(record)?),
+            (Tier::Subcomponent, LogType::Input | LogType::Output | LogType::Feedback) => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
+            (Tier::Subcomponent, LogType::Metadata) => EventRow::SubcomponentMetadata(SubcomponentMetadata::from_record(record)?),
+
+            (Tier::UndeclaredTier, _) => {
+                log::error!("Got a record with an undeclared tier: {:#?}", record);
+                return Err(ParseError::UndefinedTier);
             },
-            Tier::Subsystem => {
-                match record.log_type() {
-                    LogType::Event => EventRow::SubsystemEvent(SubsystemEvent::from_record(record)?),
-                    LogType::Runtime => EventRow::SubsystemRuntime(SubsystemRuntime::from_record(record)?),
-                    LogType::Input => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
-                    LogType::Output => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
-                    LogType::Feedback => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
-                    LogType::Metadata => EventRow::SubsystemMetadata(SubsystemMetadata::from_record(record)?),
-                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
-                }
-            },
-            Tier::Component => {
-                match record.log_type() {
-                    LogType::Event => EventRow::ComponentEvent(ComponentEvent::from_record(record)?),
-                    LogType::Runtime => EventRow::ComponentRuntime(ComponentRuntime::from_record(record)?),
-                    LogType::Input => EventRow::ComponentIO(ComponentIO::from_record(record)?),
-                    LogType::Output => EventRow::ComponentIO(ComponentIO::from_record(record)?),
-                    LogType::Feedback => EventRow::ComponentIO(ComponentIO::from_record(record)?),
-                    LogType::Metadata => EventRow::ComponentMetadata(ComponentMetadata::from_record(record)?),
-                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
-                }
-            },
-            Tier::Subcomponent => {
-                match record.log_type() {
-                    LogType::Event => EventRow::SubcomponentEvent(SubcomponentEvent::from_record(record)?),
-                    LogType::Runtime => EventRow::SubcomponentRuntime(SubcomponentRuntime::from_record(record)?),
-                    LogType::Input => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
-                    LogType::Output => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
-                    LogType::Feedback => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
-                    LogType::Metadata => EventRow::SubcomponentMetadata(SubcomponentMetadata::from_record(record)?),
-                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
-                }
-            },
-            Tier::UndeclaredTier => { return Err(ParseError::UndefinedTier); }
-        };
 
-        Ok(rec)
-    }
-}
-
-pub async fn insert_rows(records: &Vec<Record>) {
-    let mut system_event: Vec<SystemEvent> = Vec::new();
-    let mut system_runtime: Vec<SystemRuntime> = Vec::new();
-    let mut system_io: Vec<SystemIO> = Vec::new();
-    let mut system_metadata: Vec<SystemMetadata> = Vec::new();
-
-    let mut subsystem_event: Vec<SubsystemEvent> = Vec::new();
-    let mut subsystem_runtime: Vec<SubsystemRuntime> = Vec::new();
-    let mut subsystem_io: Vec<SubsystemIO> = Vec::new();
-    let mut subsystem_metadata: Vec<SubsystemMetadata> = Vec::new();
-
-    let mut component_event: Vec<ComponentEvent> = Vec::new();
-    let mut component_runtime: Vec<ComponentRuntime> = Vec::new();
-    let mut component_io: Vec<ComponentIO> = Vec::new();
-    let mut component_metadata: Vec<ComponentMetadata> = Vec::new();
-    
-    let mut subcomponent_event: Vec<SubcomponentEvent> = Vec::new();
-    let mut subcomponent_runtime: Vec<SubcomponentRuntime> = Vec::new();
-    let mut subcomponent_io: Vec<SubcomponentIO> = Vec::new();
-    let mut subcomponent_metadata: Vec<SubcomponentMetadata> = Vec::new();
-
-    for r in records {
-        let parsed_record = match EventRow::from_record(r) {
-            Ok(p) => p,
-            Err(e) => {
-                log::error!("Error parsing record: {:#?}", e);
-                continue;
+            (_, LogType::UndeclaredLogType) => {
+                log::error!("Got a record with an undeclared log type: {:#?}", record);
+                return Err(ParseError::UndefinedLogType);
             }
         };
 
-        match parsed_record {
-            // System records
-            EventRow::SystemEvent(e) => system_event.push(e),
-            EventRow::SystemRuntime(e) => system_runtime.push(e),
-            EventRow::SystemIO(e) => system_io.push(e),
-            EventRow::SystemMetadata(e) => system_metadata.push(e),
-
-            // Subsystem records
-            EventRow::SubsystemEvent(e) => subsystem_event.push(e),
-            EventRow::SubsystemRuntime(e) => subsystem_runtime.push(e),
-            EventRow::SubsystemIO(e) => subsystem_io.push(e),
-            EventRow::SubsystemMetadata(e) => subsystem_metadata.push(e),
-
-            // Component records
-            EventRow::ComponentEvent(e) => component_event.push(e),
-            EventRow::ComponentRuntime(e) => component_runtime.push(e),
-            EventRow::ComponentIO(e) => component_io.push(e),
-            EventRow::ComponentMetadata(e) => component_metadata.push(e),
-
-            // Subcomponent records
-            EventRow::SubcomponentEvent(e) => subcomponent_event.push(e),
-            EventRow::SubcomponentRuntime(e) => subcomponent_runtime.push(e),
-            EventRow::SubcomponentIO(e) => subcomponent_io.push(e),
-            EventRow::SubcomponentMetadata(e) => subcomponent_metadata.push(e),
-        }
-    };
+        Ok(record)
+    }
 }
