@@ -5,6 +5,8 @@ use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use ptolemy_core::generated::observer::Record;
+use ptolemy_core::parser::{parse_uuid, parse_io, ParseError, parse_parameters, FieldValue, parse_metadata};
 use crate::models::schema::sql_types::FieldValueType;
 use std::io::Write;
 
@@ -16,14 +18,6 @@ pub enum FieldValueTypeEnum {
     Float,
     Bool,
     Json,
-}
-
-pub enum FieldValue {
-    String(String),
-    Int(i64),
-    Float(f64),
-    Bool(bool),
-    Json(serde_json::Value),
 }
 
 impl Serialize for FieldValueTypeEnum {
@@ -78,6 +72,25 @@ impl FromSql<FieldValueType, Pg> for FieldValueTypeEnum {
     }
 }
 
+pub trait EventTable {
+    fn from_record(record: &Record) -> Result<Self, ParseError> where Self: Sized;
+}
+
+fn parse_timestamp(timestamp: &Option<String>) -> Result<NaiveDateTime, ParseError> {
+    let ts = match timestamp {
+        Some(ts) => ts,
+        None => { return Err(ParseError::MissingField);}
+    };
+
+    match NaiveDateTime::parse_from_str(&ts, "%Y-%m-%dT%H:%M:%S%.6f") {
+        Ok(dt) => return Ok(dt),
+        Err(e) => {
+            log::error!("Error parsing timestamp: {:#?}", e);
+            Err(ParseError::BadTimestamp)
+        }
+    }
+}
+
 macro_rules! create_event {
     ($name:ident, $table:ident) => {
         #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
@@ -92,8 +105,25 @@ macro_rules! create_event {
         }
 
         impl $name {
-            pub fn new(&self, id: Uuid, parent_id: Uuid, name: String, parameters: Option<serde_json::Value>, version: Option<String>, environment: Option<String>) -> Self {
+            pub fn new(id: Uuid, parent_id: Uuid, name: String, parameters: Option<serde_json::Value>, version: Option<String>, environment: Option<String>) -> Self {
                 Self { id, parent_id, name, parameters, version, environment }
+            }
+        }
+
+        impl EventTable for $name {
+            fn from_record(record: &Record) -> Result<Self, ParseError> {
+                let parameters = parse_parameters(&record.parameters)?;
+
+                let rec = Self::new(
+                    parse_uuid(&record.id).unwrap(),
+                    parse_uuid(&record.parent_id).unwrap(),
+                    record.name.clone().unwrap(),
+                    parameters,
+                    record.version.clone(),
+                    record.environment.clone(),
+                );
+
+                Ok(rec)
             }
         }
     };
@@ -115,8 +145,23 @@ macro_rules! create_runtime {
         }
 
         impl $name {
-            pub fn new(&self, id: Uuid, parent_id: Uuid, start_time: NaiveDateTime, end_time: NaiveDateTime, error_type: Option<String>, error_value: Option<String>) -> Self {
+            pub fn new(id: Uuid, parent_id: Uuid, start_time: NaiveDateTime, end_time: NaiveDateTime, error_type: Option<String>, error_value: Option<String>) -> Self {
                 Self { id, parent_id, start_time, end_time, error_type, error_value }
+            }
+        }
+
+        impl EventTable for $name {
+            fn from_record(record: &Record) -> Result<Self, ParseError> {
+                let rec = Self::new(
+                    parse_uuid(&record.id).unwrap(),
+                    parse_uuid(&record.parent_id).unwrap(),
+                    parse_timestamp(&record.start_time).unwrap(),
+                    parse_timestamp(&record.end_time).unwrap(),
+                    record.error_type.clone(),
+                    record.error_content.clone(),
+                );
+
+                Ok(rec)
             }
         }
     };
@@ -209,6 +254,19 @@ macro_rules! create_io {
                 }
             }
         }
+
+        impl EventTable for $name {
+            fn from_record(record: &Record) -> Result<Self, ParseError> {
+                let rec = Self::new(
+                    parse_uuid(&record.id).unwrap(),
+                    parse_uuid(&record.parent_id).unwrap(),
+                    record.field_name.clone().unwrap(),
+                    parse_io(&record.field_value)?,
+                );
+
+                Ok(rec)
+            }
+        }
     }
 }
 
@@ -231,6 +289,19 @@ macro_rules! create_metadata {
                     field_name,
                     field_value,
                 }
+            }
+        }
+
+        impl EventTable for $name {
+            fn from_record(record: &Record) -> Result<Self, ParseError> {
+                let rec = Self::new(
+                    parse_uuid(&record.id).unwrap(),
+                    parse_uuid(&record.parent_id).unwrap(),
+                    record.field_name.clone().unwrap(),
+                    parse_metadata(&record.field_value)?,
+                );
+
+                Ok(rec)
             }
         }
     };
