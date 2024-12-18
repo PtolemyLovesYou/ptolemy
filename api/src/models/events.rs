@@ -5,7 +5,7 @@ use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use ptolemy_core::generated::observer::Record;
+use ptolemy_core::generated::observer::{Record, Tier, LogType};
 use ptolemy_core::parser::{parse_uuid, parse_io, ParseError, parse_parameters, FieldValue, parse_metadata};
 use crate::models::schema::sql_types::FieldValueType;
 use std::io::Write;
@@ -330,3 +330,76 @@ create_event!(SubcomponentEvent, subcomponent_event);
 create_runtime!(SubcomponentRuntime, subcomponent_runtime);
 create_io!(SubcomponentIO, subcomponent_io);
 create_metadata!(SubcomponentMetadata, subcomponent_metadata);
+
+pub enum EventRow {
+    SystemEvent(SystemEvent),
+    SystemRuntime(SystemRuntime),
+    SystemIO(SystemIO),
+    SystemMetadata(SystemMetadata),
+    SubsystemEvent(SubsystemEvent),
+    SubsystemRuntime(SubsystemRuntime),
+    SubsystemIO(SubsystemIO),
+    SubsystemMetadata(SubsystemMetadata),
+    ComponentEvent(ComponentEvent),
+    ComponentRuntime(ComponentRuntime),
+    ComponentIO(ComponentIO),
+    ComponentMetadata(ComponentMetadata),
+    SubcomponentEvent(SubcomponentEvent),
+    SubcomponentRuntime(SubcomponentRuntime),
+    SubcomponentIO(SubcomponentIO),
+    SubcomponentMetadata(SubcomponentMetadata),
+}
+
+impl EventRow {
+    pub fn from_record(record: &Record) -> Result<EventRow, ParseError> {
+        let rec = match record.tier() {
+            Tier::System => {
+                match record.log_type() {
+                    LogType::Event => EventRow::SystemEvent(SystemEvent::from_record(record)?),
+                    LogType::Runtime => EventRow::SystemRuntime(SystemRuntime::from_record(record)?),
+                    LogType::Input => EventRow::SystemIO(SystemIO::from_record(record)?),
+                    LogType::Output => EventRow::SystemIO(SystemIO::from_record(record)?),
+                    LogType::Feedback => EventRow::SystemIO(SystemIO::from_record(record)?),
+                    LogType::Metadata => EventRow::SystemMetadata(SystemMetadata::from_record(record)?),
+                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
+                }
+            },
+            Tier::Subsystem => {
+                match record.log_type() {
+                    LogType::Event => EventRow::SubsystemEvent(SubsystemEvent::from_record(record)?),
+                    LogType::Runtime => EventRow::SubsystemRuntime(SubsystemRuntime::from_record(record)?),
+                    LogType::Input => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
+                    LogType::Output => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
+                    LogType::Feedback => EventRow::SubsystemIO(SubsystemIO::from_record(record)?),
+                    LogType::Metadata => EventRow::SubsystemMetadata(SubsystemMetadata::from_record(record)?),
+                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
+                }
+            },
+            Tier::Component => {
+                match record.log_type() {
+                    LogType::Event => EventRow::ComponentEvent(ComponentEvent::from_record(record)?),
+                    LogType::Runtime => EventRow::ComponentRuntime(ComponentRuntime::from_record(record)?),
+                    LogType::Input => EventRow::ComponentIO(ComponentIO::from_record(record)?),
+                    LogType::Output => EventRow::ComponentIO(ComponentIO::from_record(record)?),
+                    LogType::Feedback => EventRow::ComponentIO(ComponentIO::from_record(record)?),
+                    LogType::Metadata => EventRow::ComponentMetadata(ComponentMetadata::from_record(record)?),
+                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
+                }
+            },
+            Tier::Subcomponent => {
+                match record.log_type() {
+                    LogType::Event => EventRow::SubcomponentEvent(SubcomponentEvent::from_record(record)?),
+                    LogType::Runtime => EventRow::SubcomponentRuntime(SubcomponentRuntime::from_record(record)?),
+                    LogType::Input => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
+                    LogType::Output => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
+                    LogType::Feedback => EventRow::SubcomponentIO(SubcomponentIO::from_record(record)?),
+                    LogType::Metadata => EventRow::SubcomponentMetadata(SubcomponentMetadata::from_record(record)?),
+                    LogType::UndeclaredLogType => { return Err(ParseError::UndefinedLogType) }
+                }
+            },
+            Tier::UndeclaredTier => { return Err(ParseError::UndefinedTier); }
+        };
+
+        Ok(rec)
+    }
+}
