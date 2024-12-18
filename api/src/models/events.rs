@@ -1,76 +1,10 @@
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
-use diesel::{FromSqlRow, AsExpression, {pg::Pg, pg::PgValue}};
-use diesel::deserialize::FromSql;
-use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use ptolemy_core::generated::observer::{Record, Tier, LogType};
 use ptolemy_core::parser::{parse_uuid, parse_io, ParseError, parse_parameters, FieldValue, parse_metadata};
-use crate::models::schema::sql_types::FieldValueType;
-use std::io::Write;
-
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
-#[diesel(sql_type = FieldValueType)]
-pub enum FieldValueTypeEnum {
-    String,
-    Int,
-    Float,
-    Bool,
-    Json,
-}
-
-impl Serialize for FieldValueTypeEnum {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
-        serializer.serialize_str(match *self {
-            FieldValueTypeEnum::String => "str",
-            FieldValueTypeEnum::Int => "int",
-            FieldValueTypeEnum::Float => "float",
-            FieldValueTypeEnum::Bool => "bool",
-            FieldValueTypeEnum::Json => "json",
-        })
-    }
-}
-
-impl<'de> Deserialize<'de> for FieldValueTypeEnum {
-    fn deserialize<D>(deserializer: D) -> Result<FieldValueTypeEnum, D::Error> where D: serde::Deserializer<'de> {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "str" => Ok(FieldValueTypeEnum::String),
-            "int" => Ok(FieldValueTypeEnum::Int),
-            "float" => Ok(FieldValueTypeEnum::Float),
-            "bool" => Ok(FieldValueTypeEnum::Bool),
-            "json" => Ok(FieldValueTypeEnum::Json),
-            _ => Err(serde::de::Error::unknown_variant(s.as_str(), &["str", "int", "float", "bool", "json"])),
-        }
-    }
-}
-
-impl ToSql<FieldValueType, Pg> for FieldValueTypeEnum {
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
-        match *self {
-            FieldValueTypeEnum::String => out.write_all(b"str")?,
-            FieldValueTypeEnum::Int => out.write_all(b"int")?,
-            FieldValueTypeEnum::Float => out.write_all(b"float")?,
-            FieldValueTypeEnum::Bool => out.write_all(b"bool")?,
-            FieldValueTypeEnum::Json => out.write_all(b"json")?,
-        }
-        Ok(IsNull::No)
-    }
-}
-
-impl FromSql<FieldValueType, Pg> for FieldValueTypeEnum {
-    fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
-        match bytes.as_bytes() {
-            b"str" => Ok(FieldValueTypeEnum::String),
-            b"int" => Ok(FieldValueTypeEnum::Int),
-            b"float" => Ok(FieldValueTypeEnum::Float),
-            b"bool" => Ok(FieldValueTypeEnum::Bool),
-            b"json" => Ok(FieldValueTypeEnum::Json),
-            _ => Err("Unrecognized enum variant".into()),
-        }
-    }
-}
+use crate::models::enums::FieldValueTypeEnum;
 
 pub trait EventTable {
     fn from_record(record: &Record) -> Result<Self, ParseError> where Self: Sized;
