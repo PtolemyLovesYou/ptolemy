@@ -403,3 +403,61 @@ impl EventRow {
         Ok(rec)
     }
 }
+
+pub async fn insert_rows(records: &Vec<Record>) {
+    let mut system_event: Vec<SystemEvent> = Vec::new();
+    let mut system_runtime: Vec<SystemRuntime> = Vec::new();
+    let mut system_io: Vec<SystemIO> = Vec::new();
+    let mut system_metadata: Vec<SystemMetadata> = Vec::new();
+
+    let mut subsystem_event: Vec<SubsystemEvent> = Vec::new();
+    let mut subsystem_runtime: Vec<SubsystemRuntime> = Vec::new();
+    let mut subsystem_io: Vec<SubsystemIO> = Vec::new();
+    let mut subsystem_metadata: Vec<SubsystemMetadata> = Vec::new();
+
+    let mut component_event: Vec<ComponentEvent> = Vec::new();
+    let mut component_runtime: Vec<ComponentRuntime> = Vec::new();
+    let mut component_io: Vec<ComponentIO> = Vec::new();
+    let mut component_metadata: Vec<ComponentMetadata> = Vec::new();
+    
+    let mut subcomponent_event: Vec<SubcomponentEvent> = Vec::new();
+    let mut subcomponent_runtime: Vec<SubcomponentRuntime> = Vec::new();
+    let mut subcomponent_io: Vec<SubcomponentIO> = Vec::new();
+    let mut subcomponent_metadata: Vec<SubcomponentMetadata> = Vec::new();
+
+    for r in records {
+        let parsed_record = match EventRow::from_record(r) {
+            Ok(p) => p,
+            Err(e) => {
+                log::error!("Error parsing record: {:#?}", e);
+                continue;
+            }
+        };
+
+        match parsed_record {
+            // System records
+            EventRow::SystemEvent(e) => system_event.push(e),
+            EventRow::SystemRuntime(e) => system_runtime.push(e),
+            EventRow::SystemIO(e) => system_io.push(e),
+            EventRow::SystemMetadata(e) => system_metadata.push(e),
+
+            // Subsystem records
+            EventRow::SubsystemEvent(e) => subsystem_event.push(e),
+            EventRow::SubsystemRuntime(e) => subsystem_runtime.push(e),
+            EventRow::SubsystemIO(e) => subsystem_io.push(e),
+            EventRow::SubsystemMetadata(e) => subsystem_metadata.push(e),
+
+            // Component records
+            EventRow::ComponentEvent(e) => component_event.push(e),
+            EventRow::ComponentRuntime(e) => component_runtime.push(e),
+            EventRow::ComponentIO(e) => component_io.push(e),
+            EventRow::ComponentMetadata(e) => component_metadata.push(e),
+
+            // Subcomponent records
+            EventRow::SubcomponentEvent(e) => subcomponent_event.push(e),
+            EventRow::SubcomponentRuntime(e) => subcomponent_runtime.push(e),
+            EventRow::SubcomponentIO(e) => subcomponent_io.push(e),
+            EventRow::SubcomponentMetadata(e) => subcomponent_metadata.push(e),
+        }
+    };
+}
