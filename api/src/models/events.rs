@@ -90,6 +90,12 @@ macro_rules! create_event {
             pub version: Option<String>,
             pub environment: Option<String>,
         }
+
+        impl $name {
+            pub fn new(&self, id: Uuid, parent_id: Uuid, name: String, parameters: Option<serde_json::Value>, version: Option<String>, environment: Option<String>) -> Self {
+                Self { id, parent_id, name, parameters, version, environment }
+            }
+        }
     };
 }
 
@@ -106,6 +112,12 @@ macro_rules! create_runtime {
             pub end_time: NaiveDateTime,
             pub error_type: Option<String>,
             pub error_value: Option<String>,
+        }
+
+        impl $name {
+            pub fn new(&self, id: Uuid, parent_id: Uuid, start_time: NaiveDateTime, end_time: NaiveDateTime, error_type: Option<String>, error_value: Option<String>) -> Self {
+                Self { id, parent_id, start_time, end_time, error_type, error_value }
+            }
         }
     };
 }
@@ -136,6 +148,66 @@ macro_rules! create_io {
                     FieldValueTypeEnum::Json => FieldValue::Json(self.field_value_json.clone().unwrap()),
                 }
             }
+
+            pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: FieldValue) -> Self {
+                match field_value {
+                    FieldValue::String(s) => Self {
+                        id,
+                        parent_id,
+                        field_name,
+                        field_value_str: Some(s),
+                        field_value_int: None,
+                        field_value_float: None,
+                        field_value_bool: None,
+                        field_value_json: None,
+                        field_value_type: FieldValueTypeEnum::String,
+                    },
+                    FieldValue::Int(i) => Self {
+                        id,
+                        parent_id,
+                        field_name,
+                        field_value_str: None,
+                        field_value_int: Some(i),
+                        field_value_float: None,
+                        field_value_bool: None,
+                        field_value_json: None,
+                        field_value_type: FieldValueTypeEnum::Int,
+                    },
+                    FieldValue::Float(f) => Self {
+                        id,
+                        parent_id,
+                        field_name,
+                        field_value_str: None,
+                        field_value_int: None,
+                        field_value_float: Some(f),
+                        field_value_bool: None,
+                        field_value_json: None,
+                        field_value_type: FieldValueTypeEnum::Float,
+                    },
+                    FieldValue::Bool(b) => Self {
+                        id,
+                        parent_id,
+                        field_name,
+                        field_value_str: None,
+                        field_value_int: None,
+                        field_value_float: None,
+                        field_value_bool: Some(b),
+                        field_value_json: None,
+                        field_value_type: FieldValueTypeEnum::Bool,
+                    },
+                    FieldValue::Json(j) => Self {
+                        id,
+                        parent_id,
+                        field_name,
+                        field_value_str: None,
+                        field_value_int: None,
+                        field_value_float: None,
+                        field_value_bool: None,
+                        field_value_json: Some(j),
+                        field_value_type: FieldValueTypeEnum::Json,
+                    },
+                }
+            }
         }
     }
 }
@@ -149,6 +221,17 @@ macro_rules! create_metadata {
             pub parent_id: Uuid,
             pub field_name: String,
             pub field_value: String,
+        }
+
+        impl $name {
+            pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: String) -> Self {
+                Self {
+                    id,
+                    parent_id,
+                    field_name,
+                    field_value,
+                }
+            }
         }
     };
 }
