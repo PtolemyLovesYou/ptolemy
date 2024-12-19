@@ -14,3 +14,8 @@ diesel:
 .PHONY: build-client
 build-client:
 	cd ptolemy && maturin develop
+
+.PHONY: install-client
+install-client:
+	make build-client \
+		&& pip install -e ./ptolemy
