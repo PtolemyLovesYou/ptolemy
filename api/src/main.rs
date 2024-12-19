@@ -1,5 +1,6 @@
 use axum::{routing::get, Router};
 use std::sync::Arc;
+use tracing::info;
 
 use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
@@ -41,7 +42,7 @@ enum ApiError {
 /// server to shut down.
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
-    env_logger::init();
+    tracing_subscriber::fmt::init();
 
     let shared_state = Arc::new(AppState::new().await);
 
@@ -58,8 +59,8 @@ async fn main() -> Result<(), ApiError> {
     let server_url = format!("0.0.0.0:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 
-    println!("Observer server listening on {}", grpc_addr);
-    log::info!("Axum server serving at {}", &server_url);
+    info!("Observer server listening on {}", grpc_addr);
+    info!("Axum server serving at {}", &server_url);
 
     // Run both servers concurrently
     try_join!(
@@ -72,7 +73,7 @@ async fn main() -> Result<(), ApiError> {
             {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    log::error!("gRPC server error: {}", e);
+                    info!("gRPC server error: {}", e);
                     return Err(ApiError::APIError);
                 }
             }
@@ -82,7 +83,7 @@ async fn main() -> Result<(), ApiError> {
             match axum::serve(listener, app).await {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    log::error!("Axum server error: {}", e);
+                    info!("Axum server error: {}", e);
                     return Err(ApiError::GRPCError);
                 }
             }

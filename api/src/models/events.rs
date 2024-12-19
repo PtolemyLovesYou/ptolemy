@@ -1,4 +1,5 @@
 use crate::models::enums::FieldValueTypeEnum;
+use tracing::{error, instrument};
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
@@ -14,6 +15,7 @@ pub trait EventTable {
         Self: Sized;
 }
 
+#[instrument]
 fn parse_timestamp(timestamp: &Option<String>) -> Result<NaiveDateTime, ParseError> {
     let ts = match timestamp {
         Some(ts) => ts,
@@ -25,7 +27,7 @@ fn parse_timestamp(timestamp: &Option<String>) -> Result<NaiveDateTime, ParseErr
     match NaiveDateTime::parse_from_str(&ts, "%Y-%m-%dT%H:%M:%S%.6f") {
         Ok(dt) => return Ok(dt),
         Err(e) => {
-            log::error!("Error parsing timestamp: {:#?}", e);
+            error!("Error parsing timestamp: {:#?}", e);
             Err(ParseError::BadTimestamp)
         }
     }
@@ -308,6 +310,7 @@ pub enum EventRow {
 }
 
 impl EventRow {
+    #[instrument]
     pub fn from_record(record: &Record) -> Result<EventRow, ParseError> {
         let record = match (record.tier(), record.log_type()) {
             // System
@@ -367,12 +370,12 @@ impl EventRow {
             }
 
             (Tier::UndeclaredTier, _) => {
-                log::error!("Got a record with an undeclared tier: {:#?}", record);
+                error!("Got a record with an undeclared tier: {:#?}", record);
                 return Err(ParseError::UndefinedTier);
             }
 
             (_, LogType::UndeclaredLogType) => {
-                log::error!("Got a record with an undeclared log type: {:#?}", record);
+                error!("Got a record with an undeclared log type: {:#?}", record);
                 return Err(ParseError::UndefinedLogType);
             }
         };
