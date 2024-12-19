@@ -1,3 +1,4 @@
+use tracing::{error, instrument};
 use std::sync::Arc;
 use axum::{
     extract::Path,
@@ -6,13 +7,13 @@ use axum::{
     Json, Router,
 };
 use diesel::prelude::*;
-use diesel::SelectableHelper;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
-use crate::models::{Workspace, WorkspaceCreate};
-use crate::schema::workspace;
+use crate::models::workspace::{Workspace, WorkspaceCreate};
+use crate::models::schema::workspace;
 use crate::state::AppState;
 
+#[instrument]
 async fn create_workspace(
     state: Arc<AppState>,
     Json(workspace): Json<WorkspaceCreate>,
@@ -20,7 +21,7 @@ async fn create_workspace(
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
-            log::error!("Failed to get database connection: {}", e);
+            error!("Failed to get database connection: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
@@ -33,21 +34,22 @@ async fn create_workspace(
     {
         Ok(result) => Ok((StatusCode::CREATED, Json(result))),
         Err(e) => {
-            log::error!("Failed to create workspace: {}", e);
+            error!("Failed to create workspace: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }
 }
 
+#[instrument]
 async fn get_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Workspace>, StatusCode> {
-    use crate::schema::workspace::dsl::*;
+    use crate::models::schema::workspace::dsl::*;
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
-            log::error!("Failed to get database connection: {}", e);
+            error!("Failed to get database connection: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
@@ -59,21 +61,22 @@ async fn get_workspace(
     {
         Ok(result) => Ok(Json(result)),
         Err(e) => {
-            log::error!("Failed to get workspace: {}", e);
+            error!("Failed to get workspace: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }
 }
 
+#[instrument]
 async fn delete_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    use crate::schema::workspace::dsl::*;
+    use crate::models::schema::workspace::dsl::*;
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
-            log::error!("Failed to get database connection: {}", e);
+            error!("Failed to get database connection: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
@@ -84,7 +87,7 @@ async fn delete_workspace(
     {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(e) => {
-            log::error!("Failed to delete workspace: {}", e);
+            error!("Failed to delete workspace: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }

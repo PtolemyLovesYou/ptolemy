@@ -3,21 +3,15 @@ use axum::{
     routing::{get, on, MethodFilter},
     Router,
 };
-use clickhouse::Client;
 use juniper::{graphql_object, EmptyMutation, EmptySubscription, RootNode};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use std::sync::Arc;
 
-use crate::config::ApiConfig;
-
-pub struct GraphQLContext {
-    client: Client,
-}
+pub struct GraphQLContext {}
 
 impl GraphQLContext {
-    pub async fn new(config: &ApiConfig) -> Self {
-        let client = config.clickhouse_client().await;
-        GraphQLContext { client }
+    pub async fn new() -> Self {
+        GraphQLContext {}
     }
 }
 
@@ -29,11 +23,8 @@ pub struct Query;
 #[graphql_object]
 #[graphql(context = GraphQLContext)]
 impl Query {
-    async fn ping(ctx: &GraphQLContext) -> String {
-        match ctx.client.query("SELECT 1").execute().await {
-            Ok(()) => "Pong!".to_string(),
-            Err(err) => err.to_string(),
-        }
+    async fn ping(_ctx: &GraphQLContext) -> String {
+        "Pong!".to_string()
     }
 }
 
@@ -55,13 +46,13 @@ async fn graphql_handler(
     JuniperResponse(result)
 }
 
-pub async fn graphql_router(config: &ApiConfig) -> Router {
+pub async fn graphql_router() -> Router {
     let schema = Arc::new(Schema::new(
         Query,
         EmptyMutation::new(),
         EmptySubscription::new(),
     ));
-    let context = Arc::new(GraphQLContext::new(config).await);
+    let context = Arc::new(GraphQLContext::new().await);
 
     let state = AppState { schema, context };
 

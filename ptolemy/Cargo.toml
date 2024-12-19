@@ -19,7 +19,6 @@ log = { workspace = true }
 env_logger = { workspace = true }
 tonic-types = { workspace = true }
 prost-types = { workspace = true }
-clickhouse = { workspace = true }
 serde = { workspace = true }
 serde_repr = { workspace = true }
 uuid = { workspace = true }

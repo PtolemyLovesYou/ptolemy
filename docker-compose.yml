@@ -26,22 +26,9 @@ services:
       - postgres:/var/lib/postgresql
     networks:
       - ptolemy
-  clickhouse:
-    container_name: clickhouse
-    image: clickhouse/clickhouse-server:latest
-    ports:
-      - "8123:8123"
-      - "9000:9000"
-    networks:
-      - ptolemy
-    volumes:
-      - clickhouse:/var/lib/clickhouse
-      - ./clickhouse/config.d:/etc/clickhouse-server/config.d
 
 volumes:
   postgres:
-    driver: local
-  clickhouse:
     driver: local
 
 networks:

@@ -1,21 +1,14 @@
 use axum::{routing::get, Router};
 use std::sync::Arc;
+use tracing::info;
 
-use api::config::ApiConfig;
+use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
 use api::state::AppState;
-use api::observer::MyObserver;
+use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
-use ptolemy_core::generated::observer::observer_server::ObserverServer;
-
-async fn ping_db() -> String {
-    let pool = ApiConfig::new().postgres_conn_pool().await;
-    let mut _conn = pool.get().await;
-
-    "Database works <3".to_string()
-}
 
 /// Creates a base router for the Ptolemy API with default routes.
 ///
@@ -28,7 +21,6 @@ async fn base_router() -> Router {
     Router::new()
         .route("/", get(|| async { "Ptolemy API is up and running <3" }))
         .route("/ping", get(|| async { "Pong!" }))
-        .route("/ping_db", get(|| async { ping_db().await }))
 }
 
 #[derive(Debug)]
@@ -50,26 +42,25 @@ enum ApiError {
 /// server to shut down.
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
-    env_logger::init();
+    tracing_subscriber::fmt::init();
 
-    let config = ApiConfig::new();
-    let shared_state = Arc::new(AppState::new(&config).await);
+    let shared_state = Arc::new(AppState::new().await);
 
     // gRPC server setup
     let grpc_addr = "[::]:50051".parse().unwrap();
-    let observer = MyObserver::new().await;
-    
+    let observer = MyObserver::new(shared_state.clone()).await;
+
     // Axum server setup
     let app = Router::new()
         .nest("/", base_router().await)
-        .nest("/graphql", graphql_router(&config).await)
+        .nest("/graphql", graphql_router().await)
         .nest("/workspace", workspace_router(&shared_state).await);
 
-    let server_url = format!("0.0.0.0:{}", config.port);
+    let server_url = format!("0.0.0.0:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
-    
-    println!("Observer server listening on {}", grpc_addr);
-    log::info!("Axum server serving at {}", &server_url);
+
+    info!("Observer server listening on {}", grpc_addr);
+    info!("Axum server serving at {}", &server_url);
 
     // Run both servers concurrently
     try_join!(
@@ -82,9 +73,9 @@ async fn main() -> Result<(), ApiError> {
             {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    log::error!("gRPC server error: {}", e);
-                    return Err(ApiError::APIError)
-                },
+                    info!("gRPC server error: {}", e);
+                    return Err(ApiError::APIError);
+                }
             }
         },
         // Axum server
@@ -92,9 +83,9 @@ async fn main() -> Result<(), ApiError> {
             match axum::serve(listener, app).await {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    log::error!("Axum server error: {}", e);
-                    return Err(ApiError::GRPCError)
-                },
+                    info!("Axum server error: {}", e);
+                    return Err(ApiError::GRPCError);
+                }
             }
         }
     )?;

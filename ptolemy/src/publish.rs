@@ -96,13 +96,13 @@ impl ProtoRecord {
         self
     }
 
-    pub fn version(mut self, version: String) -> Self {
-        self.version = Some(version);
+    pub fn version(mut self, version: Option<String>) -> Self {
+        self.version = version;
         self
     }
 
-    pub fn environment(mut self, environment: String) -> Self {
-        self.environment = Some(environment);
+    pub fn environment(mut self, environment: Option<String>) -> Self {
+        self.environment = environment;
         self
     }
 
@@ -116,13 +116,13 @@ impl ProtoRecord {
         self
     }
 
-    pub fn error_type(mut self, error_type: String) -> Self {
-        self.error_type = Some(error_type);
+    pub fn error_type(mut self, error_type: Option<String>) -> Self {
+        self.error_type = error_type;
         self
     }
 
-    pub fn error_content(mut self, error_content: String) -> Self {
-        self.error_content = Some(error_content);
+    pub fn error_content(mut self, error_content: Option<String>) -> Self {
+        self.error_content = error_content;
         self
     }
 
@@ -183,8 +183,8 @@ impl RecordBuilder {
         )
         .name(name)
         .parameters(parameters)
-        .version(version.unwrap_or_default())
-        .environment(environment.unwrap_or_default())
+        .version(version)
+        .environment(environment)
     }
 
     #[pyo3(signature = (tier, parent_id, id, start_time, end_time, error_type=None, error_content=None))]
@@ -198,8 +198,8 @@ impl RecordBuilder {
         )
         .start_time(start_time)
         .end_time(end_time)
-        .error_type(error_type.unwrap_or_default())
-        .error_content(error_content.unwrap_or_default())
+        .error_type(error_type)
+        .error_content(error_content)
     }
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]

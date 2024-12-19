@@ -3,8 +3,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = crate::schema::workspace)]
+#[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
+#[diesel(table_name = crate::models::schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workspace {
     pub id: Uuid,
@@ -16,8 +16,8 @@ pub struct Workspace {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, Serialize, Deserialize)]
-#[diesel(table_name = crate::schema::workspace)]
+#[derive(Debug, Insertable, Serialize, Deserialize)]
+#[diesel(table_name = crate::models::schema::workspace)]
 pub struct WorkspaceCreate {
     name: String,
     description: Option<String>,

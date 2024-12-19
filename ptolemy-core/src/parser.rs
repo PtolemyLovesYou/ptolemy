@@ -12,27 +12,23 @@ pub enum ParseError {
     InvalidUuid,
     InvalidType,
     BadJSON,
+    BadTimestamp,
     UnexpectedNull,
 }
 
-pub fn parse_parameters(value: &Option<prost_types::Value>) -> Result<Option<String>, ParseError> {
+pub fn parse_parameters(value: &Option<prost_types::Value>) -> Result<Option<Value>, ParseError> {
     let some_value = match value {
         Some(value) => value,
         None => { return Ok(None); }
     };
 
-    let serializable = match unpack_proto_value(some_value) {
-        Some(s) => s,
+    match unpack_proto_value(some_value) {
+        Some(s) => Ok(Some(s)),
         None => { return Err(ParseError::UnexpectedNull) }
-    };
-
-    match serde_json::to_string(&serializable) {
-        Ok(s) => Ok(Some(s)),
-        Err(_) => Err(ParseError::BadJSON)
     }
 }
 
-pub fn parse_io(value: &Option<prost_types::Value>) -> Result<(FieldValueVariant, bool), ParseError> {
+pub fn parse_io(value: &Option<prost_types::Value>) -> Result<FieldValue, ParseError> {
     let some_value = match value {
         Some(value) => value,
         None => { return Err(ParseError::MissingField); }
@@ -44,22 +40,20 @@ pub fn parse_io(value: &Option<prost_types::Value>) -> Result<(FieldValueVariant
     };
 
     match serde_value {
-        Value::String(s) => Ok((FieldValueVariant::String(s.to_string()), false)),
+        Value::String(s) => Ok(FieldValue::String(s.to_string())),
         Value::Number(n) => {
             if n.is_i64() {
-                Ok((FieldValueVariant::Int(n.as_i64().unwrap()), false))
+                Ok(FieldValue::Int(n.as_i64().unwrap()))
             } else {
-                Ok((FieldValueVariant::Float(n.as_f64().unwrap()), false))
+                Ok(FieldValue::Float(n.as_f64().unwrap()))
             }
         },
-        Value::Bool(b) => Ok((FieldValueVariant::Bool(b), false)),
+        Value::Bool(b) => Ok(FieldValue::Bool(b)),
         Value::Object(o) => {
-            let json = serde_json::to_string(&o).unwrap();
-            Ok((FieldValueVariant::String(json), true))
+            Ok(FieldValue::Json(Value::Object(o)))
         },
         Value::Array(a) => {
-            let json = serde_json::to_string(&a).unwrap();
-            Ok((FieldValueVariant::String(json), true))
+            Ok(FieldValue::Json(Value::Array(a)))
         },
         _ => Err(ParseError::UnexpectedNull)
     }
@@ -131,10 +125,10 @@ pub fn unpack_proto_value(value: &prost_types::Value) -> Option<Value> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum FieldValueVariant {
+pub enum FieldValue {
     String(String),
     Int(i64),
     Float(f64),
-    Bool(bool)
+    Bool(bool),
+    Json(serde_json::Value),
 }
