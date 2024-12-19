@@ -1,6 +1,4 @@
-use crate::models::schema::workspace;
-use crate::models::workspace::{Workspace, WorkspaceCreate};
-use crate::state::AppState;
+use std::sync::Arc;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -9,8 +7,10 @@ use axum::{
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use std::sync::Arc;
 use uuid::Uuid;
+use crate::models::workspace::{Workspace, WorkspaceCreate};
+use crate::models::schema::workspace;
+use crate::state::AppState;
 
 async fn create_workspace(
     state: Arc<AppState>,
@@ -93,23 +93,28 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
     Router::new()
         .route(
             "/",
-            post({
-                let shared_state = Arc::clone(state);
-                move |workspace| create_workspace(shared_state, workspace)
-            }),
+            post(
+                {
+                    let shared_state = Arc::clone(state);
+                    move |workspace| create_workspace(shared_state, workspace)
+                },
+            )
         )
         .route(
-            "/:workspace_id",
-            delete({
-                let shared_state = Arc::clone(state);
-                move |workspace_id| delete_workspace(shared_state, workspace_id)
-            }),
+            "/:workspace_id", 
+            delete(
+                {
+                    let shared_state = Arc::clone(state);
+                    move |workspace_id| delete_workspace(shared_state, workspace_id)
+                }
+            )
         )
         .route(
-            "/:workspace_id",
-            get({
-                let shared_state = Arc::clone(state);
-                move |workspace_id| get_workspace(shared_state, workspace_id)
-            }),
+            "/:workspace_id", get(
+                {
+                    let shared_state = Arc::clone(state);
+                    move |workspace_id| get_workspace(shared_state, workspace_id)
+                }
+            )
         )
 }
