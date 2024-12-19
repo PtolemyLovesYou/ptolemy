@@ -7,12 +7,10 @@ use juniper::{graphql_object, EmptyMutation, EmptySubscription, RootNode};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use std::sync::Arc;
 
-use crate::config::ApiConfig;
-
 pub struct GraphQLContext {}
 
 impl GraphQLContext {
-    pub async fn new(_config: &ApiConfig) -> Self {
+    pub async fn new() -> Self {
         GraphQLContext {}
     }
 }
@@ -48,13 +46,13 @@ async fn graphql_handler(
     JuniperResponse(result)
 }
 
-pub async fn graphql_router(config: &ApiConfig) -> Router {
+pub async fn graphql_router() -> Router {
     let schema = Arc::new(Schema::new(
         Query,
         EmptyMutation::new(),
         EmptySubscription::new(),
     ));
-    let context = Arc::new(GraphQLContext::new(config).await);
+    let context = Arc::new(GraphQLContext::new().await);
 
     let state = AppState { schema, context };
 
