@@ -25,9 +25,9 @@ COPY ./ptolemy/Cargo.toml ./ptolemy/Cargo.toml
 
 # Create dummy executable files
 RUN mkdir ./ptolemy-core/src ./api/src ./ptolemy/src \
-    && echo "fn main() {}" > ./ptolemy-core/src/lib.rs \
-    && echo "fn main() {}" > ./api/src/main.rs \
-    && echo "fn _core() {}" > ./ptolemy/src/lib.rs
+    && echo "#![allow(dead_code)]\nfn main() {}" > ./ptolemy-core/src/lib.rs \
+    && echo "#![allow(dead_code)]\nfn main() {}" > ./api/src/main.rs \
+    && echo "#![allow(dead_code)]\nfn _core() {}" > ./ptolemy/src/lib.rs
 
 # Create a dummy main.rs to build dependencies
 RUN cargo build --bin api --release && \
