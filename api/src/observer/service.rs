@@ -1,20 +1,20 @@
-use tracing::{
-    error,
-    debug,
-    // instrument
+use crate::models::events::EventRow;
+use crate::state::AppState;
+use diesel_async::RunQueryDsl;
+use ptolemy_core::generated::observer::{
+    observer_server::Observer, PublishRequest, PublishResponse, Record,
 };
 use std::sync::Arc;
-use ptolemy_core::generated::observer::{
-    observer_server::Observer, PublishRequest, PublishResponse, Record
-};
 use tonic::{Request, Response, Status};
-use diesel_async::RunQueryDsl;
-use crate::state::AppState;
-use crate::models::events::EventRow;
+use tracing::{
+    debug,
+    // instrument
+    error,
+};
 
 #[derive(Debug)]
 pub struct MyObserver {
-    state: Arc<AppState>
+    state: Arc<AppState>,
 }
 
 impl MyObserver {
@@ -29,16 +29,17 @@ macro_rules! insert_records {
             match diesel::insert_into(crate::models::schema::$table::table)
                 .values(&$vals)
                 .execute(&mut $conn)
-                .await {
-                    Ok(_) => {
-                        debug!("Pushed {} records to Postgres", $vals.len());
-                    },
-                    Err(e) => {
-                        error!("Failed to push records to Postgres: {}", e);
-                    }
-                };
+                .await
+            {
+                Ok(_) => {
+                    debug!("Pushed {} records to Postgres", $vals.len());
+                }
+                Err(e) => {
+                    error!("Failed to push records to Postgres: {}", e);
+                }
+            };
         };
-    }
+    };
 }
 
 // #[instrument]
@@ -47,19 +48,22 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
 
     let parsed_records: Vec<EventRow> = records
         .into_iter()
-        .filter_map(|r| {
-            match EventRow::from_record(&r) {
-                Ok(p) => {
-                    debug!("Parsed record: {:#?}", p);
-                    Some(p)
-                },
-                Err(e) => {
-                    error!("Unable to parse record {:?}.{:?}: {:?}", r.tier(), r.log_type(), e);
-                    None
-                }
+        .filter_map(|r| match EventRow::from_record(&r) {
+            Ok(p) => {
+                debug!("Parsed record: {:#?}", p);
+                Some(p)
             }
-        }
-    ).collect();
+            Err(e) => {
+                error!(
+                    "Unable to parse record {:?}.{:?}: {:?}",
+                    r.tier(),
+                    r.log_type(),
+                    e
+                );
+                None
+            }
+        })
+        .collect();
 
     let mut system_event_rows = Vec::new();
     let mut system_runtime_rows = Vec::new();
@@ -70,7 +74,7 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
     let mut subsystem_runtime_rows = Vec::new();
     let mut subsystem_io_rows = Vec::new();
     let mut subsystem_metadata_rows = Vec::new();
-    
+
     let mut component_event_rows = Vec::new();
     let mut component_runtime_rows = Vec::new();
     let mut component_io_rows = Vec::new();
@@ -100,7 +104,7 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
             EventRow::SubcomponentIO(e) => subcomponent_io_rows.push(e),
             EventRow::SubcomponentMetadata(e) => subcomponent_metadata_rows.push(e),
         }
-    };
+    }
 
     insert_records!(conn, system_event_rows, system_event);
     insert_records!(conn, system_runtime_rows, system_runtime);
@@ -130,9 +134,7 @@ impl Observer for MyObserver {
 
         debug!("Received {} records", records.len());
 
-        tokio::spawn(
-            insert_rows(self.state.clone(), records)
-        );
+        tokio::spawn(insert_rows(self.state.clone(), records));
 
         let reply = PublishResponse {
             successful: true,

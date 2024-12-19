@@ -1,12 +1,12 @@
 use crate::models::enums::FieldValueTypeEnum;
-use tracing::{error, instrument};
-use chrono::{naive::serde::ts_microseconds, NaiveDateTime, DateTime};
+use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
 use ptolemy_core::parser::{
     parse_io, parse_metadata, parse_parameters, parse_uuid, FieldValue, ParseError,
 };
 use serde::{Deserialize, Serialize};
+use tracing::{error, instrument};
 use uuid::Uuid;
 
 pub trait EventTable {
@@ -169,12 +169,7 @@ impl IORecord {
         }
     }
 
-    pub fn new(
-        id: Uuid,
-        parent_id: Uuid,
-        field_name: String,
-        field_value: FieldValue,
-    ) -> Self {
+    pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: FieldValue) -> Self {
         let (
             field_value_type,
             field_value_str,
