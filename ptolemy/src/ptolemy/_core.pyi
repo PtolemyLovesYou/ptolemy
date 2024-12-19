@@ -19,8 +19,8 @@ class RecordBuilder:
     def runtime(
         tier: str,
         parent_id: str,
-        start_time: str,
-        end_time: str,
+        start_time: float,
+        end_time: float,
         error_type: str | None,
         error_content: str | None,
     ) -> ProtoRecord: ...

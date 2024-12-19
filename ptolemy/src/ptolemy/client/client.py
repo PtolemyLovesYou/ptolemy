@@ -1,7 +1,7 @@
 """Client."""
 
 from typing import List, Self, Optional, Any, Annotated
-from datetime import datetime
+import time
 import traceback as tb
 from pydantic import BaseModel, PrivateAttr, Field
 from ..engine.engine import Engine
@@ -32,8 +32,8 @@ class Ptolemy(BaseModel):
     _feedback: List[Feedback] = PrivateAttr(default=None)
     _metadata: List[Metadata] = PrivateAttr(default=None)
 
-    _start_time: datetime = PrivateAttr(default=None)
-    _end_time: datetime = PrivateAttr(default=None)
+    _start_time: float = PrivateAttr(default=None)
+    _end_time: float = PrivateAttr(default=None)
 
     engine: Annotated[Engine, Field(default_factory=PtolemyEngine)]
     workspace_id: ID
@@ -49,7 +49,7 @@ class Ptolemy(BaseModel):
         """
         if self._start_time is not None:
             raise ValueError("Already started")
-        self._start_time = datetime.now()
+        self._start_time = time.time()
         return self
 
     def stop(self) -> Self:
@@ -65,7 +65,7 @@ class Ptolemy(BaseModel):
         if self._end_time is not None:
             raise ValueError("Already ended")
 
-        self._end_time = datetime.now()
+        self._end_time = time.time()
         return self
 
     def __enter__(self):
@@ -203,8 +203,8 @@ class Ptolemy(BaseModel):
 
     def runtime(
         self,
-        start_time: datetime,
-        end_time: datetime,
+        start_time: float,
+        end_time: float,
         error_type: Optional[str] = None,
         error_content: Optional[str] = None,
     ) -> Self:
@@ -216,8 +216,8 @@ class Ptolemy(BaseModel):
         set once for an event.
 
         Args:
-            start_time: The datetime when the event started.
-            end_time: The datetime when the event ended.
+            start_time: The timestamp when the event started.
+            end_time: The timestamp when the event ended.
             error_type: Optional; the type of error encountered, if any.
             error_content: Optional; detailed content or message of the error, if any.
 

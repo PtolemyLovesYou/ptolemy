@@ -4,7 +4,7 @@ from typing import Optional, Any, ClassVar, Self, Literal, Annotated
 from abc import ABC, abstractmethod
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
-from ptolemy.utils import ID, Timestamp, Parameters, LogType, Tier, IOSerializable
+from ptolemy.utils import ID, Parameters, LogType, Tier, IOSerializable
 from .._core import RecordBuilder, ProtoRecord  # pylint: disable=no-name-in-module
 
 
@@ -101,8 +101,8 @@ class Runtime(Record):
 
     LOGTYPE = LogType.RUNTIME
 
-    start_time: Annotated[Optional[Timestamp], Field(default=None)]
-    end_time: Annotated[Optional[Timestamp], Field(default=None)]
+    start_time: Annotated[Optional[float], Field(default=None, ge=0.0)]
+    end_time: Annotated[Optional[float], Field(default=None, ge=0.0)]
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
 
@@ -111,8 +111,8 @@ class Runtime(Record):
             tier=self.TIER.value,
             parent_id=self.parent_id.hex,
             id=self.id.hex,
-            start_time=self.start_time.isoformat(),
-            end_time=self.end_time.isoformat(),
+            start_time=self.start_time,
+            end_time=self.end_time,
             error_type=self.error_type,
             error_content=self.error_content,
         )
