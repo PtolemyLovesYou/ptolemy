@@ -3,8 +3,8 @@ format:
 	black ptolemy \
 		--exclude '\s*\.venv\s*'
 
-.PHONY: migrate
-migrate:
+.PHONY: diesel
+diesel:
 	docker compose \
 		exec \
 		-e DB=clickhouse \
