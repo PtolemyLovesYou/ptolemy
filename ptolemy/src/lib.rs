@@ -1,9 +1,5 @@
+use crate::publish::{BlockingObserverClient, ProtoRecord, RecordBuilder};
 use pyo3::prelude::*;
-use crate::publish::{
-    BlockingObserverClient,
-    RecordBuilder,
-    ProtoRecord
-};
 
 pub mod publish;
 

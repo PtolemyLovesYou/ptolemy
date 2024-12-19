@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
-use serde_json::{Value, Map};
-use uuid::Uuid;
 use prost_types::value::Kind;
+use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum ParseError {
@@ -19,24 +19,30 @@ pub enum ParseError {
 pub fn parse_parameters(value: &Option<prost_types::Value>) -> Result<Option<Value>, ParseError> {
     let some_value = match value {
         Some(value) => value,
-        None => { return Ok(None); }
+        None => {
+            return Ok(None);
+        }
     };
 
     match unpack_proto_value(some_value) {
         Some(s) => Ok(Some(s)),
-        None => { return Err(ParseError::UnexpectedNull) }
+        None => return Err(ParseError::UnexpectedNull),
     }
 }
 
 pub fn parse_io(value: &Option<prost_types::Value>) -> Result<FieldValue, ParseError> {
     let some_value = match value {
         Some(value) => value,
-        None => { return Err(ParseError::MissingField); }
+        None => {
+            return Err(ParseError::MissingField);
+        }
     };
 
     let serde_value = match unpack_proto_value(some_value) {
         Some(s) => s,
-        None => { return Err(ParseError::UnexpectedNull); }
+        None => {
+            return Err(ParseError::UnexpectedNull);
+        }
     };
 
     match serde_value {
@@ -47,22 +53,18 @@ pub fn parse_io(value: &Option<prost_types::Value>) -> Result<FieldValue, ParseE
             } else {
                 Ok(FieldValue::Float(n.as_f64().unwrap()))
             }
-        },
+        }
         Value::Bool(b) => Ok(FieldValue::Bool(b)),
-        Value::Object(o) => {
-            Ok(FieldValue::Json(Value::Object(o)))
-        },
-        Value::Array(a) => {
-            Ok(FieldValue::Json(Value::Array(a)))
-        },
-        _ => Err(ParseError::UnexpectedNull)
+        Value::Object(o) => Ok(FieldValue::Json(Value::Object(o))),
+        Value::Array(a) => Ok(FieldValue::Json(Value::Array(a))),
+        _ => Err(ParseError::UnexpectedNull),
     }
 }
 
 pub fn parse_uuid(value: &str) -> Result<Uuid, ParseError> {
     match Uuid::parse_str(value) {
         Ok(s) => Ok(s),
-        Err(_) => Err(ParseError::InvalidUuid)
+        Err(_) => Err(ParseError::InvalidUuid),
     }
 }
 
@@ -70,9 +72,9 @@ pub fn parse_metadata(value: &Option<prost_types::Value>) -> Result<String, Pars
     match &value {
         Some(value) => match &value.kind {
             Some(Kind::StringValue(s)) => Ok(s.clone()),
-            _ => Err(ParseError::InvalidType)
+            _ => Err(ParseError::InvalidType),
         },
-        None => Err(ParseError::MissingField)
+        None => Err(ParseError::MissingField),
     }
 }
 
@@ -86,8 +88,7 @@ pub fn unpack_proto_value(value: &prost_types::Value) -> Option<Value> {
             } else {
                 Some(Value::Number(serde_json::Number::from_f64(*n).unwrap()))
             }
-        },
-
+        }
 
         Some(Kind::BoolValue(b)) => Some(Value::Bool(*b)),
 
@@ -96,27 +97,27 @@ pub fn unpack_proto_value(value: &prost_types::Value) -> Option<Value> {
             for (k, v) in &struct_value.fields {
                 let value = match unpack_proto_value(v) {
                     Some(v) => v,
-                    None => Value::Null
+                    None => Value::Null,
                 };
 
                 map.insert(k.clone(), value);
             }
             Some(Value::Object(map))
-        },
+        }
 
         Some(Kind::ListValue(list_value)) => {
             let mut vec = Vec::new();
             for v in &list_value.values {
                 let val = match unpack_proto_value(v) {
                     Some(v) => v,
-                    None => Value::Null
+                    None => Value::Null,
                 };
 
                 vec.push(val);
             }
 
             Some(Value::Array(vec))
-        },
+        }
 
         Some(Kind::NullValue(_)) => Some(Value::Null),
 

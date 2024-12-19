@@ -259,7 +259,7 @@ pub fn parse_record<T: EventTable>(record: &Record) -> Result<T, ParseError> {
         Tier::UndeclaredTier => {
             error!("Got a record with an undeclared tier: {:#?}", record);
             return Err(ParseError::UndefinedTier);
-        },
+        }
         t => t,
     };
 
@@ -267,7 +267,7 @@ pub fn parse_record<T: EventTable>(record: &Record) -> Result<T, ParseError> {
         LogType::UndeclaredLogType => {
             error!("Got a record with an undeclared log type: {:#?}", record);
             return Err(ParseError::UndefinedLogType);
-        },
+        }
         _ => T::from_record(record),
     };
 
