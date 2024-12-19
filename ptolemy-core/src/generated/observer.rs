@@ -137,10 +137,10 @@ pub mod observer_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct ObserverClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -184,9 +184,8 @@ pub mod observer_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             ObserverClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -224,24 +223,15 @@ pub mod observer_client {
         pub async fn publish(
             &mut self,
             request: impl tonic::IntoRequest<super::PublishRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::PublishResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::PublishResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/observer.Observer/Publish",
-            );
+            let path = http::uri::PathAndQuery::from_static("/observer.Observer/Publish");
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("observer.Observer", "Publish"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("observer.Observer", "Publish"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -253,7 +243,7 @@ pub mod observer_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with ObserverServer.
@@ -285,10 +275,7 @@ pub mod observer_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -343,21 +330,16 @@ pub mod observer_server {
                 "/observer.Observer/Publish" => {
                     #[allow(non_camel_case_types)]
                     struct PublishSvc<T: Observer>(pub Arc<T>);
-                    impl<T: Observer> tonic::server::UnaryService<super::PublishRequest>
-                    for PublishSvc<T> {
+                    impl<T: Observer> tonic::server::UnaryService<super::PublishRequest> for PublishSvc<T> {
                         type Response = super::PublishResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::PublishRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Observer>::publish(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Observer>::publish(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -383,23 +365,19 @@ pub mod observer_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(empty_body());
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(empty_body());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

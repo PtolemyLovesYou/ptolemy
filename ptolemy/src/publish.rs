@@ -1,14 +1,16 @@
-use std::collections::BTreeMap;
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
-use ptolemy_core::generated::observer::{PublishRequest, PublishResponse, Record, Tier, LogType, observer_client::ObserverClient};
-use tonic::transport::Channel;
+use ptolemy_core::generated::observer::{
+    observer_client::ObserverClient, LogType, PublishRequest, PublishResponse, Record, Tier,
+};
 use pyo3::prelude::*;
+use std::collections::BTreeMap;
+use tonic::transport::Channel;
 
 pub mod client_config {
     pub struct ObserverConfig {
         pub host: String,
-        pub port: String
+        pub port: String,
     }
 
     impl ObserverConfig {
@@ -32,8 +34,9 @@ pub fn detect_log_type(log_type: &str) -> LogType {
         "output" => Some(LogType::Output),
         "feedback" => Some(LogType::Feedback),
         "metadata" => Some(LogType::Metadata),
-        _ => None
-    }.unwrap_or_else(|| panic!("Unknown log type {}", log_type))
+        _ => None,
+    }
+    .unwrap_or_else(|| panic!("Unknown log type {}", log_type))
 }
 
 pub fn detect_tier(tier: &str) -> Tier {
@@ -42,8 +45,9 @@ pub fn detect_tier(tier: &str) -> Tier {
         "subsystem" => Some(Tier::Subsystem),
         "component" => Some(Tier::Component),
         "subcomponent" => Some(Tier::Subcomponent),
-        _ => None
-    }.unwrap_or_else(|| panic!("Unknown tier {}", tier))
+        _ => None,
+    }
+    .unwrap_or_else(|| panic!("Unknown tier {}", tier))
 }
 
 #[pyclass]
@@ -64,7 +68,6 @@ pub struct ProtoRecord {
     field_name: Option<String>,
     field_value: Option<JsonSerializable>,
 }
-
 
 impl ProtoRecord {
     pub fn new(tier: Tier, log_type: LogType, parent_id: String, id: String) -> Self {
@@ -145,7 +148,7 @@ impl ProtoRecord {
             name: self.name,
             parameters: match self.parameters {
                 None => None,
-                Some(value) => json_serializable_to_value(&Some(value))
+                Some(value) => json_serializable_to_value(&Some(value)),
             },
             version: self.version,
             environment: self.environment,
@@ -156,7 +159,7 @@ impl ProtoRecord {
             field_name: self.field_name,
             field_value: match self.field_value {
                 None => None,
-                Some(value) => json_serializable_to_value(&Some(value))
+                Some(value) => json_serializable_to_value(&Some(value)),
             },
         }
     }
@@ -169,98 +172,110 @@ pub struct RecordBuilder;
 impl RecordBuilder {
     #[new]
     pub fn new() -> RecordBuilder {
-        RecordBuilder { }
+        RecordBuilder {}
     }
 
     #[pyo3(signature = (tier, parent_id, id, name, parameters=None, version=None, environment=None))]
     #[staticmethod]
-    pub fn event(tier: &str, parent_id: String, id: String, name: String, parameters: Option<JsonSerializable>, version: Option<String>, environment: Option<String>) -> ProtoRecord {
-        ProtoRecord::new(
-            detect_tier(tier),
-            LogType::Event,
-            parent_id,
-            id
-        )
-        .name(name)
-        .parameters(parameters)
-        .version(version)
-        .environment(environment)
+    pub fn event(
+        tier: &str,
+        parent_id: String,
+        id: String,
+        name: String,
+        parameters: Option<JsonSerializable>,
+        version: Option<String>,
+        environment: Option<String>,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(tier), LogType::Event, parent_id, id)
+            .name(name)
+            .parameters(parameters)
+            .version(version)
+            .environment(environment)
     }
 
     #[pyo3(signature = (tier, parent_id, id, start_time, end_time, error_type=None, error_content=None))]
     #[staticmethod]
-    pub fn runtime(tier: &str, parent_id: String, id: String, start_time: f32, end_time: f32, error_type: Option<String>, error_content: Option<String>) -> ProtoRecord {
-        ProtoRecord::new(
-            detect_tier(tier),
-            LogType::Runtime,
-            parent_id,
-            id,
-        )
-        .start_time(start_time)
-        .end_time(end_time)
-        .error_type(error_type)
-        .error_content(error_content)
+    pub fn runtime(
+        tier: &str,
+        parent_id: String,
+        id: String,
+        start_time: f32,
+        end_time: f32,
+        error_type: Option<String>,
+        error_content: Option<String>,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(tier), LogType::Runtime, parent_id, id)
+            .start_time(start_time)
+            .end_time(end_time)
+            .error_type(error_type)
+            .error_content(error_content)
     }
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
     #[staticmethod]
-    pub fn input(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
-        ProtoRecord::new(
-            detect_tier(tier),
-            LogType::Input,
-            parent_id,
-            id,
-        )
-        .field_name(field_name)
-        .field_value(field_value)
+    pub fn input(
+        tier: &str,
+        parent_id: String,
+        id: String,
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(tier), LogType::Input, parent_id, id)
+            .field_name(field_name)
+            .field_value(field_value)
     }
 
     #[staticmethod]
-    pub fn output(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
-        ProtoRecord::new(
-            detect_tier(tier),
-            LogType::Output,
-            parent_id,
-            id,
-        )
-        .field_name(field_name)
-        .field_value(field_value)
+    pub fn output(
+        tier: &str,
+        parent_id: String,
+        id: String,
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(tier), LogType::Output, parent_id, id)
+            .field_name(field_name)
+            .field_value(field_value)
     }
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
     #[staticmethod]
-    pub fn feedback(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
-        ProtoRecord::new(
-            detect_tier(tier),
-            LogType::Feedback,
-            parent_id,
-            id,
-        )
-        .field_name(field_name)
-        .field_value(field_value)
+    pub fn feedback(
+        tier: &str,
+        parent_id: String,
+        id: String,
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(tier), LogType::Feedback, parent_id, id)
+            .field_name(field_name)
+            .field_value(field_value)
     }
 
     #[staticmethod]
-    pub fn metadata(tier: &str, parent_id: String, id: String, field_name: String, field_value: JsonSerializable) -> ProtoRecord {
-        ProtoRecord::new(
-            detect_tier(tier),
-            LogType::Metadata,
-            parent_id,
-            id,
-        )
-        .field_name(field_name)
-        .field_value(field_value)
+    pub fn metadata(
+        tier: &str,
+        parent_id: String,
+        id: String,
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(tier), LogType::Metadata, parent_id, id)
+            .field_name(field_name)
+            .field_value(field_value)
     }
 }
 
 #[pyclass]
 pub struct BlockingObserverClient {
     client: ObserverClient<Channel>,
-    rt: tokio::runtime::Runtime
+    rt: tokio::runtime::Runtime,
 }
 
 impl BlockingObserverClient {
-    pub fn connect(config: client_config::ObserverConfig) -> Result<BlockingObserverClient, Box<dyn std::error::Error>> {
+    pub fn connect(
+        config: client_config::ObserverConfig,
+    ) -> Result<BlockingObserverClient, Box<dyn std::error::Error>> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
@@ -270,19 +285,16 @@ impl BlockingObserverClient {
         Ok(BlockingObserverClient { client, rt })
     }
 
-    pub fn publish_request(&mut self, records: Vec<Record>) -> Result<PublishResponse, Box<dyn std::error::Error>> {
-        self.rt.block_on(
-            async {
-                let publish_request = tonic::Request::new(
-                    PublishRequest {
-                        records: records
-                    }
-                );
-                let response = self.client.publish(publish_request).await?;
+    pub fn publish_request(
+        &mut self,
+        records: Vec<Record>,
+    ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
+        self.rt.block_on(async {
+            let publish_request = tonic::Request::new(PublishRequest { records: records });
+            let response = self.client.publish(publish_request).await?;
 
-                Ok(response.into_inner())
-            }
-        )
+            Ok(response.into_inner())
+        })
     }
 }
 
@@ -316,7 +328,7 @@ pub enum JsonSerializable {
     Float(f64),
     Bool(bool),
     Dict(BTreeMap<String, Option<JsonSerializable>>),
-    List(Vec<Option<JsonSerializable>>)
+    List(Vec<Option<JsonSerializable>>),
 }
 
 fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> {
