@@ -40,9 +40,9 @@ Run `docker compose` to start the containers:
 docker compose up -d # omit the -d flag to keep the docker compose logs in your terminal
 ```
 
-Once everything is up and running, run the following command to configure Clickhouse:
+Once everything is up and running, run the following command to configure Postgres:
 ```sh
-docker compose exec -e DB=clickhouse goose /bin/bash -c "source ./configure.sh && goose up"
+make setup
 ```
 
 To verify that everything is up and running, navigate to `http://localhost:3000` in your web browser and verify that the UI loads.
