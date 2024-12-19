@@ -38,6 +38,8 @@ class Ptolemy(BaseModel):
     engine: Annotated[Engine, Field(default_factory=PtolemyEngine)]
     workspace_id: ID
 
+    autoflush: bool = False
+
     def start(self) -> Self:
         """
         Start a runtime.
@@ -103,7 +105,7 @@ class Ptolemy(BaseModel):
             ]
         )
 
-        if self._tier == Tier.SYSTEM:
+        if self._tier == Tier.SYSTEM and self.autoflush:
             self.engine.flush()  # pylint: disable=no-member
 
     def tier(self, tier: Tier) -> Self:
@@ -128,7 +130,7 @@ class Ptolemy(BaseModel):
             raise ValueError(f"Cannot spawn child of tier {self._tier}")
 
         return (
-            Ptolemy(engine=self.engine, workspace_id=self.workspace_id)
+            Ptolemy(engine=self.engine, workspace_id=self.workspace_id, autoflush=self.autoflush)
             .tier(self._tier.child)
             .event(
                 name=name,
@@ -148,7 +150,7 @@ class Ptolemy(BaseModel):
     ) -> "Ptolemy":
         """Start a new trace."""
         return (
-            Ptolemy(engine=self.engine, workspace_id=self.workspace_id)
+            Ptolemy(engine=self.engine, workspace_id=self.workspace_id, autoflush=self.autoflush)
             .tier(Tier.SYSTEM)
             .event(
                 parent_id=self.workspace_id,
