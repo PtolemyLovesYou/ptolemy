@@ -1,7 +1,6 @@
 """Types."""
 
 from typing import Union, Dict, Any, Annotated, TypeVar
-from datetime import datetime
 from uuid import UUID
 from pydantic import BeforeValidator, PlainSerializer, RootModel, field_validator
 
@@ -63,27 +62,3 @@ class IOSerializable(RootModel[T]):
             return self.model_dump()
 
         return self.model_dump_json()
-
-
-def _serialize_timestamp(v: datetime) -> str:
-    return v.isoformat()
-
-
-def _validate_timestamp(v: Union[datetime, str]) -> datetime:
-    if isinstance(v, datetime):
-        return v
-
-    if isinstance(v, str):
-        try:
-            return datetime.fromisoformat(v)
-        except ValueError as exc:
-            raise ValueError(f"Invalid timestamp: {v}") from exc
-
-    raise ValueError(f"Invalid timestamp: {v}")
-
-
-Timestamp = Annotated[  # pylint: disable=invalid-name
-    datetime,
-    BeforeValidator(_validate_timestamp),
-    PlainSerializer(_serialize_timestamp),
-]

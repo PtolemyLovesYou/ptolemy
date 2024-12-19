@@ -40,10 +40,10 @@ pub struct Record {
     #[prost(string, optional, tag = "8")]
     pub environment: ::core::option::Option<::prost::alloc::string::String>,
     /// runtime
-    #[prost(string, optional, tag = "9")]
-    pub start_time: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "10")]
-    pub end_time: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(float, optional, tag = "9")]
+    pub start_time: ::core::option::Option<f32>,
+    #[prost(float, optional, tag = "10")]
+    pub end_time: ::core::option::Option<f32>,
     #[prost(string, optional, tag = "11")]
     pub error_type: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "12")]

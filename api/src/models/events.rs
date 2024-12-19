@@ -1,6 +1,6 @@
 use crate::models::enums::FieldValueTypeEnum;
 use tracing::{error, instrument};
-use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
+use chrono::{naive::serde::ts_microseconds, NaiveDateTime, DateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
 use ptolemy_core::parser::{
@@ -16,21 +16,15 @@ pub trait EventTable {
 }
 
 #[instrument]
-fn parse_timestamp(timestamp: &Option<String>) -> Result<NaiveDateTime, ParseError> {
-    let ts = match timestamp {
-        Some(ts) => ts,
-        None => {
-            return Err(ParseError::MissingField);
-        }
-    };
-
-    match NaiveDateTime::parse_from_str(&ts, "%Y-%m-%dT%H:%M:%S%.6f") {
-        Ok(dt) => return Ok(dt),
-        Err(e) => {
-            error!("Error parsing timestamp: {:#?}", e);
-            Err(ParseError::BadTimestamp)
-        }
-    }
+fn parse_timestamp(timestamp: &Option<f32>) -> Result<NaiveDateTime, ParseError> {
+    timestamp
+        .map(|ts| {
+            let seconds = ts.trunc() as i64;
+            let nanoseconds = (ts.fract() * 1e9) as u32;
+            DateTime::from_timestamp(seconds, nanoseconds)
+        })
+        .map(|dt| dt.unwrap().naive_utc())
+        .ok_or(ParseError::MissingField)
 }
 
 macro_rules! create_event {

@@ -55,8 +55,8 @@ message Record {
     optional string environment = 8;
 
     // runtime
-    optional string start_time = 9;
-    optional string end_time = 10;
+    optional float start_time = 9;
+    optional float end_time = 10;
     optional string error_type = 11;
     optional string error_content = 12;
 

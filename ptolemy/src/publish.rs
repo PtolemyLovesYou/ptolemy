@@ -57,8 +57,8 @@ pub struct ProtoRecord {
     parameters: Option<JsonSerializable>,
     version: Option<String>,
     environment: Option<String>,
-    start_time: Option<String>,
-    end_time: Option<String>,
+    start_time: Option<f32>,
+    end_time: Option<f32>,
     error_type: Option<String>,
     error_content: Option<String>,
     field_name: Option<String>,
@@ -106,12 +106,12 @@ impl ProtoRecord {
         self
     }
 
-    pub fn start_time(mut self, start_time: String) -> Self {
+    pub fn start_time(mut self, start_time: f32) -> Self {
         self.start_time = Some(start_time);
         self
     }
 
-    pub fn end_time(mut self, end_time: String) -> Self {
+    pub fn end_time(mut self, end_time: f32) -> Self {
         self.end_time = Some(end_time);
         self
     }
@@ -189,7 +189,7 @@ impl RecordBuilder {
 
     #[pyo3(signature = (tier, parent_id, id, start_time, end_time, error_type=None, error_content=None))]
     #[staticmethod]
-    pub fn runtime(tier: &str, parent_id: String, id: String, start_time: String, end_time: String, error_type: Option<String>, error_content: Option<String>) -> ProtoRecord {
+    pub fn runtime(tier: &str, parent_id: String, id: String, start_time: f32, end_time: f32, error_type: Option<String>, error_content: Option<String>) -> ProtoRecord {
         ProtoRecord::new(
             detect_tier(tier),
             LogType::Runtime,
