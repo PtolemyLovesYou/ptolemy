@@ -5,11 +5,14 @@ format:
 
 .PHONY: diesel
 diesel:
-	docker compose \
-		exec \
-		-e DB=clickhouse \
-		api \
+	docker compose exec api \
 		/bin/bash -c "source /app/configure.sh && /bin/bash"
+
+
+.PHONY:
+setup:
+	docker compose exec api \
+		/bin/bash -c "source /app/configure.sh && diesel migration run"
 
 .PHONY: build-client
 build-client:
@@ -19,3 +22,7 @@ build-client:
 install-client:
 	make build-client \
 		&& pip install -e ./ptolemy
+
+.PHONY: docs
+docs:
+	cd docs && uv run mkdocs serve
