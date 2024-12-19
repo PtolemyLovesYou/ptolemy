@@ -1,4 +1,4 @@
-use axum::{routing::get, Router};
+use axum::{routing::get, Router, http::StatusCode, response::IntoResponse};
 use std::sync::Arc;
 use tracing::info;
 
@@ -9,6 +9,14 @@ use api::state::AppState;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
+use tonic_prometheus_layer::metrics::GlobalSettings;
+
+async fn metrics() -> impl IntoResponse {
+    match tonic_prometheus_layer::metrics::encode_to_string() {
+        Ok(metrics) => (StatusCode::OK, metrics).into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to encode metrics").into_response(),
+    }
+}
 
 /// Creates a base router for the Ptolemy API with default routes.
 ///
@@ -21,6 +29,7 @@ async fn base_router() -> Router {
     Router::new()
         .route("/", get(|| async { "Ptolemy API is up and running <3" }))
         .route("/ping", get(|| async { "Pong!" }))
+        .route("/metrics", get(metrics))
 }
 
 #[derive(Debug)]
@@ -50,6 +59,13 @@ async fn main() -> Result<(), ApiError> {
     let grpc_addr = "[::]:50051".parse().unwrap();
     let observer = MyObserver::new(shared_state.clone()).await;
 
+    tonic_prometheus_layer::metrics::try_init_settings(GlobalSettings {
+        histogram_buckets: vec![0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0, 10.0],
+        ..Default::default()
+    }).unwrap();
+
+    let metrics_layer = tonic_prometheus_layer::MetricsLayer::new();
+
     // Axum server setup
     let app = Router::new()
         .nest("/", base_router().await)
@@ -67,6 +83,7 @@ async fn main() -> Result<(), ApiError> {
         // gRPC server
         async move {
             match Server::builder()
+                .layer(metrics_layer)
                 .add_service(ObserverServer::new(observer))
                 .serve(grpc_addr)
                 .await

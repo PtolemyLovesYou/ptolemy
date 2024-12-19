@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'ptolemy'
+    static_configs:
+      - targets: ['ptolemy:8684']
+    metrics_path: '/metrics'
