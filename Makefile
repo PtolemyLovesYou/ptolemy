@@ -19,3 +19,7 @@ build-client:
 install-client:
 	make build-client \
 		&& pip install -e ./ptolemy
+
+.PHONY: docs
+docs:
+	cd docs && uv run mkdocs serve
