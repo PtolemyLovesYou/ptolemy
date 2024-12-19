@@ -1,14 +1,39 @@
+use std::sync::Arc;
 use ptolemy_core::generated::observer::{
-    observer_server::Observer, PublishRequest, PublishResponse,
+    observer_server::Observer, PublishRequest, PublishResponse, Record
 };
 use tonic::{Request, Response, Status};
+use crate::state::AppState;
+use crate::models::events::EventRow;
 
-pub struct MyObserver {}
+pub struct MyObserver {
+    state: Arc<AppState>
+}
 
 impl MyObserver {
-    pub async fn new() -> Self {
-        Self {}
+    pub async fn new(state: Arc<AppState>) -> Self {
+        Self { state }
     }
+}
+
+async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
+    let _conn = state.pg_pool.get().await.unwrap();
+
+    let _parsed_records: Vec<EventRow> = records
+        .into_iter()
+        .filter_map(|r| {
+            match EventRow::from_record(&r) {
+                Ok(p) => {
+                    log::error!("Parsed record: {:#?}", p);
+                    Some(p)
+                },
+                Err(e) => {
+                    log::error!("Unable to parse record {:?}.{:?}: {:?}", r.tier(), r.log_type(), e);
+                    None
+                }
+            }
+        }
+    ).collect();
 }
 
 // async fn insert_rows(client: Arc<Client>, records: Vec<Record>) -> bool {
@@ -63,21 +88,9 @@ impl Observer for MyObserver {
 
         log::info!("Received {} records", records.len());
 
-        // for rec in records {
-        //     match RecordRow::from_record(&rec) {
-        //         Ok(rec) => {
-        //             log::info!("Record parsed: {:#?}", &rec);
-        //         },
-        //         Err(e) => {
-        //             log::error!("Error parsing object: {:#?}", e);
-        //         }
-        //     }
-        // }
-
-        // spawn publish task
-        // tokio::spawn(
-        //     insert_rows(client, records)
-        // );
+        tokio::spawn(
+            insert_rows(self.state.clone(), records)
+        );
 
         let reply = PublishResponse {
             successful: true,

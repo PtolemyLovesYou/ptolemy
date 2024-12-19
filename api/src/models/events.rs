@@ -287,6 +287,7 @@ create_runtime!(SubcomponentRuntime, subcomponent_runtime);
 create_io!(SubcomponentIO, subcomponent_io);
 create_metadata!(SubcomponentMetadata, subcomponent_metadata);
 
+#[derive(Debug)]
 pub enum EventRow {
     SystemEvent(SystemEvent),
     SystemRuntime(SystemRuntime),

@@ -47,7 +47,7 @@ async fn main() -> Result<(), ApiError> {
 
     // gRPC server setup
     let grpc_addr = "[::]:50051".parse().unwrap();
-    let observer = MyObserver::new().await;
+    let observer = MyObserver::new(shared_state.clone()).await;
 
     // Axum server setup
     let app = Router::new()
