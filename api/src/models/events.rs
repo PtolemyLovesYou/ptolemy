@@ -252,97 +252,35 @@ impl EventTable for MetadataRecord {
     }
 }
 
-#[derive(Debug)]
-pub enum EventRow {
-    SystemEvent(EventRecord),
-    SystemRuntime(RuntimeRecord),
-    SystemIO(IORecord),
-    SystemMetadata(MetadataRecord),
-    SubsystemEvent(EventRecord),
-    SubsystemRuntime(RuntimeRecord),
-    SubsystemIO(IORecord),
-    SubsystemMetadata(MetadataRecord),
-    ComponentEvent(EventRecord),
-    ComponentRuntime(RuntimeRecord),
-    ComponentIO(IORecord),
-    ComponentMetadata(MetadataRecord),
-    SubcomponentEvent(EventRecord),
-    SubcomponentRuntime(RuntimeRecord),
-    SubcomponentIO(IORecord),
-    SubcomponentMetadata(MetadataRecord),
-}
+pub fn parse_record<T: EventTable>(record: &Record) -> Result<T, ParseError> {
+    let tier = record.tier();
 
-impl EventRow {
-    #[instrument]
-    pub fn from_record(record: &Record) -> Result<EventRow, ParseError> {
-        let record = match (record.tier(), record.log_type()) {
-            // System
-            (Tier::System, LogType::Event) => {
-                EventRow::SystemEvent(EventRecord::from_record(record)?)
-            }
-            (Tier::System, LogType::Runtime) => {
-                EventRow::SystemRuntime(RuntimeRecord::from_record(record)?)
-            }
-            (Tier::System, LogType::Input | LogType::Output | LogType::Feedback) => {
-                EventRow::SystemIO(IORecord::from_record(record)?)
-            }
-            (Tier::System, LogType::Metadata) => {
-                EventRow::SystemMetadata(MetadataRecord::from_record(record)?)
-            }
+    match &tier {
+        Tier::UndeclaredTier => {
+            error!("Got a record with an undeclared tier: {:#?}", record);
+            return Err(ParseError::UndefinedTier);
+        },
+        t => t,
+    };
 
-            // Subsystem
-            (Tier::Subsystem, LogType::Event) => {
-                EventRow::SubsystemEvent(EventRecord::from_record(record)?)
-            }
-            (Tier::Subsystem, LogType::Runtime) => {
-                EventRow::SubsystemRuntime(RuntimeRecord::from_record(record)?)
-            }
-            (Tier::Subsystem, LogType::Input | LogType::Output | LogType::Feedback) => {
-                EventRow::SubsystemIO(IORecord::from_record(record)?)
-            }
-            (Tier::Subsystem, LogType::Metadata) => {
-                EventRow::SubsystemMetadata(MetadataRecord::from_record(record)?)
-            }
+    let parsed: Result<T, ParseError> = match record.log_type() {
+        LogType::UndeclaredLogType => {
+            error!("Got a record with an undeclared log type: {:#?}", record);
+            return Err(ParseError::UndefinedLogType);
+        },
+        _ => T::from_record(record),
+    };
 
-            // Component
-            (Tier::Component, LogType::Event) => {
-                EventRow::ComponentEvent(EventRecord::from_record(record)?)
-            }
-            (Tier::Component, LogType::Runtime) => {
-                EventRow::ComponentRuntime(RuntimeRecord::from_record(record)?)
-            }
-            (Tier::Component, LogType::Input | LogType::Output | LogType::Feedback) => {
-                EventRow::ComponentIO(IORecord::from_record(record)?)
-            }
-            (Tier::Component, LogType::Metadata) => {
-                EventRow::ComponentMetadata(MetadataRecord::from_record(record)?)
-            }
-
-            // Subcomponent
-            (Tier::Subcomponent, LogType::Event) => {
-                EventRow::SubcomponentEvent(EventRecord::from_record(record)?)
-            }
-            (Tier::Subcomponent, LogType::Runtime) => {
-                EventRow::SubcomponentRuntime(RuntimeRecord::from_record(record)?)
-            }
-            (Tier::Subcomponent, LogType::Input | LogType::Output | LogType::Feedback) => {
-                EventRow::SubcomponentIO(IORecord::from_record(record)?)
-            }
-            (Tier::Subcomponent, LogType::Metadata) => {
-                EventRow::SubcomponentMetadata(MetadataRecord::from_record(record)?)
-            }
-
-            (Tier::UndeclaredTier, _) => {
-                error!("Got a record with an undeclared tier: {:#?}", record);
-                return Err(ParseError::UndefinedTier);
-            }
-
-            (_, LogType::UndeclaredLogType) => {
-                error!("Got a record with an undeclared log type: {:#?}", record);
-                return Err(ParseError::UndefinedLogType);
-            }
-        };
-
-        Ok(record)
+    match parsed {
+        Ok(p) => Ok(p),
+        Err(e) => {
+            error!(
+                "Unable to parse record {:?}.{:?}: {:?}",
+                record.tier(),
+                record.log_type(),
+                e
+            );
+            Err(e)
+        }
     }
 }

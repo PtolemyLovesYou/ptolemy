@@ -1,8 +1,8 @@
-use crate::models::events::EventRow;
+use crate::models::events::{parse_record, EventRecord, RuntimeRecord, IORecord, MetadataRecord};
 use crate::state::AppState;
 use diesel_async::RunQueryDsl;
 use ptolemy_core::generated::observer::{
-    observer_server::Observer, PublishRequest, PublishResponse, Record,
+    observer_server::Observer, PublishRequest, PublishResponse, Record, Tier, LogType
 };
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -46,25 +46,6 @@ macro_rules! insert_records {
 async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
     let mut conn = state.pg_pool.get().await.unwrap();
 
-    let parsed_records: Vec<EventRow> = records
-        .into_iter()
-        .filter_map(|r| match EventRow::from_record(&r) {
-            Ok(p) => {
-                debug!("Parsed record: {:#?}", p);
-                Some(p)
-            }
-            Err(e) => {
-                error!(
-                    "Unable to parse record {:?}.{:?}: {:?}",
-                    r.tier(),
-                    r.log_type(),
-                    e
-                );
-                None
-            }
-        })
-        .collect();
-
     let mut system_event_rows = Vec::new();
     let mut system_runtime_rows = Vec::new();
     let mut system_io_rows = Vec::new();
@@ -85,26 +66,88 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
     let mut subcomponent_io_rows = Vec::new();
     let mut subcomponent_metadata_rows = Vec::new();
 
-    for r in parsed_records {
-        match r {
-            EventRow::SystemEvent(e) => system_event_rows.push(e),
-            EventRow::SystemRuntime(e) => system_runtime_rows.push(e),
-            EventRow::SystemIO(e) => system_io_rows.push(e),
-            EventRow::SystemMetadata(e) => system_metadata_rows.push(e),
-            EventRow::SubsystemEvent(e) => subsystem_event_rows.push(e),
-            EventRow::SubsystemRuntime(e) => subsystem_runtime_rows.push(e),
-            EventRow::SubsystemIO(e) => subsystem_io_rows.push(e),
-            EventRow::SubsystemMetadata(e) => subsystem_metadata_rows.push(e),
-            EventRow::ComponentEvent(e) => component_event_rows.push(e),
-            EventRow::ComponentRuntime(e) => component_runtime_rows.push(e),
-            EventRow::ComponentIO(e) => component_io_rows.push(e),
-            EventRow::ComponentMetadata(e) => component_metadata_rows.push(e),
-            EventRow::SubcomponentEvent(e) => subcomponent_event_rows.push(e),
-            EventRow::SubcomponentRuntime(e) => subcomponent_runtime_rows.push(e),
-            EventRow::SubcomponentIO(e) => subcomponent_io_rows.push(e),
-            EventRow::SubcomponentMetadata(e) => subcomponent_metadata_rows.push(e),
-        }
-    }
+    let _ = records.into_iter().filter_map(|record| {
+        match record.log_type() {
+            LogType::Event => match parse_record::<EventRecord>(&record) {
+                Ok(parsed) => {
+                    match record.tier() {
+                        Tier::System => system_event_rows.push(parsed),
+                        Tier::Subsystem => subsystem_event_rows.push(parsed),
+                        Tier::Component => component_event_rows.push(parsed),
+                        Tier::Subcomponent => subcomponent_event_rows.push(parsed),
+                        Tier::UndeclaredTier => {
+                            error!("Record has undeclared tier: {:?}", record);
+                            return None;
+                        }
+                    };
+                },
+                Err(e) => {
+                    error!("Failed to parse record: {:#?}", e);
+                    return None;
+                },
+            },
+            LogType::Runtime => match parse_record::<RuntimeRecord>(&record) {
+                Ok(parsed) => {
+                    match record.tier() {
+                        Tier::System => system_runtime_rows.push(parsed),
+                        Tier::Subsystem => subsystem_runtime_rows.push(parsed),
+                        Tier::Component => component_runtime_rows.push(parsed),
+                        Tier::Subcomponent => subcomponent_runtime_rows.push(parsed),
+                        Tier::UndeclaredTier => {
+                            error!("Record has undeclared tier: {:?}", record);
+                            return None;
+                        }
+                    };
+                },
+                Err(e) => {
+                    error!("Failed to parse record: {:#?}", e);
+                    return None;
+                },
+            },
+            LogType::Input | LogType::Output | LogType::Feedback => match parse_record::<IORecord>(&record) {
+                Ok(parsed) => {
+                    match record.tier() {
+                        Tier::System => system_io_rows.push(parsed),
+                        Tier::Subsystem => subsystem_io_rows.push(parsed),
+                        Tier::Component => component_io_rows.push(parsed),
+                        Tier::Subcomponent => subcomponent_io_rows.push(parsed),
+                        Tier::UndeclaredTier => {
+                            error!("Record has undeclared tier: {:?}", record);
+                            return None;
+                        }
+                    };
+                },
+                Err(e) => {
+                    error!("Failed to parse record: {:#?}", e);
+                    return None;
+                },
+            },
+            LogType::Metadata => match parse_record::<MetadataRecord>(&record) {
+                Ok(parsed) => {
+                    match record.tier() {
+                        Tier::System => system_metadata_rows.push(parsed),
+                        Tier::Subsystem => subsystem_metadata_rows.push(parsed),
+                        Tier::Component => component_metadata_rows.push(parsed),
+                        Tier::Subcomponent => subcomponent_metadata_rows.push(parsed),
+                        Tier::UndeclaredTier => {
+                            error!("Record has undeclared tier: {:?}", record);
+                            return None;
+                        }
+                    };
+                },
+                Err(e) => {
+                    error!("Failed to parse record: {:#?}", e);
+                    return None;
+                },
+            },
+            LogType::UndeclaredLogType => {
+                error!("Record has undeclared log type: {:?}", record);
+                return None;
+            },
+        };
+
+        Some(true)
+    }).collect::<Vec<bool>>();
 
     insert_records!(conn, system_event_rows, system_event);
     insert_records!(conn, system_runtime_rows, system_runtime);
