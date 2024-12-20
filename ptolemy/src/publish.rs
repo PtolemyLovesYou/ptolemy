@@ -4,6 +4,7 @@ use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, LogType, PublishRequest, PublishResponse, Record, Tier,
 };
 use pyo3::prelude::*;
+use pyo3::{Bound, types::{PyString, PyFloat}};
 use std::collections::BTreeMap;
 use tonic::transport::Channel;
 
@@ -178,90 +179,102 @@ impl RecordBuilder {
     #[pyo3(signature = (tier, parent_id, id, name, parameters=None, version=None, environment=None))]
     #[staticmethod]
     pub fn event(
-        tier: &str,
-        parent_id: String,
-        id: String,
-        name: String,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        name: Bound<'_, PyString>,
         parameters: Option<JsonSerializable>,
-        version: Option<String>,
-        environment: Option<String>,
+        version: Option<Bound<'_, PyString>>,
+        environment: Option<Bound<'_, PyString>>,
     ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(tier), LogType::Event, parent_id, id)
-            .name(name)
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Event, parent_id.to_string(), id.to_string())
+            .name(name.to_string())
             .parameters(parameters)
-            .version(version)
-            .environment(environment)
+            .version(match version {
+                Some(v) => Some(v.to_string()),
+                None => None,
+            })
+            .environment(match environment {
+                Some(e) => Some(e.to_string()),
+                None => None,
+            })
     }
 
     #[pyo3(signature = (tier, parent_id, id, start_time, end_time, error_type=None, error_content=None))]
     #[staticmethod]
     pub fn runtime(
-        tier: &str,
-        parent_id: String,
-        id: String,
-        start_time: f32,
-        end_time: f32,
-        error_type: Option<String>,
-        error_content: Option<String>,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        start_time: Bound<'_, PyFloat>,
+        end_time: Bound<'_, PyFloat>,
+        error_type: Option<Bound<'_, PyString>>,
+        error_content: Option<Bound<'_, PyString>>,
     ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(tier), LogType::Runtime, parent_id, id)
-            .start_time(start_time)
-            .end_time(end_time)
-            .error_type(error_type)
-            .error_content(error_content)
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Runtime, parent_id.to_string(), id.to_string())
+            .start_time(start_time.extract().unwrap())
+            .end_time(end_time.extract().unwrap())
+            .error_type(match error_type {
+                Some(e) => Some(e.to_string()),
+                None => None,
+            })
+            .error_content(match error_content {
+                Some(e) => Some(e.to_string()),
+                None => None,
+            })
     }
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
     #[staticmethod]
     pub fn input(
-        tier: &str,
-        parent_id: String,
-        id: String,
-        field_name: String,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
     ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(tier), LogType::Input, parent_id, id)
-            .field_name(field_name)
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Input, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
             .field_value(field_value)
     }
 
     #[staticmethod]
     pub fn output(
-        tier: &str,
-        parent_id: String,
-        id: String,
-        field_name: String,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
     ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(tier), LogType::Output, parent_id, id)
-            .field_name(field_name)
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Output, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
             .field_value(field_value)
     }
 
     #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
     #[staticmethod]
     pub fn feedback(
-        tier: &str,
-        parent_id: String,
-        id: String,
-        field_name: String,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
     ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(tier), LogType::Feedback, parent_id, id)
-            .field_name(field_name)
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Feedback, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
             .field_value(field_value)
     }
 
     #[staticmethod]
     pub fn metadata(
-        tier: &str,
-        parent_id: String,
-        id: String,
-        field_name: String,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
     ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(tier), LogType::Metadata, parent_id, id)
-            .field_name(field_name)
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Metadata, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
             .field_value(field_value)
     }
 }
