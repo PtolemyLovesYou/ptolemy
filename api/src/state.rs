@@ -1,6 +1,17 @@
 use diesel_async::pooled_connection::bb8::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
+use crate::error::ApiError;
+
+fn get_env_var(name: &str) -> Result<String, ApiError> {
+    match std::env::var(name) {
+        Ok(val) => Ok(val),
+        Err(_) => {
+            tracing::error!("{} must be set.", name);
+            Err(ApiError::ConfigError)
+        },
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -10,14 +21,14 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new() -> Self {
-        let port = std::env::var("API_PORT").expect("API_PORT must be set.");
-        let postgres_host = std::env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set.");
-        let postgres_port = std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set.");
-        let postgres_user = std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be set.");
+    pub async fn new() -> Result<Self, ApiError> {
+        let port = get_env_var("API_PORT")?;
+        let postgres_host = get_env_var("POSTGRES_HOST")?;
+        let postgres_port = get_env_var("POSTGRES_PORT")?;
+        let postgres_user = get_env_var("POSTGRES_USER")?;
         let postgres_password =
-            std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set.");
-        let postgres_db = std::env::var("POSTGRES_DB").expect("POSTGRES_DB must be set.");
+            get_env_var("POSTGRES_PASSWORD")?;
+        let postgres_db = get_env_var("POSTGRES_DB")?;
         
         // Default to false if the env var is not set
         let enable_prometheus = std::env::var("ENABLE_PROMETHEUS")
@@ -32,10 +43,12 @@ impl AppState {
         let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(db_url);
         let pg_pool = Pool::builder().build(config).await.unwrap();
 
-        Self { 
+        let state = Self { 
             port, 
             pg_pool,
             enable_prometheus,
-        }
+        };
+
+        Ok(state)
     }
 }

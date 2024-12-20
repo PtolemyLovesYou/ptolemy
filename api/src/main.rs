@@ -10,6 +10,7 @@ use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
 use tonic_prometheus_layer::metrics::GlobalSettings;
+use api::error::ApiError;
 
 async fn metrics() -> impl IntoResponse {
     match tonic_prometheus_layer::metrics::encode_to_string() {
@@ -37,17 +38,11 @@ async fn base_router(enable_prometheus: bool) -> Router {
     router
 }
 
-#[derive(Debug)]
-enum ApiError {
-    APIError,
-    GRPCError,
-}
-
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt::init();
 
-    let shared_state = Arc::new(AppState::new().await);
+    let shared_state = Arc::new(AppState::new().await?);
 
     // gRPC server setup
     let grpc_addr = "[::]:50051".parse().unwrap();
