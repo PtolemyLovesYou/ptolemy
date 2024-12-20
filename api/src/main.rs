@@ -25,11 +25,16 @@ async fn metrics() -> impl IntoResponse {
 /// - GET `/ping`: Returns a "Pong!" message for a basic health check.
 ///
 /// Returns a `Router` configured with the specified routes.
-async fn base_router() -> Router {
-    Router::new()
+async fn base_router(enable_prometheus: bool) -> Router {
+    let mut router = Router::new()
         .route("/", get(|| async { "Ptolemy API is up and running <3" }))
-        .route("/ping", get(|| async { "Pong!" }))
-        .route("/metrics", get(metrics))
+        .route("/ping", get(|| async { "Pong!" }));
+    
+    if enable_prometheus {
+        router = router.route("/metrics", get(metrics));
+    }
+    
+    router
 }
 
 #[derive(Debug)]
@@ -38,17 +43,6 @@ enum ApiError {
     GRPCError,
 }
 
-/// Main entry point for the Ptolemy API server.
-///
-/// Initializes the `env_logger`, builds the application with the base router,
-/// initializes the `ApiConfig` with the host and port from the environment
-/// variables `PTOLEMY_API_HOST` and `PTOLEMY_API_PORT` respectively.
-///
-/// Then, it sets up a TCP listener using Tokio, binds it to the server URL
-/// and logs the URL to the console.
-///
-/// Finally, it runs the application using `axum::serve` and waits for the
-/// server to shut down.
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt::init();
@@ -59,16 +53,9 @@ async fn main() -> Result<(), ApiError> {
     let grpc_addr = "[::]:50051".parse().unwrap();
     let observer = MyObserver::new(shared_state.clone()).await;
 
-    tonic_prometheus_layer::metrics::try_init_settings(GlobalSettings {
-        histogram_buckets: vec![0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0, 10.0],
-        ..Default::default()
-    }).unwrap();
-
-    let metrics_layer = tonic_prometheus_layer::MetricsLayer::new();
-
     // Axum server setup
     let app = Router::new()
-        .nest("/", base_router().await)
+        .nest("/", base_router(shared_state.enable_prometheus).await)
         .nest("/graphql", graphql_router().await)
         .nest("/workspace", workspace_router(&shared_state).await);
 
@@ -77,35 +64,72 @@ async fn main() -> Result<(), ApiError> {
 
     info!("Observer server listening on {}", grpc_addr);
     info!("Axum server serving at {}", &server_url);
-
+    
     // Run both servers concurrently
-    try_join!(
-        // gRPC server
-        async move {
-            match Server::builder()
-                .layer(metrics_layer)
-                .add_service(ObserverServer::new(observer))
-                .serve(grpc_addr)
-                .await
-            {
-                Ok(_) => Ok(()),
-                Err(e) => {
-                    info!("gRPC server error: {}", e);
-                    return Err(ApiError::APIError);
+    if shared_state.enable_prometheus {
+        info!("Prometheus metrics enabled");
+        tonic_prometheus_layer::metrics::try_init_settings(GlobalSettings {
+            histogram_buckets: vec![0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0, 10.0],
+            ..Default::default()
+        }).unwrap();
+
+        let metrics_layer = tonic_prometheus_layer::MetricsLayer::new();
+
+        try_join!(
+            // gRPC server with metrics
+            async move {
+                match Server::builder()
+                    .layer(metrics_layer)
+                    .add_service(ObserverServer::new(observer))
+                    .serve(grpc_addr)
+                    .await
+                {
+                    Ok(_) => Ok(()),
+                    Err(e) => {
+                        info!("gRPC server error: {}", e);
+                        return Err(ApiError::APIError);
+                    }
+                }
+            },
+            // Axum server
+            async move {
+                match axum::serve(listener, app).await {
+                    Ok(_) => Ok(()),
+                    Err(e) => {
+                        info!("Axum server error: {}", e);
+                        return Err(ApiError::GRPCError);
+                    }
                 }
             }
-        },
-        // Axum server
-        async move {
-            match axum::serve(listener, app).await {
-                Ok(_) => Ok(()),
-                Err(e) => {
-                    info!("Axum server error: {}", e);
-                    return Err(ApiError::GRPCError);
+        )?;
+    } else {
+        try_join!(
+            // gRPC server without metrics
+            async move {
+                match Server::builder()
+                    .add_service(ObserverServer::new(observer))
+                    .serve(grpc_addr)
+                    .await
+                {
+                    Ok(_) => Ok(()),
+                    Err(e) => {
+                        info!("gRPC server error: {}", e);
+                        return Err(ApiError::APIError);
+                    }
+                }
+            },
+            // Axum server
+            async move {
+                match axum::serve(listener, app).await {
+                    Ok(_) => Ok(()),
+                    Err(e) => {
+                        info!("Axum server error: {}", e);
+                        return Err(ApiError::GRPCError);
+                    }
                 }
             }
-        }
-    )?;
+        )?;
+    }
 
     Ok(())
 }

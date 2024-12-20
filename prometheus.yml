@@ -7,3 +7,6 @@ scrape_configs:
     static_configs:
       - targets: ['ptolemy:8684']
     metrics_path: '/metrics'
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']

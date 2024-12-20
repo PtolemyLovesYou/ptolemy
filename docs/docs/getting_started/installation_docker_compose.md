@@ -36,3 +36,16 @@ make setup
 ```
 
 To verify that everything is up and running, navigate to `http://localhost:3000` in your web browser and verify that the UI loads.
+
+### Running Prometheus
+If you would like to deploy with prometheus, add the following to your `.env` file:
+```
+ENABLE_PROMETHEUS=true
+```
+
+Then, modify your `docker compose up` command to the following:
+```
+docker compose up --profile dev
+```
+
+Prometheus is disabled by default for performance reasons.
