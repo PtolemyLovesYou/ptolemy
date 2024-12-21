@@ -14,8 +14,8 @@ use api::error::ApiError;
 
 async fn metrics() -> impl IntoResponse {
     match tonic_prometheus_layer::metrics::encode_to_string() {
-        Ok(metrics) => (StatusCode::OK, metrics).into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to encode metrics").into_response(),
+        Ok(metrics) => metrics.into_response(),
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 

@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8684:8000"
+      - "8000:8000"
       - "50051:50051"
     volumes:
       - ./api:/app
@@ -55,9 +55,27 @@ services:
       - '--no-collector.stat_bgwriter'
     profiles:
       - prometheus
+  grafana:
+      image: grafana/grafana:latest
+      container_name: grafana
+      ports:
+        - "3000:3000"
+      volumes:
+        - grafana_data:/var/lib/grafana
+      environment:
+        - GF_SECURITY_ADMIN_USER=admin
+        - GF_SECURITY_ADMIN_PASSWORD=admin
+      depends_on:
+        - prometheus
+      networks:
+        - ptolemy
+      profiles:
+        - prometheus
 
 volumes:
   postgres:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:
