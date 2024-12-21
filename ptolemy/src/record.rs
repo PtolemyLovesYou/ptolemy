@@ -1,0 +1,306 @@
+use pyo3::{Bound, types::{PyString, PyFloat}};
+use ptolemy_core::generated::observer::{LogType, Record, Tier,};
+use prost_types::value::Kind;
+use prost_types::{ListValue, Struct, Value};
+use std::collections::BTreeMap;
+use pyo3::prelude::*;
+
+pub fn detect_log_type(log_type: &str) -> LogType {
+    match log_type {
+        "event" => Some(LogType::Event),
+        "runtime" => Some(LogType::Runtime),
+        "input" => Some(LogType::Input),
+        "output" => Some(LogType::Output),
+        "feedback" => Some(LogType::Feedback),
+        "metadata" => Some(LogType::Metadata),
+        _ => None,
+    }
+    .unwrap_or_else(|| panic!("Unknown log type {}", log_type))
+}
+
+pub fn detect_tier(tier: &str) -> Tier {
+    match tier {
+        "system" => Some(Tier::System),
+        "subsystem" => Some(Tier::Subsystem),
+        "component" => Some(Tier::Component),
+        "subcomponent" => Some(Tier::Subcomponent),
+        _ => None,
+    }
+    .unwrap_or_else(|| panic!("Unknown tier {}", tier))
+}
+
+#[pyclass]
+#[derive(Clone, Debug)]
+pub struct ProtoRecord {
+    tier: Tier,
+    log_type: LogType,
+    parent_id: String,
+    id: String,
+    name: Option<String>,
+    parameters: Option<JsonSerializable>,
+    version: Option<String>,
+    environment: Option<String>,
+    start_time: Option<f32>,
+    end_time: Option<f32>,
+    error_type: Option<String>,
+    error_content: Option<String>,
+    field_name: Option<String>,
+    field_value: Option<JsonSerializable>,
+}
+
+impl ProtoRecord {
+    pub fn new(tier: Tier, log_type: LogType, parent_id: String, id: String) -> Self {
+        ProtoRecord {
+            tier: tier,
+            log_type: log_type,
+            parent_id,
+            id,
+            name: None,
+            parameters: None,
+            version: None,
+            environment: None,
+            start_time: None,
+            end_time: None,
+            error_type: None,
+            error_content: None,
+            field_name: None,
+            field_value: None,
+        }
+    }
+
+    pub fn name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn parameters(mut self, parameters: Option<JsonSerializable>) -> Self {
+        self.parameters = parameters;
+        self
+    }
+
+    pub fn version(mut self, version: Option<String>) -> Self {
+        self.version = version;
+        self
+    }
+
+    pub fn environment(mut self, environment: Option<String>) -> Self {
+        self.environment = environment;
+        self
+    }
+
+    pub fn start_time(mut self, start_time: f32) -> Self {
+        self.start_time = Some(start_time);
+        self
+    }
+
+    pub fn end_time(mut self, end_time: f32) -> Self {
+        self.end_time = Some(end_time);
+        self
+    }
+
+    pub fn error_type(mut self, error_type: Option<String>) -> Self {
+        self.error_type = error_type;
+        self
+    }
+
+    pub fn error_content(mut self, error_content: Option<String>) -> Self {
+        self.error_content = error_content;
+        self
+    }
+
+    pub fn field_name(mut self, field_name: String) -> Self {
+        self.field_name = Some(field_name);
+        self
+    }
+
+    pub fn field_value(mut self, field_value: JsonSerializable) -> Self {
+        self.field_value = Some(field_value);
+        self
+    }
+
+    pub fn proto(self) -> Record {
+        Record {
+            tier: self.tier.into(),
+            log_type: self.log_type.into(),
+            parent_id: self.parent_id,
+            id: self.id,
+            name: self.name,
+            parameters: match self.parameters {
+                None => None,
+                Some(value) => json_serializable_to_value(&Some(value)),
+            },
+            version: self.version,
+            environment: self.environment,
+            start_time: self.start_time,
+            end_time: self.end_time,
+            error_type: self.error_type,
+            error_content: self.error_content,
+            field_name: self.field_name,
+            field_value: match self.field_value {
+                None => None,
+                Some(value) => json_serializable_to_value(&Some(value)),
+            },
+        }
+    }
+}
+
+#[pyclass]
+pub struct RecordBuilder;
+
+#[pymethods]
+impl RecordBuilder {
+    #[new]
+    pub fn new() -> RecordBuilder {
+        RecordBuilder {}
+    }
+
+    #[pyo3(signature = (tier, parent_id, id, name, parameters=None, version=None, environment=None))]
+    #[staticmethod]
+    pub fn event(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        name: Bound<'_, PyString>,
+        parameters: Option<JsonSerializable>,
+        version: Option<Bound<'_, PyString>>,
+        environment: Option<Bound<'_, PyString>>,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Event, parent_id.to_string(), id.to_string())
+            .name(name.to_string())
+            .parameters(parameters)
+            .version(match version {
+                Some(v) => Some(v.to_string()),
+                None => None,
+            })
+            .environment(match environment {
+                Some(e) => Some(e.to_string()),
+                None => None,
+            })
+    }
+
+    #[pyo3(signature = (tier, parent_id, id, start_time, end_time, error_type=None, error_content=None))]
+    #[staticmethod]
+    pub fn runtime(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        start_time: Bound<'_, PyFloat>,
+        end_time: Bound<'_, PyFloat>,
+        error_type: Option<Bound<'_, PyString>>,
+        error_content: Option<Bound<'_, PyString>>,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Runtime, parent_id.to_string(), id.to_string())
+            .start_time(start_time.extract().unwrap())
+            .end_time(end_time.extract().unwrap())
+            .error_type(match error_type {
+                Some(e) => Some(e.to_string()),
+                None => None,
+            })
+            .error_content(match error_content {
+                Some(e) => Some(e.to_string()),
+                None => None,
+            })
+    }
+
+    #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
+    #[staticmethod]
+    pub fn input(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Input, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
+            .field_value(field_value)
+    }
+
+    #[staticmethod]
+    pub fn output(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Output, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
+            .field_value(field_value)
+    }
+
+    #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
+    #[staticmethod]
+    pub fn feedback(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Feedback, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
+            .field_value(field_value)
+    }
+
+    #[staticmethod]
+    pub fn metadata(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: JsonSerializable,
+    ) -> ProtoRecord {
+        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Metadata, parent_id.to_string(), id.to_string())
+            .field_name(field_name.to_string())
+            .field_value(field_value)
+    }
+}
+
+#[derive(FromPyObject, Clone, Debug)]
+pub enum JsonSerializable {
+    String(String),
+    Int(isize),
+    Float(f64),
+    Bool(bool),
+    Dict(BTreeMap<String, Option<JsonSerializable>>),
+    List(Vec<Option<JsonSerializable>>),
+}
+
+fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> {
+    match json {
+        Some(JsonSerializable::String(s)) => Some(Value {
+            kind: Some(Kind::StringValue(s.clone())),
+        }),
+        Some(JsonSerializable::Int(i)) => Some(Value {
+            kind: Some(Kind::NumberValue(*i as f64)),
+        }),
+        Some(JsonSerializable::Float(f)) => Some(Value {
+            kind: Some(Kind::NumberValue(*f)),
+        }),
+        Some(JsonSerializable::Bool(b)) => Some(Value {
+            kind: Some(Kind::BoolValue(*b)),
+        }),
+        Some(JsonSerializable::Dict(d)) => {
+            let mut fields = BTreeMap::new();
+            for (k, v) in d {
+                if let Some(value) = json_serializable_to_value(v) {
+                    fields.insert(k.clone(), value);
+                }
+            }
+            Some(Value {
+                kind: Some(Kind::StructValue(Struct { fields })),
+            })
+        }
+        Some(JsonSerializable::List(l)) => {
+            let values: Vec<Value> = l
+                .iter()
+                .filter_map(|v| json_serializable_to_value(v))
+                .collect();
+            Some(Value {
+                kind: Some(Kind::ListValue(ListValue { values })),
+            })
+        }
+        None => None,
+    }
+}
