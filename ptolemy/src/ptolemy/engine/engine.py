@@ -11,10 +11,6 @@ class Engine(BaseModel, ABC):
     """Engine abstract class."""
 
     @abstractmethod
-    def push_records(self, records: List[Record]):
-        """Push records."""
-
-    @abstractmethod
     def queue(self, records: Iterable[Record]):
         """Queue records."""
 
