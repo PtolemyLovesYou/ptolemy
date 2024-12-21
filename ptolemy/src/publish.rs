@@ -46,11 +46,16 @@ impl BlockingObserverClient {
     }
 
     pub fn send_batch(&mut self) -> bool {
-        let clone = self.queue.clone();
-        let mut queue = clone.lock().unwrap();
-        let n_to_drain = self.batch_size.min(queue.len());
-        let records: Vec<ProtoRecord> = queue.drain(..n_to_drain).into_iter().collect();
-        drop(queue); // Drop the lock on the queue before calling publish_request
+        let records = {
+            let mut queue = self.queue.lock().unwrap();
+            let n_to_drain = self.batch_size.min(queue.len());
+            queue.drain(..n_to_drain).collect::<Vec<ProtoRecord>>()
+        }; // Lock is released here
+
+        if records.is_empty() {
+            return true;
+        }
+
         let parsed_records: Vec<Record> = records.into_iter().map(|r| r.clone().proto()).collect();
 
         match self.publish_request(parsed_records) {
@@ -71,41 +76,40 @@ impl BlockingObserverClient {
         BlockingObserverClient::connect(config, batch_size).unwrap()
     }
 
-    pub fn queue(&mut self, records: Bound<'_, PyList>) -> bool {
+    pub fn queue(&mut self, py: Python<'_>, records: Bound<'_, PyList>) -> bool {
         let records: Vec<ProtoRecord> = records.extract().unwrap();
-        let clone = self.queue.clone();
-        let mut queue = clone.lock().unwrap();
-        queue.extend(records.into_iter());
-        drop(queue);
+        
+        py.allow_threads(|| {
+            let should_send_batch;
 
-        true
-    }
-
-    pub fn queue_size(&mut self) -> usize {
-        let clone = self.queue.clone();
-        let queue = clone.lock().unwrap();
-
-        let n = queue.len();
-        drop(queue);
-
-        n
-    }
-
-    pub fn flush(&mut self) -> bool {
-        loop {
-            let size = {
-                let queue = self.queue.lock().unwrap();
-                queue.len()
+            {
+                let mut queue = self.queue.lock().unwrap();
+                queue.extend(records.into_iter());
+                should_send_batch = queue.len() >= self.batch_size;
             };
-            
-            if size == 0 {
-                break;
+
+            if should_send_batch {
+                self.send_batch();
             }
-            
-            self.send_batch();
         }
-    
+        ); // Lock is released here
+
         true
+    }
+
+    pub fn flush(&mut self, py: Python<'_>) -> bool {
+        py.allow_threads(
+            || {
+                while {
+                    let size = self.queue.lock().unwrap().len();
+                    size > 0
+                } {
+                    if !self.send_batch() {
+                        return false;
+                    }
+                }
+                true
+            }
+        )
     }
 }
-

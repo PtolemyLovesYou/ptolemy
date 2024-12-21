@@ -1,5 +1,6 @@
 """GRPC Engine with robust error handling and retries."""
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Iterable
 import logging
 from contextlib import contextmanager
@@ -22,6 +23,7 @@ class PtolemyEngine(Engine):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _client: BlockingObserverClient = PrivateAttr(default=None)
+    _executor: ThreadPoolExecutor = PrivateAttr(default_factory=lambda: ThreadPoolExecutor(max_workers=3))
     _is_connected: bool = PrivateAttr(default=False)
 
     # Configuration
@@ -66,9 +68,7 @@ class PtolemyEngine(Engine):
             EngineError: If queuing fails
         """
         with self._error_handling("queue"):
-            self._client.queue([i.proto() for i in records])
-            if self._client.queue_size() >= self.batch_size:
-                self.flush()
+            self._executor.submit(self._client.queue, [i.proto() for i in records])
 
     def flush(self) -> None:
         """
@@ -78,4 +78,5 @@ class PtolemyEngine(Engine):
             EngineError: If flush operation fails
         """
         with self._error_handling("flush"):
-            self._client.flush()
+            future = self._executor.submit(self._client.flush)
+            future.result()
