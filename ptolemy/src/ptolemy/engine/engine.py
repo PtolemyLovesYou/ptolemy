@@ -1,6 +1,6 @@
 """Engine abstract class."""
 
-from typing import Iterable, List
+from typing import Iterable
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 
