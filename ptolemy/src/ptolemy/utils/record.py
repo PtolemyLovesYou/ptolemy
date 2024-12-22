@@ -99,6 +99,14 @@ class Event(Record):
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
     version: Optional[str] = Field(min_length=1, max_length=16, default=None)
 
+    @property
+    def parameters_dict(self) -> Optional[dict]:
+        """Parameters as dictionary."""
+        if self.parameters is not None:
+            return self.parameters.model_dump()
+
+        return None
+
 
 class Runtime(Record):
     """Runtime class."""
@@ -116,6 +124,11 @@ class _IO(Record):
 
     field_name: str
     field_value: IOSerializable[Any]
+
+    @property
+    def field_value_dump(self) -> Any:
+        """Field value out of Pydantic RootModel."""
+        return self.field_value.model_dump()
 
 
 class Input(_IO):

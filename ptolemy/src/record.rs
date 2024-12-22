@@ -35,7 +35,7 @@ pub struct ProtoRecord {
     parent_id: String,
     id: String,
     name: Option<String>,
-    parameters: Option<JsonSerializable>,
+    parameters: Option<BTreeMap<String, Option<JsonSerializable>>>,
     version: Option<String>,
     environment: Option<String>,
     start_time: Option<f32>,
@@ -54,7 +54,10 @@ impl ProtoRecord {
             parent_id: self.parent_id.clone(),
             id: self.id.clone(),
             name: self.name.clone(),
-            parameters: json_serializable_to_value(&self.parameters),
+            parameters: match &self.parameters {
+                Some(p) => parameters_to_value(p),
+                None => None,
+            },
             version: self.version.clone(),
             environment: self.environment.clone(),
             start_time: self.start_time,
@@ -81,10 +84,10 @@ impl<'py> FromPyObject<'py> for ProtoRecord {
 
         let parameters = match log_type {
             LogType::Event => {
-                let params = ob.getattr("parameters")?;
+                let params = ob.getattr("parameters_dict")?;
                 match params.is_none() {
                     true => None,
-                    false => Some(params.extract::<JsonSerializable>()?)
+                    false => Some(params.extract::<BTreeMap<String, Option<JsonSerializable>>>()?)
                 }
             },
             _ => None,
@@ -151,7 +154,7 @@ impl<'py> FromPyObject<'py> for ProtoRecord {
 
         let field_value = match log_type {
             LogType::Input | LogType::Output | LogType::Feedback | LogType::Metadata => {
-                let field_val = ob.getattr("field_value")?;
+                let field_val = ob.getattr("field_value_dump")?;
                 match field_val.is_none() {
                     true => None,
                     false => Some(field_val.extract::<JsonSerializable>()?)
@@ -189,6 +192,18 @@ pub enum JsonSerializable {
     Bool(bool),
     Dict(BTreeMap<String, Option<JsonSerializable>>),
     List(Vec<Option<JsonSerializable>>),
+}
+
+fn parameters_to_value(params: &BTreeMap<String, Option<JsonSerializable>>) -> Option<Value> {
+    let mut fields = BTreeMap::new();
+    for (k, v) in params {
+        if let Some(value) = json_serializable_to_value(v) {
+            fields.insert(k.clone(), value);
+        }
+    }
+    Some(Value {
+        kind: Some(Kind::StructValue(Struct { fields })),
+    })
 }
 
 fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> {
