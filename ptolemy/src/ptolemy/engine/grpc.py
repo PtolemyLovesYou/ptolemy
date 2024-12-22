@@ -6,7 +6,6 @@ import logging
 from contextlib import contextmanager
 from pydantic import ConfigDict, PrivateAttr, Field
 from .engine import Engine
-from ..utils.record import Record
 from .._core import BlockingObserverClient, Event, Runtime, IO, Metadata  # pylint: disable=no-name-in-module
 from ..exceptions import (
     EngineError,
