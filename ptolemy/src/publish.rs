@@ -8,7 +8,7 @@ use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record
 };
 use crate::config::ObserverConfig;
-use crate::record::ProtoRecord;
+use crate::record::{ProtoRecord, Event, Runtime, IO, Metadata};
 
 #[pyclass]
 pub struct BlockingObserverClient {
@@ -56,7 +56,10 @@ impl BlockingObserverClient {
             return true;
         }
 
-        let parsed_records: Vec<Record> = records.into_iter().map(|r| r.clone().proto()).collect();
+        let parsed_records: Vec<Record> = records
+            .into_iter()
+            .map(|r| r.proto().unwrap())
+            .collect();
 
         match self.publish_request(parsed_records) {
             Ok(_) => true,
@@ -77,22 +80,39 @@ impl BlockingObserverClient {
     }
 
     pub fn queue(&mut self, py: Python<'_>, records: Bound<'_, PyList>) -> bool {
-        let records: Vec<ProtoRecord> = records.extract().unwrap();
+        // let records: Vec<ProtoRecord> = records.extract().unwrap();
+
+        let mut parsed_records: Vec<ProtoRecord> = Vec::with_capacity(records.len());
         
+        for rec in records.iter() {
+            let record_type: String = rec.getattr("log_type").unwrap().extract::<String>().unwrap();
+
+            let parsed_record = match record_type.as_str() {
+                "event" => ProtoRecord::Event(rec.extract::<Event>().unwrap()),
+                "runtime" => ProtoRecord::Runtime(rec.extract::<Runtime>().unwrap()),
+                "input" | "output" | "feedback" => ProtoRecord::IO(rec.extract::<IO>().unwrap()),
+                "metadata" => ProtoRecord::Metadata(rec.extract::<Metadata>().unwrap()),
+                _ => panic!("Unknown record type: {}", record_type.as_str()),
+            };
+
+            parsed_records.push(parsed_record)
+        }
+
         py.allow_threads(|| {
             let should_send_batch;
 
             {
                 let mut queue = self.queue.lock().unwrap();
-                queue.extend(records.into_iter());
+                queue.extend(parsed_records.into_iter());
                 should_send_batch = queue.len() >= self.batch_size;
-            };
+                drop(queue)
+            }; // Lock is released here
 
             if should_send_batch {
                 self.send_batch();
             }
         }
-        ); // Lock is released here
+        );
 
         true
     }

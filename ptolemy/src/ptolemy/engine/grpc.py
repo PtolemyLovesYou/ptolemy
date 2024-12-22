@@ -68,7 +68,8 @@ class PtolemyEngine(Engine):
             EngineError: If queuing fails
         """
         with self._error_handling("queue"):
-            self._executor.submit(self._client.queue, [i.proto() for i in records])
+            self._executor.submit(self._client.queue, list(records))
+            # future.result()
 
     def flush(self) -> None:
         """

@@ -13,7 +13,7 @@ parent_id uuid not null references system_event(id) on delete cascade,
 start_time timestamp(6) not null,
 end_time timestamp(6) not null,
 error_type varchar,
-error_value varchar
+error_content varchar
 );
 create table system_io (
 id uuid primary key,
@@ -46,7 +46,7 @@ parent_id uuid not null references subsystem_event(id) on delete cascade,
 start_time timestamp(6) not null,
 end_time timestamp(6) not null,
 error_type varchar,
-error_value varchar
+error_content varchar
 );
 create table subsystem_io (
 id uuid primary key,
@@ -79,7 +79,7 @@ parent_id uuid not null references component_event(id) on delete cascade,
 start_time timestamp(6) not null,
 end_time timestamp(6) not null,
 error_type varchar,
-error_value varchar
+error_content varchar
 );
 create table component_io (
 id uuid primary key,
@@ -112,7 +112,7 @@ parent_id uuid not null references subcomponent_event(id) on delete cascade,
 start_time timestamp(6) not null,
 end_time timestamp(6) not null,
 error_type varchar,
-error_value varchar
+error_content varchar
 );
 create table subcomponent_io (
 id uuid primary key,
