@@ -9,7 +9,7 @@ use ptolemy_core::generated::observer::{LogType, Tier, Record};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-#[pyclass]
+#[pyclass(frozen)]
 pub struct ProtoRecord {
     tier: Tier,
     log_type: LogType,
