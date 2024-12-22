@@ -8,13 +8,13 @@ use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record
 };
 use crate::config::ObserverConfig;
-use crate::record::ProtoRecord;
+use crate::event::EventRecord;
 
 #[pyclass]
 pub struct BlockingObserverClient {
     client: ObserverClient<Channel>,
     rt: tokio::runtime::Runtime,
-    queue: Arc<Mutex<VecDeque<ProtoRecord>>>,
+    queue: Arc<Mutex<VecDeque<EventRecord>>>,
     batch_size: usize,
 }
 
@@ -49,7 +49,7 @@ impl BlockingObserverClient {
         let records = {
             let mut queue = self.queue.lock().unwrap();
             let n_to_drain = self.batch_size.min(queue.len());
-            queue.drain(..n_to_drain).collect::<Vec<ProtoRecord>>()
+            queue.drain(..n_to_drain).collect::<Vec<EventRecord>>()
         }; // Lock is released here
 
         if records.is_empty() {
@@ -80,7 +80,7 @@ impl BlockingObserverClient {
     }
 
     pub fn queue(&mut self, py: Python<'_>, records: Bound<'_, PyList>) -> bool {
-        let records: Vec<ProtoRecord> = records.extract().unwrap();
+        let records: Vec<EventRecord> = records.extract().unwrap();
 
         py.allow_threads(|| {
             let should_send_batch;
