@@ -28,133 +28,156 @@ pub fn detect_tier(tier: &str) -> Tier {
     .unwrap_or_else(|| panic!("Unknown tier {}", tier))
 }
 
-#[derive(Clone, Debug, FromPyObject)]
-pub struct Event {
-    tier: String,
-    #[pyo3(attribute("parent_id_str"))]
+#[derive(Clone, Debug)]
+pub struct ProtoRecord {
+    tier: Tier,
+    log_type: LogType,
     parent_id: String,
-    #[pyo3(attribute("id_str"))]
     id: String,
     name: Option<String>,
     parameters: Option<JsonSerializable>,
     version: Option<String>,
     environment: Option<String>,
-}
-
-#[derive(Clone, Debug, FromPyObject)]
-pub struct Runtime {
-    tier: String,
-    #[pyo3(attribute("parent_id_str"))]
-    parent_id: String,
-    #[pyo3(attribute("id_str"))]
-    id: String,
     start_time: Option<f32>,
     end_time: Option<f32>,
     error_type: Option<String>,
     error_content: Option<String>,
-}
-
-#[derive(Clone, Debug, FromPyObject)]
-pub struct IO {
-    tier: String,
-    log_type: String,
-    #[pyo3(attribute("parent_id_str"))]
-    parent_id: String,
-    #[pyo3(attribute("id_str"))]
-    id: String,
-    field_name: String,
-    field_value: Option<JsonSerializable>
-}
-
-#[derive(Clone, Debug, FromPyObject)]
-pub struct Metadata {
-    tier: String,
-    #[pyo3(attribute("parent_id_str"))]
-    parent_id: String,
-    #[pyo3(attribute("id_str"))]
-    id: String,
-    field_name: String,
-    field_value: String,
-}
-
-#[derive(Clone, Debug, FromPyObject)]
-pub enum ProtoRecord {
-    Event(Event),
-    Runtime(Runtime),
-    IO(IO),
-    Metadata(Metadata),
+    field_name: Option<String>,
+    field_value: Option<JsonSerializable>,
 }
 
 impl ProtoRecord {
-    pub fn proto(&self) -> Result<Record, std::io::Error> {
-        let proto = match self {
-            ProtoRecord::Event(e) => Record {
-                tier: detect_tier(&e.tier).into(),
-                log_type: LogType::Event.into(),
-                parent_id: e.parent_id.clone(),
-                id: e.id.clone(),
-                name: e.name.clone(),
-                parameters: json_serializable_to_value(&e.parameters),
-                version: e.version.clone(),
-                environment: e.environment.clone(),
-                start_time: None,
-                end_time: None,
-                error_type: None,
-                error_content: None,
-                field_name: None,
-                field_value: None,
-            },
-            ProtoRecord::Runtime(r) => Record {
-                tier: detect_tier(&r.tier).into(),
-                log_type: LogType::Runtime.into(),
-                parent_id: r.parent_id.clone(),
-                id: r.id.clone(),
-                name: None,
-                parameters: None,
-                version: None,
-                environment: None,
-                start_time: r.start_time,
-                end_time: r.end_time,
-                error_type: r.error_type.clone(),
-                error_content: r.error_content.clone(),
-                field_name: None,
-                field_value: None,
-            },
-            ProtoRecord::IO(i) => Record {
-                tier: detect_tier(&i.tier).into(),
-                log_type: detect_log_type(&i.log_type).into(),
-                id: i.id.clone(),
-                parent_id: i.parent_id.clone(),
-                name: None,
-                parameters: None,
-                version: None,
-                environment: None,
-                start_time: None,
-                end_time: None,
-                error_type: None,
-                error_content: None,
-                field_name: Some(i.field_name.clone()),
-                field_value: json_serializable_to_value(&i.field_value)
-            },
-            ProtoRecord::Metadata(m) => Record {
-                tier: detect_tier(&m.tier).into(),
-                log_type: LogType::Metadata.into(),
-                parent_id: m.parent_id.clone(),
-                id: m.id.clone(),
-                name: None,
-                parameters: None,
-                version: None,
-                environment: None,
-                start_time: None,
-                end_time: None,
-                error_type: None,
-                error_content: None,
-                field_name: Some(m.field_name.clone()),
-                field_value: Some(Value { kind: Some(Kind::StringValue(m.field_value.clone()))}),
-            }
+    pub fn proto(&self) -> Record {
+        Record {
+            tier: self.tier.into(),
+            log_type: self.log_type.into(),
+            parent_id: self.parent_id.clone(),
+            id: self.id.clone(),
+            name: self.name.clone(),
+            parameters: json_serializable_to_value(&self.parameters),
+            version: self.version.clone(),
+            environment: self.environment.clone(),
+            start_time: self.start_time,
+            end_time: self.end_time,
+            error_type: self.error_type.clone(),
+            error_content: self.error_content.clone(),
+            field_name: self.field_name.clone(),
+            field_value: json_serializable_to_value(&self.field_value),
+        }
+    }
+}
+
+impl<'py> FromPyObject<'py> for ProtoRecord {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let tier = detect_tier(&ob.getattr("tier")?.extract::<String>()?);
+        let log_type = detect_log_type(&ob.getattr("log_type")?.extract::<String>()?);
+        let parent_id = ob.getattr("parent_id_str")?.extract::<String>()?;
+        let id = ob.getattr("id_str")?.extract::<String>()?;
+
+        let name = match log_type {
+            LogType::Event => Some(ob.getattr("name")?.extract::<String>()?),
+            _ => None,
         };
 
-        Ok(proto)
+        let parameters = match log_type {
+            LogType::Event => {
+                let params = ob.getattr("parameters")?;
+                match params.is_none() {
+                    true => None,
+                    false => Some(params.extract::<JsonSerializable>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let version = match log_type {
+            LogType::Event => {
+                let ver = ob.getattr("version")?;
+                match ver.is_none() {
+                    true => None,
+                    false => Some(ver.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let environment = match log_type {
+            LogType::Event => {
+                let ver = ob.getattr("environment")?;
+                match ver.is_none() {
+                    true => None,
+                    false => Some(ver.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let start_time = match log_type {
+            LogType::Runtime => Some(ob.getattr("start_time")?.extract::<f32>()?),
+            _ => None,
+        };
+
+        let end_time = match log_type {
+            LogType::Runtime => Some(ob.getattr("end_time")?.extract::<f32>()?),
+            _ => None,
+        };
+
+        let error_type = match log_type {
+            LogType::Runtime => {
+                let etype = ob.getattr("error_type")?;
+                match etype.is_none() {
+                    true => None,
+                    false => Some(etype.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let error_content = match log_type {
+            LogType::Runtime => {
+                let etype = ob.getattr("error_type")?;
+                match etype.is_none() {
+                    true => None,
+                    false => Some(etype.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let field_name = match log_type {
+            LogType::Input | LogType::Output | LogType::Feedback | LogType::Metadata => Some(ob.getattr("field_name")?.extract::<String>()?),
+            _ => None,
+        };
+
+        let field_value = match log_type {
+            LogType::Input | LogType::Output | LogType::Feedback | LogType::Metadata => {
+                let field_val = ob.getattr("field_value")?;
+                match field_val.is_none() {
+                    true => None,
+                    false => Some(field_val.extract::<JsonSerializable>()?)
+                }
+            },
+            _ => None
+        };
+
+        Ok(
+            Self {
+                tier,
+                log_type,
+                parent_id,
+                id,
+                name,
+                parameters,
+                version,
+                environment,
+                start_time,
+                end_time,
+                error_type,
+                error_content,
+                field_name,
+                field_value
+            }
+        )
     }
 }
 
