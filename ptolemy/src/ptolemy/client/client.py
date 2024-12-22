@@ -72,7 +72,7 @@ class Ptolemy(BaseModel):
         if self._start_time is not None:
             raise ValueError("Already started")
 
-        self.engine.queue([self._event])
+        self.engine.queue_event(self._event)
 
         self.start()
 
