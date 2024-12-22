@@ -99,7 +99,7 @@ pub struct RuntimeRecord {
     #[serde(with = "ts_microseconds")]
     pub end_time: NaiveDateTime,
     pub error_type: Option<String>,
-    pub error_value: Option<String>,
+    pub error_content: Option<String>,
 }
 
 impl RuntimeRecord {
@@ -109,7 +109,7 @@ impl RuntimeRecord {
         start_time: NaiveDateTime,
         end_time: NaiveDateTime,
         error_type: Option<String>,
-        error_value: Option<String>,
+        error_content: Option<String>,
     ) -> Self {
         Self {
             id,
@@ -117,7 +117,7 @@ impl RuntimeRecord {
             start_time,
             end_time,
             error_type,
-            error_value,
+            error_content,
         }
     }
 }

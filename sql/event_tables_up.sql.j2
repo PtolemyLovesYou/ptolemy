@@ -24,7 +24,7 @@ create table {{ tier }}_runtime (
     start_time timestamp(6) not null,
     end_time timestamp(6) not null,
     error_type varchar,
-    error_value varchar
+    error_content varchar
 );
 
 create table {{ tier }}_io (

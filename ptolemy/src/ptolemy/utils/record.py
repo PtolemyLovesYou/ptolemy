@@ -1,11 +1,10 @@
 """Record base class."""
 
 from typing import Optional, Any, ClassVar, Self, Literal, Annotated
-from abc import ABC, abstractmethod
+from abc import ABC
 import uuid
 from pydantic import BaseModel, Field, create_model, validate_call
 from ptolemy.utils import ID, Parameters, LogType, Tier, IOSerializable
-from .._core import RecordBuilder, ProtoRecord  # pylint: disable=no-name-in-module
 
 
 class Record(BaseModel, ABC):
@@ -16,6 +15,26 @@ class Record(BaseModel, ABC):
 
     parent_id: ID
     id: Annotated[ID, Field(default_factory=uuid.uuid4)]
+
+    @property
+    def tier(self) -> str:
+        """Tier."""
+        return self.TIER.value
+
+    @property
+    def log_type(self) -> str:
+        """Log type."""
+        return self.LOGTYPE.value
+
+    @property
+    def id_str(self) -> str:
+        """ID str."""
+        return self.id.hex
+
+    @property
+    def parent_id_str(self) -> str:
+        """Parent ID str."""
+        return self.parent_id.hex
 
     @classmethod
     @validate_call
@@ -69,10 +88,6 @@ class Record(BaseModel, ABC):
 
         return model
 
-    @abstractmethod
-    def proto(self) -> ProtoRecord:
-        """Convert to rust-backend protobuf."""
-
 
 class Event(Record):
     """Event class."""
@@ -84,16 +99,13 @@ class Event(Record):
     environment: Optional[str] = Field(min_length=1, max_length=8, default=None)
     version: Optional[str] = Field(min_length=1, max_length=16, default=None)
 
-    def proto(self) -> ProtoRecord:
-        return RecordBuilder().event(
-            tier=self.TIER.value,
-            parent_id=self.parent_id.hex,
-            id=self.id.hex,
-            name=self.name,
-            parameters=self.parameters.model_dump() if self.parameters is not None else None,
-            version=self.version,
-            environment=self.environment,
-        )
+    @property
+    def parameters_dict(self) -> Optional[dict]:
+        """Parameters as dictionary."""
+        if self.parameters is not None:
+            return self.parameters.model_dump()
+
+        return None
 
 
 class Runtime(Record):
@@ -106,17 +118,6 @@ class Runtime(Record):
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
 
-    def proto(self) -> ProtoRecord:
-        return RecordBuilder().runtime(
-            tier=self.TIER.value,
-            parent_id=self.parent_id.hex,
-            id=self.id.hex,
-            start_time=self.start_time,
-            end_time=self.end_time,
-            error_type=self.error_type,
-            error_content=self.error_content,
-        )
-
 
 class _IO(Record):
     """IO base class."""
@@ -124,25 +125,10 @@ class _IO(Record):
     field_name: str
     field_value: IOSerializable[Any]
 
-    def proto(self) -> ProtoRecord:
-        builder = RecordBuilder()
-
-        if self.LOGTYPE == LogType.INPUT:
-            fn = builder.input
-        elif self.LOGTYPE == LogType.OUTPUT:
-            fn = builder.output
-        elif self.LOGTYPE == LogType.FEEDBACK:
-            fn = builder.feedback
-        else:
-            raise ValueError(f"Unexpected log type {self.LOGTYPE}")
-
-        return fn(
-            tier=self.TIER.value,
-            parent_id=self.parent_id.hex,
-            id=self.id.hex,
-            field_name=self.field_name,
-            field_value=self.field_value.model_dump(),
-        )
+    @property
+    def field_value_dump(self) -> Any:
+        """Field value out of Pydantic RootModel."""
+        return self.field_value.model_dump()
 
 
 class Input(_IO):
@@ -170,15 +156,6 @@ class Metadata(Record):
 
     field_name: str
     field_value: str
-
-    def proto(self) -> ProtoRecord:
-        return RecordBuilder().metadata(
-            tier=self.TIER.value,
-            parent_id=self.parent_id.hex,
-            id=self.id.hex,
-            field_name=self.field_name,
-            field_value=self.field_value,
-        )
 
 
 RECORD_MAP = {

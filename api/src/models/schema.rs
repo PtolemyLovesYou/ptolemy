@@ -52,7 +52,7 @@ diesel::table! {
         start_time -> Timestamp,
         end_time -> Timestamp,
         error_type -> Nullable<Varchar>,
-        error_value -> Nullable<Varchar>,
+        error_content -> Nullable<Varchar>,
     }
 }
 
@@ -102,7 +102,7 @@ diesel::table! {
         start_time -> Timestamp,
         end_time -> Timestamp,
         error_type -> Nullable<Varchar>,
-        error_value -> Nullable<Varchar>,
+        error_content -> Nullable<Varchar>,
     }
 }
 
@@ -152,7 +152,7 @@ diesel::table! {
         start_time -> Timestamp,
         end_time -> Timestamp,
         error_type -> Nullable<Varchar>,
-        error_value -> Nullable<Varchar>,
+        error_content -> Nullable<Varchar>,
     }
 }
 
@@ -202,7 +202,7 @@ diesel::table! {
         start_time -> Timestamp,
         end_time -> Timestamp,
         error_type -> Nullable<Varchar>,
-        error_value -> Nullable<Varchar>,
+        error_content -> Nullable<Varchar>,
     }
 }
 

@@ -1,4 +1,3 @@
-use pyo3::{Bound, types::{PyString, PyFloat}};
 use ptolemy_core::generated::observer::{LogType, Record, Tier,};
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
@@ -29,7 +28,6 @@ pub fn detect_tier(tier: &str) -> Tier {
     .unwrap_or_else(|| panic!("Unknown tier {}", tier))
 }
 
-#[pyclass]
 #[derive(Clone, Debug)]
 pub struct ProtoRecord {
     tier: Tier,
@@ -37,7 +35,7 @@ pub struct ProtoRecord {
     parent_id: String,
     id: String,
     name: Option<String>,
-    parameters: Option<JsonSerializable>,
+    parameters: Option<BTreeMap<String, Option<JsonSerializable>>>,
     version: Option<String>,
     environment: Option<String>,
     start_time: Option<f32>,
@@ -49,211 +47,140 @@ pub struct ProtoRecord {
 }
 
 impl ProtoRecord {
-    pub fn new(tier: Tier, log_type: LogType, parent_id: String, id: String) -> Self {
-        ProtoRecord {
-            tier: tier,
-            log_type: log_type,
-            parent_id,
-            id,
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: None,
-            field_value: None,
-        }
-    }
-
-    pub fn name(mut self, name: String) -> Self {
-        self.name = Some(name);
-        self
-    }
-
-    pub fn parameters(mut self, parameters: Option<JsonSerializable>) -> Self {
-        self.parameters = parameters;
-        self
-    }
-
-    pub fn version(mut self, version: Option<String>) -> Self {
-        self.version = version;
-        self
-    }
-
-    pub fn environment(mut self, environment: Option<String>) -> Self {
-        self.environment = environment;
-        self
-    }
-
-    pub fn start_time(mut self, start_time: f32) -> Self {
-        self.start_time = Some(start_time);
-        self
-    }
-
-    pub fn end_time(mut self, end_time: f32) -> Self {
-        self.end_time = Some(end_time);
-        self
-    }
-
-    pub fn error_type(mut self, error_type: Option<String>) -> Self {
-        self.error_type = error_type;
-        self
-    }
-
-    pub fn error_content(mut self, error_content: Option<String>) -> Self {
-        self.error_content = error_content;
-        self
-    }
-
-    pub fn field_name(mut self, field_name: String) -> Self {
-        self.field_name = Some(field_name);
-        self
-    }
-
-    pub fn field_value(mut self, field_value: JsonSerializable) -> Self {
-        self.field_value = Some(field_value);
-        self
-    }
-
-    pub fn proto(self) -> Record {
+    pub fn proto(&self) -> Record {
         Record {
             tier: self.tier.into(),
             log_type: self.log_type.into(),
-            parent_id: self.parent_id,
-            id: self.id,
-            name: self.name,
-            parameters: match self.parameters {
+            parent_id: self.parent_id.clone(),
+            id: self.id.clone(),
+            name: self.name.clone(),
+            parameters: match &self.parameters {
+                Some(p) => parameters_to_value(p),
                 None => None,
-                Some(value) => json_serializable_to_value(&Some(value)),
             },
-            version: self.version,
-            environment: self.environment,
+            version: self.version.clone(),
+            environment: self.environment.clone(),
             start_time: self.start_time,
             end_time: self.end_time,
-            error_type: self.error_type,
-            error_content: self.error_content,
-            field_name: self.field_name,
-            field_value: match self.field_value {
-                None => None,
-                Some(value) => json_serializable_to_value(&Some(value)),
-            },
+            error_type: self.error_type.clone(),
+            error_content: self.error_content.clone(),
+            field_name: self.field_name.clone(),
+            field_value: json_serializable_to_value(&self.field_value),
         }
     }
 }
 
-#[pyclass]
-pub struct RecordBuilder;
+impl<'py> FromPyObject<'py> for ProtoRecord {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let tier = detect_tier(&ob.getattr("tier")?.extract::<String>()?);
+        let log_type = detect_log_type(&ob.getattr("log_type")?.extract::<String>()?);
+        let parent_id = ob.getattr("parent_id_str")?.extract::<String>()?;
+        let id = ob.getattr("id_str")?.extract::<String>()?;
 
-#[pymethods]
-impl RecordBuilder {
-    #[new]
-    pub fn new() -> RecordBuilder {
-        RecordBuilder {}
-    }
+        let name = match log_type {
+            LogType::Event => Some(ob.getattr("name")?.extract::<String>()?),
+            _ => None,
+        };
 
-    #[pyo3(signature = (tier, parent_id, id, name, parameters=None, version=None, environment=None))]
-    #[staticmethod]
-    pub fn event(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Bound<'_, PyString>,
-        name: Bound<'_, PyString>,
-        parameters: Option<JsonSerializable>,
-        version: Option<Bound<'_, PyString>>,
-        environment: Option<Bound<'_, PyString>>,
-    ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Event, parent_id.to_string(), id.to_string())
-            .name(name.to_string())
-            .parameters(parameters)
-            .version(match version {
-                Some(v) => Some(v.to_string()),
-                None => None,
-            })
-            .environment(match environment {
-                Some(e) => Some(e.to_string()),
-                None => None,
-            })
-    }
+        let parameters = match log_type {
+            LogType::Event => {
+                let params = ob.getattr("parameters_dict")?;
+                match params.is_none() {
+                    true => None,
+                    false => Some(params.extract::<BTreeMap<String, Option<JsonSerializable>>>()?)
+                }
+            },
+            _ => None,
+        };
 
-    #[pyo3(signature = (tier, parent_id, id, start_time, end_time, error_type=None, error_content=None))]
-    #[staticmethod]
-    pub fn runtime(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Bound<'_, PyString>,
-        start_time: Bound<'_, PyFloat>,
-        end_time: Bound<'_, PyFloat>,
-        error_type: Option<Bound<'_, PyString>>,
-        error_content: Option<Bound<'_, PyString>>,
-    ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Runtime, parent_id.to_string(), id.to_string())
-            .start_time(start_time.extract().unwrap())
-            .end_time(end_time.extract().unwrap())
-            .error_type(match error_type {
-                Some(e) => Some(e.to_string()),
-                None => None,
-            })
-            .error_content(match error_content {
-                Some(e) => Some(e.to_string()),
-                None => None,
-            })
-    }
+        let version = match log_type {
+            LogType::Event => {
+                let ver = ob.getattr("version")?;
+                match ver.is_none() {
+                    true => None,
+                    false => Some(ver.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
 
-    #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
-    #[staticmethod]
-    pub fn input(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: JsonSerializable,
-    ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Input, parent_id.to_string(), id.to_string())
-            .field_name(field_name.to_string())
-            .field_value(field_value)
-    }
+        let environment = match log_type {
+            LogType::Event => {
+                let ver = ob.getattr("environment")?;
+                match ver.is_none() {
+                    true => None,
+                    false => Some(ver.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
 
-    #[staticmethod]
-    pub fn output(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: JsonSerializable,
-    ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Output, parent_id.to_string(), id.to_string())
-            .field_name(field_name.to_string())
-            .field_value(field_value)
-    }
+        let start_time = match log_type {
+            LogType::Runtime => Some(ob.getattr("start_time")?.extract::<f32>()?),
+            _ => None,
+        };
 
-    #[pyo3(signature = (tier, parent_id, id, field_name, field_value))]
-    #[staticmethod]
-    pub fn feedback(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: JsonSerializable,
-    ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Feedback, parent_id.to_string(), id.to_string())
-            .field_name(field_name.to_string())
-            .field_value(field_value)
-    }
+        let end_time = match log_type {
+            LogType::Runtime => Some(ob.getattr("end_time")?.extract::<f32>()?),
+            _ => None,
+        };
 
-    #[staticmethod]
-    pub fn metadata(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: JsonSerializable,
-    ) -> ProtoRecord {
-        ProtoRecord::new(detect_tier(&tier.to_string()), LogType::Metadata, parent_id.to_string(), id.to_string())
-            .field_name(field_name.to_string())
-            .field_value(field_value)
+        let error_type = match log_type {
+            LogType::Runtime => {
+                let etype = ob.getattr("error_type")?;
+                match etype.is_none() {
+                    true => None,
+                    false => Some(etype.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let error_content = match log_type {
+            LogType::Runtime => {
+                let etype = ob.getattr("error_type")?;
+                match etype.is_none() {
+                    true => None,
+                    false => Some(etype.extract::<String>()?)
+                }
+            },
+            _ => None,
+        };
+
+        let field_name = match log_type {
+            LogType::Input | LogType::Output | LogType::Feedback | LogType::Metadata => Some(ob.getattr("field_name")?.extract::<String>()?),
+            _ => None,
+        };
+
+        let field_value = match log_type {
+            LogType::Input | LogType::Output | LogType::Feedback | LogType::Metadata => {
+                let field_val = ob.getattr("field_value_dump")?;
+                match field_val.is_none() {
+                    true => None,
+                    false => Some(field_val.extract::<JsonSerializable>()?)
+                }
+            },
+            _ => None
+        };
+
+        Ok(
+            Self {
+                tier,
+                log_type,
+                parent_id,
+                id,
+                name,
+                parameters,
+                version,
+                environment,
+                start_time,
+                end_time,
+                error_type,
+                error_content,
+                field_name,
+                field_value
+            }
+        )
     }
 }
 
@@ -267,8 +194,21 @@ pub enum JsonSerializable {
     List(Vec<Option<JsonSerializable>>),
 }
 
+fn parameters_to_value(params: &BTreeMap<String, Option<JsonSerializable>>) -> Option<Value> {
+    let mut fields = BTreeMap::new();
+    for (k, v) in params {
+        if let Some(value) = json_serializable_to_value(v) {
+            fields.insert(k.clone(), value);
+        }
+    }
+    Some(Value {
+        kind: Some(Kind::StructValue(Struct { fields })),
+    })
+}
+
 fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> {
     match json {
+        None => None,
         Some(JsonSerializable::String(s)) => Some(Value {
             kind: Some(Kind::StringValue(s.clone())),
         }),
@@ -301,6 +241,5 @@ fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> 
                 kind: Some(Kind::ListValue(ListValue { values })),
             })
         }
-        None => None,
     }
 }
