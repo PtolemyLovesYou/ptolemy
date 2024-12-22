@@ -4,7 +4,6 @@ use pyo3::prelude::*;
 
 pub mod publish;
 pub mod config;
-pub mod record;
 pub mod event;
 
 /// A Python module implemented in Rust. The name of this function must match
