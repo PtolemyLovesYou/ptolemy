@@ -1,10 +1,9 @@
 use crate::publish::BlockingObserverClient;
-use crate::event::{Event, Runtime, IO, Metadata};
+use crate::event::ProtoRecord;
 use pyo3::prelude::*;
 
 pub mod publish;
 pub mod config;
-pub mod record;
 pub mod event;
 
 /// A Python module implemented in Rust. The name of this function must match
@@ -13,9 +12,6 @@ pub mod event;
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BlockingObserverClient>()?;
-    m.add_class::<Event>()?;
-    m.add_class::<Runtime>()?;
-    m.add_class::<IO>()?;
-    m.add_class::<Metadata>()?;
+    m.add_class::<ProtoRecord>()?;
     Ok(())
 }

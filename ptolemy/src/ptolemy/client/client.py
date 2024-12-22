@@ -12,10 +12,7 @@ from ..utils import (
     ID,
 )
 from .._core import ( # pylint: disable=no-name-in-module
-    Event, # pylint: disable=no-name-in-module
-    Runtime, # pylint: disable=no-name-in-module
-    IO, # pylint: disable=no-name-in-module
-    Metadata # pylint: disable=no-name-in-module
+    ProtoRecord
 )
 
 
@@ -25,12 +22,12 @@ class Ptolemy(BaseModel):
 
     _tier: Tier = PrivateAttr(default=None)
 
-    _event: Event = PrivateAttr(default=None)
-    _runtime: Runtime = PrivateAttr(default=None)
-    _inputs: List[IO] = PrivateAttr(default=None)
-    _outputs: List[IO] = PrivateAttr(default=None)
-    _feedback: List[IO] = PrivateAttr(default=None)
-    _metadata: List[Metadata] = PrivateAttr(default=None)
+    _event: ProtoRecord = PrivateAttr(default=None)
+    _runtime: ProtoRecord = PrivateAttr(default=None)
+    _inputs: List[ProtoRecord] = PrivateAttr(default=None)
+    _outputs: List[ProtoRecord] = PrivateAttr(default=None)
+    _feedback: List[ProtoRecord] = PrivateAttr(default=None)
+    _metadata: List[ProtoRecord] = PrivateAttr(default=None)
 
     _start_time: float = PrivateAttr(default=None)
     _end_time: float = PrivateAttr(default=None)
@@ -190,7 +187,7 @@ class Ptolemy(BaseModel):
         if self._tier != Tier.SYSTEM and parent_id is None:
             raise ValueError("Parent ID is required for non-system events")
 
-        self._event = Event(
+        self._event = ProtoRecord.event(
             self._tier.value,
             name,
             parent_id.hex or self.workspace_id,
@@ -234,7 +231,7 @@ class Ptolemy(BaseModel):
         if self._runtime is not None:
             raise ValueError("Runtime already set")
 
-        self._runtime = Runtime(
+        self._runtime = ProtoRecord.runtime(
             self._tier.value,
             self._event.id,
             start_time=start_time,
@@ -265,7 +262,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Inputs already set")
 
         self._inputs = [
-            IO(
+            ProtoRecord.io(
                 self._tier,
                 LogType.INPUT.value,
                 self._event.id,
@@ -303,7 +300,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Outputs already set")
 
         self._outputs = [
-            IO(
+            ProtoRecord.io(
                 self._tier,
                 self._event.id,
                 LogType.OUTPUT.value,
@@ -332,7 +329,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Feedback already set")
 
         self._feedback = [
-            IO(
+            ProtoRecord.io(
                 self._tier,
                 self._event.id,
                 LogType.FEEDBACK.value,
@@ -368,7 +365,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Metadata already set")
 
         self._metadata = [
-            Metadata(
+            ProtoRecord.metadata(
                 self._tier,
                 self._event.id,
                 LogType.METADATA.value,
