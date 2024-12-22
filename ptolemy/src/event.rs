@@ -69,7 +69,7 @@ impl Event {
     #[new]
     #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
     fn new_py(
-        tier: String,
+        tier: Bound<'_, PyString>,
         name: Bound<'_, PyString>,
         parent_id: Bound<'_, PyString>,
         id: Option<Bound<'_, PyString>>,
@@ -77,6 +77,8 @@ impl Event {
         version: Option<Bound<'_, PyString>>,
         environment: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
+        let tier: String = tier.extract()?;
+
         let version = match version {
             Some(v) => v.extract()?,
             None => None,
@@ -174,7 +176,7 @@ impl Runtime {
     #[new]
     #[pyo3(signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
     fn py_new(
-        tier: String,
+        tier: Bound<'_, PyString>,
         parent_id: Bound<'_, PyString>,
         start_time: Bound<'_, PyFloat>,
         end_time: Bound<'_, PyFloat>,
@@ -182,6 +184,8 @@ impl Runtime {
         error_type: Option<Bound<'_, PyString>>,
         error_content: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
+        let tier: String = tier.extract()?;
+
         let error_type: Option<String> = match error_type {
             Some(e) => e.extract()?,
             None => None,
@@ -292,22 +296,23 @@ impl IO {
     #[new]
     #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
     fn py_new(
-        tier: String,
-        log_type: String,
+        tier: Bound<'_, PyString>,
+        log_type: Bound<'_, PyString>,
         parent_id: Bound<'_, PyString>,
         field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
         id: Option<Bound<'_, PyString>>
     ) -> PyResult<Self> {
-        let tier = detect_tier(&tier);
-        let log_type = detect_log_type(&log_type);
+        let tier: String = tier.extract()?;
+        let log_type: String = log_type.extract()?;
+
         let parent_id = get_uuid(Some(parent_id))?;
         let id = get_uuid(id)?;
         let field_name: String = field_name.extract()?;
         
         let io = Self::new(
-            tier,
-            log_type,
+            detect_tier(&tier),
+            detect_log_type(&log_type),
             parent_id,
             id,
             field_name,
@@ -395,19 +400,20 @@ impl Metadata {
     #[new]
     #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
     fn py_new(
-        tier: String,
+        tier: Bound<'_, PyString>,
         parent_id: Bound<'_, PyString>,
         field_name: Bound<'_, PyString>,
         field_value: Bound<'_, PyString>,
         id: Option<Bound<'_, PyString>>
     ) -> PyResult<Self> {
-        let tier = detect_tier(&tier);
+        let tier: String = tier.extract()?;
+
         let parent_id = get_uuid(Some(parent_id))?;
         let id = get_uuid(id)?;
         let field_name: String = field_name.extract()?;
         
         let io = Self::new(
-            tier,
+            detect_tier(&tier),
             LogType::Metadata,
             parent_id,
             id,
