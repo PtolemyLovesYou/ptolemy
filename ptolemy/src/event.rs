@@ -103,7 +103,6 @@ impl ProtoRecord {
             field_value_io: None,
             field_value_str: None,
         };
-
         Ok(rec)
     }
 
