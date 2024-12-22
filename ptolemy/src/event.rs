@@ -80,28 +80,21 @@ impl ProtoRecord {
         version: Option<Bound<'_, PyString>>,
         environment: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
-        let tier: String = tier.extract()?;
-        let name: String = name.extract()?;
-        let parent_id: Uuid = get_uuid(Some(parent_id))?;
-        let id: Uuid = get_uuid(id)?;
-        let version: Option<String> = match version {
-            Some(v) => v.extract()?,
-            None => None,
-        };
-        let environment: Option<String> = match environment {
-            Some(e) => e.extract()?,
-            None => None,
-        };
-
         let rec = Self {
-            tier: detect_tier(&tier),
+            tier: detect_tier(&tier.extract::<String>()?),
             log_type: LogType::Event,
-            parent_id,
-            id,
-            name: Some(name),
+            parent_id: get_uuid(Some(parent_id))?,
+            id: get_uuid(id)?,
+            name: Some(name.extract::<String>()?),
             parameters,
-            version,
-            environment,
+            version: match version {
+                Some(v) => v.extract()?,
+                None => None,
+            },
+            environment: match environment {
+                Some(e) => e.extract()?,
+                None => None,
+            },
             start_time: None,
             end_time: None,
             error_type: None,
@@ -110,7 +103,6 @@ impl ProtoRecord {
             field_value_io: None,
             field_value_str: None,
         };
-
         Ok(rec)
     }
 
@@ -125,8 +117,6 @@ impl ProtoRecord {
         error_type: Option<Bound<'_, PyString>>,
         error_content: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
-        let tier: String = tier.extract()?;
-
         let error_type: Option<String> = match error_type {
             Some(e) => e.extract()?,
             None => None,
@@ -138,7 +128,7 @@ impl ProtoRecord {
         };
 
         let rec = Self {
-            tier: detect_tier(&tier),
+            tier: detect_tier(&tier.extract::<String>()?),
             log_type: LogType::Runtime,
             parent_id: get_uuid(Some(parent_id))?,
             id: get_uuid(id)?,
@@ -168,18 +158,11 @@ impl ProtoRecord {
         field_value: JsonSerializable,
         id: Option<Bound<'_, PyString>>
     ) -> PyResult<Self> {
-        let tier: String = tier.extract()?;
-        let log_type: String = log_type.extract()?;
-
-        let parent_id = get_uuid(Some(parent_id))?;
-        let id = get_uuid(id)?;
-        let field_name: String = field_name.extract()?;
-        
         let rec = Self {
-            tier: detect_tier(&tier),
-            log_type: detect_log_type(&log_type),
-            parent_id: parent_id,
-            id: id,
+            tier: detect_tier(&tier.extract::<String>()?),
+            log_type: detect_log_type(&log_type.extract::<String>()?),
+            parent_id: get_uuid(Some(parent_id))?,
+            id: get_uuid(id)?,
             name: None,
             parameters: None,
             version: None,
@@ -188,7 +171,7 @@ impl ProtoRecord {
             end_time: None,
             error_type: None,
             error_content: None,
-            field_name: Some(field_name),
+            field_name: Some(field_name.extract::<String>()?),
             field_value_io: Some(field_value),
             field_value_str: None,
         };
@@ -205,17 +188,11 @@ impl ProtoRecord {
         field_value: Bound<'_, PyString>,
         id: Option<Bound<'_, PyString>>
     ) -> PyResult<Self> {
-        let tier: String = tier.extract()?;
-
-        let parent_id = get_uuid(Some(parent_id))?;
-        let id = get_uuid(id)?;
-        let field_name: String = field_name.extract()?;
-        
         let rec = Self {
-            tier: detect_tier(&tier),
+            tier: detect_tier(&tier.extract::<String>()?),
             log_type: LogType::Metadata,
-            parent_id,
-            id,
+            parent_id: get_uuid(Some(parent_id))?,
+            id: get_uuid(id)?,
             name: None,
             parameters: None,
             version: None,
@@ -224,7 +201,7 @@ impl ProtoRecord {
             end_time: None,
             error_type: None,
             error_content: None,
-            field_name: Some(field_name),
+            field_name: Some(field_name.extract::<String>()?),
             field_value_io: None,
             field_value_str: Some(field_value.extract()?)
         };
