@@ -8,13 +8,13 @@ use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record
 };
 use crate::config::ObserverConfig;
-use crate::event::{Event, EventRecord};
+use crate::event::ProtoRecord;
 
 #[pyclass]
 pub struct BlockingObserverClient {
     client: ObserverClient<Channel>,
     rt: tokio::runtime::Runtime,
-    queue: Arc<Mutex<VecDeque<EventRecord>>>,
+    queue: Arc<Mutex<VecDeque<ProtoRecord>>>,
     batch_size: usize,
 }
 
@@ -49,7 +49,7 @@ impl BlockingObserverClient {
         let records = {
             let mut queue = self.queue.lock().unwrap();
             let n_to_drain = self.batch_size.min(queue.len());
-            let drain = queue.drain(..n_to_drain).collect::<Vec<EventRecord>>();
+            let drain = queue.drain(..n_to_drain).collect::<Vec<ProtoRecord>>();
             drop(queue);
             drain
         }; // Lock is released here
@@ -81,15 +81,15 @@ impl BlockingObserverClient {
         BlockingObserverClient::connect(config, batch_size).unwrap()
     }
 
-    pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, Event>) -> bool {
-        let rec = record.extract::<Event>().unwrap();
+    pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, ProtoRecord>) -> bool {
+        let rec = record.extract::<ProtoRecord>().unwrap();
 
         py.allow_threads(|| {
             let should_send_batch;
 
             {
                 let mut queue = self.queue.lock().unwrap();
-                queue.push_front(EventRecord::Event(rec));
+                queue.push_front(rec);
                 should_send_batch = queue.len() >= self.batch_size;
                 drop(queue)
             }; // Lock is released here
@@ -104,7 +104,7 @@ impl BlockingObserverClient {
     }
 
     pub fn queue(&mut self, py: Python<'_>, records: Bound<'_, PyList>) -> bool {
-        let records: Vec<EventRecord> = records.extract().unwrap();
+        let records: Vec<ProtoRecord> = records.extract().unwrap();
 
         py.allow_threads(|| {
             let should_send_batch;

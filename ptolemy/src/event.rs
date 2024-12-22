@@ -10,65 +10,68 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 #[pyclass]
-pub struct Event {
+pub struct ProtoRecord {
     tier: Tier,
+    log_type: LogType,
     parent_id: Uuid,
     id: Uuid,
-    name: String,
+
+    // event fields
+    name: Option<String>,
     parameters: Option<Parameters>,
     version: Option<String>,
     environment: Option<String>,
+
+    // runtime fields
+    start_time: Option<f32>,
+    end_time: Option<f32>,
+    error_type: Option<String>,
+    error_content: Option<String>,
+
+    // IO fields
+    field_name: Option<String>,
+    field_value_io: Option<JsonSerializable>,
+
+    // Metadata field
+    field_value_str: Option<String>
 }
 
-impl Event {
-    fn new(
-        tier: Tier,
-        parent_id: Uuid,
-        id: Uuid,
-        name: String,
-        parameters: Option<Parameters>,
-        version: Option<String>,
-        environment: Option<String>,
-    ) -> Self {
-        Self {
-            tier,
-            parent_id,
-            id,
-            name,
-            parameters,
-            version,
-            environment,
-        }
-    }
-
+impl ProtoRecord {
     pub fn proto(&self) -> Record {
         Record {
             tier: self.tier.into(),
-            log_type: LogType::Event.into(),
+            log_type: self.log_type.into(),
             parent_id: self.parent_id.to_string(),
             id: self.id.to_string(),
-            name: Some(self.name.clone()),
+            name: self.name.clone(),
             parameters: match &self.parameters {
                 Some(p) => parameters_to_value(p),
                 None => None,
             },
-            version: self.version.clone(),
             environment: self.environment.clone(),
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: None,
-            field_value: None,
+            version: self.version.clone(),
+            start_time: self.start_time,
+            end_time: self.end_time,
+            error_type: self.error_type.clone(),
+            error_content: self.error_content.clone(),
+            field_name: self.field_name.clone(),
+            field_value: match self.log_type {
+                LogType::Input | LogType::Output | LogType::Feedback => json_serializable_to_value(&self.field_value_io),
+                LogType::Metadata => match &self.field_value_str {
+                    Some(m) => Some(Value {kind: Some(Kind::StringValue(m.clone()))}),
+                    None => {panic!("Field value should be present for Metadata!!")}
+                },
+                _ => None
+            }
         }
     }
 }
 
 #[pymethods]
-impl Event {
-    #[new]
+impl ProtoRecord {
+    #[staticmethod]
     #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
-    fn new_py(
+    fn event(
         tier: Bound<'_, PyString>,
         name: Bound<'_, PyString>,
         parent_id: Bound<'_, PyString>,
@@ -78,104 +81,42 @@ impl Event {
         environment: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
         let tier: String = tier.extract()?;
-
-        let version = match version {
+        let name: String = name.extract()?;
+        let parent_id: Uuid = get_uuid(Some(parent_id))?;
+        let id: Uuid = get_uuid(id)?;
+        let version: Option<String> = match version {
             Some(v) => v.extract()?,
             None => None,
         };
-
-        let environment = match environment {
-            Some(v) => v.extract()?,
+        let environment: Option<String> = match environment {
+            Some(e) => e.extract()?,
             None => None,
         };
 
-        Ok(
-            Self::new(
-                detect_tier(&tier),
-                get_uuid(Some(parent_id))?,
-                get_uuid(id)?,
-                name.extract()?,
-                parameters,
-                version,
-                environment
-            )
-        )
-    }
-
-    #[getter]
-    fn tier(&self) -> PyResult<String> {
-        tier_to_string(&self.tier)
-    }
-
-    #[getter]
-    fn log_type(&self) -> PyResult<String> {
-        Ok("event".to_string())
-    }
-
-    #[getter]
-    fn id(&self) -> PyResult<String> {
-        Ok(self.id.to_string())
-    }
-}
-
-#[derive(Clone, Debug)]
-#[pyclass]
-pub struct Runtime {
-    tier: Tier,
-    parent_id: Uuid,
-    id: Uuid,
-    start_time: f32,
-    end_time: f32,
-    error_type: Option<String>,
-    error_content: Option<String>,
-}
-
-impl Runtime {
-    fn new(
-        tier: Tier,
-        parent_id: Uuid,
-        id: Uuid,
-        start_time: f32,
-        end_time: f32,
-        error_type: Option<String>,
-        error_content: Option<String>
-    ) -> Self {
-        Self {
-            tier,
+        let rec = Self {
+            tier: detect_tier(&tier),
+            log_type: LogType::Event,
             parent_id,
             id,
-            start_time,
-            end_time,
-            error_type,
-            error_content,
-        }
-    }
-
-    pub fn proto(&self) -> Record {
-        Record {
-            tier: self.tier.into(),
-            log_type: LogType::Runtime.into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.id.to_string(),
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: Some(self.start_time),
-            end_time: Some(self.end_time),
-            error_type: self.error_type.clone(),
-            error_content: self.error_content.clone(),
+            name: Some(name),
+            parameters,
+            version,
+            environment,
+            start_time: None,
+            end_time: None,
+            error_type: None,
+            error_content: None,
             field_name: None,
-            field_value: None,
-        }
-    }
-}
+            field_value_io: None,
+            field_value_str: None,
+        };
 
-#[pymethods]
-impl Runtime {
-    #[new]
+        Ok(rec)
+    }
+
+    #[staticmethod]
     #[pyo3(signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
-    fn py_new(
+    fn runtime(
         tier: Bound<'_, PyString>,
         parent_id: Bound<'_, PyString>,
         start_time: Bound<'_, PyFloat>,
@@ -196,17 +137,99 @@ impl Runtime {
             None => None,
         };
 
-        let rt = Self::new(
-            detect_tier(&tier),
-            get_uuid(Some(parent_id))?,
-            get_uuid(id)?,
-            start_time.extract()?,
-            end_time.extract()?,
+        let rec = Self {
+            tier: detect_tier(&tier),
+            log_type: LogType::Runtime,
+            parent_id: get_uuid(Some(parent_id))?,
+            id: get_uuid(id)?,
+            name: None,
+            parameters: None,
+            version: None,
+            environment: None,
+            start_time: start_time.extract()?,
+            end_time: end_time.extract()?,
             error_type,
-            error_content
-        );
+            error_content,
+            field_name: None,
+            field_value_io: None,
+            field_value_str: None,
+        };
 
-        Ok(rt)
+        Ok(rec)
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
+    fn io(
+        tier: Bound<'_, PyString>,
+        log_type: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: JsonSerializable,
+        id: Option<Bound<'_, PyString>>
+    ) -> PyResult<Self> {
+        let tier: String = tier.extract()?;
+        let log_type: String = log_type.extract()?;
+
+        let parent_id = get_uuid(Some(parent_id))?;
+        let id = get_uuid(id)?;
+        let field_name: String = field_name.extract()?;
+        
+        let rec = Self {
+            tier: detect_tier(&tier),
+            log_type: detect_log_type(&log_type),
+            parent_id: parent_id,
+            id: id,
+            name: None,
+            parameters: None,
+            version: None,
+            environment: None,
+            start_time: None,
+            end_time: None,
+            error_type: None,
+            error_content: None,
+            field_name: Some(field_name),
+            field_value_io: Some(field_value),
+            field_value_str: None,
+        };
+
+        Ok(rec)
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
+    fn metadata(
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: Bound<'_, PyString>,
+        id: Option<Bound<'_, PyString>>
+    ) -> PyResult<Self> {
+        let tier: String = tier.extract()?;
+
+        let parent_id = get_uuid(Some(parent_id))?;
+        let id = get_uuid(id)?;
+        let field_name: String = field_name.extract()?;
+        
+        let rec = Self {
+            tier: detect_tier(&tier),
+            log_type: LogType::Metadata,
+            parent_id,
+            id,
+            name: None,
+            parameters: None,
+            version: None,
+            environment: None,
+            start_time: None,
+            end_time: None,
+            error_type: None,
+            error_content: None,
+            field_name: Some(field_name),
+            field_value_io: None,
+            field_value_str: Some(field_value.extract()?)
+        };
+
+        Ok(rec)
     }
 
     #[getter]
@@ -216,7 +239,17 @@ impl Runtime {
 
     #[getter]
     fn log_type(&self) -> PyResult<String> {
-        Ok("runtime".to_string())
+        let log_type = match self.log_type {
+            LogType::Event => "event".to_string(),
+            LogType::Runtime => "runtime".to_string(),
+            LogType::Input => "input".to_string(),
+            LogType::Output => "output".to_string(),
+            LogType::Feedback => "feedback".to_string(),
+            LogType::Metadata => "metadata".to_string(),
+            LogType::UndeclaredLogType => { panic!("Undeclared log type!")}
+        };
+
+        Ok(log_type)
     }
 
     #[getter]
@@ -239,224 +272,6 @@ fn get_uuid(id: Option<Bound<'_, PyString>>) -> PyResult<Uuid> {
             },
             None => return Ok(Uuid::new_v4()),
         }
-}
-
-#[derive(Clone, Debug)]
-#[pyclass]
-pub struct IO {
-    tier: Tier,
-    log_type: LogType,
-    parent_id: Uuid,
-    id: Uuid,
-    field_name: String,
-    field_value: JsonSerializable,
-}
-
-impl IO {
-    fn new(
-        tier: Tier,
-        log_type: LogType,
-        parent_id: Uuid,
-        id: Uuid,
-        field_name: String,
-        field_value: JsonSerializable
-    ) -> Self {
-        Self {
-            tier,
-            log_type,
-            parent_id,
-            id,
-            field_name,
-            field_value
-        }
-    }
-
-    pub fn proto(&self) -> Record {
-        Record {
-            tier: self.tier.into(),
-            log_type: self.log_type.into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.id.to_string(),
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: Some(self.field_name.clone()),
-            field_value: json_serializable_to_value(&Some(self.field_value.clone()))
-        }
-    }
-}
-
-#[pymethods]
-impl IO {
-    #[new]
-    #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
-    fn py_new(
-        tier: Bound<'_, PyString>,
-        log_type: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: JsonSerializable,
-        id: Option<Bound<'_, PyString>>
-    ) -> PyResult<Self> {
-        let tier: String = tier.extract()?;
-        let log_type: String = log_type.extract()?;
-
-        let parent_id = get_uuid(Some(parent_id))?;
-        let id = get_uuid(id)?;
-        let field_name: String = field_name.extract()?;
-        
-        let io = Self::new(
-            detect_tier(&tier),
-            detect_log_type(&log_type),
-            parent_id,
-            id,
-            field_name,
-            field_value
-        );
-
-        Ok(io)
-    }
-
-    #[getter]
-    fn tier(&self) -> PyResult<String> {
-        tier_to_string(&self.tier)
-    }
-
-    #[getter]
-    fn log_type(&self) -> PyResult<String> {
-        let log_type = match self.log_type {
-            LogType::Input => "input".to_string(),
-            LogType::Output => "output".to_string(),
-            LogType::Feedback => "feedback".to_string(),
-            _ => { panic!("Tier should be Input, Output, or Feedback." )}
-        };
-
-        Ok(log_type)
-    }
-
-    #[getter]
-    fn id(&self) -> PyResult<String> {
-        Ok(self.id.to_string())
-    }
-}
-
-#[derive(Clone, Debug)]
-#[pyclass]
-pub struct Metadata {
-    tier: Tier,
-    log_type: LogType,
-    parent_id: Uuid,
-    id: Uuid,
-    field_name: String,
-    field_value: JsonSerializable,
-}
-
-impl Metadata {
-    fn new(
-        tier: Tier,
-        log_type: LogType,
-        parent_id: Uuid,
-        id: Uuid,
-        field_name: String,
-        field_value: JsonSerializable
-    ) -> Self {
-        Self {
-            tier,
-            log_type,
-            parent_id,
-            id,
-            field_name,
-            field_value
-        }
-    }
-
-    pub fn proto(&self) -> Record {
-        Record {
-            tier: self.tier.into(),
-            log_type: self.log_type.into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.id.to_string(),
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: Some(self.field_name.clone()),
-            field_value: json_serializable_to_value(&Some(self.field_value.clone()))
-        }
-    }
-}
-
-#[pymethods]
-impl Metadata {
-    #[new]
-    #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
-    fn py_new(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: Bound<'_, PyString>,
-        id: Option<Bound<'_, PyString>>
-    ) -> PyResult<Self> {
-        let tier: String = tier.extract()?;
-
-        let parent_id = get_uuid(Some(parent_id))?;
-        let id = get_uuid(id)?;
-        let field_name: String = field_name.extract()?;
-        
-        let io = Self::new(
-            detect_tier(&tier),
-            LogType::Metadata,
-            parent_id,
-            id,
-            field_name,
-            JsonSerializable::String(field_value.extract()?)
-        );
-
-        Ok(io)
-    }
-
-    #[getter]
-    fn tier(&self) -> PyResult<String> {
-        tier_to_string(&self.tier)
-    }
-
-    #[getter]
-    fn log_type(&self) -> PyResult<String> {
-        Ok("metadata".to_string())
-    }
-
-    #[getter]
-    fn id(&self) -> PyResult<String> {
-        Ok(self.id.to_string())
-    }
-}
-
-#[derive(FromPyObject, Clone, Debug)]
-pub enum EventRecord {
-    Event(Event),
-    Runtime(Runtime),
-    IO(IO),
-    Metadata(Metadata),
-}
-
-impl EventRecord {
-    pub fn proto(&self) -> Record {
-        match self {
-            EventRecord::Event(e) => e.proto(),
-            EventRecord::Runtime(r) => r.proto(),
-            EventRecord::IO(i) => i.proto(),
-            EventRecord::Metadata(m) => m.proto(),
-        }
-    }
 }
 
 #[derive(FromPyObject, Clone, Debug)]

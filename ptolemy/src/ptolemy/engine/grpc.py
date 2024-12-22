@@ -1,12 +1,12 @@
 """GRPC Engine with robust error handling and retries."""
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Iterable, Union
+from typing import Iterable
 import logging
 from contextlib import contextmanager
 from pydantic import ConfigDict, PrivateAttr, Field
 from .engine import Engine
-from .._core import BlockingObserverClient, Event, Runtime, IO, Metadata  # pylint: disable=no-name-in-module
+from .._core import BlockingObserverClient, ProtoRecord # pylint: disable=no-name-in-module
 from ..exceptions import (
     EngineError,
     PtolemyConnectionError,
@@ -56,11 +56,11 @@ class PtolemyEngine(Engine):
             self._is_connected = False
             raise EngineError(f"Failed during {operation}") from e
 
-    def queue_event(self, record: Event) -> None:
+    def queue_event(self, record: ProtoRecord) -> None:
         with self._error_handling("queue"):
             future = self._executor.submit(self._client.queue_event, record)
 
-    def queue(self, records: Iterable[Union[Runtime, IO, Metadata]]) -> None:
+    def queue(self, records: Iterable[ProtoRecord]) -> None:
         """
         Queue records for batch processing.
 
