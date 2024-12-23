@@ -11,7 +11,10 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
-async fn hash_password(conn: &mut DbConnection<'_>, password_str: &str) -> Result<String, CRUDError> {
+async fn hash_password(
+    conn: &mut DbConnection<'_>,
+    password_str: &str,
+) -> Result<String, CRUDError> {
     let salt: String = match diesel::select(gen_salt("bf")).get_result(conn).await {
         Ok(s) => s,
         Err(e) => {
@@ -118,7 +121,6 @@ pub async fn change_user_password(
         }
     }
 }
-
 
 pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(), CRUDError> {
     match diesel::delete(users.filter(id.eq(user_id)))
