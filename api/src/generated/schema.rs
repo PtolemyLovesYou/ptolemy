@@ -10,6 +10,10 @@ pub mod sql_types {
     pub struct FieldValueType;
 
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "user_status"))]
+    pub struct UserStatus;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "workspace_role"))]
     pub struct WorkspaceRole;
 }
@@ -241,11 +245,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::UserStatus;
+
     users (id) {
         id -> Uuid,
         username -> Varchar,
         password_hash -> Varchar,
         display_name -> Nullable<Varchar>,
+        status -> Nullable<UserStatus>,
         is_sysadmin -> Bool,
         is_admin -> Bool,
     }

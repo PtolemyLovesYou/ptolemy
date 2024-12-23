@@ -5,3 +5,4 @@ drop table workspace_user;
 drop table users;
 drop type api_key_permission;
 drop type workspace_role;
+drop type user_status;

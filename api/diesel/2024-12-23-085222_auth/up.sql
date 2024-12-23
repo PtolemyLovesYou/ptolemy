@@ -3,12 +3,14 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 create type workspace_role as enum ('reader', 'writer', 'manager', 'admin');
 create type api_key_permission as enum ('read_only', 'write_only', 'read_write');
+create type user_status as enum ('active', 'suspended');
 
 create table users (
     id UUID not null primary key default gen_random_uuid(),
     username varchar unique not null,
     password_hash varchar not null,
     display_name varchar,
+    status user_status default 'active',
     is_sysadmin bool not null,
     is_admin bool not null
 );

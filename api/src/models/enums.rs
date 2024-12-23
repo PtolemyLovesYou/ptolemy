@@ -1,4 +1,4 @@
-use crate::generated::schema::sql_types::{FieldValueType, WorkspaceRole, ApiKeyPermission};
+use crate::generated::schema::sql_types::{FieldValueType, WorkspaceRole, ApiKeyPermission, UserStatus};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{
@@ -138,6 +138,42 @@ impl FromSql<ApiKeyPermission, Pg> for ApiKeyPermissionEnum {
             b"write_only" => Ok(ApiKeyPermissionEnum::WriteOnly),
             b"read_write" => Ok(ApiKeyPermissionEnum::ReadWrite),
             _ => Err("Unrecognized enum variant".into()),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
+#[diesel(sql_type = UserStatus)]
+pub enum UserStatusEnum {
+    Active,
+    Suspended
+}
+
+impl Serialize for UserStatusEnum {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(match *self {
+            UserStatusEnum::Active => "active",
+            UserStatusEnum::Suspended => "suspended",
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for UserStatusEnum {
+    fn deserialize<D>(deserializer: D) -> Result<UserStatusEnum, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "active" => Ok(UserStatusEnum::Active),
+            "suspended" => Ok(UserStatusEnum::Suspended),
+            _ => Err(serde::de::Error::unknown_variant(
+                s.as_str(),
+                &["active", "suspended"],
+            )),
         }
     }
 }
