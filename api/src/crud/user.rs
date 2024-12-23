@@ -11,10 +11,7 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
-pub async fn create_user(
-    conn: &mut DbConnection<'_>,
-    user: &UserCreate,
-) -> Result<Uuid, CRUDError> {
+async fn hash_password(conn: &mut DbConnection<'_>, password_str: &str) -> Result<String, CRUDError> {
     let salt: String = match diesel::select(gen_salt("bf")).get_result(conn).await {
         Ok(s) => s,
         Err(e) => {
@@ -23,7 +20,7 @@ pub async fn create_user(
         }
     };
 
-    let hashed_password: String = match diesel::select(crypt(&user.password, salt))
+    let hashed_password: String = match diesel::select(crypt(password_str, salt))
         .get_result(conn)
         .await
     {
@@ -33,6 +30,15 @@ pub async fn create_user(
             return Err(CRUDError::InsertError);
         }
     };
+
+    Ok(hashed_password)
+}
+
+pub async fn create_user(
+    conn: &mut DbConnection<'_>,
+    user: &UserCreate,
+) -> Result<Uuid, CRUDError> {
+    let hashed_password: String = hash_password(conn, &user.password).await?;
 
     match diesel::insert_into(users)
         .values((
@@ -72,6 +78,47 @@ pub async fn change_user_status(
         }
     }
 }
+
+pub async fn change_user_display_name(
+    conn: &mut DbConnection<'_>,
+    user_id: Uuid,
+    user_display_name: String,
+) -> Result<(), CRUDError> {
+    match diesel::update(users)
+        .filter(id.eq(user_id))
+        .set(display_name.eq(user_display_name))
+        .execute(conn)
+        .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to update user display name: {}", e);
+            return Err(CRUDError::UpdateError);
+        }
+    }
+}
+
+pub async fn change_user_password(
+    conn: &mut DbConnection<'_>,
+    user_id: Uuid,
+    user_password: String,
+) -> Result<(), CRUDError> {
+    let hashed_password: String = hash_password(conn, &user_password).await?;
+
+    match diesel::update(users)
+        .filter(id.eq(user_id))
+        .set(password_hash.eq(hashed_password))
+        .execute(conn)
+        .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to update user status: {}", e);
+            return Err(CRUDError::UpdateError);
+        }
+    }
+}
+
 
 pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(), CRUDError> {
     match diesel::delete(users.filter(id.eq(user_id)))
