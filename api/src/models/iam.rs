@@ -38,11 +38,10 @@ pub struct User {
     pub is_admin: bool,
 }
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = crate::generated::schema::users)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserCreate {
     pub username: String,
-    pub password_hash: String,
+    pub password: String,
     pub display_name: Option<String>,
     pub is_sysadmin: bool,
     pub is_admin: bool,
