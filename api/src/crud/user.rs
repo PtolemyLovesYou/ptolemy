@@ -37,6 +37,28 @@ async fn hash_password(
     Ok(hashed_password)
 }
 
+pub async fn verify_user(
+    conn: &mut DbConnection<'_>,
+    user_id: Uuid,
+    password: String,
+) -> Result<bool, CRUDError> {
+    let hashed_password: String = hash_password(conn, &password).await?;
+
+    let password_is_correct: bool = match users
+        .filter(id.eq(&user_id))
+        .select(password_hash.eq(&hashed_password))
+        .get_result::<bool>(conn)
+        .await {
+            Ok(v) => v,
+            Err(e) => {
+                error!("Unable to verify user: {}", e);
+                return Err(CRUDError::GetError);
+            }
+        };
+
+    Ok(password_is_correct)
+}
+
 pub async fn create_user(
     conn: &mut DbConnection<'_>,
     user: &UserCreate,
