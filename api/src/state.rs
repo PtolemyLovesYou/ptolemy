@@ -1,7 +1,7 @@
+use crate::error::ApiError;
 use diesel_async::pooled_connection::bb8::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
-use crate::error::ApiError;
 
 fn get_env_var(name: &str) -> Result<String, ApiError> {
     match std::env::var(name) {
@@ -9,7 +9,7 @@ fn get_env_var(name: &str) -> Result<String, ApiError> {
         Err(_) => {
             tracing::error!("{} must be set.", name);
             Err(ApiError::ConfigError)
-        },
+        }
     }
 }
 
@@ -26,10 +26,9 @@ impl AppState {
         let postgres_host = get_env_var("POSTGRES_HOST")?;
         let postgres_port = get_env_var("POSTGRES_PORT")?;
         let postgres_user = get_env_var("POSTGRES_USER")?;
-        let postgres_password =
-            get_env_var("POSTGRES_PASSWORD")?;
+        let postgres_password = get_env_var("POSTGRES_PASSWORD")?;
         let postgres_db = get_env_var("POSTGRES_DB")?;
-        
+
         // Default to false if the env var is not set
         let enable_prometheus = std::env::var("ENABLE_PROMETHEUS")
             .map(|v| v.to_lowercase() == "true")
@@ -43,8 +42,8 @@ impl AppState {
         let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(db_url);
         let pg_pool = Pool::builder().build(config).await.unwrap();
 
-        let state = Self { 
-            port, 
+        let state = Self {
+            port,
             pg_pool,
             enable_prometheus,
         };

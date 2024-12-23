@@ -1,7 +1,8 @@
-use axum::{routing::get, Router, http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::sync::Arc;
 use tracing::info;
 
+use api::error::ApiError;
 use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
@@ -10,7 +11,6 @@ use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
 use tonic_prometheus_layer::metrics::GlobalSettings;
-use api::error::ApiError;
 
 async fn metrics() -> impl IntoResponse {
     match tonic_prometheus_layer::metrics::encode_to_string() {
@@ -30,11 +30,11 @@ async fn base_router(enable_prometheus: bool) -> Router {
     let mut router = Router::new()
         .route("/", get(|| async { "Ptolemy API is up and running <3" }))
         .route("/ping", get(|| async { "Pong!" }));
-    
+
     if enable_prometheus {
         router = router.route("/metrics", get(metrics));
     }
-    
+
     router
 }
 
@@ -59,14 +59,15 @@ async fn main() -> Result<(), ApiError> {
 
     info!("Observer server listening on {}", grpc_addr);
     info!("Axum server serving at {}", &server_url);
-    
+
     // Run both servers concurrently
     if shared_state.enable_prometheus {
         info!("Prometheus metrics enabled");
         tonic_prometheus_layer::metrics::try_init_settings(GlobalSettings {
             histogram_buckets: vec![0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0, 10.0],
             ..Default::default()
-        }).unwrap();
+        })
+        .unwrap();
 
         let metrics_layer = tonic_prometheus_layer::MetricsLayer::new();
 

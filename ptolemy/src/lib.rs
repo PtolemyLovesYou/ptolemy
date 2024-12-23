@@ -1,10 +1,10 @@
-use crate::publish::BlockingObserverClient;
 use crate::event::ProtoRecord;
+use crate::publish::BlockingObserverClient;
 use pyo3::prelude::*;
 
-pub mod publish;
 pub mod config;
 pub mod event;
+pub mod publish;
 
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to

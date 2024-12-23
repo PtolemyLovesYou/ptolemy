@@ -1,11 +1,11 @@
 // use ptolemy_core::generated::observer;
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
-use std::collections::BTreeMap;
-use pyo3::prelude::*;
-use pyo3::types::{PyString, PyFloat};
+use ptolemy_core::generated::observer::{LogType, Record, Tier};
 use pyo3::exceptions::PyValueError;
-use ptolemy_core::generated::observer::{LogType, Tier, Record};
+use pyo3::prelude::*;
+use pyo3::types::{PyFloat, PyString};
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -33,7 +33,7 @@ pub struct ProtoRecord {
     field_value_io: Option<JsonSerializable>,
 
     // Metadata field
-    field_value_str: Option<String>
+    field_value_str: Option<String>,
 }
 
 impl ProtoRecord {
@@ -56,13 +56,19 @@ impl ProtoRecord {
             error_content: self.error_content.clone(),
             field_name: self.field_name.clone(),
             field_value: match self.log_type {
-                LogType::Input | LogType::Output | LogType::Feedback => json_serializable_to_value(&self.field_value_io),
+                LogType::Input | LogType::Output | LogType::Feedback => {
+                    json_serializable_to_value(&self.field_value_io)
+                }
                 LogType::Metadata => match &self.field_value_str {
-                    Some(m) => Some(Value {kind: Some(Kind::StringValue(m.clone()))}),
-                    None => {panic!("Field value should be present for Metadata!!")}
+                    Some(m) => Some(Value {
+                        kind: Some(Kind::StringValue(m.clone())),
+                    }),
+                    None => {
+                        panic!("Field value should be present for Metadata!!")
+                    }
                 },
-                _ => None
-            }
+                _ => None,
+            },
         }
     }
 }
@@ -156,7 +162,7 @@ impl ProtoRecord {
         parent_id: Bound<'_, PyString>,
         field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
-        id: Option<Bound<'_, PyString>>
+        id: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
         let rec = Self {
             tier: detect_tier(&tier.extract::<String>()?),
@@ -186,7 +192,7 @@ impl ProtoRecord {
         parent_id: Bound<'_, PyString>,
         field_name: Bound<'_, PyString>,
         field_value: Bound<'_, PyString>,
-        id: Option<Bound<'_, PyString>>
+        id: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
         let rec = Self {
             tier: detect_tier(&tier.extract::<String>()?),
@@ -203,7 +209,7 @@ impl ProtoRecord {
             error_content: None,
             field_name: Some(field_name.extract::<String>()?),
             field_value_io: None,
-            field_value_str: Some(field_value.extract()?)
+            field_value_str: Some(field_value.extract()?),
         };
 
         Ok(rec)
@@ -223,7 +229,9 @@ impl ProtoRecord {
             LogType::Output => "output".to_string(),
             LogType::Feedback => "feedback".to_string(),
             LogType::Metadata => "metadata".to_string(),
-            LogType::UndeclaredLogType => { panic!("Undeclared log type!")}
+            LogType::UndeclaredLogType => {
+                panic!("Undeclared log type!")
+            }
         };
 
         Ok(log_type)
@@ -237,18 +245,18 @@ impl ProtoRecord {
 
 fn get_uuid(id: Option<Bound<'_, PyString>>) -> PyResult<Uuid> {
     match id {
-            Some(i) => {
-                let id_ub: String = i.extract()?;
-                match Uuid::parse_str(&id_ub) {
-                    Ok(i) => Ok(i),
-                    Err(e) => {
-                        let error_msg = format!("Unable to parse UUID: {}", e);
-                        Err(PyValueError::new_err(error_msg))
-                    },
+        Some(i) => {
+            let id_ub: String = i.extract()?;
+            match Uuid::parse_str(&id_ub) {
+                Ok(i) => Ok(i),
+                Err(e) => {
+                    let error_msg = format!("Unable to parse UUID: {}", e);
+                    Err(PyValueError::new_err(error_msg))
                 }
-            },
-            None => return Ok(Uuid::new_v4()),
+            }
         }
+        None => return Ok(Uuid::new_v4()),
+    }
 }
 
 #[derive(FromPyObject, Clone, Debug)]
@@ -288,7 +296,7 @@ pub fn detect_log_type(log_type: &str) -> LogType {
 #[derive(FromPyObject, Clone, Debug)]
 #[pyo3(transparent)]
 pub struct Parameters {
-    inner: BTreeMap<String, JsonSerializable>
+    inner: BTreeMap<String, JsonSerializable>,
 }
 
 fn tier_to_string(tier: &Tier) -> PyResult<String> {
@@ -298,7 +306,9 @@ fn tier_to_string(tier: &Tier) -> PyResult<String> {
         Tier::Component => "component",
         Tier::Subcomponent => "subcomponent",
         Tier::UndeclaredTier => {
-            return Err(PyValueError::new_err("Undeclared tier. This shouldn't happen. Contact the maintainers."));
+            return Err(PyValueError::new_err(
+                "Undeclared tier. This shouldn't happen. Contact the maintainers.",
+            ));
         }
     };
 
