@@ -1,4 +1,6 @@
-use crate::models::records::models::{parse_record, EventRecord, IORecord, MetadataRecord, RuntimeRecord};
+use crate::models::records::models::{
+    parse_record, EventRecord, IORecord, MetadataRecord, RuntimeRecord,
+};
 use crate::state::AppState;
 use diesel_async::RunQueryDsl;
 use ptolemy_core::generated::observer::{

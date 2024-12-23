@@ -48,13 +48,14 @@ pub async fn verify_user(
         .filter(id.eq(&user_id))
         .select(password_hash.eq(&hashed_password))
         .get_result::<bool>(conn)
-        .await {
-            Ok(v) => v,
-            Err(e) => {
-                error!("Unable to verify user: {}", e);
-                return Err(CRUDError::GetError);
-            }
-        };
+        .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            error!("Unable to verify user: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    };
 
     Ok(password_is_correct)
 }

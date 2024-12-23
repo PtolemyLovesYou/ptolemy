@@ -1,2 +1,2 @@
-pub mod records;
 pub mod auth;
+pub mod records;
