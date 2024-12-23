@@ -1,5 +1,5 @@
 use crate::generated::schema::workspace;
-use crate::models::workspace::{Workspace, WorkspaceCreate};
+use crate::models::iam::{Workspace, WorkspaceCreate};
 use crate::state::AppState;
 use axum::{
     extract::Path,
