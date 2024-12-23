@@ -2,7 +2,7 @@ use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::models::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum};
+use crate::models::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum, UserStatusEnum};
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::generated::schema::workspace)]
@@ -33,6 +33,7 @@ pub struct User {
     pub username: String,
     pub password_hash: String,
     pub display_name: Option<String>,
+    pub status: UserStatusEnum,
     pub is_sysadmin: bool,
     pub is_admin: bool,
 }
