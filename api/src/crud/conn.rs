@@ -23,7 +23,6 @@ pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<As
 ///
 /// This function will log an error and return `CRUDError::ConnectionError` if it fails to get
 /// a connection from the pool.
-
 pub async fn get_conn(state: &Arc<AppState>) -> Result<DbConnection<'_>, CRUDError> {
     match state.pg_pool.get().await {
         Ok(c) => Ok(c),
