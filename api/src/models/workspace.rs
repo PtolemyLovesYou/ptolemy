@@ -10,6 +10,8 @@ pub struct Workspace {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
+    #[diesel(treat_none_as_default_value = true)]
+    pub archived: Option<bool>,
     #[serde(with = "ts_microseconds")]
     pub created_at: NaiveDateTime,
     #[serde(with = "ts_microseconds")]
