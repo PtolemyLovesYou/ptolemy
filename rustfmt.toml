@@ -1,0 +1,3 @@
+ignore = [
+    "ptolemy-core/src/generated/**/*.rs"
+]
