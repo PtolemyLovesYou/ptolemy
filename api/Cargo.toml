@@ -30,3 +30,5 @@ ptolemy-core = { path = "../ptolemy-core" }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 tonic_prometheus_layer = "0.1.10"
+ring = "0.17.8"
+base64 = "0.22.1"

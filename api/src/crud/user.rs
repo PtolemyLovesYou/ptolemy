@@ -3,53 +3,13 @@ use crate::crud::error::CRUDError;
 use crate::generated::auth_schema::users::dsl::{
     display_name, id, is_admin, is_sysadmin, password_hash, status, username, users,
 };
-use crate::models::auth::crypto::{crypt, gen_salt};
+use crate::crud::crypto::hash_password;
 use crate::models::auth::enums::UserStatusEnum;
 use crate::models::auth::models::UserCreate;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-
-/// Hashes a given password using a generated salt and returns the hashed password.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `password_str` - A string slice that holds the password to be hashed.
-///
-/// # Returns
-///
-/// Returns a `Result` containing the hashed password as a `String` if successful, or a `CRUDError` if an error occurs.
-///
-/// # Errors
-///
-/// This function will return `CRUDError::InsertError` if there is an error generating the salt or hashing the password.
-async fn hash_password(
-    conn: &mut DbConnection<'_>,
-    password_str: &str,
-) -> Result<String, CRUDError> {
-    let salt: String = match diesel::select(gen_salt("bf")).get_result(conn).await {
-        Ok(s) => s,
-        Err(e) => {
-            error!("Unable to generate salt: {}", e);
-            return Err(CRUDError::InsertError);
-        }
-    };
-
-    let hashed_password: String = match diesel::select(crypt(password_str, salt))
-        .get_result(conn)
-        .await
-    {
-        Ok(s) => s,
-        Err(e) => {
-            error!("Unable to generate hashed password: {}", e);
-            return Err(CRUDError::InsertError);
-        }
-    };
-
-    Ok(hashed_password)
-}
 
 /// Verifies that a given password is correct for a given user.
 ///
