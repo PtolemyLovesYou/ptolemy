@@ -12,7 +12,8 @@ create table users (
     display_name varchar,
     status user_status default 'active',
     is_sysadmin bool not null,
-    is_admin bool not null
+    is_admin bool not null,
+    CONSTRAINT check_admin_roles CHECK (NOT (is_sysadmin AND is_admin))
 );
 
 create table workspace_user (
