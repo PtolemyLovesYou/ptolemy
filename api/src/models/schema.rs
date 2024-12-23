@@ -2,8 +2,16 @@
 
 pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "api_key_permission"))]
+    pub struct ApiKeyPermission;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "field_value_type"))]
     pub struct FieldValueType;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "workspace_role"))]
+    pub struct WorkspaceRole;
 }
 
 diesel::table! {
@@ -53,6 +61,19 @@ diesel::table! {
         end_time -> Timestamp,
         error_type -> Nullable<Varchar>,
         error_content -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ApiKeyPermission;
+
+    service_api_key (id) {
+        id -> Uuid,
+        workspace_id -> Uuid,
+        key_hash -> Varchar,
+        permissions -> ApiKeyPermission,
+        expires_at -> Nullable<Timestamp>,
     }
 }
 
@@ -207,13 +228,49 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ApiKeyPermission;
+
+    user_api_key (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        key_hash -> Varchar,
+        permissions -> ApiKeyPermission,
+        expires_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    users (id) {
+        id -> Uuid,
+        username -> Varchar,
+        password_hash -> Varchar,
+        display_name -> Nullable<Varchar>,
+        is_sysadmin -> Bool,
+        is_admin -> Bool,
+    }
+}
+
+diesel::table! {
     workspace (id) {
         id -> Uuid,
         #[max_length = 128]
         name -> Varchar,
         description -> Nullable<Varchar>,
+        archived -> Nullable<Bool>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::WorkspaceRole;
+
+    workspace_user (user_id, workspace_id) {
+        user_id -> Uuid,
+        workspace_id -> Uuid,
+        role -> WorkspaceRole,
     }
 }
 
@@ -221,6 +278,7 @@ diesel::joinable!(component_event -> subsystem_event (parent_id));
 diesel::joinable!(component_io -> component_event (parent_id));
 diesel::joinable!(component_metadata -> component_event (parent_id));
 diesel::joinable!(component_runtime -> component_event (parent_id));
+diesel::joinable!(service_api_key -> workspace (workspace_id));
 diesel::joinable!(subcomponent_event -> component_event (parent_id));
 diesel::joinable!(subcomponent_io -> subcomponent_event (parent_id));
 diesel::joinable!(subcomponent_metadata -> subcomponent_event (parent_id));
@@ -233,12 +291,16 @@ diesel::joinable!(system_event -> workspace (parent_id));
 diesel::joinable!(system_io -> system_event (parent_id));
 diesel::joinable!(system_metadata -> system_event (parent_id));
 diesel::joinable!(system_runtime -> system_event (parent_id));
+diesel::joinable!(user_api_key -> users (user_id));
+diesel::joinable!(workspace_user -> users (user_id));
+diesel::joinable!(workspace_user -> workspace (workspace_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     component_event,
     component_io,
     component_metadata,
     component_runtime,
+    service_api_key,
     subcomponent_event,
     subcomponent_io,
     subcomponent_metadata,
@@ -251,5 +313,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     system_io,
     system_metadata,
     system_runtime,
+    user_api_key,
+    users,
     workspace,
+    workspace_user,
 );

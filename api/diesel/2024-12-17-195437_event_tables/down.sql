@@ -15,3 +15,4 @@ drop table system_runtime;
 drop table system_io;
 drop table system_metadata;
 drop table system_event;
+drop type field_value_type;
