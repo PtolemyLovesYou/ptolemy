@@ -9,6 +9,16 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
+/// Creates a new entry in the workspace_user table.
+///
+/// # Arguments
+///
+/// * `conn` - A mutable reference to the database connection.
+/// * `wk_user` - The WorkspaceUser to be inserted.
+///
+/// # Errors
+///
+/// This function will return `CRUDError::InsertError` if there is an error inserting the user into the database.
 pub async fn create_workspace_user(
     conn: &mut DbConnection<'_>,
     wk_user: &WorkspaceUser,
@@ -25,6 +35,19 @@ pub async fn create_workspace_user(
         }
     }
 }
+
+/// Updates the role of a user in a workspace.
+///
+/// # Arguments
+///
+/// * `conn` - A mutable reference to the database connection.
+/// * `wk_id` - The UUID of the workspace.
+/// * `us_id` - The UUID of the user.
+/// * `role` - The new role to be assigned to the user.
+///
+/// # Errors
+///
+/// This function will return `CRUDError::UpdateError` if there is an error updating the user's role in the database.
 
 pub async fn set_workspace_user_role(
     conn: &mut DbConnection<'_>,
@@ -46,6 +69,17 @@ pub async fn set_workspace_user_role(
     }
 }
 
+/// Deletes a user from a workspace.
+///
+/// # Arguments
+///
+/// * `conn` - A mutable reference to the database connection.
+/// * `wk_id` - The UUID of the workspace.
+/// * `us_id` - The UUID of the user.
+///
+/// # Errors
+///
+/// This function will return `CRUDError::DeleteError` if there is an error deleting the user from the workspace_user table.
 pub async fn delete_workspace_user(
     conn: &mut DbConnection<'_>,
     wk_id: Uuid,

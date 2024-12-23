@@ -11,6 +11,20 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
+/// Hashes a given password using a generated salt and returns the hashed password.
+///
+/// # Arguments
+///
+/// * `conn` - A mutable reference to the database connection.
+/// * `password_str` - A string slice that holds the password to be hashed.
+///
+/// # Returns
+///
+/// Returns a `Result` containing the hashed password as a `String` if successful, or a `CRUDError` if an error occurs.
+///
+/// # Errors
+///
+/// This function will return `CRUDError::InsertError` if there is an error generating the salt or hashing the password.
 async fn hash_password(
     conn: &mut DbConnection<'_>,
     password_str: &str,
@@ -37,6 +51,18 @@ async fn hash_password(
     Ok(hashed_password)
 }
 
+/// Verifies that a given password is correct for a given user.
+///
+/// # Arguments
+///
+/// * `conn` - A mutable reference to the database connection.
+/// * `user_id` - The UUID of the user to verify.
+/// * `password` - The password to verify for the given user.
+///
+/// # Returns
+///
+/// Returns a `Result` containing `true` if the password is correct, or `false` if the password is incorrect.
+/// Returns `CRUDError::GetError` if there is an error verifying the user.
 pub async fn verify_user(
     conn: &mut DbConnection<'_>,
     user_id: Uuid,
@@ -60,6 +86,17 @@ pub async fn verify_user(
     Ok(password_is_correct)
 }
 
+/// Creates a new user in the database.
+///
+/// # Arguments
+///
+/// * `conn` - A mutable reference to the database connection.
+/// * `user` - The `UserCreate` object containing the new user's information.
+///
+/// # Returns
+///
+/// Returns a `Result` containing the UUID of the newly created user.
+/// Returns `CRUDError::InsertError` if there is an error creating the user.
 pub async fn create_user(
     conn: &mut DbConnection<'_>,
     user: &UserCreate,
