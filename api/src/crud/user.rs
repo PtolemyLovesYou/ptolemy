@@ -1,15 +1,20 @@
-use crate::generated::schema::users;
-use crate::models::iam::UserCreate;
-use crate::models::crypto::{crypt, gen_salt};
-use crate::crud::error::CRUDError;
 use crate::crud::conn::DbConnection;
-use uuid::Uuid;
+use crate::crud::error::CRUDError;
+use crate::generated::schema::users::dsl::{
+    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users,
+};
+use crate::models::crypto::{crypt, gen_salt};
+use crate::models::enums::UserStatusEnum;
+use crate::models::iam::UserCreate;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
+use uuid::Uuid;
 
-pub async fn create_user(conn: &mut DbConnection<'_>, user: &UserCreate) -> Result<Uuid, CRUDError> {
-    use crate::generated::schema::users::dsl::{username, display_name, is_sysadmin, is_admin, password_hash, id};
+pub async fn create_user(
+    conn: &mut DbConnection<'_>,
+    user: &UserCreate,
+) -> Result<Uuid, CRUDError> {
     let salt: String = match diesel::select(gen_salt("bf")).get_result(conn).await {
         Ok(s) => s,
         Err(e) => {
@@ -18,7 +23,10 @@ pub async fn create_user(conn: &mut DbConnection<'_>, user: &UserCreate) -> Resu
         }
     };
 
-    let hashed_password: String = match diesel::select(crypt(&user.password, salt)).get_result(conn).await {
+    let hashed_password: String = match diesel::select(crypt(&user.password, salt))
+        .get_result(conn)
+        .await
+    {
         Ok(s) => s,
         Err(e) => {
             error!("Unable to generate hashed password: {}", e);
@@ -26,7 +34,7 @@ pub async fn create_user(conn: &mut DbConnection<'_>, user: &UserCreate) -> Resu
         }
     };
 
-    match diesel::insert_into(users::table)
+    match diesel::insert_into(users)
         .values((
             username.eq(&user.username),
             display_name.eq(&user.display_name),
@@ -36,11 +44,44 @@ pub async fn create_user(conn: &mut DbConnection<'_>, user: &UserCreate) -> Resu
         ))
         .returning(id)
         .get_result(conn)
-        .await {
-            Ok(user) => Ok(user),
-            Err(e) => {
-                error!("Failed to create user: {}", e);
-                return Err(CRUDError::InsertError);
-            }
+        .await
+    {
+        Ok(user) => Ok(user),
+        Err(e) => {
+            error!("Failed to create user: {}", e);
+            return Err(CRUDError::InsertError);
         }
+    }
+}
+
+pub async fn change_user_status(
+    conn: &mut DbConnection<'_>,
+    user_id: Uuid,
+    user_status: UserStatusEnum,
+) -> Result<(), CRUDError> {
+    match diesel::update(users)
+        .filter(id.eq(user_id))
+        .set(status.eq(user_status))
+        .execute(conn)
+        .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to update user status: {}", e);
+            return Err(CRUDError::UpdateError);
+        }
+    }
+}
+
+pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(), CRUDError> {
+    match diesel::delete(users.filter(id.eq(user_id)))
+        .execute(conn)
+        .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to delete workspace: {}", e);
+            Err(CRUDError::DeleteError)
+        }
+    }
 }

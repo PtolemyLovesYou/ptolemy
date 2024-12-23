@@ -1,4 +1,6 @@
-use crate::generated::schema::sql_types::{FieldValueType, WorkspaceRole, ApiKeyPermission, UserStatus};
+use crate::generated::schema::sql_types::{
+    ApiKeyPermission, FieldValueType, UserStatus, WorkspaceRole,
+};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{
@@ -142,38 +144,29 @@ impl FromSql<ApiKeyPermission, Pg> for ApiKeyPermissionEnum {
     }
 }
 
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
+#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize)]
 #[diesel(sql_type = UserStatus)]
 pub enum UserStatusEnum {
     Active,
-    Suspended
+    Suspended,
 }
 
-impl Serialize for UserStatusEnum {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(match *self {
-            UserStatusEnum::Active => "active",
-            UserStatusEnum::Suspended => "suspended",
-        })
+impl ToSql<UserStatus, Pg> for UserStatusEnum {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
+        match *self {
+            UserStatusEnum::Active => out.write_all(b"active")?,
+            UserStatusEnum::Suspended => out.write_all(b"suspended")?,
+        }
+        Ok(IsNull::No)
     }
 }
 
-impl<'de> Deserialize<'de> for UserStatusEnum {
-    fn deserialize<D>(deserializer: D) -> Result<UserStatusEnum, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "active" => Ok(UserStatusEnum::Active),
-            "suspended" => Ok(UserStatusEnum::Suspended),
-            _ => Err(serde::de::Error::unknown_variant(
-                s.as_str(),
-                &["active", "suspended"],
-            )),
+impl FromSql<UserStatus, Pg> for UserStatusEnum {
+    fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"active" => Ok(UserStatusEnum::Active),
+            b"suspended" => Ok(UserStatusEnum::Suspended),
+            _ => Err("Unrecognized enum variant".into()),
         }
     }
 }

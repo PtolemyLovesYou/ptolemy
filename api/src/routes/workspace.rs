@@ -1,5 +1,5 @@
-use crate::crud::workspace as workspace_crud;
 use crate::crud::conn::get_conn;
+use crate::crud::workspace as workspace_crud;
 use crate::models::iam::{Workspace, WorkspaceCreate};
 use crate::state::AppState;
 use axum::{
@@ -60,10 +60,9 @@ async fn delete_workspace(
         }
     };
 
-    match workspace_crud::delete_workspace(&mut conn, workspace_id).await
-    {
+    match workspace_crud::delete_workspace(&mut conn, workspace_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR)
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 

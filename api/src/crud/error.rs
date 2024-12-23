@@ -3,4 +3,5 @@ pub enum CRUDError {
     GetError,
     DeleteError,
     ConnectionError,
+    UpdateError,
 }

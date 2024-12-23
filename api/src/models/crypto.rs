@@ -1,4 +1,4 @@
-use diesel::{sql_types::Text, define_sql_function};
+use diesel::{define_sql_function, sql_types::Text};
 
 define_sql_function! {
     fn crypt(password: Text, salt: Text) -> Text;

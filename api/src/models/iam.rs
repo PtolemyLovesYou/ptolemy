@@ -1,8 +1,8 @@
+use crate::models::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::models::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum, UserStatusEnum};
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::generated::schema::workspace)]

@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use crate::crud::error::CRUDError;
+use crate::state::AppState;
+use bb8::PooledConnection;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
-use bb8::PooledConnection;
-use crate::state::AppState;
-use crate::crud::error::CRUDError;
+use std::sync::Arc;
 use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
