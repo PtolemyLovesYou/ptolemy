@@ -35,3 +35,15 @@ pub async fn set_workspace_user_role(conn: &mut DbConnection<'_>, wk_id: Uuid, u
             }
         }
 }
+
+pub async fn delete_workspace_user(conn: &mut DbConnection<'_>, wk_id: Uuid, us_id: Uuid) -> Result<(), CRUDError> {
+    match diesel::delete(dsl::workspace_user.filter(dsl::workspace_id.eq(wk_id).and(dsl::user_id.eq(us_id))))
+        .execute(conn)
+        .await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("Failed to delete workspace_user: {}", e);
+                Err(CRUDError::DeleteError)
+            }
+        }
+}
