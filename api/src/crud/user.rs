@@ -1,11 +1,11 @@
 use crate::crud::conn::DbConnection;
 use crate::crud::error::CRUDError;
-use crate::generated::schema::users::dsl::{
+use crate::generated::auth_schema::users::dsl::{
     display_name, id, is_admin, is_sysadmin, password_hash, status, username, users,
 };
-use crate::models::crypto::{crypt, gen_salt};
-use crate::models::enums::UserStatusEnum;
-use crate::models::iam::UserCreate;
+use crate::models::auth::crypto::{crypt, gen_salt};
+use crate::models::auth::enums::UserStatusEnum;
+use crate::models::auth::models::UserCreate;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;

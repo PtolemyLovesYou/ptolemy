@@ -1,2 +1,4 @@
 #[rustfmt::skip]
-pub mod schema;
+pub mod auth_schema;
+pub mod records_schema;
+

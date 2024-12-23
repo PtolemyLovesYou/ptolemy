@@ -1,9 +1,15 @@
 # For documentation on how to configure this file,
 # see https://diesel.rs/guides/configuring-diesel-cli
 
-[print_schema]
-file = "src/generated/schema.rs"
+[print_schema.auth]
+file = "src/generated/auth_schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
+filter = { only_tables = ["workspace", "users", "workspace_user", "user_api_key", "service_api_key"] }
+
+[print_schema.records]
+file = "src/generated/records_schema.rs"
+custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
+filter = { only_tables = ["workspace", "system_event", "system_runtime", "system_io", "system_metadata", "subsystem_event", "subsystem_runtime", "subsystem_io", "subsystem_metadata", "component_event", "component_runtime", "component_io", "component_metadata",  "subcomponent_event", "subcomponent_runtime", "subcomponent_io", "subcomponent_metadata"] }
 
 [migrations_directory]
 dir = "/app/diesel"

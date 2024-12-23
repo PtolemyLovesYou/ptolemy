@@ -1,4 +1,4 @@
-use crate::models::events::{parse_record, EventRecord, IORecord, MetadataRecord, RuntimeRecord};
+use crate::models::records::models::{parse_record, EventRecord, IORecord, MetadataRecord, RuntimeRecord};
 use crate::state::AppState;
 use diesel_async::RunQueryDsl;
 use ptolemy_core::generated::observer::{
@@ -27,7 +27,7 @@ impl MyObserver {
 macro_rules! insert_records {
     ($conn:ident, $vals:expr, $table:ident) => {
         if !$vals.is_empty() {
-            match diesel::insert_into(crate::generated::schema::$table::table)
+            match diesel::insert_into(crate::generated::records_schema::$table::table)
                 .values(&$vals)
                 .execute(&mut $conn)
                 .await

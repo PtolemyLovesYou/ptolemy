@@ -1,6 +1,6 @@
 use crate::crud::conn::get_conn;
 use crate::crud::workspace as workspace_crud;
-use crate::models::iam::{Workspace, WorkspaceCreate};
+use crate::models::auth::models::{Workspace, WorkspaceCreate};
 use crate::state::AppState;
 use axum::{
     extract::Path,
