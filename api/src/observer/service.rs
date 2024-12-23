@@ -27,7 +27,7 @@ impl MyObserver {
 macro_rules! insert_records {
     ($conn:ident, $vals:expr, $table:ident) => {
         if !$vals.is_empty() {
-            match diesel::insert_into(crate::models::schema::$table::table)
+            match diesel::insert_into(crate::generated::schema::$table::table)
                 .values(&$vals)
                 .execute(&mut $conn)
                 .await

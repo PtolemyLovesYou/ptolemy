@@ -1,4 +1,4 @@
-use crate::models::schema::workspace;
+use crate::generated::schema::workspace;
 use crate::models::workspace::{Workspace, WorkspaceCreate};
 use crate::state::AppState;
 use axum::{
@@ -45,7 +45,7 @@ async fn get_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Workspace>, StatusCode> {
-    use crate::models::schema::workspace::dsl::*;
+    use crate::generated::schema::workspace::dsl::*;
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
@@ -72,7 +72,7 @@ async fn delete_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    use crate::models::schema::workspace::dsl::*;
+    use crate::generated::schema::workspace::dsl::*;
     let mut conn = match state.pg_pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
