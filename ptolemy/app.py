@@ -171,7 +171,7 @@ def usr_management_view():
         with header[3]:
             st.markdown("**STATUS**")
         with header[4]:
-            st.markdown("**DEL**")
+            st.markdown("**86**")
 
     with st.form("usr_management_form", border=False, enter_to_submit=False):
         for user_id, user in users.items():
