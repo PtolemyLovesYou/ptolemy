@@ -26,6 +26,11 @@ def usr_ak_management_view():
 def get_admin(sidebar_container, main_container):
     """Get admin view."""
     with sidebar_container:
+        usr_ak_management = st.button(
+            "API Keys",
+            use_container_width=True,
+            key="usr_ak_management"
+            )
         wk_management = st.button(
             "Workspace Management",
             use_container_width=True,
@@ -36,19 +41,16 @@ def get_admin(sidebar_container, main_container):
             use_container_width=True,
             key="usr_management"
             )
-        usr_ak_management = st.button(
-            "API Keys",
-            use_container_width=True,
-            key="usr_ak_management"
-            )
 
     with main_container:
-        if wk_management:
+        if usr_ak_management:
+            usr_ak_management_view()
+        elif wk_management:
             wk_management_view()
         elif usr_management:
             usr_management_view()
-
-        elif usr_ak_management:
+        # Show api key management by default
+        else:
             usr_ak_management_view()
 
 def get_sql(sidebar_container, main_container):
