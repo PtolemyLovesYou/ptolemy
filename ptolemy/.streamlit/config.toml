@@ -5,5 +5,8 @@ secondaryBackgroundColor="#292928"
 textColor="#aaff00"
 font="monospace"
 
+[client]
+toolbarMode = "viewer"
+
 [server]
 runOnSave = true
