@@ -11,6 +11,7 @@ dependencies = [
     "aiohttp>=3.11.10",
     "clickhouse-connect>=0.8.9",
     "pydantic>=2.10.3",
+    "requests>=2.32.3",
     "tenacity>=9.0.0",
 ]
 

@@ -73,6 +73,7 @@ impl FromSql<ApiKeyPermission, Pg> for ApiKeyPermissionEnum {
 
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize)]
 #[diesel(sql_type = UserStatus)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub enum UserStatusEnum {
     Active,
     Suspended,

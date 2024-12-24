@@ -673,6 +673,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "clickhouse-connect" },
     { name = "pydantic" },
+    { name = "requests" },
     { name = "tenacity" },
 ]
 
@@ -686,6 +687,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.10" },
     { name = "clickhouse-connect", specifier = ">=0.8.9" },
     { name = "pydantic", specifier = ">=2.10.3" },
+    { name = "requests", specifier = ">=2.32.3" },
     { name = "streamlit", marker = "extra == 'prototype'", specifier = ">=1.41.1" },
     { name = "tenacity", specifier = ">=9.0.0" },
 ]

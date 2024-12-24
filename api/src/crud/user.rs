@@ -102,6 +102,19 @@ pub async fn change_user_status(
     }
 }
 
+pub async fn get_user(
+    conn: &mut DbConnection<'_>,
+    user_id: Uuid,
+) -> Result<crate::models::auth::models::User, CRUDError> {
+    match users.filter(id.eq(user_id)).get_result(conn).await {
+        Ok(user) => Ok(user),
+        Err(e) => {
+            error!("Failed to get user: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    }
+}
+
 pub async fn change_user_display_name(
     conn: &mut DbConnection<'_>,
     user_id: Uuid,

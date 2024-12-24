@@ -49,7 +49,7 @@ diesel::table! {
         username -> Varchar,
         password_hash -> Varchar,
         display_name -> Nullable<Varchar>,
-        status -> Nullable<UserStatus>,
+        status -> UserStatus,
         is_sysadmin -> Bool,
         is_admin -> Bool,
     }

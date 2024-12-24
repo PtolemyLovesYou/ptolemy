@@ -28,9 +28,11 @@ pub struct WorkspaceCreate {
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::generated::auth_schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
     pub username: String,
+    #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub password_hash: String,
     pub display_name: Option<String>,
     pub status: UserStatusEnum,

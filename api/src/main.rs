@@ -6,6 +6,7 @@ use api::error::ApiError;
 use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
+use api::routes::user::user_router;
 use api::state::AppState;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
@@ -52,7 +53,8 @@ async fn main() -> Result<(), ApiError> {
     let app = Router::new()
         .nest("/", base_router(shared_state.enable_prometheus).await)
         .nest("/graphql", graphql_router().await)
-        .nest("/workspace", workspace_router(&shared_state).await);
+        .nest("/workspace", workspace_router(&shared_state).await)
+        .nest("/user", user_router(&shared_state).await);
 
     let server_url = format!("0.0.0.0:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();

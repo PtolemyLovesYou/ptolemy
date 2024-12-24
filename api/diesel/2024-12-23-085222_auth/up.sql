@@ -10,7 +10,7 @@ create table users (
     username varchar unique not null,
     password_hash varchar not null,
     display_name varchar,
-    status user_status default 'active',
+    status user_status not null default 'active',
     is_sysadmin bool not null,
     is_admin bool not null,
     CONSTRAINT check_admin_roles CHECK (NOT (is_sysadmin AND is_admin))
