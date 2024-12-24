@@ -148,8 +148,8 @@ pub async fn change_user_display_name(
 
 pub async fn change_user_password(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    user_password: String,
+    user_id: &Uuid,
+    user_password: &String,
 ) -> Result<(), CRUDError> {
     let hashed_password: String = hash_password(conn, &user_password).await?;
 
@@ -176,6 +176,41 @@ pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(
         Err(e) => {
             error!("Failed to delete workspace: {}", e);
             Err(CRUDError::DeleteError)
+        }
+    }
+}
+
+pub async fn ensure_sysadmin(conn: &mut DbConnection<'_>) -> Result<(), CRUDError> {
+    let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
+    let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
+
+    let users_list = get_all_users(conn).await?;
+
+    for user in users_list {
+        if user.is_sysadmin {
+            let hashed_pass = hash_password(conn, &pass).await?;
+            if hashed_pass == user.password_hash {
+                return Ok(());
+            }
+            // update password
+            else {
+                change_user_password(conn, &user.id, &pass).await?;
+                return Ok(());
+            }
+        }
+    }
+
+    match create_user(conn, &UserCreate {
+        username: user,
+        display_name: Some("SYSADMIN".to_string()),
+        is_sysadmin: true,
+        is_admin: false,
+        password: pass,
+    }).await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to create sysadmin: {:?}", e);
+            Err(CRUDError::InsertError)
         }
     }
 }

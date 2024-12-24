@@ -8,6 +8,8 @@ use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
 use api::routes::user::user_router;
 use api::state::AppState;
+use api::crud::user::ensure_sysadmin;
+use api::crud::conn::get_conn;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
@@ -44,6 +46,9 @@ async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt::init();
 
     let shared_state = Arc::new(AppState::new().await?);
+
+    // ensure sysadmin
+    ensure_sysadmin(&mut get_conn(&shared_state).await.unwrap()).await.unwrap();
 
     // gRPC server setup
     let grpc_addr = "[::]:50051".parse().unwrap();
