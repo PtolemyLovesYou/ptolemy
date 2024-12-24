@@ -17,6 +17,7 @@ def get_workspaces() -> dict[str, dict[str, Any]]:
     }
 
 def user_role(is_admin: bool, is_sysadmin: bool) -> str:
+    """Get user role."""
     if is_admin:
         return "admin"
     if is_sysadmin:
