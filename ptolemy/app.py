@@ -163,7 +163,7 @@ def usr_management_view():
                 with cols[4]:
                     st.popover(r"\.\.\.", use_container_width=False)
 
-        st.form_submit_button(label="Save", on_click=lambda: None)
+        st.form_submit_button(label="Save")
 
 def usr_ak_management_view():
     """Get user API key management view."""
