@@ -3,7 +3,7 @@ from typing import Any
 import uuid
 import streamlit as st
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="Ptolemy")
 
 def get_workspaces() -> dict[str, dict[str, Any]]:
     """Get workspaces."""
@@ -89,7 +89,7 @@ def wk_management_view():
             key="wk_description"
         )
 
-        st.form_submit_button(label="Save",on_click=lambda: None)
+        st.form_submit_button(label="Save", on_click=lambda: wk_description)
 
 
 def usr_management_view():
