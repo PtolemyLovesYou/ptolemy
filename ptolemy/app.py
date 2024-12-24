@@ -264,12 +264,12 @@ def get_settings(sidebar_container, main_container):
             usr_management_view()
 
 @st.fragment
-def code_container():
+def get_ide_view():
     """Code container."""
     st.write("SQL IDE goes here")
 
 @st.fragment
-def event_explorer_container():
+def get_event_explorer_view():
     """Event explorer container."""
     st.write("Event explorer goes here")
 
@@ -314,9 +314,9 @@ def get_layout():
         main_container = st.container(height=650, border=True)
         with main_container:
             if event_explorer_button:
-                event_explorer_container()
+                get_event_explorer_view()
             elif code_button:
-                code_container()
+                get_ide_view()
             elif api_keys_button:
                 usr_ak_management_view()
             elif workspace_management_button:
@@ -324,6 +324,6 @@ def get_layout():
             elif user_management_button:
                 usr_management_view()
             else:
-                event_explorer_container()
+                get_event_explorer_view()
 
 get_layout()
