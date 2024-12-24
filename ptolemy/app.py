@@ -124,6 +124,7 @@ def wk_management_view():
         st.form_submit_button(label="Save", on_click=lambda: wk_description)
 
 
+@st.fragment
 def usr_management_view():
     """Get user management view."""
     # header
@@ -235,22 +236,27 @@ def usr_ak_management_view():
 def get_settings(sidebar_container, main_container):
     """Get settings view."""
     with sidebar_container:
-        settings_radio = st.radio(
-            "Settings Radio",
-            label_visibility="collapsed",
-            options=[
-                "API Keys",
-                "Workspace Management",
-                "User Management"
-                ]
-            )
+        api_keys_button = st.button(
+            "API Keys",
+            use_container_width = True,
+        )
+
+        workspace_management_button = st.button(
+            "Workspaces",
+            use_container_width = True,
+        )
+
+        user_management_button = st.button(
+            "User Management",
+            use_container_width = True,
+        )
 
     with main_container:
-        if settings_radio == "API Keys":
-            usr_ak_management_view()
-        if settings_radio == "Workspace Management":
-            wk_management_view()
-        if settings_radio == "User Management":
+        if api_keys_button:
+            pass
+        if workspace_management_button:
+            pass
+        if user_management_button:
             usr_management_view()
 
 def get_sql(sidebar_container, main_container):
