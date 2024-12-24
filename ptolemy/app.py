@@ -11,13 +11,45 @@ def get_main(sidebar_container, main_container):
     with main_container:
         st.write("Main")
 
+def wk_management_view():
+    """Get workspace management view."""
+    st.write("Workspace management view.")
+
+def usr_management_view():
+    """Get user management view."""
+    st.write("User management view.")
+
+def usr_ak_management_view():
+    """Get user API key management view."""
+    st.write("User API key management view.")
+
 def get_admin(sidebar_container, main_container):
     """Get admin view."""
     with sidebar_container:
-        st.write("Admin sidebar")
+        wk_management = st.button(
+            "Workspace Management",
+            use_container_width=True,
+            key="wk_management"
+            )
+        usr_management = st.button(
+            "User Management",
+            use_container_width=True,
+            key="usr_management"
+            )
+        usr_ak_management = st.button(
+            "API Keys",
+            use_container_width=True,
+            key="usr_ak_management"
+            )
 
     with main_container:
-        st.write("Admin main")
+        if wk_management:
+            wk_management_view()
+        elif usr_management:
+            usr_management_view()
+
+        elif usr_ak_management:
+            usr_ak_management_view()
 
 def get_sql(sidebar_container, main_container):
     """Get sql view."""
@@ -49,11 +81,8 @@ def get_layout():
 
         sidebar_container = st.container(height=600, border=True)
 
-        # get_sidebar(selected_view)
-
     with main_column:
         main_container = st.container(height=650, border=True)
-        # get_main(selected_view)
 
     if selected_view == 'Data Explorer':
         get_data_explorer(sidebar_container, main_container)
