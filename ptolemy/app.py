@@ -1,5 +1,5 @@
 """Streamlit prototype app."""
-from typing import Any
+from typing import Any, Optional
 import uuid
 import streamlit as st
 import requests
@@ -23,6 +23,23 @@ def user_role(is_admin: bool, is_sysadmin: bool) -> str:
         return "sysadmin"
 
     return "user"
+
+def create_new_user(username: str, password: str, role: str, display_name: Optional[str] = None):
+    """Create new user."""
+    resp = requests.post(
+        "http://localhost:8000/user",
+        json={
+            "username": username,
+            "password": password,
+            "is_admin": role == "admin",
+            "is_sysadmin": role == "sysadmin",
+            "display_name": display_name,
+        },
+        timeout=5,
+    )
+
+    resp.raise_for_status()
+
 def get_users() -> dict[str, dict[str, Any]]:
     """Get users."""
     user_list = requests.get(
@@ -102,7 +119,30 @@ def usr_management_view():
         create_user_button = st.popover(r"\+", use_container_width=False)
 
         with create_user_button:
-            st.write("Create user")
+            with st.form(
+                "create_new_usr_form",
+                border=False,
+                enter_to_submit=False,
+                clear_on_submit=True
+                ):
+                new_usr_username = st.text_input("Username")
+                new_usr_password = st.text_input("Password")
+                new_usr_display_name = st.text_input("Display name")
+                new_usr_role = st.pills(
+                    "Role",
+                    options=["user", "admin", "sysadmin"],
+                    default="user"
+                )
+
+                submit = st.form_submit_button(label="Create")
+
+                if submit:
+                    create_new_user(
+                        new_usr_username,
+                        new_usr_password,
+                        new_usr_role,
+                        display_name=new_usr_display_name
+                    )
 
     users = get_users()
 
