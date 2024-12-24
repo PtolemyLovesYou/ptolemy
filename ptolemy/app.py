@@ -78,6 +78,7 @@ def get_main(sidebar_container, main_container):
     with main_container:
         st.write("Main")
 
+@st.fragment
 def wk_management_view():
     """Get workspace management view."""
     workspaces = get_workspaces()
@@ -237,18 +238,21 @@ def get_settings(sidebar_container, main_container):
     """Get settings view."""
     with sidebar_container:
         api_keys_button = st.button(
-            "API Keys",
+            "",
             use_container_width = True,
+            icon=":material/key:"
         )
 
         workspace_management_button = st.button(
-            "Workspaces",
+            "",
             use_container_width = True,
+            icon=":material/workspaces:"
         )
 
         user_management_button = st.button(
-            "User Management",
+            "",
             use_container_width = True,
+            icon=":material/group:"
         )
 
     with main_container:
@@ -259,46 +263,67 @@ def get_settings(sidebar_container, main_container):
         if user_management_button:
             usr_management_view()
 
-def get_sql(sidebar_container, main_container):
-    """Get sql view."""
-    with sidebar_container:
-        st.write("SQL sidebar")
+@st.fragment
+def code_container():
+    """Code container."""
+    st.write("SQL IDE goes here")
 
-    with main_container:
-        st.write("SQL main")
-
-def get_data_explorer(sidebar_container, main_container):
-    """Get data explorer view."""
-    with sidebar_container:
-        st.write("Data explorer sidebar")
-
-    with main_container:
-        st.write("Data explorer main")
+@st.fragment
+def event_explorer_container():
+    """Event explorer container."""
+    st.write("Event explorer goes here")
 
 def get_layout():
     """Get layout."""
-    sidebar_column, main_column = st.columns([1, 3], border=False, vertical_alignment="bottom")
+    sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
 
     with sidebar_column:
-        selected_view = st.segmented_control(
-                label="selected_view",
-                label_visibility="collapsed",
-                options=["Data Explorer", "SQL", "Settings"],
-                default="Data Explorer",
-                )
+        sidebar_container = st.container(height=650, border=False)
+        with sidebar_container:
+            event_explorer_button = st.button(
+                "",
+                use_container_width = True,
+                icon=":material/monitoring:"
+            )
 
-        sidebar_container = st.container(height=600, border=True)
+            code_button = st.button(
+                "",
+                use_container_width=True,
+                icon=":material/code:"
+            )
+
+            api_keys_button = st.button(
+                "",
+                use_container_width = True,
+                icon=":material/key:"
+            )
+
+            workspace_management_button = st.button(
+                "",
+                use_container_width = True,
+                icon=":material/workspaces:"
+            )
+
+            user_management_button = st.button(
+                "",
+                use_container_width = True,
+                icon=":material/group:"
+            )
 
     with main_column:
         main_container = st.container(height=650, border=True)
-
-    if selected_view == 'Data Explorer':
-        get_data_explorer(sidebar_container, main_container)
-
-    if selected_view == 'SQL':
-        get_sql(sidebar_container, main_container)
-
-    if selected_view == 'Settings':
-        get_settings(sidebar_container, main_container)
+        with main_container:
+            if event_explorer_button:
+                event_explorer_container()
+            elif code_button:
+                code_container()
+            elif api_keys_button:
+                usr_ak_management_view()
+            elif workspace_management_button:
+                wk_management_view()
+            elif user_management_button:
+                usr_management_view()
+            else:
+                event_explorer_container()
 
 get_layout()
