@@ -115,6 +115,18 @@ pub async fn get_user(
     }
 }
 
+pub async fn get_all_users(
+    conn: &mut DbConnection<'_>,
+) -> Result<Vec<crate::models::auth::models::User>, CRUDError> {
+    match users.get_results(conn).await {
+        Ok(us) => Ok(us),
+        Err(e) => {
+            error!("Failed to get users: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    }
+}
+
 pub async fn change_user_display_name(
     conn: &mut DbConnection<'_>,
     user_id: Uuid,

@@ -2,6 +2,7 @@
 from typing import Any
 import uuid
 import streamlit as st
+import requests
 
 USER_ID = uuid.uuid4().hex
 
@@ -15,30 +16,29 @@ def get_workspaces() -> dict[str, dict[str, Any]]:
             } for i in range(5)
     }
 
+def user_role(is_admin: bool, is_sysadmin: bool) -> str:
+    if is_admin:
+        return "admin"
+    if is_sysadmin:
+        return "sysadmin"
+
+    return "user"
 def get_users() -> dict[str, dict[str, Any]]:
     """Get users."""
-    user_list = [
-        {
-            "username": "besaleli",
-            "display_name": "Raz Besaleli",
-            "role": "admin",
-            "status": "active"
-            },
-        {
-            "username": "kalmysh",
-            "display_name": "Anton Kalmysh",
-            "role": "user",
-            "status": "active"
-            },
-        {
-            "username": "kobakhidze",
-            "display_name": "Irakli Kobakhidze",
-            "role": "user",
-            "status": "suspended"
-            }
-    ]
+    user_list = requests.get(
+        "http://localhost:8000/user/all",
+        timeout=10,
+    ).json()
 
-    return {uuid.uuid4().hex: u for u in user_list}
+    user_dict = {}
+
+    for u in user_list:
+        user_dict[u['id']] = u
+        user_dict[u['id']]['role'] = user_role(
+            u['is_admin'], u['is_sysadmin']
+            )
+
+    return {u['id']: u for u in user_list}
 
 def get_main(sidebar_container, main_container):
     """Get main."""
@@ -154,8 +154,8 @@ def usr_management_view():
                 with cols[3]:
                     st.selectbox(
                         label=f"user_status_{user_id}",
-                        options=["active", "suspended"],
-                        index=["active", "suspended"].index(user['status']),
+                        options=["Active", "Suspended"],
+                        index=["Active", "Suspended"].index(user['status']),
                         disabled=False,
                         key=f"user_status_{user_id}",
                         label_visibility='collapsed'
