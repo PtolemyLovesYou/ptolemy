@@ -41,6 +41,18 @@ def create_new_user(username: str, password: str, role: str, display_name: Optio
 
     resp.raise_for_status()
 
+def delete_user(user_id: str):
+    """Delete user."""
+    resp = requests.delete(
+        f"http://localhost:8000/user/{user_id}",
+        timeout=5,
+    )
+
+    if not resp.ok:
+        st.toast(
+            f"Failed to delete user {user_id}"
+            )
+
 def get_users() -> dict[str, dict[str, Any]]:
     """Get users."""
     user_list = requests.get(
@@ -149,7 +161,7 @@ def usr_management_view():
 
     header_container = st.container()
     with header_container:
-        header = st.columns([0.75, 1, 0.6, 0.6, 0.5])
+        header = st.columns([0.75, 1, 0.6, 0.6, 0.25])
         with header[0]:
             st.markdown("**USERNAME**")
         with header[1]:
@@ -159,13 +171,13 @@ def usr_management_view():
         with header[3]:
             st.markdown("**STATUS**")
         with header[4]:
-            st.markdown("**ACTIONS**")
+            st.markdown("**DEL**")
 
     with st.form("usr_management_form", border=False, enter_to_submit=False):
         for user_id, user in users.items():
             user_container = st.container(border=False)
             with user_container:
-                cols = st.columns([0.75, 1, 0.6, 0.6, 0.5])
+                cols = st.columns([0.75, 1, 0.6, 0.6, 0.25])
 
                 with cols[0]:
                     st.text_input(
@@ -202,9 +214,19 @@ def usr_management_view():
                         label_visibility='collapsed'
                     )
                 with cols[4]:
-                    st.popover(r"\.\.\.", use_container_width=False)
+                    st.checkbox(
+                        label=f"user_delete_{user_id}",
+                        disabled=False,
+                        key=f"user_delete_{user_id}",
+                        label_visibility='collapsed'
+                    )
 
-        st.form_submit_button(label="Save")
+        def delete_users():
+            for user_id in users.keys():
+                if st.session_state[f"user_delete_{user_id}"]:
+                    delete_user(user_id)
+
+        st.form_submit_button(label="Save", on_click=delete_users)
 
 def usr_ak_management_view():
     """Get user API key management view."""
