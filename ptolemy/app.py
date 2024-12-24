@@ -96,17 +96,19 @@ def wk_management_view():
 
 def usr_management_view():
     """Get user management view."""
-    # create button
-    create_user_button = st.popover(r"\+", use_container_width=False)
+    # header
+    header_columns = st.columns([1, 1, 5])
+    with header_columns[0]:
+        create_user_button = st.popover(r"\+", use_container_width=False)
 
-    with create_user_button:
-        st.write("Create user")
+        with create_user_button:
+            st.write("Create user")
 
     users = get_users()
 
     header_container = st.container()
     with header_container:
-        header = st.columns([0.75, 1, 1, 1, 0.5])
+        header = st.columns([0.75, 1, 0.6, 0.6, 0.5])
         with header[0]:
             st.markdown("**USERNAME**")
         with header[1]:
@@ -118,21 +120,50 @@ def usr_management_view():
         with header[4]:
             st.markdown("**ACTIONS**")
 
-    for user in users.values():
-        user_container = st.container(border=False)
-        with user_container:
-            cols = st.columns([0.75, 1, 1, 1, 0.5])
+    with st.form("usr_management_form", border=False, enter_to_submit=False):
+        for user_id, user in users.items():
+            user_container = st.container(border=False)
+            with user_container:
+                cols = st.columns([0.75, 1, 0.6, 0.6, 0.5])
 
-            with cols[0]:
-                st.write(user['username'])
-            with cols[1]:
-                st.write(user['display_name'])
-            with cols[2]:
-                st.write(user['role'])
-            with cols[3]:
-                st.write(user['status'])
-            with cols[4]:
-                st.popover(r"\.\.\.", use_container_width=False)
+                with cols[0]:
+                    st.text_input(
+                        "username",
+                        value=user['username'],
+                        disabled=True,
+                        key=f"user_username_{user_id}",
+                        label_visibility='collapsed'
+                        )
+                with cols[1]:
+                    st.text_input(
+                        "display_name",
+                        value=user['display_name'],
+                        disabled=False,
+                        key=f"user_display_name_{user_id}",
+                        label_visibility='collapsed'
+                    )
+                with cols[2]:
+                    st.selectbox(
+                        label=f"user_role_{user_id}",
+                        options=["admin", "sysadmin", "user"],
+                        index=["admin", "sysadmin", "user"].index(user['role']),
+                        disabled=False,
+                        key=f"user_role_{user_id}",
+                        label_visibility='collapsed'
+                    )
+                with cols[3]:
+                    st.selectbox(
+                        label=f"user_status_{user_id}",
+                        options=["active", "suspended"],
+                        index=["active", "suspended"].index(user['status']),
+                        disabled=False,
+                        key=f"user_status_{user_id}",
+                        label_visibility='collapsed'
+                    )
+                with cols[4]:
+                    st.popover(r"\.\.\.", use_container_width=False)
+
+        st.form_submit_button(label="Save", on_click=lambda: None)
 
 def usr_ak_management_view():
     """Get user API key management view."""
