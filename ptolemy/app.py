@@ -3,6 +3,8 @@ from typing import Any
 import uuid
 import streamlit as st
 
+USER_ID = uuid.uuid4().hex
+
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
 def get_workspaces() -> dict[str, dict[str, Any]]:
