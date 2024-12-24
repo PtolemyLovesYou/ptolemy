@@ -26,3 +26,7 @@ install-client:
 .PHONY: docs
 docs:
 	cd docs && uv run mkdocs serve
+
+.PHONY: run-prototype-app
+run-prototype-app:
+	VIRTUAL_ENV=$(pwd)/app-prototype/.venv cd app-prototype && uv run -m streamlit run main.py
