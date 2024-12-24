@@ -23,8 +23,8 @@ def usr_ak_management_view():
     """Get user API key management view."""
     st.write("User API key management view.")
 
-def get_admin(sidebar_container, main_container):
-    """Get admin view."""
+def get_settings(sidebar_container, main_container):
+    """Get settings view."""
     with sidebar_container:
         usr_ak_management = st.button(
             "API Keys",
@@ -77,7 +77,7 @@ def get_layout():
         selected_view = st.segmented_control(
                 label="selected_view",
                 label_visibility="hidden",
-                options=["Data Explorer", "SQL", "Admin"],
+                options=["Data Explorer", "SQL", "Settings"],
                 default="Data Explorer",
                 )
 
@@ -92,7 +92,7 @@ def get_layout():
     if selected_view == 'SQL':
         get_sql(sidebar_container, main_container)
 
-    if selected_view == 'Admin':
-        get_admin(sidebar_container, main_container)
+    if selected_view == 'Settings':
+        get_settings(sidebar_container, main_container)
 
 get_layout()
