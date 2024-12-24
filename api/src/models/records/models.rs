@@ -1,4 +1,4 @@
-use crate::models::enums::FieldValueTypeEnum;
+use crate::models::records::enums::FieldValueTypeEnum;
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
@@ -30,10 +30,10 @@ fn parse_timestamp(timestamp: &Option<f32>) -> Result<NaiveDateTime, ParseError>
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
 #[
     diesel(
-        table_name = crate::models::schema::system_event,
-        table_name = crate::models::schema::subsystem_event,
-        table_name = crate::models::schema::component_event,
-        table_name = crate::models::schema::subcomponent_event,
+        table_name = crate::generated::records_schema::system_event,
+        table_name = crate::generated::records_schema::subsystem_event,
+        table_name = crate::generated::records_schema::component_event,
+        table_name = crate::generated::records_schema::subcomponent_event,
     )
     ]
 pub struct EventRecord {
@@ -85,10 +85,10 @@ impl EventTable for EventRecord {
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
 #[
     diesel(
-        table_name = crate::models::schema::system_runtime,
-        table_name = crate::models::schema::subsystem_runtime,
-        table_name = crate::models::schema::component_runtime,
-        table_name = crate::models::schema::subcomponent_runtime,
+        table_name = crate::generated::records_schema::system_runtime,
+        table_name = crate::generated::records_schema::subsystem_runtime,
+        table_name = crate::generated::records_schema::component_runtime,
+        table_name = crate::generated::records_schema::subcomponent_runtime,
     )
     ]
 pub struct RuntimeRecord {
@@ -140,10 +140,10 @@ impl EventTable for RuntimeRecord {
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
 #[
     diesel(
-        table_name = crate::models::schema::system_io,
-        table_name = crate::models::schema::subsystem_io,
-        table_name = crate::models::schema::component_io,
-        table_name = crate::models::schema::subcomponent_io,
+        table_name = crate::generated::records_schema::system_io,
+        table_name = crate::generated::records_schema::subsystem_io,
+        table_name = crate::generated::records_schema::component_io,
+        table_name = crate::generated::records_schema::subcomponent_io,
     )
     ]
 pub struct IORecord {
@@ -215,10 +215,10 @@ impl EventTable for IORecord {
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
 #[
     diesel(
-        table_name = crate::models::schema::system_metadata,
-        table_name = crate::models::schema::subsystem_metadata,
-        table_name = crate::models::schema::component_metadata,
-        table_name = crate::models::schema::subcomponent_metadata,
+        table_name = crate::generated::records_schema::system_metadata,
+        table_name = crate::generated::records_schema::subsystem_metadata,
+        table_name = crate::generated::records_schema::component_metadata,
+        table_name = crate::generated::records_schema::subcomponent_metadata,
     )
     ]
 pub struct MetadataRecord {

@@ -4,6 +4,10 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "field_value_type"))]
     pub struct FieldValueType;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "workspace_role"))]
+    pub struct WorkspaceRole;
 }
 
 diesel::table! {
@@ -212,8 +216,20 @@ diesel::table! {
         #[max_length = 128]
         name -> Varchar,
         description -> Nullable<Varchar>,
+        archived -> Nullable<Bool>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::WorkspaceRole;
+
+    workspace_user (user_id, workspace_id) {
+        user_id -> Uuid,
+        workspace_id -> Uuid,
+        role -> WorkspaceRole,
     }
 }
 
@@ -233,6 +249,7 @@ diesel::joinable!(system_event -> workspace (parent_id));
 diesel::joinable!(system_io -> system_event (parent_id));
 diesel::joinable!(system_metadata -> system_event (parent_id));
 diesel::joinable!(system_runtime -> system_event (parent_id));
+diesel::joinable!(workspace_user -> workspace (workspace_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     component_event,
@@ -252,4 +269,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     system_metadata,
     system_runtime,
     workspace,
+    workspace_user,
 );
