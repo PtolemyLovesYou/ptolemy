@@ -1,7 +1,42 @@
 """Streamlit prototype app."""
+from typing import Any
+import uuid
 import streamlit as st
 
 st.set_page_config(layout="wide")
+
+def get_workspaces() -> dict[str, dict[str, Any]]:
+    """Get workspaces."""
+    return {
+        uuid.uuid4().hex: {
+            "name": f"workspace{i}", "description": f"wk{i} description"
+            } for i in range(5)
+    }
+
+def get_users() -> dict[str, dict[str, Any]]:
+    """Get users."""
+    user_list = [
+        {
+            "username": "besaleli",
+            "display_name": "Raz Besaleli",
+            "role": "admin",
+            "status": "active"
+            },
+        {
+            "username": "kalmysh",
+            "display_name": "Anton Kalmysh",
+            "role": "user",
+            "status": "active"
+            },
+        {
+            "username": "kobakhidze",
+            "display_name": "Irakli Kobakhidze",
+            "role": "user",
+            "status": "suspended"
+            }
+    ]
+
+    return {uuid.uuid4().hex: u for u in user_list}
 
 def get_main(sidebar_container, main_container):
     """Get main."""
@@ -13,11 +48,89 @@ def get_main(sidebar_container, main_container):
 
 def wk_management_view():
     """Get workspace management view."""
-    st.write("Workspace management view.")
+    workspaces = get_workspaces()
+    tabs_col, add_col = st.columns([4, 0.25])
+    with tabs_col:
+        selected_wk_settings_name = st.selectbox(
+            "Select workspace",
+            options=[i['name'] for i in workspaces.values()],
+            label_visibility='collapsed'
+            )
+
+        selected_wk_settings_id = [
+            k for k, v in workspaces.items() if v['name'] == selected_wk_settings_name
+            ][0]
+
+        selected_wk_settings_data = workspaces[selected_wk_settings_id]
+
+    with add_col:
+        create_workspace_popover = st.popover(r"\+", use_container_width=False)
+        with create_workspace_popover:
+            st.write("Create workspace")
+
+    with st.form("wk_form", border=False):
+        st.text_input(
+            "ID",
+            value=selected_wk_settings_id,
+            disabled=True,
+            key="wk_id"
+        )
+
+        st.text_input(
+            "Name",
+            value=selected_wk_settings_data['name'],
+            disabled=True,
+            key="wk_name"
+        )
+
+        wk_description = st.text_area(
+            "Description",
+            placeholder=selected_wk_settings_data['description'],
+            key="wk_description"
+        )
+
+        st.form_submit_button(label="Save",on_click=lambda: None)
+
 
 def usr_management_view():
     """Get user management view."""
-    st.write("User management view.")
+    # create button
+    create_user_button = st.popover(r"\+", use_container_width=False)
+
+    with create_user_button:
+        st.write("Create user")
+
+    users = get_users()
+
+    header_container = st.container()
+    with header_container:
+        header = st.columns([0.75, 1, 1, 1, 0.5])
+        with header[0]:
+            st.markdown("**USERNAME**")
+        with header[1]:
+            st.markdown("**NAME**")
+        with header[2]:
+            st.markdown("**ROLE**")
+        with header[3]:
+            st.markdown("**STATUS**")
+        with header[4]:
+            st.markdown("**ACTIONS**")
+
+    for user in users.values():
+        user_container = st.container(border=False)
+        with user_container:
+            cols = st.columns([0.75, 1, 1, 1, 0.5])
+
+            with cols[0]:
+                st.write(user['username'])
+            with cols[1]:
+                st.write(user['display_name'])
+            with cols[2]:
+                st.write(user['role'])
+            with cols[3]:
+                st.write(user['status'])
+            with cols[4]:
+                st.popover(r"\.\.\.", use_container_width=False)
 
 def usr_ak_management_view():
     """Get user API key management view."""
@@ -26,32 +139,23 @@ def usr_ak_management_view():
 def get_settings(sidebar_container, main_container):
     """Get settings view."""
     with sidebar_container:
-        usr_ak_management = st.button(
-            "API Keys",
-            use_container_width=True,
-            key="usr_ak_management"
-            )
-        wk_management = st.button(
-            "Workspace Management",
-            use_container_width=True,
-            key="wk_management"
-            )
-        usr_management = st.button(
-            "User Management",
-            use_container_width=True,
-            key="usr_management"
+        settings_radio = st.radio(
+            "Settings Radio",
+            label_visibility="collapsed",
+            options=[
+                "API Keys",
+                "Workspace Management",
+                "User Management"
+                ]
             )
 
     with main_container:
-        if usr_ak_management:
+        if settings_radio == "API Keys":
             usr_ak_management_view()
-        elif wk_management:
+        if settings_radio == "Workspace Management":
             wk_management_view()
-        elif usr_management:
+        if settings_radio == "User Management":
             usr_management_view()
-        # Show api key management by default
-        else:
-            usr_ak_management_view()
 
 def get_sql(sidebar_container, main_container):
     """Get sql view."""
@@ -76,7 +180,7 @@ def get_layout():
     with sidebar_column:
         selected_view = st.segmented_control(
                 label="selected_view",
-                label_visibility="hidden",
+                label_visibility="collapsed",
                 options=["Data Explorer", "SQL", "Settings"],
                 default="Data Explorer",
                 )
