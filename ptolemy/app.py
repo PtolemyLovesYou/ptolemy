@@ -3,39 +3,37 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-def get_sidebar(selected_view: str):
-    """Get sidebar."""
-    container = st.container(height=600, border=True)
-    with container:
-        if selected_view == "Data Explorer":
-            st.write("Data explorer sidebar")
-        if selected_view == "SQL":
-            st.write("SQL sidebar")
-        if selected_view == "Admin":
-            st.write("Admin sidebar")
-
-def get_explorer_main():
-    """Get explorer main view"""
-    st.write("Data explorer main view")
-
-def get_sql_main():
-    """Get sql main view"""
-    st.write("SQL main view")
-
-def get_admin_main():
-    """Get admin main."""
-    st.write("Admin main view")
-
-def get_main(selected_view: str):
+def get_main(sidebar_container, main_container):
     """Get main."""
-    container = st.container(height=650, border=True)
-    with container:
-        if selected_view == "Data Explorer":
-            get_explorer_main()
-        if selected_view == "SQL":
-            get_sql_main()
-        if selected_view == "Admin":
-            get_admin_main()
+    with sidebar_container:
+        st.write("Sidebar")
+
+    with main_container:
+        st.write("Main")
+
+def get_admin(sidebar_container, main_container):
+    """Get admin view."""
+    with sidebar_container:
+        st.write("Admin sidebar")
+
+    with main_container:
+        st.write("Admin main")
+
+def get_sql(sidebar_container, main_container):
+    """Get sql view."""
+    with sidebar_container:
+        st.write("SQL sidebar")
+
+    with main_container:
+        st.write("SQL main")
+
+def get_data_explorer(sidebar_container, main_container):
+    """Get data explorer view."""
+    with sidebar_container:
+        st.write("Data explorer sidebar")
+
+    with main_container:
+        st.write("Data explorer main")
 
 def get_layout():
     """Get layout."""
@@ -49,9 +47,21 @@ def get_layout():
                 default="Data Explorer",
                 )
 
-        get_sidebar(selected_view)
+        sidebar_container = st.container(height=600, border=True)
+
+        # get_sidebar(selected_view)
 
     with main_column:
-        get_main(selected_view)
+        main_container = st.container(height=650, border=True)
+        # get_main(selected_view)
+
+    if selected_view == 'Data Explorer':
+        get_data_explorer(sidebar_container, main_container)
+
+    if selected_view == 'SQL':
+        get_sql(sidebar_container, main_container)
+
+    if selected_view == 'Admin':
+        get_admin(sidebar_container, main_container)
 
 get_layout()
