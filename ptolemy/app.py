@@ -29,6 +29,11 @@ def get_event_explorer_view():
     """Event explorer container."""
     st.write("Event explorer goes here")
 
+@st.fragment
+def get_account_management_view():
+    """Get account management view."""
+    st.write("Account management view")
+
 def get_layout():
     """Get layout."""
     if not st.session_state.authenticated:
@@ -69,6 +74,15 @@ def get_layout():
                     icon=":material/group:"
                 )
 
+                # spacer
+                st.container(height=257, border=False)
+
+                account_management_button = st.button(
+                    "",
+                    use_container_width = True,
+                    icon=":material/account_circle:"
+                )
+
                 st.button(
                     "",
                     use_container_width=True,
@@ -89,6 +103,8 @@ def get_layout():
                     wk_management_view()
                 elif user_management_button:
                     usr_management_view()
+                elif account_management_button:
+                    get_account_management_view()
                 else:
                     get_event_explorer_view()
 
