@@ -355,7 +355,8 @@ def get_layout():
                 logout_button = st.button(
                     "",
                     use_container_width=True,
-                    icon=":material/logout:"
+                    icon=":material/logout:",
+                    on_click=logout,
                 )
 
         with main_column:
@@ -371,9 +372,6 @@ def get_layout():
                     wk_management_view()
                 elif user_management_button:
                     usr_management_view()
-                elif logout_button:
-                    logout()
-                    st.rerun()
                 else:
                     get_event_explorer_view()
 
