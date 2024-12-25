@@ -8,6 +8,30 @@ USER_ID = uuid.uuid4().hex
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'user_info' not in st.session_state:
+    st.session_state.user_info = None
+
+def login(username: str, password: str) -> bool:
+    """Login."""
+    if username == "foo" and password == "bar":
+        st.session_state.authenticated = True
+        st.session_state.user_info = {
+            "id": USER_ID,
+            "username": username,
+            "display_name": "Foo Bar",
+        }
+
+        return True
+
+    return False
+
+def logout():
+    """Logout user."""
+    st.session_state.authenticated = False
+    st.session_state.user_info = None
+
 def get_workspaces() -> dict[str, dict[str, Any]]:
     """Get workspaces."""
     return {
@@ -273,57 +297,84 @@ def get_event_explorer_view():
     """Event explorer container."""
     st.write("Event explorer goes here")
 
+def get_login_layout():
+    """Login layout."""
+    st.title("Login")
+
+    with st.form("login_form"):
+        username = st.text_input("Username", key="auth_username")
+        password = st.text_input("Password", type="password", key="auth_password")
+        submit = st.form_submit_button("Login")
+        if submit:
+            if login(username, password):
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Invalid username or password")
+
 def get_layout():
     """Get layout."""
-    sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
+    if not st.session_state.authenticated:
+        get_login_layout()
+    else:
+        sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
 
-    with sidebar_column:
-        sidebar_container = st.container(height=650, border=False)
-        with sidebar_container:
-            event_explorer_button = st.button(
-                "",
-                use_container_width = True,
-                icon=":material/monitoring:"
-            )
+        with sidebar_column:
+            sidebar_container = st.container(height=650, border=False)
+            with sidebar_container:
+                event_explorer_button = st.button(
+                    "",
+                    use_container_width = True,
+                    icon=":material/monitoring:"
+                )
 
-            code_button = st.button(
-                "",
-                use_container_width=True,
-                icon=":material/code:"
-            )
+                code_button = st.button(
+                    "",
+                    use_container_width=True,
+                    icon=":material/code:"
+                )
 
-            api_keys_button = st.button(
-                "",
-                use_container_width = True,
-                icon=":material/key:"
-            )
+                api_keys_button = st.button(
+                    "",
+                    use_container_width = True,
+                    icon=":material/key:"
+                )
 
-            workspace_management_button = st.button(
-                "",
-                use_container_width = True,
-                icon=":material/workspaces:"
-            )
+                workspace_management_button = st.button(
+                    "",
+                    use_container_width = True,
+                    icon=":material/workspaces:"
+                )
 
-            user_management_button = st.button(
-                "",
-                use_container_width = True,
-                icon=":material/group:"
-            )
+                user_management_button = st.button(
+                    "",
+                    use_container_width = True,
+                    icon=":material/group:"
+                )
 
-    with main_column:
-        main_container = st.container(height=650, border=True)
-        with main_container:
-            if event_explorer_button:
-                get_event_explorer_view()
-            elif code_button:
-                get_ide_view()
-            elif api_keys_button:
-                usr_ak_management_view()
-            elif workspace_management_button:
-                wk_management_view()
-            elif user_management_button:
-                usr_management_view()
-            else:
-                get_event_explorer_view()
+                logout_button = st.button(
+                    "",
+                    use_container_width=True,
+                    icon=":material/logout:"
+                )
+
+        with main_column:
+            main_container = st.container(height=650, border=True)
+            with main_container:
+                if event_explorer_button:
+                    get_event_explorer_view()
+                elif code_button:
+                    get_ide_view()
+                elif api_keys_button:
+                    usr_ak_management_view()
+                elif workspace_management_button:
+                    wk_management_view()
+                elif user_management_button:
+                    usr_management_view()
+                elif logout_button:
+                    logout()
+                    st.rerun()
+                else:
+                    get_event_explorer_view()
 
 get_layout()
