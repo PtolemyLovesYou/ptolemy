@@ -14,6 +14,7 @@ if 'authenticated' not in st.session_state:
 if 'user_info' not in st.session_state:
     st.session_state.user_info = None
 
+@st.fragment
 def usr_ak_management_view():
     """Get user API key management view."""
     st.write("User API key management view.")
