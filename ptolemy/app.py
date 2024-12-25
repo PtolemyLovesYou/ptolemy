@@ -14,6 +14,9 @@ if 'authenticated' not in st.session_state:
 if 'user_info' not in st.session_state:
     st.session_state.user_info = None
 
+if st.session_state.authenticated:
+    st.logo("prototype/assets/logomark_lime.svg")
+
 @st.fragment
 def usr_ak_management_view():
     """Get user API key management view."""
