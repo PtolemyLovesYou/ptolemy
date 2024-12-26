@@ -1,6 +1,12 @@
 [theme]
-primaryColor="#807c4e"
+primaryColor="#aaff00"
 backgroundColor="#000000"
-secondaryBackgroundColor="#403e27"
-textColor="#fff89c"
+secondaryBackgroundColor="#292928"
+textColor="#aaff00"
 font="monospace"
+
+[client]
+toolbarMode = "viewer"
+
+[server]
+runOnSave = true

@@ -1,50 +1,15 @@
 use crate::crud::conn::DbConnection;
 use crate::crud::error::CRUDError;
 use crate::generated::auth_schema::users::dsl::{
-    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users,
+    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users, salt
 };
-use crate::crud::crypto::hash_password;
+use crate::crud::crypto::{hash_password, verify_password};
 use crate::models::auth::enums::UserStatusEnum;
-use crate::models::auth::models::UserCreate;
+use crate::models::auth::models::{UserCreate, User};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-
-/// Verifies that a given password is correct for a given user.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `user_id` - The UUID of the user to verify.
-/// * `password` - The password to verify for the given user.
-///
-/// # Returns
-///
-/// Returns a `Result` containing `true` if the password is correct, or `false` if the password is incorrect.
-/// Returns `CRUDError::GetError` if there is an error verifying the user.
-pub async fn verify_user(
-    conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    password: String,
-) -> Result<bool, CRUDError> {
-    let hashed_password: String = hash_password(conn, &password).await?;
-
-    let password_is_correct: bool = match users
-        .filter(id.eq(&user_id))
-        .select(password_hash.eq(&hashed_password))
-        .get_result::<bool>(conn)
-        .await
-    {
-        Ok(v) => v,
-        Err(e) => {
-            error!("Unable to verify user: {}", e);
-            return Err(CRUDError::GetError);
-        }
-    };
-
-    Ok(password_is_correct)
-}
 
 /// Creates a new user in the database.
 ///
@@ -61,7 +26,7 @@ pub async fn create_user(
     conn: &mut DbConnection<'_>,
     user: &UserCreate,
 ) -> Result<Uuid, CRUDError> {
-    let hashed_password: String = hash_password(conn, &user.password).await?;
+    let (hashed_password, salt_val) = hash_password(conn, &user.password).await?;
 
     match diesel::insert_into(users)
         .values((
@@ -70,6 +35,7 @@ pub async fn create_user(
             is_sysadmin.eq(&user.is_sysadmin),
             is_admin.eq(&user.is_admin),
             password_hash.eq(&hashed_password),
+            salt.eq(&salt_val),
         ))
         .returning(id)
         .get_result(conn)
@@ -102,6 +68,31 @@ pub async fn change_user_status(
     }
 }
 
+pub async fn get_user(
+    conn: &mut DbConnection<'_>,
+    user_id: Uuid,
+) -> Result<crate::models::auth::models::User, CRUDError> {
+    match users.filter(id.eq(user_id)).get_result(conn).await {
+        Ok(user) => Ok(user),
+        Err(e) => {
+            error!("Failed to get user: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    }
+}
+
+pub async fn get_all_users(
+    conn: &mut DbConnection<'_>,
+) -> Result<Vec<crate::models::auth::models::User>, CRUDError> {
+    match users.get_results(conn).await {
+        Ok(us) => Ok(us),
+        Err(e) => {
+            error!("Failed to get users: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    }
+}
+
 pub async fn change_user_display_name(
     conn: &mut DbConnection<'_>,
     user_id: Uuid,
@@ -123,14 +114,14 @@ pub async fn change_user_display_name(
 
 pub async fn change_user_password(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    user_password: String,
+    user_id: &Uuid,
+    user_password: &String,
 ) -> Result<(), CRUDError> {
-    let hashed_password: String = hash_password(conn, &user_password).await?;
+    let (hashed_password, salt_val) = hash_password(conn, &user_password).await?;
 
     match diesel::update(users)
         .filter(id.eq(user_id))
-        .set(password_hash.eq(hashed_password))
+        .set((password_hash.eq(hashed_password), salt.eq(salt_val)))
         .execute(conn)
         .await
     {
@@ -151,6 +142,65 @@ pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(
         Err(e) => {
             error!("Failed to delete workspace: {}", e);
             Err(CRUDError::DeleteError)
+        }
+    }
+}
+
+pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &String) -> Result<Option<User>, CRUDError> {
+    let user = match users
+        .filter(username.eq(&uname))
+        .get_result::<User>(conn)
+        .await
+    {
+        Ok(user) => user,
+        Err(e) => {
+            error!("Failed to get user: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    };
+
+    if user.status != UserStatusEnum::Active {
+        return Ok(None);
+    }
+
+    let pass_correct = verify_password(conn, &password, &user.salt, &user.password_hash).await?;
+
+    match pass_correct {
+        true => Ok(Some(user)),
+        false => Ok(None),
+    }
+}
+
+pub async fn ensure_sysadmin(conn: &mut DbConnection<'_>) -> Result<(), CRUDError> {
+    let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
+    let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
+
+    let users_list = get_all_users(conn).await?;
+
+    for user in users_list {
+        if user.is_sysadmin {
+            if verify_password(conn, &pass, &user.salt, &user.password_hash).await? {
+                return Ok(());
+            }
+            // update password
+            else {
+                change_user_password(conn, &user.id, &pass).await?;
+                return Ok(());
+            }
+        }
+    }
+
+    match create_user(conn, &UserCreate {
+        username: user,
+        display_name: Some("SYSADMIN".to_string()),
+        is_sysadmin: true,
+        is_admin: false,
+        password: pass,
+    }).await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to create sysadmin: {:?}", e);
+            Err(CRUDError::InsertError)
         }
     }
 }
