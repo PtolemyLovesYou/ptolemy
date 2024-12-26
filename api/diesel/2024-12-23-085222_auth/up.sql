@@ -9,6 +9,7 @@ create table users (
     id UUID not null primary key default gen_random_uuid(),
     username varchar unique not null,
     password_hash varchar not null,
+    salt varchar not null,
     display_name varchar,
     status user_status not null default 'active',
     is_sysadmin bool not null,
@@ -27,6 +28,7 @@ create table user_api_key (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references users(id) on delete cascade,
     key_hash varchar not null,
+    salt varchar not null,
     permissions api_key_permission not null,
     expires_at timestamp(6)
 );
@@ -35,6 +37,7 @@ create table service_api_key (
     id uuid primary key default gen_random_uuid(),
     workspace_id uuid not null references workspace(id) on delete cascade,
     key_hash varchar not null,
+    salt varchar not null,
     permissions api_key_permission not null,
     expires_at timestamp(6)
 );

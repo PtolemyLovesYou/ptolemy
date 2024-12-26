@@ -36,7 +36,7 @@ pub async fn generate_api_key() -> String {
 pub async fn hash_password(
     conn: &mut DbConnection<'_>,
     password_str: &str,
-) -> Result<String, CRUDError> {
+) -> Result<(String, String), CRUDError> {
     let salt: String = match diesel::select(gen_salt("bf")).get_result(conn).await {
         Ok(s) => s,
         Err(e) => {
@@ -45,7 +45,7 @@ pub async fn hash_password(
         }
     };
 
-    let hashed_password: String = match diesel::select(crypt(password_str, salt))
+    let hashed_password: String = match diesel::select(crypt(password_str, salt.clone()))
         .get_result(conn)
         .await
     {
@@ -56,5 +56,25 @@ pub async fn hash_password(
         }
     };
 
-    Ok(hashed_password)
+    Ok((hashed_password, salt))
+}
+
+pub async fn verify_password(
+    conn: &mut DbConnection<'_>,
+    password: &str,
+    salt: &str,
+    hashed_password: &str,
+) -> Result<bool, CRUDError> {
+    let att_hashed_password: String = match diesel::select(crypt(password, salt.to_string()))
+        .get_result(conn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            error!("Unable to generate hashed password: {}", e);
+            return Err(CRUDError::InsertError);
+        }
+    };
+
+    Ok(att_hashed_password == hashed_password)
 }
