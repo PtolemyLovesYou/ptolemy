@@ -5,7 +5,7 @@ use crate::generated::auth_schema::users::dsl::{
 };
 use crate::crud::crypto::hash_password;
 use crate::models::auth::enums::UserStatusEnum;
-use crate::models::auth::models::UserCreate;
+use crate::models::auth::models::{UserCreate, User};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -177,6 +177,33 @@ pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(
             error!("Failed to delete workspace: {}", e);
             Err(CRUDError::DeleteError)
         }
+    }
+}
+
+pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &String) -> Result<Option<User>, CRUDError> {
+    let hashed_password: String = hash_password(conn, &password).await?;
+
+    let user = match users
+        .filter(username.eq(&uname))
+        .get_result::<User>(conn)
+        .await
+    {
+        Ok(user) => user,
+        Err(e) => {
+            error!("Failed to get user: {}", e);
+            return Err(CRUDError::GetError);
+        }
+    };
+
+    error!("{}, {}", user.password_hash, hashed_password);
+
+    if user.status != UserStatusEnum::Active {
+        return Ok(None);
+    }
+
+    match user.password_hash == hashed_password {
+        true => Ok(Some(user)),
+        false => Ok(None),
     }
 }
 
