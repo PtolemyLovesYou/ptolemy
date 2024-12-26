@@ -1,14 +1,22 @@
 """Auth services."""
 import streamlit as st
+import requests
 
 def login(username: str, password: str) -> bool:
     """Login."""
-    if username == "foo" and password == "bar":
+    resp = requests.post(
+        "http://localhost:8000/user/auth",
+        json={"username": username, "password": password},
+        timeout=5,
+    )
+
+    if resp.ok:
+        data = resp.json()
         st.session_state.authenticated = True
         st.session_state.user_info = {
             "id": "id_goes_here",
             "username": username,
-            "display_name": "Foo Bar",
+            "display_name": data["display_name"],
         }
 
         return True
