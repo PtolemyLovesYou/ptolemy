@@ -1,7 +1,34 @@
 """User management."""
-from typing import Optional, Any
+from typing import Optional
+from enum import StrEnum
 import requests
 import streamlit as st
+from pydantic import BaseModel
+
+class UserRole(StrEnum):
+    """User role."""
+    USER = "user"
+    ADMIN = "admin"
+    SYSADMIN = "sysadmin"
+
+class User(BaseModel):
+    """User model."""
+    id: str
+    username: str
+    is_admin: bool
+    is_sysadmin: bool
+    display_name: Optional[str] = None
+    status: str
+
+    @property
+    def role(self) -> UserRole:
+        """User role."""
+        if self.is_admin:
+            return UserRole.ADMIN
+        if self.is_sysadmin:
+            return UserRole.SYSADMIN
+
+        return UserRole.USER
 
 def user_role(is_admin: bool, is_sysadmin: bool) -> str:
     """Get user role."""
@@ -40,22 +67,16 @@ def delete_user(user_id: str):
             f"Failed to delete user {user_id}"
             )
 
-def get_users() -> dict[str, dict[str, Any]]:
+def get_users() -> dict[str, User]:
     """Get users."""
     user_list = requests.get(
         "http://localhost:8000/user/all",
         timeout=10,
     ).json()
 
-    user_dict = {}
-
-    for u in user_list:
-        user_dict[u['id']] = u
-        user_dict[u['id']]['role'] = user_role(
-            u['is_admin'], u['is_sysadmin']
-            )
-
-    return {u['id']: u for u in user_list}
+    return {
+        u['id']: User(**u) for u in user_list
+        }
 
 @st.fragment
 def usr_management_view():
@@ -116,7 +137,7 @@ def usr_management_view():
                 with cols[0]:
                     st.text_input(
                         "username",
-                        value=user['username'],
+                        value=user.username,
                         disabled=True,
                         key=f"user_username_{user_id}",
                         label_visibility='collapsed'
@@ -124,7 +145,7 @@ def usr_management_view():
                 with cols[1]:
                     st.text_input(
                         "display_name",
-                        value=user['display_name'],
+                        value=user.display_name,
                         disabled=False,
                         key=f"user_display_name_{user_id}",
                         label_visibility='collapsed'
@@ -133,7 +154,7 @@ def usr_management_view():
                     st.selectbox(
                         label=f"user_role_{user_id}",
                         options=["admin", "sysadmin", "user"],
-                        index=["admin", "sysadmin", "user"].index(user['role']),
+                        index=["admin", "sysadmin", "user"].index(user.role),
                         disabled=False,
                         key=f"user_role_{user_id}",
                         label_visibility='collapsed'
@@ -142,7 +163,7 @@ def usr_management_view():
                     st.selectbox(
                         label=f"user_status_{user_id}",
                         options=["Active", "Suspended"],
-                        index=["Active", "Suspended"].index(user['status']),
+                        index=["Active", "Suspended"].index(user.status),
                         disabled=False,
                         key=f"user_status_{user_id}",
                         label_visibility='collapsed'

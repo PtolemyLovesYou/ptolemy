@@ -1,6 +1,7 @@
 """Auth services."""
 import streamlit as st
 import requests
+from .user import User
 
 def login(username: str, password: str) -> bool:
     """Login."""
@@ -13,11 +14,7 @@ def login(username: str, password: str) -> bool:
     if resp.ok:
         data = resp.json()
         st.session_state.authenticated = True
-        st.session_state.user_info = {
-            "id": "id_goes_here",
-            "username": username,
-            "display_name": data["display_name"],
-        }
+        st.session_state.user_info = User(**data)
 
         return True
 
