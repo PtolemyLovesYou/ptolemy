@@ -1,5 +1,5 @@
-use crate::crud::conn::DbConnection;
-use crate::crud::error::CRUDError;
+use crate::state::DbConnection;
+use crate::error::CRUDError;
 use crate::models::auth::crypto::{gen_salt, crypt};
 use base64::Engine;
 use tracing::error;

@@ -1,7 +1,10 @@
-use crate::error::ApiError;
-use diesel_async::pooled_connection::bb8::Pool;
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use crate::error::{ApiError, CRUDError};
+use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
+use bb8::PooledConnection;
+use tracing::error;
+
+pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
 fn get_env_var(name: &str) -> Result<String, ApiError> {
     match std::env::var(name) {
@@ -49,5 +52,15 @@ impl AppState {
         };
 
         Ok(state)
+    }
+
+    pub async fn get_conn(&self) -> Result<DbConnection<'_>, CRUDError> {
+        match self.pg_pool.get().await {
+            Ok(c) => Ok(c),
+            Err(e) => {
+                error!("Failed to get connection: {}", e);
+                Err(CRUDError::ConnectionError)
+            }
+        }
     }
 }

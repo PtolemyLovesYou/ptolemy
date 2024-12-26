@@ -1,4 +1,3 @@
-use crate::crud::conn::get_conn;
 use crate::crud::workspace as workspace_crud;
 use crate::models::auth::models::{Workspace, WorkspaceCreate};
 use crate::state::AppState;
@@ -17,7 +16,7 @@ async fn create_workspace(
     state: Arc<AppState>,
     Json(workspace): Json<WorkspaceCreate>,
 ) -> Result<(StatusCode, Json<Workspace>), StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -35,7 +34,7 @@ async fn get_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Workspace>, StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -53,7 +52,7 @@ async fn delete_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);

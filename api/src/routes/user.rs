@@ -1,4 +1,3 @@
-use crate::crud::conn::get_conn;
 use crate::crud::user as user_crud;
 use crate::models::auth::models::{
     User,
@@ -30,7 +29,7 @@ async fn create_user(
     state: Arc<AppState>,
     Json(user): Json<UserCreate>,
 ) -> Result<(StatusCode, Json<CreateUserResponse>), StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -49,7 +48,7 @@ async fn create_user(
 async fn get_all_users(
     state: Arc<AppState>,
 ) -> Result<Json<Vec<User>>, StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -66,7 +65,7 @@ async fn get_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<User>, StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -83,7 +82,7 @@ pub async fn delete_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -101,7 +100,7 @@ pub async fn auth_user(
     Json(user): Json<UserAuth>,
 ) -> Result<Json<User>, StatusCode> {
     // todo: make this better
-    let mut conn = match get_conn(&state).await {
+    let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);

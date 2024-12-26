@@ -2,17 +2,15 @@ use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::sync::Arc;
 use tracing::{info, error};
 
-use api::error::ApiError;
+use api::error::{ApiError, CRUDError};
 use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
 use api::routes::user::user_router;
 use api::state::AppState;
 use api::crud::{
-    conn::get_conn,
     user::{create_user, change_user_password, get_all_users},
     crypto::verify_password,
-    error::CRUDError,
 };
 use api::models::auth::models::UserCreate;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
@@ -47,7 +45,7 @@ async fn base_router(enable_prometheus: bool) -> Router {
 }
 
 async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
-    let mut conn = get_conn(state).await?;
+    let mut conn = state.get_conn().await?;
 
     let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
     let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");

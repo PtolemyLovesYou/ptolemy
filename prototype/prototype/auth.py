@@ -13,8 +13,6 @@ def login(username: str, password: str) -> bool:
         timeout=5,
     )
 
-    print(resp.status_code, resp.text)
-
     if resp.ok:
         data = resp.json()
         st.session_state.authenticated = True

@@ -1,5 +1,5 @@
-use crate::crud::conn::DbConnection;
-use crate::crud::error::CRUDError;
+use crate::state::DbConnection;
+use crate::error::CRUDError;
 use crate::generated::auth_schema::users::dsl::{
     display_name, id, is_admin, is_sysadmin, password_hash, status, username, users, salt
 };

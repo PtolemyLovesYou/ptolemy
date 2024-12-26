@@ -1,5 +1,5 @@
-use crate::crud::conn::DbConnection;
-use crate::crud::error::CRUDError;
+use crate::state::DbConnection;
+use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace_user;
 use crate::generated::auth_schema::workspace_user::dsl;
 use crate::models::auth::enums::WorkspaceRoleEnum;
