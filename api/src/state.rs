@@ -1,7 +1,7 @@
 use crate::error::{ApiError, CRUDError};
+use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
-use bb8::PooledConnection;
 use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;

@@ -1,8 +1,5 @@
 use crate::crud::user as user_crud;
-use crate::models::auth::models::{
-    User,
-    UserCreate
-};
+use crate::models::auth::models::{User, UserCreate};
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -10,9 +7,9 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, Serialize)]
 struct CreateUserResponse {
@@ -22,7 +19,7 @@ struct CreateUserResponse {
 #[derive(Clone, Debug, Deserialize)]
 pub struct UserAuth {
     username: String,
-    password: String
+    password: String,
 }
 
 async fn create_user(
@@ -40,14 +37,12 @@ async fn create_user(
         Ok(result) => {
             let response = CreateUserResponse { id: result };
             Ok((StatusCode::CREATED, Json(response)))
-        },
+        }
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 
-async fn get_all_users(
-    state: Arc<AppState>,
-) -> Result<Json<Vec<User>>, StatusCode> {
+async fn get_all_users(state: Arc<AppState>) -> Result<Json<Vec<User>>, StatusCode> {
     let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(_) => {
@@ -123,7 +118,7 @@ pub async fn user_router(state: &Arc<AppState>) -> Router {
             post({
                 let shared_state = Arc::clone(state);
                 move |user| create_user(shared_state, user)
-            })
+            }),
         )
         .route(
             "/:user_id",
@@ -139,12 +134,18 @@ pub async fn user_router(state: &Arc<AppState>) -> Router {
                 move |user_id| delete_user(shared_state, user_id)
             }),
         )
-        .route("/all", get({
-            let shared_state = Arc::clone(state);
-            move || get_all_users(shared_state)
-        }))
-        .route("/auth", post({
-            let shared_state = Arc::clone(state);
-            move |user| auth_user(shared_state, user)
-        }))
+        .route(
+            "/all",
+            get({
+                let shared_state = Arc::clone(state);
+                move || get_all_users(shared_state)
+            }),
+        )
+        .route(
+            "/auth",
+            post({
+                let shared_state = Arc::clone(state);
+                move |user| auth_user(shared_state, user)
+            }),
+        )
 }

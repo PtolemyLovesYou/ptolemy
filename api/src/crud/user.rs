@@ -1,11 +1,11 @@
-use crate::state::DbConnection;
+use crate::crud::crypto::{hash_password, verify_password};
 use crate::error::CRUDError;
 use crate::generated::auth_schema::users::dsl::{
-    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users, salt
+    display_name, id, is_admin, is_sysadmin, password_hash, salt, status, username, users,
 };
-use crate::crud::crypto::{hash_password, verify_password};
 use crate::models::auth::enums::UserStatusEnum;
-use crate::models::auth::models::{UserCreate, User};
+use crate::models::auth::models::{User, UserCreate};
+use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -146,7 +146,11 @@ pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(
     }
 }
 
-pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &String) -> Result<Option<User>, CRUDError> {
+pub async fn auth_user(
+    conn: &mut DbConnection<'_>,
+    uname: &String,
+    password: &String,
+) -> Result<Option<User>, CRUDError> {
     let user = match users
         .filter(username.eq(&uname))
         .get_result::<User>(conn)

@@ -1,6 +1,6 @@
 use crate::crud::workspace_user as workspace_user_crud;
-use crate::models::auth::models::WorkspaceUser;
 use crate::models::auth::enums::WorkspaceRoleEnum;
+use crate::models::auth::models::WorkspaceUser;
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -8,10 +8,10 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use serde::Deserialize;
 use std::sync::Arc;
 use tracing::error;
 use uuid::Uuid;
-use serde::Deserialize;
 
 async fn create_workspace_user(
     state: Arc<AppState>,
@@ -23,6 +23,9 @@ async fn create_workspace_user(
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
+
+    // TODO: ensure user with user_id has permissions to set user role
+    // specifically, this person must be an admin/manager of the workspace
 
     match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
         Ok(_) => Ok(StatusCode::CREATED),
@@ -84,7 +87,13 @@ async fn change_workspace_user_role(
         }
     };
     // todo: ensure user with user_id has permissions to set user role
-    let user_permission = match workspace_user_crud::get_workspace_user_permission(&mut conn, &req.workspace_id, &req.user_id).await {
+    let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        &mut conn,
+        &req.workspace_id,
+        &req.user_id,
+    )
+    .await
+    {
         Ok(role) => role,
         Err(e) => {
             error!("Unable to get workspace_user permission: {:?}", e);
@@ -100,15 +109,17 @@ async fn change_workspace_user_role(
             };
             ()
         }
-        _ => return Err(StatusCode::FORBIDDEN)
+        _ => return Err(StatusCode::FORBIDDEN),
     };
 
     match workspace_user_crud::set_workspace_user_role(
         &mut conn,
         &req.workspace_id,
         &req.target_user_id,
-        &req.role
-    ).await {
+        &req.role,
+    )
+    .await
+    {
         Ok(_) => Ok(StatusCode::OK),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -148,14 +159,16 @@ pub async fn workspace_user_router(state: &Arc<AppState>) -> Router {
             put({
                 let shared_state = Arc::clone(state);
                 move |req| change_workspace_user_role(shared_state, req)
-            })
+            }),
         )
         // delete workspace user (DELETE)
         .route(
             "/:workspace_id/:user_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |workspace_id, user_id| delete_workspace_user(shared_state, workspace_id, user_id)
+                move |workspace_id, user_id| {
+                    delete_workspace_user(shared_state, workspace_id, user_id)
+                }
             }),
         )
         // get workspace user (GET)
@@ -163,7 +176,9 @@ pub async fn workspace_user_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/:user_id",
             get({
                 let shared_state = Arc::clone(state);
-                move |workspace_user_id, user_id| get_workspace_user(shared_state, workspace_user_id, user_id)
+                move |workspace_user_id, user_id| {
+                    get_workspace_user(shared_state, workspace_user_id, user_id)
+                }
             }),
         )
         // get all users of workspace (GET)

@@ -1,10 +1,10 @@
-use crate::state::DbConnection;
 use crate::error::CRUDError;
-use crate::models::auth::crypto::{gen_salt, crypt};
+use crate::models::auth::crypto::{crypt, gen_salt};
+use crate::state::DbConnection;
 use base64::Engine;
-use tracing::error;
 use diesel_async::RunQueryDsl;
-use ring::rand::{SystemRandom, SecureRandom};
+use ring::rand::{SecureRandom, SystemRandom};
+use tracing::error;
 
 /// Generates a 32 byte api key and encodes it as a base64 string.
 ///

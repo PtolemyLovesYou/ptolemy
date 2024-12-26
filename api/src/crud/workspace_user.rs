@@ -1,9 +1,9 @@
-use crate::state::DbConnection;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace_user;
 use crate::generated::auth_schema::workspace_user::dsl;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::models::WorkspaceUser;
+use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -42,7 +42,11 @@ pub async fn get_workspace_user_permission(
     user_id: &Uuid,
 ) -> Result<WorkspaceRoleEnum, CRUDError> {
     match workspace_user::table
-        .filter(dsl::workspace_id.eq(workspace_id).and(dsl::user_id.eq(user_id)))
+        .filter(
+            dsl::workspace_id
+                .eq(workspace_id)
+                .and(dsl::user_id.eq(user_id)),
+        )
         .select(dsl::role)
         .get_result(conn)
         .await
@@ -124,7 +128,11 @@ pub async fn get_workspace_user(
     user_id: &Uuid,
 ) -> Result<WorkspaceUser, CRUDError> {
     match workspace_user::table
-        .filter(dsl::workspace_id.eq(workspace_id).and(dsl::user_id.eq(user_id)))
+        .filter(
+            dsl::workspace_id
+                .eq(workspace_id)
+                .and(dsl::user_id.eq(user_id)),
+        )
         .get_result(conn)
         .await
     {

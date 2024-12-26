@@ -1,19 +1,19 @@
 use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::sync::Arc;
-use tracing::{info, error};
+use tracing::{error, info};
 
+use api::crud::{
+    crypto::verify_password,
+    user::{change_user_password, create_user, get_all_users},
+};
 use api::error::{ApiError, CRUDError};
+use api::models::auth::models::UserCreate;
 use api::observer::service::MyObserver;
 use api::routes::graphql::router::graphql_router;
-use api::routes::workspace::workspace_router;
 use api::routes::user::user_router;
+use api::routes::workspace::workspace_router;
 use api::routes::workspace_user::workspace_user_router;
 use api::state::AppState;
-use api::crud::{
-    user::{create_user, change_user_password, get_all_users},
-    crypto::verify_password,
-};
-use api::models::auth::models::UserCreate;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
@@ -66,13 +66,18 @@ async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
         }
     }
 
-    match create_user(&mut conn, &UserCreate {
-        username: user,
-        display_name: Some("SYSADMIN".to_string()),
-        is_sysadmin: true,
-        is_admin: false,
-        password: pass,
-    }).await {
+    match create_user(
+        &mut conn,
+        &UserCreate {
+            username: user,
+            display_name: Some("SYSADMIN".to_string()),
+            is_sysadmin: true,
+            is_admin: false,
+            password: pass,
+        },
+    )
+    .await
+    {
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Failed to create sysadmin: {:?}", e);
@@ -105,7 +110,10 @@ async fn main() -> Result<(), ApiError> {
         .nest("/graphql", graphql_router().await)
         .nest("/workspace", workspace_router(&shared_state).await)
         .nest("/user", user_router(&shared_state).await)
-        .nest("/workspace_user", workspace_user_router(&shared_state).await);
+        .nest(
+            "/workspace_user",
+            workspace_user_router(&shared_state).await,
+        );
 
     let server_url = format!("0.0.0.0:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
