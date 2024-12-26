@@ -30,7 +30,7 @@ def get_login_layout():
 
     _, logocol, _ = st.columns([1, 0.25, 1])
     with logocol:
-        st.image("prototype/assets/logomark_lime.svg", use_container_width=True)
+        st.image("assets/logomark_lime.svg", use_container_width=True)
 
     _, logincol, _ = st.columns([1, 1, 1])
 

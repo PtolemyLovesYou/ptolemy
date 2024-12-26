@@ -1,9 +1,9 @@
 """Streamlit prototype app."""
 import uuid
 import streamlit as st
-from prototype.auth import logout, get_login_layout
-from prototype.user import usr_management_view
-from prototype.workspace import wk_management_view
+from ptolemy.prototype.auth import logout, get_login_layout
+from ptolemy.prototype.user import usr_management_view
+from ptolemy.prototype.workspace import wk_management_view
 
 USER_ID = uuid.uuid4().hex
 
@@ -15,7 +15,7 @@ if 'user_info' not in st.session_state:
     st.session_state.user_info = None
 
 if st.session_state.authenticated:
-    st.logo("prototype/assets/logomark_lime.svg")
+    st.logo("assets/logomark_lime.svg")
 
 @st.fragment
 def usr_ak_management_view():
