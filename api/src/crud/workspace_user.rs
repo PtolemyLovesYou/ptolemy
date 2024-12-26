@@ -36,6 +36,25 @@ pub async fn create_workspace_user(
     }
 }
 
+pub async fn get_workspace_user_permission(
+    conn: &mut DbConnection<'_>,
+    workspace_id: &Uuid,
+    user_id: &Uuid,
+) -> Result<WorkspaceRoleEnum, CRUDError> {
+    match workspace_user::table
+        .filter(dsl::workspace_id.eq(workspace_id).and(dsl::user_id.eq(user_id)))
+        .select(dsl::role)
+        .get_result(conn)
+        .await
+    {
+        Ok(role) => Ok(role),
+        Err(e) => {
+            error!("Unable to get workspace_user permission: {}", e);
+            Err(CRUDError::GetError)
+        }
+    }
+}
+
 /// Updates the role of a user in a workspace.
 ///
 /// # Arguments
@@ -51,9 +70,9 @@ pub async fn create_workspace_user(
 
 pub async fn set_workspace_user_role(
     conn: &mut DbConnection<'_>,
-    wk_id: Uuid,
-    us_id: Uuid,
-    role: WorkspaceRoleEnum,
+    wk_id: &Uuid,
+    us_id: &Uuid,
+    role: &WorkspaceRoleEnum,
 ) -> Result<(), CRUDError> {
     match diesel::update(workspace_user::table)
         .filter(dsl::workspace_id.eq(wk_id).and(dsl::user_id.eq(us_id)))
@@ -95,6 +114,41 @@ pub async fn delete_workspace_user(
         Err(e) => {
             error!("Failed to delete workspace_user: {}", e);
             Err(CRUDError::DeleteError)
+        }
+    }
+}
+
+pub async fn get_workspace_user(
+    conn: &mut DbConnection<'_>,
+    workspace_id: &Uuid,
+    user_id: &Uuid,
+) -> Result<WorkspaceUser, CRUDError> {
+    match workspace_user::table
+        .filter(dsl::workspace_id.eq(workspace_id).and(dsl::user_id.eq(user_id)))
+        .get_result(conn)
+        .await
+    {
+        Ok(user) => Ok(user),
+        Err(e) => {
+            error!("Unable to get workspace_user: {}", e);
+            Err(CRUDError::GetError)
+        }
+    }
+}
+
+pub async fn get_workspace_users(
+    conn: &mut DbConnection<'_>,
+    workspace_id: &Uuid,
+) -> Result<Vec<WorkspaceUser>, CRUDError> {
+    match workspace_user::table
+        .filter(dsl::workspace_id.eq(workspace_id))
+        .get_results(conn)
+        .await
+    {
+        Ok(users) => Ok(users),
+        Err(e) => {
+            error!("Unable to get workspace_users: {}", e);
+            Err(CRUDError::GetError)
         }
     }
 }
