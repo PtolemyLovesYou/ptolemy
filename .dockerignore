@@ -2,3 +2,7 @@ target/
 .venv/
 docs/
 assets/
+
+prototype/.venv/
+ptolemy/.venv/
+ptolemy/target/

@@ -1,11 +1,14 @@
 """Streamlit prototype app."""
 import uuid
+import logging
 import streamlit as st
-from ptolemy.prototype.auth import logout, get_login_layout
-from ptolemy.prototype.user import usr_management_view
-from ptolemy.prototype.workspace import wk_management_view
+from prototype.auth import logout, get_login_layout
+from prototype.user import usr_management_view
+from prototype.workspace import wk_management_view
 
 USER_ID = uuid.uuid4().hex
+
+logging.basicConfig(level=logging.DEBUG)
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 

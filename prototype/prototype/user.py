@@ -1,9 +1,11 @@
 """User management."""
 from typing import Optional
 from enum import StrEnum
+from urllib.parse import urljoin
 import requests
 import streamlit as st
 from pydantic import BaseModel
+from .env_settings import API_URL
 
 class UserRole(StrEnum):
     """User role."""
@@ -42,7 +44,7 @@ def user_role(is_admin: bool, is_sysadmin: bool) -> str:
 def create_new_user(username: str, password: str, role: str, display_name: Optional[str] = None):
     """Create new user."""
     resp = requests.post(
-        "http://localhost:8000/user",
+        urljoin(API_URL, "/user"),
         json={
             "username": username,
             "password": password,
@@ -58,7 +60,7 @@ def create_new_user(username: str, password: str, role: str, display_name: Optio
 def delete_user(user_id: str):
     """Delete user."""
     resp = requests.delete(
-        f"http://localhost:8000/user/{user_id}",
+        urljoin(API_URL, f"/user/{user_id}"),
         timeout=5,
     )
 
@@ -70,7 +72,7 @@ def delete_user(user_id: str):
 def get_users() -> dict[str, User]:
     """Get users."""
     user_list = requests.get(
-        "http://localhost:8000/user/all",
+        urljoin(API_URL, "/user/all"),
         timeout=10,
     ).json()
 

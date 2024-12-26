@@ -1,6 +1,6 @@
 use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, error};
 
 use api::error::ApiError;
 use api::observer::service::MyObserver;
@@ -8,8 +8,13 @@ use api::routes::graphql::router::graphql_router;
 use api::routes::workspace::workspace_router;
 use api::routes::user::user_router;
 use api::state::AppState;
-use api::crud::user::ensure_sysadmin;
-use api::crud::conn::get_conn;
+use api::crud::{
+    conn::get_conn,
+    user::{create_user, change_user_password, get_all_users},
+    crypto::verify_password,
+    error::CRUDError,
+};
+use api::models::auth::models::UserCreate;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
 use tonic::transport::Server;
@@ -41,6 +46,42 @@ async fn base_router(enable_prometheus: bool) -> Router {
     router
 }
 
+async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
+    let mut conn = get_conn(state).await?;
+
+    let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
+    let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
+
+    let users_list = get_all_users(&mut conn).await?;
+
+    for user in users_list {
+        if user.is_sysadmin {
+            if verify_password(&mut conn, &pass, &user.salt, &user.password_hash).await? {
+                return Ok(());
+            }
+            // update password
+            else {
+                change_user_password(&mut conn, &user.id, &pass).await?;
+                return Ok(());
+            }
+        }
+    }
+
+    match create_user(&mut conn, &UserCreate {
+        username: user,
+        display_name: Some("SYSADMIN".to_string()),
+        is_sysadmin: true,
+        is_admin: false,
+        password: pass,
+    }).await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            error!("Failed to create sysadmin: {:?}", e);
+            Err(CRUDError::InsertError)
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt::init();
@@ -48,7 +89,12 @@ async fn main() -> Result<(), ApiError> {
     let shared_state = Arc::new(AppState::new().await?);
 
     // ensure sysadmin
-    ensure_sysadmin(&mut get_conn(&shared_state).await.unwrap()).await.unwrap();
+    match ensure_sysadmin(&shared_state).await {
+        Ok(_) => (),
+        Err(err) => {
+            error!("Failed to set up sysadmin. This may be because the Postgres db is empty. Run Diesel migrations and then try again. More details: {:?}", err);
+        }
+    };
 
     // gRPC server setup
     let grpc_addr = "[::]:50051".parse().unwrap();

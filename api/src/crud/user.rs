@@ -170,37 +170,3 @@ pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &S
         false => Ok(None),
     }
 }
-
-pub async fn ensure_sysadmin(conn: &mut DbConnection<'_>) -> Result<(), CRUDError> {
-    let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
-    let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
-
-    let users_list = get_all_users(conn).await?;
-
-    for user in users_list {
-        if user.is_sysadmin {
-            if verify_password(conn, &pass, &user.salt, &user.password_hash).await? {
-                return Ok(());
-            }
-            // update password
-            else {
-                change_user_password(conn, &user.id, &pass).await?;
-                return Ok(());
-            }
-        }
-    }
-
-    match create_user(conn, &UserCreate {
-        username: user,
-        display_name: Some("SYSADMIN".to_string()),
-        is_sysadmin: true,
-        is_admin: false,
-        password: pass,
-    }).await {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to create sysadmin: {:?}", e);
-            Err(CRUDError::InsertError)
-        }
-    }
-}

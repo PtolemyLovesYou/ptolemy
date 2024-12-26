@@ -1,15 +1,19 @@
 """Auth services."""
+from urllib.parse import urljoin
 import streamlit as st
 import requests
 from .user import User
+from .env_settings import API_URL
 
 def login(username: str, password: str) -> bool:
     """Login."""
     resp = requests.post(
-        "http://localhost:8000/user/auth",
+        urljoin(API_URL, "/user/auth"),
         json={"username": username, "password": password},
         timeout=5,
     )
+
+    print(resp.status_code, resp.text)
 
     if resp.ok:
         data = resp.json()
