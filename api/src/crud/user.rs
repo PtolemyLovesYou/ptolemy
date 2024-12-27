@@ -51,8 +51,8 @@ pub async fn create_user(
 
 pub async fn change_user_status(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    user_status: UserStatusEnum,
+    user_id: &Uuid,
+    user_status: &UserStatusEnum,
 ) -> Result<(), CRUDError> {
     match diesel::update(users)
         .filter(id.eq(user_id))
@@ -70,7 +70,7 @@ pub async fn change_user_status(
 
 pub async fn get_user(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
+    user_id: &Uuid,
 ) -> Result<crate::models::auth::models::User, CRUDError> {
     match users.filter(id.eq(user_id)).get_result(conn).await {
         Ok(user) => Ok(user),
@@ -95,8 +95,8 @@ pub async fn get_all_users(
 
 pub async fn change_user_display_name(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    user_display_name: String,
+    user_id: &Uuid,
+    user_display_name: &String,
 ) -> Result<(), CRUDError> {
     match diesel::update(users)
         .filter(id.eq(user_id))
@@ -133,7 +133,7 @@ pub async fn change_user_password(
     }
 }
 
-pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(), CRUDError> {
+pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: &Uuid) -> Result<(), CRUDError> {
     match diesel::delete(users.filter(id.eq(user_id)))
         .execute(conn)
         .await

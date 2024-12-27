@@ -57,7 +57,7 @@ async fn get_user(
 ) -> Result<Json<User>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match user_crud::get_user(&mut conn, user_id).await {
+    match user_crud::get_user(&mut conn, &user_id).await {
         Ok(result) => Ok(Json(result)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -69,7 +69,7 @@ pub async fn delete_user(
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match user_crud::delete_user(&mut conn, user_id).await {
+    match user_crud::delete_user(&mut conn, &user_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }

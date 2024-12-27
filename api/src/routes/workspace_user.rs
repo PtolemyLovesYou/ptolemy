@@ -134,7 +134,7 @@ async fn delete_workspace_user(
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match workspace_user_crud::delete_workspace_user(&mut conn, workspace_id, user_id).await {
+    match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }

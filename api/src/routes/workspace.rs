@@ -16,7 +16,7 @@ use uuid::Uuid;
 use serde::Deserialize;
 
 async fn ensure_admin(conn: &mut crate::state::DbConnection<'_>, user_id: Uuid) -> Result<(), StatusCode> {
-    match user_crud::get_user(conn, user_id)
+    match user_crud::get_user(conn, &user_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .is_admin {
