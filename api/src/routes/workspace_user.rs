@@ -13,9 +13,15 @@ use std::sync::Arc;
 use tracing::error;
 use uuid::Uuid;
 
+#[derive(Debug, Deserialize)]
+struct CreateWorkspaceUserRequest {
+    user_id: Uuid,
+    workspace_user: WorkspaceUser,
+}
+
 async fn create_workspace_user(
     state: Arc<AppState>,
-    Json(workspace_user): Json<WorkspaceUser>,
+    Json(req): Json<CreateWorkspaceUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = match state.get_conn().await {
         Ok(c) => c,
@@ -24,10 +30,25 @@ async fn create_workspace_user(
         }
     };
 
-    // TODO: ensure user with user_id has permissions to set user role
-    // specifically, this person must be an admin/manager of the workspace
+    // User making request should be a manager or admin of the given workspace
+    let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        &mut conn,
+        &req.workspace_user.workspace_id,
+        &req.user_id,
+    ).await {
+        Ok(role) => role,
+        Err(e) => {
+            error!("Unable to get workspace_user permission: {:?}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
 
-    match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
+    match user_permission {
+        WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
+        _ => return Err(StatusCode::FORBIDDEN),
+    }
+
+    match workspace_user_crud::create_workspace_user(&mut conn, &req.workspace_user).await {
         Ok(_) => Ok(StatusCode::CREATED),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
