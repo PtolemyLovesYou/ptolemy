@@ -64,3 +64,15 @@ impl AppState {
         }
     }
 }
+
+#[macro_export]
+macro_rules! get_conn_http {
+    ($state:ident) => {
+        match $state.get_conn().await {
+            Ok(c) => c,
+            Err(_) => {
+                return Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+            }
+        }
+    };
+}

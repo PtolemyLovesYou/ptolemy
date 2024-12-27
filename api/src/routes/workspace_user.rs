@@ -2,6 +2,7 @@ use crate::crud::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::models::WorkspaceUser;
 use crate::state::AppState;
+use crate::get_conn_http;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -23,12 +24,7 @@ async fn create_workspace_user(
     state: Arc<AppState>,
     Json(req): Json<CreateWorkspaceUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = match state.get_conn().await {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let mut conn = get_conn_http!(state);
 
     // User making request should be a manager or admin of the given workspace
     let user_permission = match workspace_user_crud::get_workspace_user_permission(
@@ -59,12 +55,7 @@ async fn get_workspace_user(
     Path(workspace_id): Path<Uuid>,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<WorkspaceUser>, StatusCode> {
-    let mut conn = match state.get_conn().await {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let mut conn = get_conn_http!(state);
 
     match workspace_user_crud::get_workspace_user(&mut conn, &workspace_id, &user_id).await {
         Ok(result) => Ok(Json(result)),
@@ -76,12 +67,7 @@ async fn get_workspace_users(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Vec<WorkspaceUser>>, StatusCode> {
-    let mut conn = match state.get_conn().await {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let mut conn = get_conn_http!(state);
 
     match workspace_user_crud::get_workspace_users(&mut conn, &workspace_id).await {
         Ok(result) => Ok(Json(result)),
@@ -101,12 +87,8 @@ async fn change_workspace_user_role(
     state: Arc<AppState>,
     Json(req): Json<ChangeWorkspaceUserRoleRequest>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = match state.get_conn().await {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let mut conn = get_conn_http!(state);
+
     // todo: ensure user with user_id has permissions to set user role
     let user_permission = match workspace_user_crud::get_workspace_user_permission(
         &mut conn,
@@ -151,12 +133,7 @@ async fn delete_workspace_user(
     Path(workspace_id): Path<Uuid>,
     Path(user_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = match state.get_conn().await {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let mut conn = get_conn_http!(state);
 
     match workspace_user_crud::delete_workspace_user(&mut conn, workspace_id, user_id).await {
         Ok(_) => Ok(StatusCode::OK),
