@@ -38,8 +38,8 @@ async fn create_user(
         return Err(StatusCode::FORBIDDEN);
     }
 
-    // if user is admin and they're trying to make a sysadmin, return forbidden
-    if user.is_sysadmin && req.user.is_sysadmin {
+    // sysadmin cannot be created via REST API
+    if req.user.is_sysadmin {
         return Err(StatusCode::FORBIDDEN);
     }
 
