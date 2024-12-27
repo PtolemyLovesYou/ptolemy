@@ -2,9 +2,10 @@
 import uuid
 import logging
 import streamlit as st
-from prototype.auth import logout, get_login_layout
+from prototype.auth import logout, get_login_layout, get_user_info
 from prototype.user import usr_management_view
 from prototype.workspace import wk_management_view
+from prototype.models import UserRole
 
 USER_ID = uuid.uuid4().hex
 
@@ -45,6 +46,8 @@ def get_layout():
     if not st.session_state.authenticated:
         get_login_layout()
     else:
+        user_info = get_user_info()
+
         sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
 
         with sidebar_column:
@@ -71,13 +74,14 @@ def get_layout():
                 workspace_management_button = st.button(
                     "",
                     use_container_width = True,
-                    icon=":material/workspaces:"
+                    icon=":material/workspaces:",
                 )
 
                 user_management_button = st.button(
                     "",
                     use_container_width = True,
-                    icon=":material/group:"
+                    icon=":material/group:",
+                    disabled=user_info.role == UserRole.USER,
                 )
 
                 # spacer
