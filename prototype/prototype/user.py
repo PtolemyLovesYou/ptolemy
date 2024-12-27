@@ -123,7 +123,7 @@ def usr_management_view():
                     st.text_input(
                         "display_name",
                         value=user.display_name,
-                        disabled=False,
+                        disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_display_name_{user_id}",
                         label_visibility='collapsed'
                     )
@@ -132,7 +132,7 @@ def usr_management_view():
                         label=f"user_role_{user_id}",
                         options=["admin", "sysadmin", "user"],
                         index=["admin", "sysadmin", "user"].index(user.role),
-                        disabled=False,
+                        disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_role_{user_id}",
                         label_visibility='collapsed'
                     )
@@ -141,14 +141,14 @@ def usr_management_view():
                         label=f"user_status_{user_id}",
                         options=["Active", "Suspended"],
                         index=["Active", "Suspended"].index(user.status),
-                        disabled=False,
+                        disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_status_{user_id}",
                         label_visibility='collapsed'
                     )
                 with cols[4]:
                     st.checkbox(
                         label=f"user_delete_{user_id}",
-                        disabled=False,
+                        disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_delete_{user_id}",
                         label_visibility='collapsed'
                     )
