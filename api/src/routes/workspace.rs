@@ -1,8 +1,8 @@
-use crate::crud::workspace as workspace_crud;
 use crate::crud::user as user_crud;
+use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
-use crate::models::auth::models::{Workspace, WorkspaceCreate, WorkspaceUser};
 use crate::models::auth::enums::WorkspaceRoleEnum;
+use crate::models::auth::models::{Workspace, WorkspaceCreate, WorkspaceUser};
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -10,16 +10,20 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use serde::Deserialize;
 use std::sync::Arc;
 use tracing::instrument;
 use uuid::Uuid;
-use serde::Deserialize;
 
-async fn ensure_admin(conn: &mut crate::state::DbConnection<'_>, user_id: Uuid) -> Result<(), StatusCode> {
+async fn ensure_admin(
+    conn: &mut crate::state::DbConnection<'_>,
+    user_id: Uuid,
+) -> Result<(), StatusCode> {
     match user_crud::get_user(conn, &user_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .is_admin {
+        .is_admin
+    {
         true => Ok(()),
         false => Err(StatusCode::FORBIDDEN),
     }
@@ -60,8 +64,10 @@ async fn create_workspace(
             workspace_id: wk.id,
             user_id: wk_admin_id,
             role: WorkspaceRoleEnum::Admin,
-        }
-    ).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        },
+    )
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok((StatusCode::CREATED, Json(wk)))
 }

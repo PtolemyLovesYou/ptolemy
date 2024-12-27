@@ -30,7 +30,9 @@ async fn create_workspace_user(
         &mut conn,
         &req.workspace_user.workspace_id,
         &req.user_id,
-    ).await {
+    )
+    .await
+    {
         Ok(role) => role,
         Err(e) => {
             error!("Unable to get workspace_user permission: {:?}", e);
@@ -85,7 +87,6 @@ async fn get_workspaces_of_user(
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
-
 
 #[derive(Debug, Deserialize)]
 struct ChangeWorkspaceUserRoleRequest {

@@ -66,6 +66,8 @@ impl AppState {
     }
 
     pub async fn get_conn_http(&self) -> Result<DbConnection<'_>, StatusCode> {
-        self.get_conn().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        self.get_conn()
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
     }
 }
