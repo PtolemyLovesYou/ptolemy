@@ -160,3 +160,20 @@ pub async fn get_workspace_users(
         }
     }
 }
+
+pub async fn get_workspaces_of_user(
+    conn: &mut DbConnection<'_>,
+    user_id: &Uuid,
+) -> Result<Vec<WorkspaceUser>, CRUDError> {
+    match workspace_user::table
+        .filter(dsl::user_id.eq(user_id))
+        .get_results(conn)
+        .await
+    {
+        Ok(users) => Ok(users),
+        Err(e) => {
+            error!("Unable to get workspaces of user: {}", e);
+            Err(CRUDError::GetError)
+        }
+    }
+}

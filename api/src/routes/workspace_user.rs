@@ -74,6 +74,19 @@ async fn get_workspace_users(
     }
 }
 
+async fn get_workspaces_of_user(
+    state: Arc<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Result<Json<Vec<WorkspaceUser>>, StatusCode> {
+    let mut conn = state.get_conn_http().await?;
+
+    match workspace_user_crud::get_workspaces_of_user(&mut conn, &user_id).await {
+        Ok(result) => Ok(Json(result)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+
 #[derive(Debug, Deserialize)]
 struct ChangeWorkspaceUserRoleRequest {
     workspace_id: Uuid,
@@ -180,10 +193,18 @@ pub async fn workspace_user_router(state: &Arc<AppState>) -> Router {
         )
         // get all users of workspace (GET)
         .route(
-            "/:workspace_id",
+            "/workspace/:workspace_id",
             get({
                 let shared_state = Arc::clone(state);
                 move |workspace_id| get_workspace_users(shared_state, workspace_id)
+            }),
+        )
+        // get all workspaces of user (GET)
+        .route(
+            "/user/:user_id",
+            get({
+                let shared_state = Arc::clone(state);
+                move |user_id| get_workspaces_of_user(shared_state, user_id)
             }),
         )
 }
