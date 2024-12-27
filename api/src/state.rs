@@ -1,4 +1,5 @@
 use crate::error::{ApiError, CRUDError};
+use axum::http::StatusCode;
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
@@ -63,16 +64,11 @@ impl AppState {
             }
         }
     }
-}
 
-#[macro_export]
-macro_rules! get_conn_http {
-    ($state:ident) => {
-        match $state.get_conn().await {
-            Ok(c) => c,
-            Err(_) => {
-                return Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR);
-            }
+    pub async fn get_conn_http(&self) -> Result<DbConnection<'_>, StatusCode> {
+        match self.get_conn().await {
+            Ok(c) => Ok(c),
+            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
         }
-    };
+    }
 }

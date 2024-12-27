@@ -1,7 +1,6 @@
 use crate::crud::workspace as workspace_crud;
 use crate::models::auth::models::{Workspace, WorkspaceCreate};
 use crate::state::AppState;
-use crate::get_conn_http;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -17,7 +16,7 @@ async fn create_workspace(
     state: Arc<AppState>,
     Json(workspace): Json<WorkspaceCreate>,
 ) -> Result<(StatusCode, Json<Workspace>), StatusCode> {
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match workspace_crud::create_workspace(&mut conn, &workspace).await {
         Ok(result) => Ok((StatusCode::CREATED, Json(result))),
@@ -30,7 +29,7 @@ async fn get_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<Json<Workspace>, StatusCode> {
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match workspace_crud::get_workspace(&mut conn, workspace_id).await {
         Ok(result) => Ok(Json(result)),
@@ -43,7 +42,7 @@ async fn delete_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match workspace_crud::delete_workspace(&mut conn, workspace_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),

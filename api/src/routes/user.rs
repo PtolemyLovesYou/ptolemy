@@ -1,7 +1,6 @@
 use crate::crud::user as user_crud;
 use crate::models::auth::models::{User, UserCreate};
 use crate::state::AppState;
-use crate::get_conn_http;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -27,7 +26,7 @@ async fn create_user(
     state: Arc<AppState>,
     Json(user): Json<UserCreate>,
 ) -> Result<(StatusCode, Json<CreateUserResponse>), StatusCode> {
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match user_crud::create_user(&mut conn, &user).await {
         Ok(result) => {
@@ -56,7 +55,7 @@ async fn get_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<User>, StatusCode> {
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match user_crud::get_user(&mut conn, user_id).await {
         Ok(result) => Ok(Json(result)),
@@ -68,7 +67,7 @@ pub async fn delete_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match user_crud::delete_user(&mut conn, user_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
@@ -81,7 +80,7 @@ pub async fn auth_user(
     Json(user): Json<UserAuth>,
 ) -> Result<Json<User>, StatusCode> {
     // todo: make this better
-    let mut conn = get_conn_http!(state);
+    let mut conn = state.get_conn_http().await?;
 
     match user_crud::auth_user(&mut conn, &user.username, &user.password).await {
         Ok(user) => match user {
