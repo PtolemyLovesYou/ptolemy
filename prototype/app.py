@@ -75,6 +75,8 @@ def get_layout():
                     "",
                     use_container_width = True,
                     icon=":material/workspaces:",
+                    # Sysadmins can't manage workspaces
+                    disabled=user_info.role == UserRole.SYSADMIN
                 )
 
                 user_management_button = st.button(
