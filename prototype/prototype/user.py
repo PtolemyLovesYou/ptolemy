@@ -26,7 +26,11 @@ def create_new_user(username: str, password: str, role: str, display_name: Optio
         timeout=5,
     )
 
-    resp.raise_for_status()
+    # if status code is forbidden, toast
+    if resp.status_code == 403:
+        st.toast(
+            f"Failed to create user {username}: Unauthorized"
+            )
 
 def delete_user(user_id: str):
     """Delete user."""

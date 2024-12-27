@@ -33,18 +33,18 @@ async fn create_user(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // if user is not admin, return forbidden
-    if user.is_admin == false {
+    // if user is not admin or sysadmin, return forbidden
+    if !user.is_admin && !user.is_sysadmin {
         return Err(StatusCode::FORBIDDEN);
     }
 
     // if user is admin and they're trying to make a sysadmin, return forbidden
-    if user.is_sysadmin == true && req.user.is_sysadmin == true {
+    if user.is_sysadmin && req.user.is_sysadmin {
         return Err(StatusCode::FORBIDDEN);
     }
 
     // if user is admin and they're trying to make another admin, return forbidden
-    if user.is_admin == true && req.user.is_admin == true {
+    if user.is_admin && req.user.is_admin {
         return Err(StatusCode::FORBIDDEN);
     }
 
