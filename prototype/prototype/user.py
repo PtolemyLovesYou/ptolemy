@@ -36,6 +36,9 @@ def delete_user(user_id: str):
     """Delete user."""
     resp = requests.delete(
         urljoin(API_URL, f"/user/{user_id}"),
+        json={
+            "user_id": get_user_info().id,
+            },
         timeout=5,
     )
 
@@ -148,7 +151,14 @@ def usr_management_view():
                 with cols[4]:
                     st.checkbox(
                         label=f"user_delete_{user_id}",
-                        disabled=user.role == UserRole.SYSADMIN,
+                        disabled=(
+                            user.role == UserRole.SYSADMIN
+                            or user.id == get_user_info().id
+                            or (
+                                user.role == UserRole.ADMIN
+                                and get_user_info().role == UserRole.ADMIN
+                                )
+                            ),
                         key=f"user_delete_{user_id}",
                         label_visibility='collapsed'
                     )

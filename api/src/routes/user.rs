@@ -78,11 +78,45 @@ async fn get_user(
     }
 }
 
-pub async fn delete_user(
+#[derive(Debug, Deserialize)]
+struct DeleteUserRequest {
+    user_id: Uuid,
+}
+
+async fn delete_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
+    Json(req): Json<DeleteUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
+
+    let acting_user = user_crud::get_user(&mut conn, &req.user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // if user is not admin or sysadmin, return forbidden
+    if !acting_user.is_admin && !acting_user.is_sysadmin {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    let user_to_delete = user_crud::get_user(&mut conn, &user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // if acting user is admin and they're trying to delete another admin, return forbidden
+    if acting_user.is_admin && user_to_delete.is_admin {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // if acting user is trying to delete themselves, return forbidden
+    if acting_user.id == user_to_delete.id {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // sysadmin cannot be deleted via REST API
+    if user_to_delete.is_sysadmin {
+        return Err(StatusCode::FORBIDDEN);
+    }
 
     match user_crud::delete_user(&mut conn, &user_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
@@ -132,7 +166,7 @@ pub async fn user_router(state: &Arc<AppState>) -> Router {
             "/:user_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |user_id| delete_user(shared_state, user_id)
+                move |user_id, req| delete_user(shared_state, user_id, req)
             }),
         )
         .route(
