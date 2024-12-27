@@ -1,5 +1,8 @@
 use crate::crud::workspace as workspace_crud;
-use crate::models::auth::models::{Workspace, WorkspaceCreate};
+use crate::crud::user as user_crud;
+use crate::crud::workspace_user as workspace_user_crud;
+use crate::models::auth::models::{Workspace, WorkspaceCreate, WorkspaceUser};
+use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -10,18 +13,57 @@ use axum::{
 use std::sync::Arc;
 use tracing::instrument;
 use uuid::Uuid;
+use serde::Deserialize;
+
+async fn ensure_admin(conn: &mut crate::state::DbConnection<'_>, user_id: Uuid) -> Result<(), StatusCode> {
+    match user_crud::get_user(conn, user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .is_admin {
+        true => Ok(()),
+        false => Err(StatusCode::FORBIDDEN),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct WorkspaceCreateRequest {
+    user_id: Uuid,
+    workspace: WorkspaceCreate,
+    workspace_admin_user_id: Option<Uuid>,
+}
 
 #[instrument]
 async fn create_workspace(
     state: Arc<AppState>,
-    Json(workspace): Json<WorkspaceCreate>,
+    Json(req): Json<WorkspaceCreateRequest>,
 ) -> Result<(StatusCode, Json<Workspace>), StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match workspace_crud::create_workspace(&mut conn, &workspace).await {
-        Ok(result) => Ok((StatusCode::CREATED, Json(result))),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    // ensure that user with user_id has permissions to create workspace (must be Admin)
+    ensure_admin(&mut conn, req.user_id).await?;
+
+    // create workspace
+    let wk = workspace_crud::create_workspace(&mut conn, &req.workspace)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // add workspace admin
+    let wk_admin_id = match req.workspace_admin_user_id {
+        Some(id) => id,
+        // if none provided, default to user_id
+        None => req.user_id,
+    };
+
+    workspace_user_crud::create_workspace_user(
+        &mut conn,
+        &WorkspaceUser {
+            workspace_id: wk.id,
+            user_id: wk_admin_id,
+            role: WorkspaceRoleEnum::Admin,
+        }
+    ).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok((StatusCode::CREATED, Json(wk)))
 }
 
 #[instrument]
@@ -31,20 +73,44 @@ async fn get_workspace(
 ) -> Result<Json<Workspace>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match workspace_crud::get_workspace(&mut conn, workspace_id).await {
+    match workspace_crud::get_workspace(&mut conn, &workspace_id).await {
         Ok(result) => Ok(Json(result)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 
+async fn ensure_workspace_admin(
+    conn: &mut crate::state::DbConnection<'_>,
+    user_id: &Uuid,
+    workspace_id: &Uuid,
+) -> Result<(), StatusCode> {
+    match workspace_user_crud::get_workspace_user_permission(conn, workspace_id, user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        == WorkspaceRoleEnum::Admin
+    {
+        true => Ok(()),
+        false => Err(StatusCode::FORBIDDEN),
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct DeleteWorkspaceRequest {
+    user_id: Uuid,
+    workspace_id: Uuid,
+}
+
 #[instrument]
 async fn delete_workspace(
     state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
+    Json(req): Json<DeleteWorkspaceRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match workspace_crud::delete_workspace(&mut conn, workspace_id).await {
+    // ensure that user with user_id has permissions to delete workspace (must be Admin)
+    ensure_workspace_admin(&mut conn, &req.user_id, &req.workspace_id).await?;
+
+    match workspace_crud::delete_workspace(&mut conn, &req.workspace_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -56,14 +122,14 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/",
             post({
                 let shared_state = Arc::clone(state);
-                move |workspace| create_workspace(shared_state, workspace)
+                move |req| create_workspace(shared_state, req)
             }),
         )
         .route(
-            "/:workspace_id",
+            "/",
             delete({
                 let shared_state = Arc::clone(state);
-                move |workspace_id| delete_workspace(shared_state, workspace_id)
+                move |req| delete_workspace(shared_state, req)
             }),
         )
         .route(
