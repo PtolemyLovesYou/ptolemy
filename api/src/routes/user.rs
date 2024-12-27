@@ -38,12 +38,7 @@ async fn create_user(
 }
 
 async fn get_all_users(state: Arc<AppState>) -> Result<Json<Vec<User>>, StatusCode> {
-    let mut conn = match state.get_conn().await {
-        Ok(c) => c,
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let mut conn = state.get_conn_http().await?;
 
     match user_crud::get_all_users(&mut conn).await {
         Ok(result) => Ok(Json(result)),
