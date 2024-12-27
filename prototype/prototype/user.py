@@ -1,56 +1,27 @@
 """User management."""
 from typing import Optional
-from enum import StrEnum
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from pydantic import BaseModel
 from .env_settings import API_URL
-
-class UserRole(StrEnum):
-    """User role."""
-    USER = "user"
-    ADMIN = "admin"
-    SYSADMIN = "sysadmin"
-
-class User(BaseModel):
-    """User model."""
-    id: str
-    username: str
-    is_admin: bool
-    is_sysadmin: bool
-    display_name: Optional[str] = None
-    status: str
-
-    @property
-    def role(self) -> UserRole:
-        """User role."""
-        if self.is_admin:
-            return UserRole.ADMIN
-        if self.is_sysadmin:
-            return UserRole.SYSADMIN
-
-        return UserRole.USER
-
-def user_role(is_admin: bool, is_sysadmin: bool) -> str:
-    """Get user role."""
-    if is_admin:
-        return "admin"
-    if is_sysadmin:
-        return "sysadmin"
-
-    return "user"
+from .models import User, UserRole
+from .auth import get_user_info
 
 def create_new_user(username: str, password: str, role: str, display_name: Optional[str] = None):
     """Create new user."""
+    user_id = get_user_info().id
+
     resp = requests.post(
         urljoin(API_URL, "/user"),
         json={
-            "username": username,
-            "password": password,
-            "is_admin": role == "admin",
-            "is_sysadmin": role == "sysadmin",
-            "display_name": display_name,
+            "user_id": user_id,
+            "user": {
+                "username": username,
+                "password": password,
+                "is_admin": role == UserRole.ADMIN,
+                "is_sysadmin": role == UserRole.SYSADMIN,
+                "display_name": display_name,
+                },
         },
         timeout=5,
     )

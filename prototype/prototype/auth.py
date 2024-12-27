@@ -2,7 +2,7 @@
 from urllib.parse import urljoin
 import streamlit as st
 import requests
-from .user import User
+from .models import User
 from .env_settings import API_URL
 
 def login(username: str, password: str) -> bool:
@@ -26,6 +26,13 @@ def logout():
     """Logout user."""
     st.session_state.authenticated = False
     st.session_state.user_info = None
+
+def get_user_info() -> User:
+    """Get user info."""
+    if st.session_state.user_info is None:
+        raise ValueError("User is not logged in")
+
+    return st.session_state.user_info
 
 def get_login_layout():
     """Login layout."""

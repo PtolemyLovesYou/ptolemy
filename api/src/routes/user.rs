@@ -11,24 +11,44 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
+#[derive(Debug, Deserialize)]
+struct CreateUserRequest {
+    user_id: Uuid,
+    user: UserCreate,
+}
+
 #[derive(Clone, Debug, Serialize)]
 struct CreateUserResponse {
     id: Uuid,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct UserAuth {
-    username: String,
-    password: String,
-}
-
 async fn create_user(
     state: Arc<AppState>,
-    Json(user): Json<UserCreate>,
+    Json(req): Json<CreateUserRequest>,
 ) -> Result<(StatusCode, Json<CreateUserResponse>), StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match user_crud::create_user(&mut conn, &user).await {
+    // get user permissions
+    let user = user_crud::get_user(&mut conn, &req.user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // if user is not admin, return forbidden
+    if user.is_admin == false {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // if user is admin and they're trying to make a sysadmin, return forbidden
+    if user.is_sysadmin == true && req.user.is_sysadmin == true {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // if user is admin and they're trying to make another admin, return forbidden
+    if user.is_admin == true && req.user.is_admin == true {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    match user_crud::create_user(&mut conn, &req.user).await {
         Ok(result) => {
             let response = CreateUserResponse { id: result };
             Ok((StatusCode::CREATED, Json(response)))
@@ -68,6 +88,12 @@ pub async fn delete_user(
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct UserAuth {
+    username: String,
+    password: String,
 }
 
 pub async fn auth_user(
