@@ -1,5 +1,5 @@
 """User management."""
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import urljoin
 import requests
 import streamlit as st
@@ -47,16 +47,14 @@ def delete_user(user_id: str):
             f"Failed to delete user {user_id}"
             )
 
-def get_users() -> dict[str, User]:
+def get_users() -> List[User]:
     """Get users."""
     user_list = requests.get(
         urljoin(API_URL, "/user/all"),
         timeout=10,
     ).json()
 
-    return {
-        u['id']: User(**u) for u in user_list
-        }
+    return [User(**u) for u in user_list]
 
 @st.fragment
 def usr_management_view():
@@ -109,7 +107,7 @@ def usr_management_view():
             st.markdown("**86**")
 
     with st.form("usr_management_form", border=False, enter_to_submit=False):
-        for user_id, user in users.items():
+        for user in users:
             user_container = st.container(border=False)
             with user_container:
                 cols = st.columns([0.75, 1, 0.6, 0.6, 0.25])
@@ -119,7 +117,7 @@ def usr_management_view():
                         "username",
                         value=user.username,
                         disabled=True,
-                        key=f"user_username_{user_id}",
+                        key=f"user_username_{user.id}",
                         label_visibility='collapsed'
                         )
                 with cols[1]:
@@ -127,30 +125,30 @@ def usr_management_view():
                         "display_name",
                         value=user.display_name,
                         disabled=user.role == UserRole.SYSADMIN,
-                        key=f"user_display_name_{user_id}",
+                        key=f"user_display_name_{user.id}",
                         label_visibility='collapsed'
                     )
                 with cols[2]:
                     st.selectbox(
-                        label=f"user_role_{user_id}",
+                        label=f"user_role_{user.id}",
                         options=["admin", "sysadmin", "user"],
                         index=["admin", "sysadmin", "user"].index(user.role),
                         disabled=user.role == UserRole.SYSADMIN,
-                        key=f"user_role_{user_id}",
+                        key=f"user_role_{user.id}",
                         label_visibility='collapsed'
                     )
                 with cols[3]:
                     st.selectbox(
-                        label=f"user_status_{user_id}",
+                        label=f"user_status_{user.id}",
                         options=["Active", "Suspended"],
                         index=["Active", "Suspended"].index(user.status),
                         disabled=user.role == UserRole.SYSADMIN,
-                        key=f"user_status_{user_id}",
+                        key=f"user_status_{user.id}",
                         label_visibility='collapsed'
                     )
                 with cols[4]:
                     st.checkbox(
-                        label=f"user_delete_{user_id}",
+                        label=f"user_delete_{user.id}",
                         disabled=(
                             user.role == UserRole.SYSADMIN
                             or user.id == get_user_info().id
@@ -159,13 +157,13 @@ def usr_management_view():
                                 and get_user_info().role == UserRole.ADMIN
                                 )
                             ),
-                        key=f"user_delete_{user_id}",
+                        key=f"user_delete_{user.id}",
                         label_visibility='collapsed'
                     )
 
         def delete_users():
-            for user_id in users.keys():
-                if st.session_state[f"user_delete_{user_id}"]:
-                    delete_user(user_id)
+            for user in users:
+                if st.session_state[f"user_delete_{user.id}"]:
+                    delete_user(user.id)
 
         st.form_submit_button(label="Save", on_click=delete_users)
