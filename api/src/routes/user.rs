@@ -127,12 +127,12 @@ async fn delete_user(
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct UserAuth {
+struct UserAuth {
     username: String,
     password: String,
 }
 
-pub async fn auth_user(
+async fn auth_user(
     state: Arc<AppState>,
     Json(user): Json<UserAuth>,
 ) -> Result<Json<User>, StatusCode> {
