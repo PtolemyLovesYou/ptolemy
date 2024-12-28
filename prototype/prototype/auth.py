@@ -8,7 +8,7 @@ from .env_settings import API_URL
 def login(username: str, password: str) -> bool:
     """Login."""
     resp = requests.post(
-        urljoin(API_URL, "/user/auth"),
+        urljoin(API_URL, "/auth"),
         json={"username": username, "password": password},
         timeout=5,
     )

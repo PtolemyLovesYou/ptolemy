@@ -126,28 +126,6 @@ async fn delete_user(
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
-struct UserAuth {
-    username: String,
-    password: String,
-}
-
-async fn auth_user(
-    state: Arc<AppState>,
-    Json(user): Json<UserAuth>,
-) -> Result<Json<User>, StatusCode> {
-    // todo: make this better
-    let mut conn = state.get_conn_http().await?;
-
-    match user_crud::auth_user(&mut conn, &user.username, &user.password).await {
-        Ok(user) => match user {
-            Some(user) => Ok(Json(user)),
-            None => Err(StatusCode::UNAUTHORIZED),
-        },
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
-}
-
 async fn get_workspaces_of_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
@@ -205,13 +183,6 @@ pub async fn user_router(state: &Arc<AppState>) -> Router {
             get({
                 let shared_state = Arc::clone(state);
                 move |user_id| get_workspaces_of_user(shared_state, user_id)
-            }),
-        )
-        .route(
-            "/auth",
-            post({
-                let shared_state = Arc::clone(state);
-                move |user| auth_user(shared_state, user)
             }),
         )
 }
