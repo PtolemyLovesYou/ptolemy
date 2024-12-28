@@ -103,20 +103,20 @@ async fn ensure_workspace_admin(
 #[derive(Debug, Clone, Deserialize)]
 struct DeleteWorkspaceRequest {
     user_id: Uuid,
-    workspace_id: Uuid,
 }
 
 #[instrument]
 async fn delete_workspace(
     state: Arc<AppState>,
+    Path(workspace_id): Path<Uuid>,
     Json(req): Json<DeleteWorkspaceRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
     // ensure that user with user_id has permissions to delete workspace (must be Admin)
-    ensure_workspace_admin(&mut conn, &req.user_id, &req.workspace_id).await?;
+    ensure_workspace_admin(&mut conn, &req.user_id, &workspace_id).await?;
 
-    match workspace_crud::delete_workspace(&mut conn, &req.workspace_id).await {
+    match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -311,10 +311,10 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
         )
         // Delete workspace [DELETE]
         .route(
-            "/",
+            "/:workspace_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |req| delete_workspace(shared_state, req)
+                move |workspace_id, req| delete_workspace(shared_state, workspace_id, req)
             }),
         )
         // Get workspace [GET]
