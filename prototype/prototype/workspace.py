@@ -156,12 +156,15 @@ def update_workspace_users(workspace: Workspace):
 
         if delete:
             remove_user_from_workspace(workspace.id, user.id)
+            continue
 
         if role != user.workspace_role(workspace.id):
             update_workspace_user_role(workspace.id, user.id, role)
 
-def workspace_form(workspace: Workspace):
+def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace form."""
+    can_edit_users = user_workspace_role in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
+
     with st.form("wk_form", border=False, clear_on_submit=False):
         st.text_area(
             "Description",
@@ -193,12 +196,11 @@ def workspace_form(workspace: Workspace):
                 )
 
             with wk_user_cols[1]:
-
                 st.segmented_control(
                     "role",
                     options=wk_roles,
                     default=user.workspace_role(workspace.id),
-                    disabled=False,
+                    disabled=not can_edit_users,
                     key=f"wk_user_role_{user.id}",
                     label_visibility="collapsed"
                 )
@@ -206,7 +208,7 @@ def workspace_form(workspace: Workspace):
             with wk_user_cols[2]:
                 st.checkbox(
                     "delete",
-                    disabled=False,
+                    disabled=not can_edit_users,
                     key=f"wk_user_delete_{user.id}",
                     label_visibility="collapsed"
                 )
@@ -233,10 +235,16 @@ def wk_management_view():
             placeholder="Select workspace..."
             )
 
+    user_workspace_role = None
+
+    if workspace is not None:
+        user_workspace_role = get_user_info().workspace_role(workspace.id)
+
     with add_user_col:
         with st.popover(
             "Add User",
             use_container_width=False,
+            disabled=user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
             ):
             if workspace is not None:
                 add_user_to_workspace_form(workspace)
@@ -256,4 +264,4 @@ def wk_management_view():
             delete_workspace(workspace.id)
 
     if workspace:
-        workspace_form(workspace)
+        workspace_form(workspace, user_workspace_role)
