@@ -117,12 +117,10 @@ def wk_management_view():
 
             for user in workspace.users:
                 with wk_user_cols[0]:
-                    st.selectbox(
+                    st.text_input(
                         "username",
-                        options=workspace.users,
-                        index=workspace.users.index(user),
+                        value=user.username,
                         disabled=True,
-                        format_func=lambda u: u.username,
                         key=f"wk_user_{user.id}_username",
                         label_visibility="collapsed",
                     )
