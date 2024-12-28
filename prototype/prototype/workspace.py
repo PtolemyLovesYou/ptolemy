@@ -1,46 +1,12 @@
 """Workspace management."""
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from .models import Workspace, UserRole, User
+from .models import Workspace, UserRole
 from .user import get_users
 from .auth import get_user_info
 from .env_settings import API_URL
-
-def get_workspaces() -> List[Workspace]:
-    """Get workspaces."""
-    user = get_user_info()
-
-    resp = requests.get(
-        urljoin(API_URL, f"/workspace_user/user/{user.id}"),
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to get workspaces: {resp.status_code}"
-            )
-
-        return []
-
-    return [Workspace(**wk) for wk in resp.json()]
-
-def get_users_in_workspace(workspace_id: str) -> List[User]:
-    """Get users in workspace."""
-    resp = requests.get(
-        urljoin(API_URL, f"/workspace_user/workspace/{workspace_id}"),
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to get users in workspace: {resp.status_code}"
-            )
-
-        return []
-
-    return [User(**u) for u in resp.json()]
 
 def create_workspace(name: str, admin_id: Optional[str] = None, description: Optional[str] = None):
     """Create workspace."""
@@ -71,7 +37,7 @@ def wk_management_view():
     with tabs_col:
         workspace: Workspace = st.selectbox(
             "Select workspace",
-            options=get_workspaces(),
+            options=get_user_info().workspaces,
             label_visibility='collapsed',
             format_func=lambda w: w.name,
             )
@@ -126,6 +92,6 @@ def wk_management_view():
                 key="wk_description"
             )
 
-            users = get_users_in_workspace(workspace.id)
+            st.write(workspace.users)
 
             st.form_submit_button(label="Save", on_click=lambda: wk_description)

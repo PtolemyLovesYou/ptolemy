@@ -1,5 +1,7 @@
 use crate::crud::user as user_crud;
-use crate::models::auth::models::{User, UserCreate};
+use crate::crud::workspace_user as workspace_user_crud;
+use crate::crud::workspace as workspace_crud;
+use crate::models::auth::models::{User, UserCreate, Workspace};
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -146,6 +148,28 @@ pub async fn auth_user(
     }
 }
 
+async fn get_workspaces_of_user(
+    state: Arc<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Result<Json<Vec<Workspace>>, StatusCode> {
+    let mut conn = state.get_conn_http().await?;
+
+    let workspace_user_objs = workspace_user_crud::get_workspaces_of_user(&mut conn, &user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let mut workspaces: Vec<Workspace> = Vec::new();
+
+    for obj in workspace_user_objs {
+        match workspace_crud::get_workspace(&mut conn, &obj.workspace_id).await {
+            Ok(workspace) => workspaces.push(workspace),
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    };
+
+    Ok(Json(workspaces))
+}
+
 pub async fn user_router(state: &Arc<AppState>) -> Router {
     Router::new()
         .route(
@@ -174,6 +198,13 @@ pub async fn user_router(state: &Arc<AppState>) -> Router {
             get({
                 let shared_state = Arc::clone(state);
                 move || get_all_users(shared_state)
+            }),
+        )
+        .route(
+            "/:user_id/workspaces",
+            get({
+                let shared_state = Arc::clone(state);
+                move |user_id| get_workspaces_of_user(shared_state, user_id)
             }),
         )
         .route(

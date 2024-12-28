@@ -1,7 +1,11 @@
 """Models."""
-from typing import Optional
+from typing import Optional, List
 from enum import StrEnum
+from urllib.parse import urljoin
+import requests
 from pydantic import BaseModel
+import streamlit as st
+from .env_settings import API_URL
 
 class UserRole(StrEnum):
     """User role."""
@@ -28,6 +32,23 @@ class User(BaseModel):
 
         return UserRole.USER
 
+    @property
+    def workspaces(self) -> List['Workspace']:
+        """Workspaces belonging to user."""
+        resp = requests.get(
+            urljoin(API_URL, f"user/{self.id}/workspaces"),
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to get workspaces: {resp.status_code}"
+                )
+
+            return []
+
+        return [Workspace(**wk) for wk in resp.json()]
+
 
 class Workspace(BaseModel):
     """Workspace."""
@@ -35,3 +56,20 @@ class Workspace(BaseModel):
     name: str
     description: Optional[str] = None
     archived: bool
+
+    @property
+    def users(self) -> List[User]:
+        """Users in workspace."""
+        resp = requests.get(
+            urljoin(API_URL, f"/workspace/{self.id}/users"),
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to get users in workspace: {resp.status_code}"
+                )
+
+            return []
+
+        return [User(**u) for u in resp.json()]
