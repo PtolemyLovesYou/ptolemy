@@ -163,13 +163,14 @@ def update_workspace_users(workspace: Workspace):
 
 def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace form."""
-    can_edit_users = user_workspace_role in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
+    disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
 
     with st.form("wk_form", border=False, clear_on_submit=False):
         st.text_area(
             "Description",
             value=workspace.description,
-            key="wk_description"
+            key="wk_description",
+            disabled=disabled
         )
 
         wk_user_cols = st.columns([0.5, 0.7, 1])
@@ -200,7 +201,7 @@ def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
                     "role",
                     options=wk_roles,
                     default=user.workspace_role(workspace.id),
-                    disabled=not can_edit_users,
+                    disabled=disabled,
                     key=f"wk_user_role_{user.id}",
                     label_visibility="collapsed"
                 )
@@ -208,14 +209,18 @@ def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
             with wk_user_cols[2]:
                 st.checkbox(
                     "delete",
-                    disabled=not can_edit_users,
+                    disabled=disabled,
                     key=f"wk_user_delete_{user.id}",
                     label_visibility="collapsed"
                 )
 
         submit_col, _ = st.columns([0.5, 4])
         with submit_col:
-            submit_wk = st.form_submit_button(label="Save", use_container_width=True)
+            submit_wk = st.form_submit_button(
+                label="Save",
+                use_container_width=True,
+                disabled=disabled
+                )
 
         if submit_wk:
             update_workspace_users(workspace)
@@ -250,7 +255,12 @@ def wk_management_view():
                 add_user_to_workspace_form(workspace)
 
     with add_wk_col:
-        with st.popover("New Workspace", use_container_width=False):
+        add_wk_col_disabled = get_user_info().role != UserRole.ADMIN
+        with st.popover(
+            "New Workspace",
+            use_container_width=False,
+            disabled=add_wk_col_disabled
+            ):
             create_workspace_form()
 
     with delete_wk_col:
