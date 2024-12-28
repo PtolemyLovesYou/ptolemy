@@ -142,30 +142,17 @@ def create_workspace_form():
                 sk_name,
                 admin_id=sk_admin.id if sk_admin else None,
                 description=sk_description
-                )
+            )
 
             st.rerun(scope="fragment")
-
-def update_workspace_users(workspace: Workspace):
-    """Update workspace users."""
-    existing_users = workspace.users
-
-    for user in existing_users:
-        role = st.session_state[f"wk_user_role_{user.id}"]
-        delete = st.session_state[f"wk_user_delete_{user.id}"]
-
-        if delete:
-            remove_user_from_workspace(workspace.id, user.id)
-            continue
-
-        if role != user.workspace_role(workspace.id):
-            update_workspace_user_role(workspace.id, user.id, role)
 
 def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace form."""
     disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
 
     with st.form("wk_form", border=False, clear_on_submit=False):
+        st.text_input("Name", value=workspace.name, disabled=True)
+
         st.text_area(
             "Description",
             value=workspace.description,
@@ -173,105 +160,104 @@ def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
             disabled=disabled
         )
 
-        wk_user_cols = st.columns([0.5, 0.7, 1])
-
-        with wk_user_cols[0]:
-            st.markdown("**USERNAME**")
-
-        with wk_user_cols[1]:
-            st.markdown("**ROLE**")
-
-        with wk_user_cols[2]:
-            st.markdown("**86**")
-
-        wk_roles = list(WorkspaceRole)
-
-        for user in workspace.users:
-            with wk_user_cols[0]:
-                st.text_input(
-                    "username",
-                    value=user.username,
-                    disabled=True,
-                    key=f"wk_user_username_{user.id}",
-                    label_visibility="collapsed",
-                )
-
-            with wk_user_cols[1]:
-                st.segmented_control(
-                    "role",
-                    options=wk_roles,
-                    default=user.workspace_role(workspace.id),
-                    disabled=disabled,
-                    key=f"wk_user_role_{user.id}",
-                    label_visibility="collapsed"
-                )
-
-            with wk_user_cols[2]:
-                st.checkbox(
-                    "delete",
-                    disabled=disabled,
-                    key=f"wk_user_delete_{user.id}",
-                    label_visibility="collapsed"
-                )
-
-        submit_col, _ = st.columns([0.5, 4])
-        with submit_col:
-            submit_wk = st.form_submit_button(
-                label="Save",
-                use_container_width=True,
-                disabled=disabled
-                )
+        submit_wk = st.form_submit_button(
+            label="Save",
+            disabled=disabled
+            )
 
         if submit_wk:
-            update_workspace_users(workspace)
+            st.rerun(scope="fragment")
+
+    with st.popover("Delete Workspace", use_container_width=True, disabled=disabled):
+        st.write("Are you sure you want to delete this workspace?")
+        delete_wk_button = st.button("Delete", disabled=disabled)
+        if delete_wk_button:
+            delete_workspace(workspace.id)
+
+@st.fragment
+def wk_user_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
+    """Workspace user management form"""
+    disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
+    users = workspace.users
+
+    with st.popover("Add User to Workspace", use_container_width=True, disabled=disabled):
+        add_user_to_workspace_form(workspace)
+
+    with st.form("Workspace User Management", clear_on_submit=True, border=False):
+        wk_users = st.data_editor(
+            [
+                {
+                    "username": u.username,
+                    "role": u.workspace_role(workspace.id),
+                    "delete": False
+                    } for u in users
+                ],
+            use_container_width=True,
+            column_config={
+                "username": st.column_config.TextColumn(disabled=True),
+                "role": st.column_config.SelectboxColumn(
+                    options=list(WorkspaceRole),
+                    disabled=disabled,
+                    required=True,
+                    ),
+                "delete": st.column_config.CheckboxColumn(
+                    disabled=disabled,
+                    required=True,
+                    ),
+                },
+            )
+
+        submit_wk_users = st.form_submit_button(label="Save", disabled=disabled)
+
+        if submit_wk_users:
+            for user, user_row in zip(users, wk_users):
+                if user_row["delete"]:
+                    remove_user_from_workspace(workspace.id, user.id)
+                    continue
+
+                if user_row["role"] != user.role:
+                    update_workspace_user_role(workspace.id, user.id, user_row["role"])
+
             st.rerun(scope="fragment")
 
 @st.fragment
 def wk_management_view():
     """Get workspace management view."""
-    select_workspace_col, add_user_col, add_wk_col, delete_wk_col = st.columns([4, 1, 1.5, 1.5])
-    with select_workspace_col:
-        workspace: Workspace = st.selectbox(
+    wk_selection_col, new_col = st.columns([3, 1])
+
+    with wk_selection_col:
+        selected_workspace = st.selectbox(
             "Select workspace",
             options=get_user_info().workspaces,
-            label_visibility='collapsed',
-            format_func=lambda w: w.name,
+            format_func=lambda i: i.name,
+            placeholder="Select Workspace",
+            label_visibility="collapsed",
             index=None,
-            placeholder="Select workspace..."
             )
 
-    user_workspace_role = None
-
-    if workspace is not None:
-        user_workspace_role = get_user_info().workspace_role(workspace.id)
-
-    with add_user_col:
-        with st.popover(
-            "Add User",
-            use_container_width=False,
-            disabled=user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
-            ):
-            if workspace is not None:
-                add_user_to_workspace_form(workspace)
-
-    with add_wk_col:
-        add_wk_col_disabled = get_user_info().role != UserRole.ADMIN
-        with st.popover(
-            "New Workspace",
-            use_container_width=False,
-            disabled=add_wk_col_disabled
-            ):
+    with new_col:
+        with st.popover(r"\+", use_container_width=True):
             create_workspace_form()
 
-    with delete_wk_col:
-        delete_wk_button = st.button(
-            "Delete Workspace",
-            disabled=workspace is None,
-            use_container_width=True,
-        )
+    with st.container(border=True, height=560):
+        if selected_workspace is None:
+            pass
+        else:
+            wk_mgmnt, wk_users, api_keys = st.tabs(
+                ["Workspace Management", "Workspace Users", "API Keys"]
+                )
 
-        if delete_wk_button:
-            delete_workspace(workspace.id)
+            with wk_mgmnt:
+                workspace_form(
+                    selected_workspace,
+                    get_user_info().workspace_role(selected_workspace.id)
+                    )
 
-    if workspace:
-        workspace_form(workspace, user_workspace_role)
+            with wk_users:
+                wk_user_management_form(
+                    selected_workspace,
+                    get_user_info().workspace_role(selected_workspace.id)
+                    )
+
+            with api_keys:
+                st.write("API keys")
