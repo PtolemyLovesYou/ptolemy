@@ -1,15 +1,10 @@
-use serde::Deserialize;
-use std::sync::Arc;
-use axum::{
-    Json,
-    http::StatusCode,
-    routing::post,
-    Router,
-};
 use crate::crud::user as user_crud;
 use crate::error::CRUDError;
 use crate::models::auth::models::User;
 use crate::state::AppState;
+use axum::{http::StatusCode, routing::post, Json, Router};
+use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Clone, Debug, Deserialize)]
 struct UserAuth {
@@ -37,12 +32,11 @@ async fn auth_user(
 }
 
 pub async fn auth_router(state: &Arc<AppState>) -> Router {
-    Router::new()
-        .route(
-            "/",
-            post({
-                let shared_state = Arc::clone(state);
-                move |user| auth_user(shared_state, user)
-            }),
-        )
+    Router::new().route(
+        "/",
+        post({
+            let shared_state = Arc::clone(state);
+            move |user| auth_user(shared_state, user)
+        }),
+    )
 }

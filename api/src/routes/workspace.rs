@@ -1,10 +1,10 @@
 use crate::crud::user as user_crud;
 use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
+use crate::error::CRUDError;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::models::{User, Workspace, WorkspaceCreate, WorkspaceUser};
 use crate::state::AppState;
-use crate::error::CRUDError;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -358,9 +358,7 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             post({
                 let shared_state = Arc::clone(state);
-                move |path_vars, req| {
-                    add_user_to_workspace(shared_state, path_vars, req)
-                }
+                move |path_vars, req| add_user_to_workspace(shared_state, path_vars, req)
             }),
         )
         // Delete user from workspace [DELETE]
@@ -368,9 +366,7 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |path_vars, req| {
-                    delete_user_from_workspace(shared_state, path_vars, req)
-                }
+                move |path_vars, req| delete_user_from_workspace(shared_state, path_vars, req)
             }),
         )
         // Change user role in workspace [PUT]
@@ -378,9 +374,7 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             put({
                 let shared_state = Arc::clone(state);
-                move |path_vars, req| {
-                    change_workspace_user_role(shared_state, path_vars, req)
-                }
+                move |path_vars, req| change_workspace_user_role(shared_state, path_vars, req)
             }),
         )
 }

@@ -1,9 +1,9 @@
 use crate::crud::user as user_crud;
 use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
+use crate::error::CRUDError;
 use crate::models::auth::models::{User, UserCreate, Workspace};
 use crate::state::AppState;
-use crate::error::CRUDError;
 use axum::{
     extract::Path,
     http::StatusCode,

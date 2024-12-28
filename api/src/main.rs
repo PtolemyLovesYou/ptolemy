@@ -9,10 +9,10 @@ use api::crud::{
 use api::error::{ApiError, CRUDError};
 use api::models::auth::models::UserCreate;
 use api::observer::service::MyObserver;
+use api::routes::auth::auth_router;
 use api::routes::graphql::router::graphql_router;
 use api::routes::user::user_router;
 use api::routes::workspace::workspace_router;
-use api::routes::auth::auth_router;
 use api::state::AppState;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use tokio::try_join;
