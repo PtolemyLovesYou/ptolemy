@@ -123,9 +123,9 @@ def create_workspace_form():
 def workspace_form(workspace: Workspace):
     """Workspace form."""
     with st.form("wk_form", border=False, clear_on_submit=False):
-        wk_description = st.text_area(
+        st.text_area(
             "Description",
-            placeholder=workspace.description,
+            value=workspace.description,
             key="wk_description"
         )
 
@@ -148,7 +148,7 @@ def workspace_form(workspace: Workspace):
                     "username",
                     value=user.username,
                     disabled=True,
-                    key=f"wk_user_{user.id}_username",
+                    key=f"wk_user_username_{user.id}",
                     label_visibility="collapsed",
                 )
 
@@ -159,7 +159,7 @@ def workspace_form(workspace: Workspace):
                     options=wk_roles,
                     default=user.workspace_role(workspace.id),
                     disabled=False,
-                    key=f"wk_user_{user.id}_role",
+                    key=f"wk_user_role_{user.id}",
                     label_visibility="collapsed"
                 )
 
@@ -167,7 +167,7 @@ def workspace_form(workspace: Workspace):
                 st.checkbox(
                     "delete",
                     disabled=False,
-                    key=f"wk_user_{user.id}_delete",
+                    key=f"wk_user_delete_{user.id}",
                     label_visibility="collapsed"
                 )
 
