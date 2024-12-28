@@ -4,6 +4,7 @@ use crate::crud::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::models::{User, Workspace, WorkspaceCreate, WorkspaceUser};
 use crate::state::AppState;
+use crate::error::CRUDError;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -180,7 +181,12 @@ async fn add_user_to_workspace(
         Ok(role) => role,
         Err(e) => {
             error!("Unable to get workspace_user permission: {:?}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            match e {
+                // TODO: make this more specific
+                CRUDError::DatabaseError => return Err(StatusCode::CONFLICT),
+                CRUDError::NotFoundError => return Err(StatusCode::NOT_FOUND),
+                _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+            };
         }
     };
 
@@ -197,7 +203,10 @@ async fn add_user_to_workspace(
 
     match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
         Ok(_) => Ok(StatusCode::CREATED),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => match e {
+            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
+            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
     }
 }
 
@@ -295,7 +304,10 @@ async fn change_workspace_user_role(
     .await
     {
         Ok(_) => Ok(StatusCode::OK),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => match e {
+            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
+            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
     }
 }
 

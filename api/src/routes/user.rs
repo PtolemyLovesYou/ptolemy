@@ -3,6 +3,7 @@ use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
 use crate::models::auth::models::{User, UserCreate, Workspace};
 use crate::state::AppState;
+use crate::error::CRUDError;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -55,7 +56,11 @@ async fn create_user(
             let response = CreateUserResponse { id: result };
             Ok((StatusCode::CREATED, Json(response)))
         }
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => match e {
+            // TODO: make this more specific
+            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
+            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
     }
 }
 
@@ -76,7 +81,10 @@ async fn get_user(
 
     match user_crud::get_user(&mut conn, &user_id).await {
         Ok(result) => Ok(Json(result)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => match e {
+            CRUDError::NotFoundError => Err(StatusCode::NOT_FOUND),
+            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
     }
 }
 
