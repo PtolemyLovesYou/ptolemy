@@ -3,7 +3,7 @@ from typing import List, Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from .models import Workspace, UserRole
+from .models import Workspace, UserRole, User
 from .user import get_users
 from .auth import get_user_info
 from .env_settings import API_URL
@@ -25,6 +25,22 @@ def get_workspaces() -> List[Workspace]:
         return []
 
     return [Workspace(**wk) for wk in resp.json()]
+
+def get_users_in_workspace(workspace_id: str) -> List[User]:
+    """Get users in workspace."""
+    resp = requests.get(
+        urljoin(API_URL, f"/workspace_user/workspace/{workspace_id}"),
+        timeout=5,
+    )
+
+    if not resp.ok:
+        st.toast(
+            f"Failed to get users in workspace: {resp.status_code}"
+            )
+
+        return []
+
+    return [User(**u) for u in resp.json()]
 
 def create_workspace(name: str, admin_id: Optional[str] = None, description: Optional[str] = None):
     """Create workspace."""
@@ -80,7 +96,12 @@ def wk_management_view():
                 sk_submit = st.form_submit_button(label="Create")
 
                 if sk_submit:
-                    create_workspace(sk_name, admin_id=sk_admin.id if sk_admin else None, description=sk_description)
+                    create_workspace(
+                        sk_name,
+                        admin_id=sk_admin.id if sk_admin else None,
+                        description=sk_description
+                        )
+
                     st.rerun(scope="fragment")
 
     if workspace:
@@ -104,5 +125,7 @@ def wk_management_view():
                 placeholder=workspace.description,
                 key="wk_description"
             )
+
+            users = get_users_in_workspace(workspace.id)
 
             st.form_submit_button(label="Save", on_click=lambda: wk_description)

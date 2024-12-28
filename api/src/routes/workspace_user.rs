@@ -1,8 +1,8 @@
 use crate::crud::workspace_user as workspace_user_crud;
 use crate::crud::workspace as workspace_crud;
+use crate::crud::user as user_crud;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::Workspace;
-use crate::models::auth::models::WorkspaceUser;
+use crate::models::auth::models::{WorkspaceUser, Workspace, User};
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -69,13 +69,23 @@ async fn get_workspace_user(
 async fn get_workspace_users(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
-) -> Result<Json<Vec<WorkspaceUser>>, StatusCode> {
+) -> Result<Json<Vec<User>>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match workspace_user_crud::get_workspace_users(&mut conn, &workspace_id).await {
-        Ok(result) => Ok(Json(result)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    let wk_users = workspace_user_crud::get_workspace_users(&mut conn, &workspace_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let mut users: Vec<User> = Vec::new();
+
+    for obj in wk_users {
+        match user_crud::get_user(&mut conn, &obj.user_id).await {
+            Ok(user) => users.push(user),
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    };
+
+    Ok(Json(users))
 }
 
 async fn get_workspaces_of_user(
