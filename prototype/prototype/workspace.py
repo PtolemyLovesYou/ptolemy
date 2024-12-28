@@ -45,6 +45,32 @@ def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
     else:
         st.rerun(scope="fragment")
 
+def remove_user_from_workspace(workspace_id: str, user_id: str):
+    """Remove user from workspace."""
+    resp = requests.delete(
+        urljoin(API_URL, f"/workspace/{workspace_id}/user/{user_id}"),
+        timeout=5,
+        json={"user_id": get_user_info().id},
+    )
+
+    if not resp.ok:
+        st.toast(
+            f"Failed to remove user {user_id} from workspace {workspace_id}: {resp.text}"
+            )
+
+def update_workspace_user_role(workspace_id: str, user_id: str, role: WorkspaceRole):
+    """Update workspace user role."""
+    resp = requests.put(
+        urljoin(API_URL, f"/workspace/{workspace_id}/user/{user_id}"),
+        json={"user_id": get_user_info().id, "role": role.capitalize()},
+        timeout=5,
+    )
+
+    if not resp.ok:
+        st.toast(
+            f"Failed to update user {user_id} role in workspace {workspace_id}: {resp.text}"
+            )
+
 def add_user_to_workspace_form(workspace: Workspace):
     """Add user to workspace."""
     with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
@@ -120,6 +146,20 @@ def create_workspace_form():
 
             st.rerun(scope="fragment")
 
+def update_workspace_users(workspace: Workspace):
+    """Update workspace users."""
+    existing_users = workspace.users
+
+    for user in existing_users:
+        role = st.session_state[f"wk_user_role_{user.id}"]
+        delete = st.session_state[f"wk_user_delete_{user.id}"]
+
+        if delete:
+            remove_user_from_workspace(workspace.id, user.id)
+
+        if role != user.workspace_role(workspace.id):
+            update_workspace_user_role(workspace.id, user.id, role)
+
 def workspace_form(workspace: Workspace):
     """Workspace form."""
     with st.form("wk_form", border=False, clear_on_submit=False):
@@ -176,6 +216,7 @@ def workspace_form(workspace: Workspace):
             submit_wk = st.form_submit_button(label="Save", use_container_width=True)
 
         if submit_wk:
+            update_workspace_users(workspace)
             st.rerun(scope="fragment")
 
 @st.fragment
