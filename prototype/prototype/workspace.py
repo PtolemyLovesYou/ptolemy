@@ -70,6 +70,70 @@ def create_workspace_form():
 
             st.rerun(scope="fragment")
 
+def workspace_form(workspace: Workspace):
+    """Workspace form."""
+    with st.form("wk_form", border=False, clear_on_submit=False):
+        wk_description = st.text_area(
+            "Description",
+            placeholder=workspace.description,
+            key="wk_description"
+        )
+
+        wk_user_cols = st.columns([0.5, 0.7, 1])
+
+        with wk_user_cols[0]:
+            st.markdown("**USERNAME**")
+
+        with wk_user_cols[1]:
+            st.markdown("**ROLE**")
+
+        with wk_user_cols[2]:
+            st.markdown("**86**")
+
+        wk_roles = list(WorkspaceRole)
+
+        for user in workspace.users:
+            with wk_user_cols[0]:
+                st.text_input(
+                    "username",
+                    value=user.username,
+                    disabled=True,
+                    key=f"wk_user_{user.id}_username",
+                    label_visibility="collapsed",
+                )
+
+            with wk_user_cols[1]:
+
+                st.segmented_control(
+                    "role",
+                    options=wk_roles,
+                    default=user.workspace_role(workspace.id),
+                    disabled=False,
+                    key=f"wk_user_{user.id}_role",
+                    label_visibility="collapsed"
+                )
+
+            with wk_user_cols[2]:
+                st.checkbox(
+                    "delete",
+                    disabled=False,
+                    key=f"wk_user_{user.id}_delete",
+                    label_visibility="collapsed"
+                )
+
+        submit_cols = st.columns([0.25, 0.25, 2])
+        with submit_cols[0]:
+            submit_wk = st.form_submit_button(label="Save", use_container_width=True)
+        with submit_cols[1]:
+            delete_wk = st.form_submit_button(label="Delete", use_container_width=True)
+
+        if submit_wk:
+            st.rerun(scope="fragment")
+
+        if delete_wk:
+            delete_workspace(workspace.id)
+            st.rerun(scope="fragment")
+
 @st.fragment
 def wk_management_view():
     """Get workspace management view."""
@@ -95,64 +159,4 @@ def wk_management_view():
             create_workspace_form()
 
     if workspace:
-        with st.form("wk_form", border=False, clear_on_submit=False):
-            wk_description = st.text_area(
-                "Description",
-                placeholder=workspace.description,
-                key="wk_description"
-            )
-
-            wk_user_cols = st.columns([0.5, 0.7, 1])
-
-            with wk_user_cols[0]:
-                st.markdown("**USERNAME**")
-
-            with wk_user_cols[1]:
-                st.markdown("**ROLE**")
-
-            with wk_user_cols[2]:
-                st.markdown("**86**")
-
-            wk_roles = list(WorkspaceRole)
-
-            for user in workspace.users:
-                with wk_user_cols[0]:
-                    st.text_input(
-                        "username",
-                        value=user.username,
-                        disabled=True,
-                        key=f"wk_user_{user.id}_username",
-                        label_visibility="collapsed",
-                    )
-
-                with wk_user_cols[1]:
-
-                    st.segmented_control(
-                        "role",
-                        options=wk_roles,
-                        default=user.workspace_role(workspace.id),
-                        disabled=False,
-                        key=f"wk_user_{user.id}_role",
-                        label_visibility="collapsed"
-                    )
-
-                with wk_user_cols[2]:
-                    st.checkbox(
-                        "delete",
-                        disabled=False,
-                        key=f"wk_user_{user.id}_delete",
-                        label_visibility="collapsed"
-                    )
-
-            submit_cols = st.columns([0.25, 0.25, 2])
-            with submit_cols[0]:
-                submit_wk = st.form_submit_button(label="Save", use_container_width=True)
-            with submit_cols[1]:
-                delete_wk = st.form_submit_button(label="Delete", use_container_width=True)
-
-            if submit_wk:
-                st.rerun(scope="fragment")
-
-            if delete_wk:
-                delete_workspace(workspace.id)
-                st.rerun(scope="fragment")
+        workspace_form(workspace)
