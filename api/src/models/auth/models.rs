@@ -68,6 +68,7 @@ pub struct UserApiKey {
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
@@ -82,6 +83,7 @@ pub struct UserApiKeyCreate {
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
@@ -95,6 +97,7 @@ pub struct ServiceApiKey {
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
@@ -108,6 +111,7 @@ pub struct ServiceApiKeyCreate {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
