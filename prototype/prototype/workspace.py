@@ -187,7 +187,7 @@ def wk_management_view():
             disabled=workspace is None,
             use_container_width=True,
         )
-        
+
         if delete_wk_button:
             delete_workspace(workspace.id)
 
