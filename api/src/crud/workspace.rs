@@ -1,7 +1,7 @@
-use crate::crud::conn::DbConnection;
-use crate::crud::error::CRUDError;
+use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace;
 use crate::models::auth::models::{Workspace, WorkspaceCreate};
+use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -30,7 +30,10 @@ pub async fn create_workspace(
         Ok(result) => Ok(result),
         Err(e) => {
             error!("Failed to create workspace: {}", e);
-            return Err(CRUDError::InsertError);
+            return match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::InsertError),
+            };
         }
     }
 }
@@ -47,7 +50,7 @@ pub async fn create_workspace(
 /// This function will return `CRUDError::GetError` if there is an error retrieving the workspace from the database.
 pub async fn get_workspace(
     conn: &mut DbConnection<'_>,
-    workspace_id: Uuid,
+    workspace_id: &Uuid,
 ) -> Result<Workspace, CRUDError> {
     use crate::generated::auth_schema::workspace::dsl::*;
     match workspace
@@ -58,7 +61,11 @@ pub async fn get_workspace(
         Ok(result) => Ok(result),
         Err(e) => {
             error!("Failed to get workspace: {}", e);
-            Err(CRUDError::GetError)
+            match e {
+                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }
@@ -75,7 +82,7 @@ pub async fn get_workspace(
 /// This function will return `CRUDError::DeleteError` if there is an error deleting the workspace from the database.
 pub async fn delete_workspace(
     conn: &mut DbConnection<'_>,
-    workspace_id: Uuid,
+    workspace_id: &Uuid,
 ) -> Result<(), CRUDError> {
     use crate::generated::auth_schema::workspace::dsl::*;
     match diesel::delete(workspace.filter(id.eq(workspace_id)))
@@ -85,7 +92,10 @@ pub async fn delete_workspace(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Failed to delete workspace: {}", e);
-            Err(CRUDError::DeleteError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::DeleteError),
+            }
         }
     }
 }

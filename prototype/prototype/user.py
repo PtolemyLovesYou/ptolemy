@@ -1,37 +1,44 @@
 """User management."""
-from typing import Optional, Any
+from typing import Optional, List
+from urllib.parse import urljoin
 import requests
 import streamlit as st
-
-def user_role(is_admin: bool, is_sysadmin: bool) -> str:
-    """Get user role."""
-    if is_admin:
-        return "admin"
-    if is_sysadmin:
-        return "sysadmin"
-
-    return "user"
+from .env_settings import API_URL
+from .models import User, UserRole
+from .auth import get_user_info
 
 def create_new_user(username: str, password: str, role: str, display_name: Optional[str] = None):
     """Create new user."""
+    user_id = get_user_info().id
+
     resp = requests.post(
-        "http://localhost:8000/user",
+        urljoin(API_URL, "/user"),
         json={
-            "username": username,
-            "password": password,
-            "is_admin": role == "admin",
-            "is_sysadmin": role == "sysadmin",
-            "display_name": display_name,
+            "user_id": user_id,
+            "user": {
+                "username": username,
+                "password": password,
+                "is_admin": role == UserRole.ADMIN,
+                "is_sysadmin": role == UserRole.SYSADMIN,
+                "display_name": display_name,
+                },
         },
         timeout=5,
     )
 
-    resp.raise_for_status()
+    # if status code is forbidden, toast
+    if resp.status_code == 403:
+        st.toast(
+            f"Failed to create user {username}: Unauthorized"
+            )
 
 def delete_user(user_id: str):
     """Delete user."""
     resp = requests.delete(
-        f"http://localhost:8000/user/{user_id}",
+        urljoin(API_URL, f"/user/{user_id}"),
+        json={
+            "user_id": get_user_info().id,
+            },
         timeout=5,
     )
 
@@ -40,22 +47,14 @@ def delete_user(user_id: str):
             f"Failed to delete user {user_id}"
             )
 
-def get_users() -> dict[str, dict[str, Any]]:
+def get_users() -> List[User]:
     """Get users."""
     user_list = requests.get(
-        "http://localhost:8000/user/all",
+        urljoin(API_URL, "/user/all"),
         timeout=10,
     ).json()
 
-    user_dict = {}
-
-    for u in user_list:
-        user_dict[u['id']] = u
-        user_dict[u['id']]['role'] = user_role(
-            u['is_admin'], u['is_sysadmin']
-            )
-
-    return {u['id']: u for u in user_list}
+    return [User(**u) for u in user_list]
 
 @st.fragment
 def usr_management_view():
@@ -108,7 +107,7 @@ def usr_management_view():
             st.markdown("**86**")
 
     with st.form("usr_management_form", border=False, enter_to_submit=False):
-        for user_id, user in users.items():
+        for user in users:
             user_container = st.container(border=False)
             with user_container:
                 cols = st.columns([0.75, 1, 0.6, 0.6, 0.25])
@@ -116,48 +115,55 @@ def usr_management_view():
                 with cols[0]:
                     st.text_input(
                         "username",
-                        value=user['username'],
+                        value=user.username,
                         disabled=True,
-                        key=f"user_username_{user_id}",
+                        key=f"user_username_{user.id}",
                         label_visibility='collapsed'
                         )
                 with cols[1]:
                     st.text_input(
                         "display_name",
-                        value=user['display_name'],
-                        disabled=False,
-                        key=f"user_display_name_{user_id}",
+                        value=user.display_name,
+                        disabled=user.role == UserRole.SYSADMIN,
+                        key=f"user_display_name_{user.id}",
                         label_visibility='collapsed'
                     )
                 with cols[2]:
                     st.selectbox(
-                        label=f"user_role_{user_id}",
+                        label=f"user_role_{user.id}",
                         options=["admin", "sysadmin", "user"],
-                        index=["admin", "sysadmin", "user"].index(user['role']),
-                        disabled=False,
-                        key=f"user_role_{user_id}",
+                        index=["admin", "sysadmin", "user"].index(user.role),
+                        disabled=user.role == UserRole.SYSADMIN,
+                        key=f"user_role_{user.id}",
                         label_visibility='collapsed'
                     )
                 with cols[3]:
                     st.selectbox(
-                        label=f"user_status_{user_id}",
+                        label=f"user_status_{user.id}",
                         options=["Active", "Suspended"],
-                        index=["Active", "Suspended"].index(user['status']),
-                        disabled=False,
-                        key=f"user_status_{user_id}",
+                        index=["Active", "Suspended"].index(user.status),
+                        disabled=user.role == UserRole.SYSADMIN,
+                        key=f"user_status_{user.id}",
                         label_visibility='collapsed'
                     )
                 with cols[4]:
                     st.checkbox(
-                        label=f"user_delete_{user_id}",
-                        disabled=False,
-                        key=f"user_delete_{user_id}",
+                        label=f"user_delete_{user.id}",
+                        disabled=(
+                            user.role == UserRole.SYSADMIN
+                            or user.id == get_user_info().id
+                            or (
+                                user.role == UserRole.ADMIN
+                                and get_user_info().role == UserRole.ADMIN
+                                )
+                            ),
+                        key=f"user_delete_{user.id}",
                         label_visibility='collapsed'
                     )
 
         def delete_users():
-            for user_id in users.keys():
-                if st.session_state[f"user_delete_{user_id}"]:
-                    delete_user(user_id)
+            for user in users:
+                if st.session_state[f"user_delete_{user.id}"]:
+                    delete_user(user.id)
 
         st.form_submit_button(label="Save", on_click=delete_users)

@@ -4,7 +4,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workspace {
@@ -26,7 +26,7 @@ pub struct WorkspaceCreate {
     description: Option<String>,
 }
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
 #[diesel(table_name = crate::generated::auth_schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
@@ -51,15 +51,29 @@ pub struct UserCreate {
     pub is_admin: bool,
 }
 
-#[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations)]
+#[diesel(belongs_to(User))]
+#[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::workspace_user)]
+#[diesel(primary_key(user_id, workspace_id))]
 pub struct WorkspaceUser {
     pub user_id: Uuid,
     pub workspace_id: Uuid,
     pub role: WorkspaceRoleEnum,
 }
 
-#[derive(Debug, Queryable, Insertable, Selectable, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Queryable,
+    Insertable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    PartialEq,
+    Associations,
+)]
+#[diesel(belongs_to(User))]
 #[diesel(table_name = crate::generated::auth_schema::user_api_key)]
 pub struct UserApiKey {
     pub id: Uuid,
@@ -68,6 +82,7 @@ pub struct UserApiKey {
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
@@ -82,11 +97,23 @@ pub struct UserApiKeyCreate {
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Queryable, Insertable, Selectable, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Queryable,
+    Insertable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    PartialEq,
+    Associations,
+)]
+#[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::service_api_key)]
 pub struct ServiceApiKey {
     pub id: Uuid,
@@ -95,6 +122,7 @@ pub struct ServiceApiKey {
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
@@ -108,6 +136,7 @@ pub struct ServiceApiKeyCreate {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub salt: String,
+    pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }

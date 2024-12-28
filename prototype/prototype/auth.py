@@ -1,11 +1,14 @@
 """Auth services."""
+from urllib.parse import urljoin
 import streamlit as st
 import requests
+from .models import User
+from .env_settings import API_URL
 
 def login(username: str, password: str) -> bool:
     """Login."""
     resp = requests.post(
-        "http://localhost:8000/user/auth",
+        urljoin(API_URL, "/auth"),
         json={"username": username, "password": password},
         timeout=5,
     )
@@ -13,11 +16,7 @@ def login(username: str, password: str) -> bool:
     if resp.ok:
         data = resp.json()
         st.session_state.authenticated = True
-        st.session_state.user_info = {
-            "id": "id_goes_here",
-            "username": username,
-            "display_name": data["display_name"],
-        }
+        st.session_state.user_info = User(**data)
 
         return True
 
@@ -28,12 +27,19 @@ def logout():
     st.session_state.authenticated = False
     st.session_state.user_info = None
 
+def get_user_info() -> User:
+    """Get user info."""
+    if st.session_state.user_info is None:
+        raise ValueError("User is not logged in")
+
+    return st.session_state.user_info
+
 def get_login_layout():
     """Login layout."""
 
     _, logocol, _ = st.columns([1, 0.25, 1])
     with logocol:
-        st.image("prototype/assets/logomark_lime.svg", use_container_width=True)
+        st.image("assets/logomark_lime.svg", use_container_width=True)
 
     _, logincol, _ = st.columns([1, 1, 1])
 

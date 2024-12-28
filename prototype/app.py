@@ -1,11 +1,9 @@
 """Streamlit prototype app."""
-import uuid
 import streamlit as st
-from prototype.auth import logout, get_login_layout
+from prototype.auth import logout, get_login_layout, get_user_info
 from prototype.user import usr_management_view
 from prototype.workspace import wk_management_view
-
-USER_ID = uuid.uuid4().hex
+from prototype.models import UserRole
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
@@ -15,7 +13,7 @@ if 'user_info' not in st.session_state:
     st.session_state.user_info = None
 
 if st.session_state.authenticated:
-    st.logo("prototype/assets/logomark_lime.svg")
+    st.logo("assets/logomark_lime.svg")
 
 @st.fragment
 def usr_ak_management_view():
@@ -42,6 +40,8 @@ def get_layout():
     if not st.session_state.authenticated:
         get_login_layout()
     else:
+        user_info = get_user_info()
+
         sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
 
         with sidebar_column:
@@ -68,13 +68,16 @@ def get_layout():
                 workspace_management_button = st.button(
                     "",
                     use_container_width = True,
-                    icon=":material/workspaces:"
+                    icon=":material/workspaces:",
+                    # Sysadmins can't manage workspaces
+                    disabled=user_info.role == UserRole.SYSADMIN
                 )
 
                 user_management_button = st.button(
                     "",
                     use_container_width = True,
-                    icon=":material/group:"
+                    icon=":material/group:",
+                    disabled=user_info.role == UserRole.USER,
                 )
 
                 # spacer

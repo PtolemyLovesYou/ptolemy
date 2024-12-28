@@ -71,6 +71,19 @@ services:
         - ptolemy
       profiles:
         - prometheus
+  # prototype app
+  app:
+    container_name: app
+    build:
+      dockerfile: prototype/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./prototype:/app
+    networks:
+      - ptolemy
 
 volumes:
   postgres:

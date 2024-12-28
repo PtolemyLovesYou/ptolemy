@@ -1,11 +1,11 @@
-use crate::crud::conn::DbConnection;
-use crate::crud::error::CRUDError;
-use crate::generated::auth_schema::users::dsl::{
-    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users, salt
-};
 use crate::crud::crypto::{hash_password, verify_password};
+use crate::error::CRUDError;
+use crate::generated::auth_schema::users::dsl::{
+    display_name, id, is_admin, is_sysadmin, password_hash, salt, status, username, users,
+};
 use crate::models::auth::enums::UserStatusEnum;
-use crate::models::auth::models::{UserCreate, User};
+use crate::models::auth::models::{User, UserCreate};
+use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -44,15 +44,18 @@ pub async fn create_user(
         Ok(user) => Ok(user),
         Err(e) => {
             error!("Failed to create user: {}", e);
-            return Err(CRUDError::InsertError);
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::InsertError),
+            }
         }
     }
 }
 
 pub async fn change_user_status(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    user_status: UserStatusEnum,
+    user_id: &Uuid,
+    user_status: &UserStatusEnum,
 ) -> Result<(), CRUDError> {
     match diesel::update(users)
         .filter(id.eq(user_id))
@@ -63,20 +66,27 @@ pub async fn change_user_status(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Failed to update user status: {}", e);
-            return Err(CRUDError::UpdateError);
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::UpdateError),
+            }
         }
     }
 }
 
 pub async fn get_user(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
+    user_id: &Uuid,
 ) -> Result<crate::models::auth::models::User, CRUDError> {
     match users.filter(id.eq(user_id)).get_result(conn).await {
         Ok(user) => Ok(user),
         Err(e) => {
             error!("Failed to get user: {}", e);
-            return Err(CRUDError::GetError);
+            match e {
+                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }
@@ -95,8 +105,8 @@ pub async fn get_all_users(
 
 pub async fn change_user_display_name(
     conn: &mut DbConnection<'_>,
-    user_id: Uuid,
-    user_display_name: String,
+    user_id: &Uuid,
+    user_display_name: &String,
 ) -> Result<(), CRUDError> {
     match diesel::update(users)
         .filter(id.eq(user_id))
@@ -133,7 +143,7 @@ pub async fn change_user_password(
     }
 }
 
-pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(), CRUDError> {
+pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: &Uuid) -> Result<(), CRUDError> {
     match diesel::delete(users.filter(id.eq(user_id)))
         .execute(conn)
         .await
@@ -146,7 +156,11 @@ pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: Uuid) -> Result<(
     }
 }
 
-pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &String) -> Result<Option<User>, CRUDError> {
+pub async fn auth_user(
+    conn: &mut DbConnection<'_>,
+    uname: &String,
+    password: &String,
+) -> Result<Option<User>, CRUDError> {
     let user = match users
         .filter(username.eq(&uname))
         .get_result::<User>(conn)
@@ -155,7 +169,11 @@ pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &S
         Ok(user) => user,
         Err(e) => {
             error!("Failed to get user: {}", e);
-            return Err(CRUDError::GetError);
+            match e {
+                diesel::result::Error::NotFound => return Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => return Err(CRUDError::DatabaseError),
+                _ => return Err(CRUDError::GetError),
+            }
         }
     };
 
@@ -168,39 +186,5 @@ pub async fn auth_user(conn: &mut DbConnection<'_>, uname: &String, password: &S
     match pass_correct {
         true => Ok(Some(user)),
         false => Ok(None),
-    }
-}
-
-pub async fn ensure_sysadmin(conn: &mut DbConnection<'_>) -> Result<(), CRUDError> {
-    let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
-    let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
-
-    let users_list = get_all_users(conn).await?;
-
-    for user in users_list {
-        if user.is_sysadmin {
-            if verify_password(conn, &pass, &user.salt, &user.password_hash).await? {
-                return Ok(());
-            }
-            // update password
-            else {
-                change_user_password(conn, &user.id, &pass).await?;
-                return Ok(());
-            }
-        }
-    }
-
-    match create_user(conn, &UserCreate {
-        username: user,
-        display_name: Some("SYSADMIN".to_string()),
-        is_sysadmin: true,
-        is_admin: false,
-        password: pass,
-    }).await {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to create sysadmin: {:?}", e);
-            Err(CRUDError::InsertError)
-        }
     }
 }
