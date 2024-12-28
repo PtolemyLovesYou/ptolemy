@@ -169,7 +169,11 @@ pub async fn auth_user(
         Ok(user) => user,
         Err(e) => {
             error!("Failed to get user: {}", e);
-            return Err(CRUDError::GetError);
+            match e {
+                diesel::result::Error::NotFound => return Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => return Err(CRUDError::DatabaseError),
+                _ => return Err(CRUDError::GetError),
+            }
         }
     };
 
