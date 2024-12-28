@@ -30,6 +30,31 @@ def create_workspace(name: str, admin_id: Optional[str] = None, description: Opt
             "Failed to create workspace."
         )
 
+def add_user_to_workspace_form(workspace: Workspace):
+    """Add user to workspace."""
+    with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
+        valid_users = [
+            i for i in get_users() if i.role != UserRole.SYSADMIN and i.id not in [
+                usr.id for usr in workspace.users
+                ]
+            ]
+
+        sk_user = st.selectbox(
+            "User",
+            options=valid_users,
+            format_func=lambda u: u.username,
+            index=None,
+            placeholder="Select user..."
+        )
+
+        sk_role = st.segmented_control(
+            "Role",
+            options=list(WorkspaceRole),
+            default=WorkspaceRole.READER,
+        )
+
+        sk_submit = st.form_submit_button(label="Submit")
+
 def delete_workspace(workspace_id: str):
     """Delete workspace."""
     resp = requests.delete(
@@ -42,6 +67,8 @@ def delete_workspace(workspace_id: str):
         st.toast(
             f"Failed to delete workspace {workspace_id}"
             )
+    else:
+        st.rerun(scope="fragment")
 
 def create_workspace_form():
     """Create workspace form."""
@@ -121,42 +148,48 @@ def workspace_form(workspace: Workspace):
                     label_visibility="collapsed"
                 )
 
-        submit_cols = st.columns([0.25, 0.25, 2])
-        with submit_cols[0]:
+        submit_col, _ = st.columns([0.5, 4])
+        with submit_col:
             submit_wk = st.form_submit_button(label="Save", use_container_width=True)
-        with submit_cols[1]:
-            delete_wk = st.form_submit_button(label="Delete", use_container_width=True)
 
         if submit_wk:
-            st.rerun(scope="fragment")
-
-        if delete_wk:
-            delete_workspace(workspace.id)
             st.rerun(scope="fragment")
 
 @st.fragment
 def wk_management_view():
     """Get workspace management view."""
-    select_workspace_col, add_user_col, add_wk_col = st.columns([4, 1, 1.25])
+    select_workspace_col, add_user_col, add_wk_col, delete_wk_col = st.columns([4, 1, 1.5, 1.5])
     with select_workspace_col:
         workspace: Workspace = st.selectbox(
             "Select workspace",
             options=get_user_info().workspaces,
             label_visibility='collapsed',
             format_func=lambda w: w.name,
+            index=None,
+            placeholder="Select workspace..."
             )
 
     with add_user_col:
         with st.popover(
             "Add User",
             use_container_width=False,
-            disabled=workspace is None
             ):
-            st.write('create user here')
+            if workspace is not None:
+                add_user_to_workspace_form(workspace)
 
     with add_wk_col:
-        with st.popover("New Workspace...", use_container_width=False):
+        with st.popover("New Workspace", use_container_width=False):
             create_workspace_form()
+
+    with delete_wk_col:
+        delete_wk_button = st.button(
+            "Delete Workspace",
+            disabled=workspace is None,
+            use_container_width=True,
+        )
+        
+        if delete_wk_button:
+            delete_workspace(workspace.id)
 
     if workspace:
         workspace_form(workspace)
