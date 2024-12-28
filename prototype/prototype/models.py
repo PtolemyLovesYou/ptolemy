@@ -27,3 +27,11 @@ class User(BaseModel):
             return UserRole.SYSADMIN
 
         return UserRole.USER
+
+
+class Workspace(BaseModel):
+    """Workspace."""
+    id: str
+    name: str
+    description: Optional[str] = None
+    archived: bool
