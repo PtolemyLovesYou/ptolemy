@@ -63,8 +63,17 @@ pub struct WorkspaceUser {
 }
 
 #[derive(
-    Debug, Queryable, Insertable, Selectable, Serialize, Deserialize, Identifiable, PartialEq,
+    Debug,
+    Queryable,
+    Insertable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    PartialEq,
+    Associations,
 )]
+#[diesel(belongs_to(User))]
 #[diesel(table_name = crate::generated::auth_schema::user_api_key)]
 pub struct UserApiKey {
     pub id: Uuid,
@@ -94,8 +103,17 @@ pub struct UserApiKeyCreate {
 }
 
 #[derive(
-    Debug, Queryable, Insertable, Selectable, Serialize, Deserialize, Identifiable, PartialEq,
+    Debug,
+    Queryable,
+    Insertable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    PartialEq,
+    Associations,
 )]
+#[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::service_api_key)]
 pub struct ServiceApiKey {
     pub id: Uuid,
