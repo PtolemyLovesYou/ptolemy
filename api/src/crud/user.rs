@@ -44,7 +44,10 @@ pub async fn create_user(
         Ok(user) => Ok(user),
         Err(e) => {
             error!("Failed to create user: {}", e);
-            return Err(CRUDError::InsertError);
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::InsertError),
+            }
         }
     }
 }
@@ -63,7 +66,10 @@ pub async fn change_user_status(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Failed to update user status: {}", e);
-            return Err(CRUDError::UpdateError);
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::UpdateError),
+            }
         }
     }
 }
@@ -76,7 +82,11 @@ pub async fn get_user(
         Ok(user) => Ok(user),
         Err(e) => {
             error!("Failed to get user: {}", e);
-            return Err(CRUDError::GetError);
+            match e {
+                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }

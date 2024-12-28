@@ -31,7 +31,10 @@ pub async fn create_workspace_user(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Unable to add workspace_user: {}", e);
-            Err(CRUDError::InsertError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::InsertError),
+            }
         }
     }
 }
@@ -54,7 +57,11 @@ pub async fn get_workspace_user_permission(
         Ok(role) => Ok(role),
         Err(e) => {
             error!("Unable to get workspace_user permission: {}", e);
-            Err(CRUDError::GetError)
+            match e {
+                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }
@@ -87,7 +94,10 @@ pub async fn set_workspace_user_role(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Unable to update workspace_user role: {}", e);
-            Err(CRUDError::UpdateError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::UpdateError),
+            }
         }
     }
 }
@@ -117,7 +127,10 @@ pub async fn delete_workspace_user(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Failed to delete workspace_user: {}", e);
-            Err(CRUDError::DeleteError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::DeleteError),
+            }
         }
     }
 }
@@ -139,7 +152,11 @@ pub async fn get_workspace_user(
         Ok(user) => Ok(user),
         Err(e) => {
             error!("Unable to get workspace_user: {}", e);
-            Err(CRUDError::GetError)
+            match e {
+                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }
@@ -156,7 +173,10 @@ pub async fn get_workspace_users(
         Ok(users) => Ok(users),
         Err(e) => {
             error!("Unable to get workspace_users: {}", e);
-            Err(CRUDError::GetError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }
@@ -173,7 +193,10 @@ pub async fn get_workspaces_of_user(
         Ok(users) => Ok(users),
         Err(e) => {
             error!("Unable to get workspaces of user: {}", e);
-            Err(CRUDError::GetError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }

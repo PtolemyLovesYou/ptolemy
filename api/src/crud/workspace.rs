@@ -30,7 +30,10 @@ pub async fn create_workspace(
         Ok(result) => Ok(result),
         Err(e) => {
             error!("Failed to create workspace: {}", e);
-            return Err(CRUDError::InsertError);
+            return match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::InsertError),
+            };
         }
     }
 }
@@ -58,7 +61,11 @@ pub async fn get_workspace(
         Ok(result) => Ok(result),
         Err(e) => {
             error!("Failed to get workspace: {}", e);
-            Err(CRUDError::GetError)
+            match e {
+                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            }
         }
     }
 }
@@ -85,7 +92,10 @@ pub async fn delete_workspace(
         Ok(_) => Ok(()),
         Err(e) => {
             error!("Failed to delete workspace: {}", e);
-            Err(CRUDError::DeleteError)
+            match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::DeleteError),
+            }
         }
     }
 }

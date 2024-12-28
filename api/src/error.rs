@@ -9,6 +9,8 @@ pub enum ApiError {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum CRUDError {
+    DatabaseError,
+    NotFoundError,
     InsertError,
     GetError,
     DeleteError,
