@@ -3,7 +3,7 @@ from typing import Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from .models import Workspace, UserRole
+from .models import Workspace, UserRole, WorkspaceRole
 from .user import get_users
 from .auth import get_user_info
 from .env_settings import API_URL
@@ -72,13 +72,6 @@ def wk_management_view():
 
     if workspace:
         with st.form("wk_form", border=False):
-            # st.text_input(
-            #     "ID",
-            #     value=workspace.id,
-            #     disabled=True,
-            #     key="wk_id"
-            # )
-
             st.text_input(
                 "Name",
                 value=workspace.name,
@@ -92,7 +85,45 @@ def wk_management_view():
                 key="wk_description"
             )
 
+            wk_user_cols = st.columns([0.5, 0.5, 1])
+
+            with wk_user_cols[0]:
+                st.markdown("**USERNAME**")
+
+            with wk_user_cols[1]:
+                st.markdown("**ROLE**")
+
+            with wk_user_cols[2]:
+                st.markdown("**86**")
+
+            wk_roles = list(WorkspaceRole)
+
             for user in workspace.users:
-                st.write(user.username, user.workspace_role(workspace.id))
+                with wk_user_cols[0]:
+                    st.text_input(
+                        "username",
+                        value=user.username,
+                        disabled=True,
+                        key=f"wk_user_{user.id}_username",
+                        label_visibility="collapsed",
+                    )
+
+                with wk_user_cols[1]:
+                    st.selectbox(
+                        "role",
+                        options=wk_roles,
+                        index=wk_roles.index(user.workspace_role(workspace.id)),
+                        disabled=False,
+                        key=f"wk_user_{user.id}_role",
+                        label_visibility="collapsed",
+                    )
+
+                with wk_user_cols[2]:
+                    st.checkbox(
+                        "delete",
+                        disabled=False,
+                        key=f"wk_user_{user.id}_delete",
+                        label_visibility="collapsed"
+                    )
 
             st.form_submit_button(label="Save", on_click=lambda: wk_description)
