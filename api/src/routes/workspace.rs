@@ -2,7 +2,7 @@ use crate::crud::user as user_crud;
 use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::{Workspace, WorkspaceCreate, WorkspaceUser, User};
+use crate::models::auth::models::{User, Workspace, WorkspaceCreate, WorkspaceUser};
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -12,7 +12,7 @@ use axum::{
 };
 use serde::Deserialize;
 use std::sync::Arc;
-use tracing::{instrument, error};
+use tracing::{error, instrument};
 use uuid::Uuid;
 
 async fn ensure_admin(
@@ -139,7 +139,7 @@ async fn get_workspace_users(
             Ok(user) => users.push(user),
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         }
-    };
+    }
 
     Ok(Json(users))
 }
@@ -160,11 +160,13 @@ async fn get_workspace_user(
 #[derive(Debug, Deserialize)]
 struct CreateWorkspaceUserRequest {
     user_id: Uuid,
-    workspace_user: WorkspaceUser,
+    role: WorkspaceRoleEnum,
 }
 
-async fn create_workspace_user(
+async fn add_user_to_workspace(
     state: Arc<AppState>,
+    Path(workspace_id): Path<Uuid>,
+    Path(target_user_id): Path<Uuid>,
     Json(req): Json<CreateWorkspaceUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
@@ -172,7 +174,7 @@ async fn create_workspace_user(
     // User making request should be a manager or admin of the given workspace
     let user_permission = match workspace_user_crud::get_workspace_user_permission(
         &mut conn,
-        &req.workspace_user.workspace_id,
+        &workspace_id,
         &req.user_id,
     )
     .await
@@ -189,20 +191,60 @@ async fn create_workspace_user(
         _ => return Err(StatusCode::FORBIDDEN),
     }
 
-    match workspace_user_crud::create_workspace_user(&mut conn, &req.workspace_user).await {
+    let workspace_user = WorkspaceUser {
+        workspace_id,
+        user_id: target_user_id,
+        role: req.role,
+    };
+
+    match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
         Ok(_) => Ok(StatusCode::CREATED),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 
-async fn delete_workspace_user(
+#[derive(Debug, Deserialize)]
+struct DeleteWorkspaceUserRequest {
+    user_id: Uuid,
+}
+
+async fn delete_user_from_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
-    Path(user_id): Path<Uuid>,
+    Path(target_user_id): Path<Uuid>,
+    Json(req): Json<DeleteWorkspaceUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
+    // ensure user with user_id has permissions to set user role
+    let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        &mut conn,
+        &workspace_id,
+        &req.user_id,
+    )
+    .await
+    {
+        Ok(role) => role,
+        Err(e) => {
+            error!("Unable to get workspace_user permission: {:?}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    match user_permission {
+        WorkspaceRoleEnum::Admin => (),
+        WorkspaceRoleEnum::Manager => {
+            if user_permission == WorkspaceRoleEnum::Admin {
+                return Err(StatusCode::FORBIDDEN);
+            };
+            ()
+        }
+        _ => return Err(StatusCode::FORBIDDEN),
+    };
+
+    match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &target_user_id)
+        .await
+    {
         Ok(_) => Ok(StatusCode::OK),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -210,22 +252,22 @@ async fn delete_workspace_user(
 
 #[derive(Debug, Deserialize)]
 struct ChangeWorkspaceUserRoleRequest {
-    workspace_id: Uuid,
     user_id: Uuid,
-    target_user_id: Uuid,
     role: WorkspaceRoleEnum,
 }
 
 async fn change_workspace_user_role(
     state: Arc<AppState>,
+    Path(workspace_id): Path<Uuid>,
+    Path(target_user_id): Path<Uuid>,
     Json(req): Json<ChangeWorkspaceUserRoleRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    // todo: ensure user with user_id has permissions to set user role
+    // ensure user with user_id has permissions to set user role
     let user_permission = match workspace_user_crud::get_workspace_user_permission(
         &mut conn,
-        &req.workspace_id,
+        &workspace_id,
         &req.user_id,
     )
     .await
@@ -250,8 +292,8 @@ async fn change_workspace_user_role(
 
     match workspace_user_crud::set_workspace_user_role(
         &mut conn,
-        &req.workspace_id,
-        &req.target_user_id,
+        &workspace_id,
+        &target_user_id,
         &req.role,
     )
     .await
@@ -305,10 +347,12 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
         )
         // Add user to workspace [POST]
         .route(
-            "/user/add",
+            "/:workspace_id/user/:user_id",
             post({
                 let shared_state = Arc::clone(state);
-                move |req| create_workspace_user(shared_state, req)
+                move |workspace_id, target_user_id, req| {
+                    add_user_to_workspace(shared_state, workspace_id, target_user_id, req)
+                }
             }),
         )
         // Delete user from workspace [DELETE]
@@ -316,7 +360,9 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |workspace_id, user_id| delete_workspace_user(shared_state, workspace_id, user_id)
+                move |workspace_id, user_id, req| {
+                    delete_user_from_workspace(shared_state, workspace_id, user_id, req)
+                }
             }),
         )
         // Change user role in workspace [PUT]
@@ -324,7 +370,9 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             put({
                 let shared_state = Arc::clone(state);
-                move |req| change_workspace_user_role(shared_state, req)
+                move |workspace_id, target_user_id, req| {
+                    change_workspace_user_role(shared_state, workspace_id, target_user_id, req)
+                }
             }),
         )
 }

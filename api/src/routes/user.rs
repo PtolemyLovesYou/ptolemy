@@ -1,6 +1,6 @@
 use crate::crud::user as user_crud;
-use crate::crud::workspace_user as workspace_user_crud;
 use crate::crud::workspace as workspace_crud;
+use crate::crud::workspace_user as workspace_user_crud;
 use crate::models::auth::models::{User, UserCreate, Workspace};
 use crate::state::AppState;
 use axum::{
@@ -165,7 +165,7 @@ async fn get_workspaces_of_user(
             Ok(workspace) => workspaces.push(workspace),
             Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         }
-    };
+    }
 
     Ok(Json(workspaces))
 }
