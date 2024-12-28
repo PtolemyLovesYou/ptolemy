@@ -30,13 +30,29 @@ def create_workspace(name: str, admin_id: Optional[str] = None, description: Opt
             "Failed to create workspace."
         )
 
+def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
+    """Add user to workspace."""
+    resp = requests.post(
+        urljoin(API_URL, f"/workspace/{workspace_id}/user/{user_id}"),
+        json={"user_id": get_user_info().id, "role": role.capitalize()},
+        timeout=5
+    )
+
+    if not resp.ok:
+        st.toast(
+            f"Failed to add user {user_id} to workspace {workspace_id}: {resp.text}"
+            )
+    else:
+        st.rerun(scope="fragment")
+
 def add_user_to_workspace_form(workspace: Workspace):
     """Add user to workspace."""
     with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
         valid_users = [
-            i for i in get_users() if i.role != UserRole.SYSADMIN and i.id not in [
-                usr.id for usr in workspace.users
-                ]
+            i for i in get_users() if (
+                i.role != UserRole.SYSADMIN
+                and i.id not in [usr.id for usr in workspace.users]
+                )
             ]
 
         sk_user = st.selectbox(
@@ -54,6 +70,13 @@ def add_user_to_workspace_form(workspace: Workspace):
         )
 
         sk_submit = st.form_submit_button(label="Submit")
+
+        if sk_submit:
+            add_user_to_workspace(
+                workspace.id,
+                sk_user.id,
+                sk_role
+                )
 
 def delete_workspace(workspace_id: str):
     """Delete workspace."""
