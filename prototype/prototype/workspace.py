@@ -92,6 +92,7 @@ def wk_management_view():
                 key="wk_description"
             )
 
-            st.write(workspace.users)
+            for user in workspace.users:
+                st.write(user.username, user.workspace_role(workspace.id))
 
             st.form_submit_button(label="Save", on_click=lambda: wk_description)

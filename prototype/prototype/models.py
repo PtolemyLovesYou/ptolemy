@@ -13,6 +13,13 @@ class UserRole(StrEnum):
     ADMIN = "admin"
     SYSADMIN = "sysadmin"
 
+class WorkspaceRole(StrEnum):
+    """Workspace role."""
+    READER = "reader"
+    WRITER = "writer"
+    MANAGER = "manager"
+    ADMIN = "admin"
+
 class User(BaseModel):
     """User model."""
     id: str
@@ -31,6 +38,22 @@ class User(BaseModel):
             return UserRole.SYSADMIN
 
         return UserRole.USER
+
+    def workspace_role(self, workspace_id: str) -> WorkspaceRole:
+        """Workspace role."""
+        resp = requests.get(
+            urljoin(API_URL, f"/workspace/{workspace_id}/user/{self.id}"),
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to get workspace role: {resp.status_code} {resp.text}"
+                )
+
+            return WorkspaceRole.READER
+
+        return WorkspaceRole(str(resp.json()["role"]).lower())
 
     @property
     def workspaces(self) -> List['Workspace']:

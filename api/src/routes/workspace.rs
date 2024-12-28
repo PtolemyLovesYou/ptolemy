@@ -146,8 +146,7 @@ async fn get_workspace_users(
 
 async fn get_workspace_user(
     state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-    Path(user_id): Path<Uuid>,
+    Path((workspace_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<WorkspaceUser>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
@@ -165,8 +164,7 @@ struct CreateWorkspaceUserRequest {
 
 async fn add_user_to_workspace(
     state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-    Path(target_user_id): Path<Uuid>,
+    Path((workspace_id, target_user_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<CreateWorkspaceUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
@@ -210,8 +208,7 @@ struct DeleteWorkspaceUserRequest {
 
 async fn delete_user_from_workspace(
     state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-    Path(target_user_id): Path<Uuid>,
+    Path((workspace_id, target_user_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<DeleteWorkspaceUserRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
@@ -258,8 +255,7 @@ struct ChangeWorkspaceUserRoleRequest {
 
 async fn change_workspace_user_role(
     state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-    Path(target_user_id): Path<Uuid>,
+    Path((workspace_id, target_user_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<ChangeWorkspaceUserRoleRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
@@ -342,7 +338,7 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             get({
                 let shared_state = Arc::clone(state);
-                move |workspace_id, user_id| get_workspace_user(shared_state, workspace_id, user_id)
+                move |path_vars| get_workspace_user(shared_state, path_vars)
             }),
         )
         // Add user to workspace [POST]
@@ -350,8 +346,8 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             post({
                 let shared_state = Arc::clone(state);
-                move |workspace_id, target_user_id, req| {
-                    add_user_to_workspace(shared_state, workspace_id, target_user_id, req)
+                move |path_vars, req| {
+                    add_user_to_workspace(shared_state, path_vars, req)
                 }
             }),
         )
@@ -360,8 +356,8 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |workspace_id, user_id, req| {
-                    delete_user_from_workspace(shared_state, workspace_id, user_id, req)
+                move |path_vars, req| {
+                    delete_user_from_workspace(shared_state, path_vars, req)
                 }
             }),
         )
@@ -370,8 +366,8 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/user/:user_id",
             put({
                 let shared_state = Arc::clone(state);
-                move |workspace_id, target_user_id, req| {
-                    change_workspace_user_role(shared_state, workspace_id, target_user_id, req)
+                move |path_vars, req| {
+                    change_workspace_user_role(shared_state, path_vars, req)
                 }
             }),
         )
