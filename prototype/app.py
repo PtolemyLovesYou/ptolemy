@@ -4,6 +4,7 @@ import streamlit as st
 from prototype.auth import logout, get_login_layout
 from prototype.user import usr_management_view
 from prototype.workspace.view import wk_management_view
+from prototype.profile import profile_view
 from prototype.models import UserRole, User
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
@@ -35,12 +36,6 @@ def get_event_explorer_view():
     st.write("Event explorer goes here")
 
 
-@st.fragment
-def get_account_management_view():
-    """Get account management view."""
-    st.write("Account management view")
-
-
 def get_layout():
     """Get layout."""
     if not st.session_state.authenticated:
@@ -63,10 +58,6 @@ def get_layout():
                     "", use_container_width=True, icon=":material/code:"
                 )
 
-                api_keys_button = st.button(
-                    "", use_container_width=True, icon=":material/key:"
-                )
-
                 workspace_management_button = st.button(
                     "",
                     use_container_width=True,
@@ -83,9 +74,9 @@ def get_layout():
                 )
 
                 # spacer
-                st.container(height=257, border=False)
+                st.container(height=314, border=False)
 
-                account_management_button = st.button(
+                profile_button = st.button(
                     "", use_container_width=True, icon=":material/account_circle:"
                 )
 
@@ -103,14 +94,12 @@ def get_layout():
                     get_event_explorer_view()
                 elif code_button:
                     get_ide_view()
-                elif api_keys_button:
-                    usr_ak_management_view()
                 elif workspace_management_button:
                     wk_management_view()
                 elif user_management_button:
                     usr_management_view()
-                elif account_management_button:
-                    get_account_management_view()
+                elif profile_button:
+                    profile_view()
                 else:
                     get_event_explorer_view()
 
