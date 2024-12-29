@@ -1,4 +1,3 @@
-use crate::crud::crypto::verify_password;
 use crate::crud::user::{change_user_password, create_user, get_all_users};
 use crate::error::CRUDError;
 use crate::models::auth::models::UserCreate;
@@ -16,12 +15,12 @@ pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
 
     for user in users_list {
         if user.is_sysadmin {
-            if verify_password(&mut conn, &pass, &user.salt, &user.password_hash).await? {
+            if state.password_handler.verify_password(&pass, &user.password_hash) {
                 return Ok(());
             }
             // update password
             else {
-                change_user_password(&mut conn, &user.id, &pass).await?;
+                change_user_password(&mut conn, &user.id, &pass, &state.password_handler).await?;
                 return Ok(());
             }
         }
@@ -36,6 +35,7 @@ pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
             is_admin: false,
             password: pass,
         },
+        &state.password_handler,
     )
     .await
     {

@@ -19,7 +19,7 @@ async fn auth_user(
     // todo: make this better
     let mut conn = state.get_conn_http().await?;
 
-    match user_crud::auth_user(&mut conn, &user.username, &user.password).await {
+    match user_crud::auth_user(&mut conn, &user.username, &user.password, &state.password_handler).await {
         Ok(user) => match user {
             Some(user) => Ok(Json(user)),
             None => Err(StatusCode::UNAUTHORIZED),

@@ -51,7 +51,7 @@ async fn create_user(
         return Err(StatusCode::FORBIDDEN);
     }
 
-    match user_crud::create_user(&mut conn, &req.user).await {
+    match user_crud::create_user(&mut conn, &req.user, &state.password_handler).await {
         Ok(result) => {
             let response = CreateUserResponse { id: result };
             Ok((StatusCode::CREATED, Json(response)))
