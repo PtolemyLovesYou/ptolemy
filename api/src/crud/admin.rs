@@ -1,10 +1,10 @@
-use std::sync::Arc;
-use tracing::error;
+use crate::crud::crypto::verify_password;
+use crate::crud::user::{change_user_password, create_user, get_all_users};
 use crate::error::CRUDError;
 use crate::models::auth::models::UserCreate;
-use crate::crud::user::{get_all_users, change_user_password, create_user};
-use crate::crud::crypto::verify_password;
 use crate::state::AppState;
+use std::sync::Arc;
+use tracing::error;
 
 pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
     let mut conn = state.get_conn().await?;

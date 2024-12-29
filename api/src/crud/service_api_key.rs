@@ -45,7 +45,7 @@ pub async fn create_service_api_key(
         Err(e) => {
             error!("Unable to create service_api_key: {}", e);
             Err(CRUDError::InsertError)
-        },
+        }
     }
 }
 
@@ -67,7 +67,7 @@ pub async fn get_service_api_key(
         Err(e) => {
             error!("Unable to get service_api_key: {}", e);
             Err(CRUDError::GetError)
-        },
+        }
     }
 }
 
@@ -88,12 +88,10 @@ pub async fn get_workspace_service_api_keys(
         .select(ServiceApiKey::as_select())
         .get_results(conn)
         .await
-        .map_err(
-            |e| {
-                error!("Unable to get service_api_keys: {}", e);
-                CRUDError::GetError
-            }
-        )?;
+        .map_err(|e| {
+            error!("Unable to get service_api_keys: {}", e);
+            CRUDError::GetError
+        })?;
 
     Ok(api_keys)
 }
@@ -116,6 +114,6 @@ pub async fn delete_service_api_key(
         Err(e) => {
             error!("Unable to delete service_api_key: {:?}", e);
             Err(CRUDError::DeleteError)
-        },
+        }
     }
 }

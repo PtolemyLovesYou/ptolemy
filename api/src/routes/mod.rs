@@ -1,9 +1,9 @@
 pub mod auth;
+pub mod base;
 pub mod graphql;
+pub mod middleware;
 pub mod user;
 pub mod workspace;
-pub mod base;
-pub mod middleware;
 
 pub async fn get_router(state: &std::sync::Arc<crate::state::AppState>) -> axum::Router {
     axum::Router::new()
