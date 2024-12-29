@@ -11,4 +11,6 @@ def profile_view():
     st.text_input("Username", value=current_user.username, disabled=True)
     st.text_input("Display Name", value=current_user.display_name, disabled=True)
 
-    st.subheader("API Keys")
+    with st.form("API Keys", clear_on_submit=True):
+        st.subheader("API Keys")
+        st.form_submit_button("Save")
