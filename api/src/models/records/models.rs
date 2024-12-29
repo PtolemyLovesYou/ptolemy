@@ -6,7 +6,7 @@ use ptolemy_core::parser::{
     parse_io, parse_metadata, parse_parameters, parse_uuid, FieldValue, ParseError,
 };
 use serde::{Deserialize, Serialize};
-use tracing::{error, instrument};
+use tracing::error;
 use uuid::Uuid;
 
 pub trait EventTable {
@@ -15,7 +15,6 @@ pub trait EventTable {
         Self: Sized;
 }
 
-#[instrument]
 fn parse_timestamp(timestamp: &Option<f32>) -> Result<NaiveDateTime, ParseError> {
     timestamp
         .map(|ts| {

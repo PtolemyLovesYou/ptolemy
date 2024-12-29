@@ -9,11 +9,7 @@ use ptolemy_core::generated::observer::{
 use std::collections::HashMap;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
-use tracing::{
-    debug,
-    // instrument
-    error,
-};
+use tracing::{debug, error};
 
 #[derive(Debug)]
 pub struct MyObserver {
@@ -67,7 +63,6 @@ macro_rules! add_record {
     }};
 }
 
-// #[instrument]
 async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
     let mut conn = state.pg_pool.get().await.unwrap();
 
@@ -126,7 +121,6 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
 
 #[tonic::async_trait]
 impl Observer for MyObserver {
-    // #[instrument]
     async fn publish(
         &self,
         request: Request<PublishRequest>,

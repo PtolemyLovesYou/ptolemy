@@ -12,7 +12,6 @@ use axum::{
 };
 use serde::Deserialize;
 use std::sync::Arc;
-use tracing::instrument;
 use uuid::Uuid;
 
 async fn ensure_admin(
@@ -36,7 +35,6 @@ struct WorkspaceCreateRequest {
     workspace_admin_user_id: Option<Uuid>,
 }
 
-#[instrument]
 async fn create_workspace(
     state: Arc<AppState>,
     Json(req): Json<WorkspaceCreateRequest>,
@@ -72,7 +70,6 @@ async fn create_workspace(
     Ok((StatusCode::CREATED, Json(wk)))
 }
 
-#[instrument]
 async fn get_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -105,7 +102,6 @@ struct DeleteWorkspaceRequest {
     user_id: Uuid,
 }
 
-#[instrument]
 async fn delete_workspace(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
