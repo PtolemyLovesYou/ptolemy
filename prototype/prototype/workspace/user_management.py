@@ -27,7 +27,7 @@ def add_user_to_workspace_form(workspace: Workspace):
         sk_role = st.segmented_control(
             "Role",
             options=list(WorkspaceRole),
-            default=WorkspaceRole.READER,
+            default=WorkspaceRole.USER,
         )
 
         sk_submit = st.form_submit_button(label="Submit")

@@ -196,7 +196,7 @@ class User(BaseModel):
 
             return WorkspaceRole.USER
 
-        return WorkspaceRole(str(resp.json()["role"]).lower())
+        return WorkspaceRole(str(resp.json()["role"]))
 
     @property
     def workspaces(self) -> List["Workspace"]:

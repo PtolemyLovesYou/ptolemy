@@ -21,4 +21,7 @@ COPY ./prototype /app/prototype
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --package prototype
 
-CMD ["uv", "run", "--package", "prototype", "--directory", "prototype", "-m", "streamlit", "run", "app.py", "--server.address=0.0.0.0"]
+ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+ENV STREAMLIT_BROWSER_ADDRESS=0.0.0.0
+
+CMD ["uv", "run", "--package", "prototype", "--directory", "prototype", "-m", "streamlit", "run", "app.py"]
