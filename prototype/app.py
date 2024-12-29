@@ -2,7 +2,7 @@
 import streamlit as st
 from prototype.auth import logout, get_login_layout
 from prototype.user import usr_management_view
-from prototype.workspace import wk_management_view
+from prototype.workspace.view import wk_management_view
 from prototype.models import UserRole, User
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
