@@ -1,33 +1,10 @@
 """Workspace management."""
-from typing import Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
 from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission, User, ServiceApiKey
 from .user import get_users
 from .env_settings import API_URL
-
-def create_workspace(name: str, admin_id: Optional[str] = None, description: Optional[str] = None):
-    """Create workspace."""
-    body = {
-        "user_id": User.current_user().id,
-        "workspace_admin_user_id": admin_id or User.current_user().id,
-        "workspace": {
-            "name": name,
-            "description": description,
-        }
-    }
-
-    resp = requests.post(
-        urljoin(API_URL, "/workspace"),
-        json=body,
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            "Failed to create workspace."
-        )
 
 def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
     """Add user to workspace."""
@@ -103,21 +80,6 @@ def add_user_to_workspace_form(workspace: Workspace):
                 sk_role
                 )
 
-def delete_workspace(workspace_id: str):
-    """Delete workspace."""
-    resp = requests.delete(
-        urljoin(API_URL, f"/workspace/{workspace_id}"),
-        json={"user_id": User.current_user().id},
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to delete workspace {workspace_id}"
-            )
-    else:
-        st.rerun(scope="fragment")
-
 def create_workspace_form():
     """Create workspace form."""
     with st.form(
@@ -137,13 +99,14 @@ def create_workspace_form():
         sk_submit = st.form_submit_button(label="Create")
 
         if sk_submit:
-            create_workspace(
+            wk = Workspace.create(
                 sk_name,
                 admin_id=sk_admin.id if sk_admin else None,
                 description=sk_description
             )
 
-            st.rerun(scope="fragment")
+            if wk:
+                st.rerun(scope="fragment")
 
 def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace form."""
@@ -171,7 +134,9 @@ def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
         st.write("Are you sure you want to delete this workspace?")
         delete_wk_button = st.button("Delete", disabled=disabled)
         if delete_wk_button:
-            delete_workspace(workspace.id)
+            success = workspace.delete()
+            if success:
+                st.rerun(scope="fragment")
 
 @st.fragment
 def wk_user_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):

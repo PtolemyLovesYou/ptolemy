@@ -14,11 +14,13 @@ class UserRole(StrEnum):
     ADMIN = "admin"
     SYSADMIN = "sysadmin"
 
+
 class ApiKeyPermission(StrEnum):
     """API Key Permission Enum"""
     READ_ONLY = "ReadOnly"
     WRITE_ONLY = "WriteOnly"
     READ_WRITE = "ReadWrite"
+
 
 class WorkspaceRole(StrEnum):
     """Workspace role."""
@@ -26,6 +28,7 @@ class WorkspaceRole(StrEnum):
     WRITER = "writer"
     MANAGER = "manager"
     ADMIN = "admin"
+
 
 class ServiceApiKey(BaseModel):
     """Service API key."""
@@ -61,7 +64,7 @@ class ServiceApiKey(BaseModel):
         name: str,
         permission: ApiKeyPermission,
         duration: Optional[int] = None,
-        ) -> str:
+        ) -> Optional[str]:
         """Create API key."""
         data = {
             "user_id": User.current_user().id,
@@ -154,6 +157,48 @@ class Workspace(BaseModel):
     name: str
     description: Optional[str] = None
     archived: bool
+
+    def delete(self) -> bool:
+        """Delete workspace."""
+        resp = requests.delete(
+            urljoin(API_URL, f"/workspace/{self.id}"),
+            json={"user_id": User.current_user().id},
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.error(f"Failed to delete workspace {self.id}: {resp.text}")
+
+        return resp.ok
+
+    @classmethod
+    def create(
+        cls,
+        name: str,
+        admin_id: Optional[str] = None,
+        description: Optional[str] = None
+        ) -> Optional['Workspace']:
+        """Create new workspace."""
+        body = {
+            "user_id": User.current_user().id,
+            "workspace_admin_user_id": admin_id or User.current_user().id,
+            "workspace": {
+                "name": name,
+                "description": description
+            }
+        }
+
+        resp = requests.post(
+            urljoin(API_URL, "/workspace"),
+            json=body,
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.error(f"Failed to create workspace: {resp.text}")
+            return None
+
+        return Workspace(**resp.json())
 
     @property
     def users(self) -> List[User]:
