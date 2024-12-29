@@ -1,6 +1,8 @@
 """User management."""
+
 import streamlit as st
 from .models import User, UserRole
+
 
 @st.fragment
 def usr_management_view():
@@ -15,15 +17,13 @@ def usr_management_view():
                 "create_new_usr_form",
                 border=False,
                 enter_to_submit=False,
-                clear_on_submit=True
-                ):
+                clear_on_submit=True,
+            ):
                 new_usr_username = st.text_input("Username")
                 new_usr_password = st.text_input("Password")
                 new_usr_display_name = st.text_input("Display name")
                 new_usr_role = st.pills(
-                    "Role",
-                    options=["user", "admin", "sysadmin"],
-                    default="user"
+                    "Role", options=["user", "admin", "sysadmin"], default="user"
                 )
 
                 submit = st.form_submit_button(label="Create")
@@ -33,7 +33,7 @@ def usr_management_view():
                         new_usr_username,
                         new_usr_password,
                         new_usr_role,
-                        display_name=new_usr_display_name
+                        display_name=new_usr_display_name,
                     )
 
     users = User.all()
@@ -64,15 +64,15 @@ def usr_management_view():
                         value=user.username,
                         disabled=True,
                         key=f"user_username_{user.id}",
-                        label_visibility='collapsed'
-                        )
+                        label_visibility="collapsed",
+                    )
                 with cols[1]:
                     st.text_input(
                         "display_name",
                         value=user.display_name,
                         disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_display_name_{user.id}",
-                        label_visibility='collapsed'
+                        label_visibility="collapsed",
                     )
                 with cols[2]:
                     st.selectbox(
@@ -81,7 +81,7 @@ def usr_management_view():
                         index=["admin", "sysadmin", "user"].index(user.role),
                         disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_role_{user.id}",
-                        label_visibility='collapsed'
+                        label_visibility="collapsed",
                     )
                 with cols[3]:
                     st.selectbox(
@@ -90,7 +90,7 @@ def usr_management_view():
                         index=["Active", "Suspended"].index(user.status),
                         disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_status_{user.id}",
-                        label_visibility='collapsed'
+                        label_visibility="collapsed",
                     )
                 with cols[4]:
                     st.checkbox(
@@ -101,10 +101,10 @@ def usr_management_view():
                             or (
                                 user.role == UserRole.ADMIN
                                 and User.current_user().role == UserRole.ADMIN
-                                )
-                            ),
+                            )
+                        ),
                         key=f"user_delete_{user.id}",
-                        label_visibility='collapsed'
+                        label_visibility="collapsed",
                     )
 
         def delete_users():

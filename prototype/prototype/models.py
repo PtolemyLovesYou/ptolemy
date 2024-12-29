@@ -1,4 +1,5 @@
 """Models."""
+
 from typing import Optional, List
 from datetime import datetime
 from enum import StrEnum
@@ -8,8 +9,10 @@ from pydantic import BaseModel, field_validator
 import streamlit as st
 from .env_settings import API_URL
 
+
 class UserRole(StrEnum):
     """User role."""
+
     USER = "user"
     ADMIN = "admin"
     SYSADMIN = "sysadmin"
@@ -17,6 +20,7 @@ class UserRole(StrEnum):
 
 class ApiKeyPermission(StrEnum):
     """API Key Permission Enum"""
+
     READ_ONLY = "ReadOnly"
     WRITE_ONLY = "WriteOnly"
     READ_WRITE = "ReadWrite"
@@ -24,6 +28,7 @@ class ApiKeyPermission(StrEnum):
 
 class WorkspaceRole(StrEnum):
     """Workspace role."""
+
     USER = "User"
     MANAGER = "Manager"
     ADMIN = "Admin"
@@ -31,6 +36,7 @@ class WorkspaceRole(StrEnum):
 
 class ServiceApiKey(BaseModel):
     """Service API key."""
+
     workspace_id: str
     id: str
     name: str
@@ -39,7 +45,7 @@ class ServiceApiKey(BaseModel):
     expires_at: Optional[str] = None
     api_key: Optional[str] = None
 
-    @field_validator('expires_at')
+    @field_validator("expires_at")
     @classmethod
     def validate_expires_at(cls, v: Optional[str]) -> datetime:
         """Validate expiration date."""
@@ -59,11 +65,11 @@ class ServiceApiKey(BaseModel):
     @classmethod
     def create(
         cls,
-        workspace: 'Workspace',
+        workspace: "Workspace",
         name: str,
         permission: ApiKeyPermission,
         duration: Optional[int] = None,
-        ) -> Optional[str]:
+    ) -> Optional[str]:
         """Create API key."""
         data = {
             "user_id": User.current_user().id,
@@ -80,17 +86,17 @@ class ServiceApiKey(BaseModel):
         )
 
         if not resp.ok:
-            st.error(
-                f"Failed to create API key: {resp.text}"
-            )
+            st.error(f"Failed to create API key: {resp.text}")
             return None
 
         api_key = resp.json()
 
         return api_key["api_key"]
 
+
 class User(BaseModel):
     """User model."""
+
     id: str
     username: str
     is_admin: bool
@@ -99,7 +105,7 @@ class User(BaseModel):
     status: str
 
     @classmethod
-    def current_user(cls) -> 'User':
+    def current_user(cls) -> "User":
         """Current user."""
         if st.session_state.user_info is None:
             raise ValueError("User is not logged in")
@@ -112,20 +118,18 @@ class User(BaseModel):
             urljoin(API_URL, f"/user/{self.id}"),
             json={
                 "user_id": User.current_user().id,
-                },
+            },
             timeout=5,
         )
 
         if not resp.ok:
-            st.toast(
-                f"Failed to delete user {self.id}"
-                )
+            st.toast(f"Failed to delete user {self.id}")
             return False
 
         return True
 
     @classmethod
-    def all(cls) -> List['User']:
+    def all(cls) -> List["User"]:
         """Get all users."""
         user_list = requests.get(
             urljoin(API_URL, "/user/all"),
@@ -140,8 +144,8 @@ class User(BaseModel):
         username: str,
         password: str,
         role: UserRole,
-        display_name: Optional[str] = None
-        ) -> bool:
+        display_name: Optional[str] = None,
+    ) -> bool:
         """Create user."""
         user_id = User.current_user().id
 
@@ -155,7 +159,7 @@ class User(BaseModel):
                     "is_admin": role == UserRole.ADMIN,
                     "is_sysadmin": role == UserRole.SYSADMIN,
                     "display_name": display_name,
-                    },
+                },
             },
             timeout=5,
         )
@@ -188,16 +192,14 @@ class User(BaseModel):
         )
 
         if not resp.ok:
-            st.toast(
-                f"Failed to get workspace role: {resp.status_code} {resp.text}"
-                )
+            st.toast(f"Failed to get workspace role: {resp.status_code} {resp.text}")
 
             return WorkspaceRole.USER
 
         return WorkspaceRole(str(resp.json()["role"]).lower())
 
     @property
-    def workspaces(self) -> List['Workspace']:
+    def workspaces(self) -> List["Workspace"]:
         """Workspaces belonging to user."""
         resp = requests.get(
             urljoin(API_URL, f"user/{self.id}/workspaces"),
@@ -205,9 +207,7 @@ class User(BaseModel):
         )
 
         if not resp.ok:
-            st.toast(
-                f"Failed to get workspaces: {resp.status_code}"
-                )
+            st.toast(f"Failed to get workspaces: {resp.status_code}")
 
             return []
 
@@ -216,6 +216,7 @@ class User(BaseModel):
 
 class Workspace(BaseModel):
     """Workspace."""
+
     id: str
     name: str
     description: Optional[str] = None
@@ -239,16 +240,13 @@ class Workspace(BaseModel):
         cls,
         name: str,
         admin_id: Optional[str] = None,
-        description: Optional[str] = None
-        ) -> Optional['Workspace']:
+        description: Optional[str] = None,
+    ) -> Optional["Workspace"]:
         """Create new workspace."""
         body = {
             "user_id": User.current_user().id,
             "workspace_admin_user_id": admin_id or User.current_user().id,
-            "workspace": {
-                "name": name,
-                "description": description
-            }
+            "workspace": {"name": name, "description": description},
         }
 
         resp = requests.post(
@@ -272,9 +270,7 @@ class Workspace(BaseModel):
         )
 
         if not resp.ok:
-            st.toast(
-                f"Failed to get users in workspace: {resp.status_code}"
-                )
+            st.toast(f"Failed to get users in workspace: {resp.status_code}")
 
             return []
 
@@ -289,9 +285,7 @@ class Workspace(BaseModel):
         )
 
         if not resp.ok:
-            st.toast(
-                f"Failed to get API keys in workspace: {resp.status_code}"
-                )
+            st.toast(f"Failed to get API keys in workspace: {resp.status_code}")
 
             return []
 
@@ -302,13 +296,13 @@ class Workspace(BaseModel):
         resp = requests.post(
             urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
             json={"user_id": User.current_user().id, "role": role},
-            timeout=5
+            timeout=5,
         )
 
         if not resp.ok:
             st.error(
                 f"Failed to add user {user.id} to workspace {self.id}: {resp.text}"
-                )
+            )
             return False
 
         return True
@@ -324,7 +318,7 @@ class Workspace(BaseModel):
         if not resp.ok:
             st.toast(
                 f"Failed to remove user {user.id} from workspace {self.id}: {resp.text}"
-                )
+            )
             return False
 
         return True
@@ -340,7 +334,7 @@ class Workspace(BaseModel):
         if not resp.ok:
             st.toast(
                 f"Failed to update user {user.id} role in workspace {self.id}: {resp.text}"
-                )
+            )
             return False
 
         return True

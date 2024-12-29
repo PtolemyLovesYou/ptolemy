@@ -1,9 +1,11 @@
 """Auth services."""
+
 from urllib.parse import urljoin
 import streamlit as st
 import requests
 from .models import User
 from .env_settings import API_URL
+
 
 def login(username: str, password: str) -> bool:
     """Login."""
@@ -22,10 +24,12 @@ def login(username: str, password: str) -> bool:
 
     return False
 
+
 def logout():
     """Logout user."""
     st.session_state.authenticated = False
     st.session_state.user_info = None
+
 
 def get_login_layout():
     """Login layout."""

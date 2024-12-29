@@ -1,6 +1,8 @@
 """Workspace management."""
+
 import streamlit as st
 from ..models import WorkspaceRole, Workspace
+
 
 def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace form."""
@@ -13,13 +15,10 @@ def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
             "Description",
             value=workspace.description,
             key="wk_description",
-            disabled=disabled
+            disabled=disabled,
         )
 
-        submit_wk = st.form_submit_button(
-            label="Save",
-            disabled=disabled
-            )
+        submit_wk = st.form_submit_button(label="Save", disabled=disabled)
 
         if submit_wk:
             st.rerun(scope="fragment")

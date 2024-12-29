@@ -4,7 +4,7 @@ from typing import Iterable
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 
-from .._core import ProtoRecord # pylint: disable=no-name-in-module
+from .._core import ProtoRecord  # pylint: disable=no-name-in-module
 
 
 class Engine(BaseModel, ABC):

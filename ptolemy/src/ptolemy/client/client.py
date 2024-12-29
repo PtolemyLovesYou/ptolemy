@@ -11,13 +11,12 @@ from ..utils import (
     Tier,
     ID,
 )
-from .._core import ( # pylint: disable=no-name-in-module
-    ProtoRecord
-)
+from .._core import ProtoRecord  # pylint: disable=no-name-in-module
 
 
 class Ptolemy(BaseModel):
     """Ptolemy client."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _tier: Tier = PrivateAttr(default=None)
@@ -127,7 +126,11 @@ class Ptolemy(BaseModel):
             raise ValueError(f"Cannot spawn child of tier {self._tier}")
 
         return (
-            Ptolemy(engine=self.engine, workspace_id=self.workspace_id, autoflush=self.autoflush)
+            Ptolemy(
+                engine=self.engine,
+                workspace_id=self.workspace_id,
+                autoflush=self.autoflush,
+            )
             .tier(self._tier.child)
             .event(
                 name=name,
@@ -147,7 +150,11 @@ class Ptolemy(BaseModel):
     ) -> "Ptolemy":
         """Start a new trace."""
         return (
-            Ptolemy(engine=self.engine, workspace_id=self.workspace_id, autoflush=self.autoflush)
+            Ptolemy(
+                engine=self.engine,
+                workspace_id=self.workspace_id,
+                autoflush=self.autoflush,
+            )
             .tier(Tier.SYSTEM)
             .event(
                 parent_id=self.workspace_id,
@@ -195,7 +202,7 @@ class Ptolemy(BaseModel):
             parameters=parameters,
             version=version,
             environment=environment,
-            )
+        )
 
         return self
 
@@ -262,13 +269,8 @@ class Ptolemy(BaseModel):
             raise ValueError("Inputs already set")
 
         self._inputs = [
-            ProtoRecord.io(
-                self._tier,
-                LogType.INPUT.value,
-                self._event.id,
-                k,
-                v
-            ) for k, v in kwargs.items()
+            ProtoRecord.io(self._tier, LogType.INPUT.value, self._event.id, k, v)
+            for k, v in kwargs.items()
         ]
 
         return self
@@ -300,13 +302,8 @@ class Ptolemy(BaseModel):
             raise ValueError("Outputs already set")
 
         self._outputs = [
-            ProtoRecord.io(
-                self._tier,
-                self._event.id,
-                LogType.OUTPUT.value,
-                k,
-                v
-            ) for k, v in kwargs.items()
+            ProtoRecord.io(self._tier, self._event.id, LogType.OUTPUT.value, k, v)
+            for k, v in kwargs.items()
         ]
 
         return self
@@ -329,13 +326,8 @@ class Ptolemy(BaseModel):
             raise ValueError("Feedback already set")
 
         self._feedback = [
-            ProtoRecord.io(
-                self._tier,
-                self._event.id,
-                LogType.FEEDBACK.value,
-                k,
-                v
-            ) for k, v in kwargs.items()
+            ProtoRecord.io(self._tier, self._event.id, LogType.FEEDBACK.value, k, v)
+            for k, v in kwargs.items()
         ]
 
         return self
@@ -366,12 +358,9 @@ class Ptolemy(BaseModel):
 
         self._metadata = [
             ProtoRecord.metadata(
-                self._tier,
-                self._event.id,
-                LogType.METADATA.value,
-                k,
-                v
-            ) for k, v in kwargs.items()
+                self._tier, self._event.id, LogType.METADATA.value, k, v
+            )
+            for k, v in kwargs.items()
         ]
 
         return self
