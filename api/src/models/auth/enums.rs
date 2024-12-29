@@ -11,8 +11,7 @@ use std::io::Write;
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize)]
 #[diesel(sql_type = WorkspaceRole)]
 pub enum WorkspaceRoleEnum {
-    Reader,
-    Writer,
+    User,
     Manager,
     Admin,
 }
@@ -20,8 +19,7 @@ pub enum WorkspaceRoleEnum {
 impl ToSql<WorkspaceRole, Pg> for WorkspaceRoleEnum {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
         match *self {
-            WorkspaceRoleEnum::Reader => out.write_all(b"reader")?,
-            WorkspaceRoleEnum::Writer => out.write_all(b"writer")?,
+            WorkspaceRoleEnum::User => out.write_all(b"user")?,
             WorkspaceRoleEnum::Manager => out.write_all(b"manager")?,
             WorkspaceRoleEnum::Admin => out.write_all(b"admin")?,
         }
@@ -32,8 +30,7 @@ impl ToSql<WorkspaceRole, Pg> for WorkspaceRoleEnum {
 impl FromSql<WorkspaceRole, Pg> for WorkspaceRoleEnum {
     fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
         match bytes.as_bytes() {
-            b"reader" => Ok(WorkspaceRoleEnum::Reader),
-            b"writer" => Ok(WorkspaceRoleEnum::Writer),
+            b"user" => Ok(WorkspaceRoleEnum::User),
             b"manager" => Ok(WorkspaceRoleEnum::Manager),
             b"admin" => Ok(WorkspaceRoleEnum::Admin),
             _ => Err("Unrecognized enum variant".into()),

@@ -1,7 +1,7 @@
 -- Your SQL goes here
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-create type workspace_role as enum ('reader', 'writer', 'manager', 'admin');
+create type workspace_role as enum ('user', 'manager', 'admin');
 create type api_key_permission as enum ('read_only', 'write_only', 'read_write');
 create type user_status as enum ('active', 'suspended');
 
