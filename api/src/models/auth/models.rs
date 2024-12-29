@@ -78,6 +78,7 @@ pub struct WorkspaceUser {
 pub struct UserApiKey {
     pub id: Uuid,
     pub user_id: Uuid,
+    pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
@@ -93,6 +94,7 @@ pub struct UserApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]
     pub id: Option<Uuid>,
     pub user_id: Uuid,
+    pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
@@ -118,6 +120,7 @@ pub struct UserApiKeyCreate {
 pub struct ServiceApiKey {
     pub id: Uuid,
     pub workspace_id: Uuid,
+    pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     #[serde(skip)] // salt should NOT be serialized under any circumstances
@@ -133,6 +136,7 @@ pub struct ServiceApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]
     pub id: Option<Uuid>,
     pub workspace_id: Uuid,
+    pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub salt: String,

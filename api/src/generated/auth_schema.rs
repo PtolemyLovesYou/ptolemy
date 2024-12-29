@@ -21,7 +21,10 @@ diesel::table! {
     service_api_key (id) {
         id -> Uuid,
         workspace_id -> Uuid,
+        name -> Varchar,
+        #[max_length = 72]
         key_hash -> Varchar,
+        #[max_length = 16]
         key_preview -> Varchar,
         salt -> Varchar,
         permissions -> ApiKeyPermission,
@@ -36,6 +39,7 @@ diesel::table! {
     user_api_key (id) {
         id -> Uuid,
         user_id -> Uuid,
+        name -> Varchar,
         key_hash -> Varchar,
         key_preview -> Varchar,
         salt -> Varchar,

@@ -27,13 +27,6 @@ def logout():
     st.session_state.authenticated = False
     st.session_state.user_info = None
 
-def get_user_info() -> User:
-    """Get user info."""
-    if st.session_state.user_info is None:
-        raise ValueError("User is not logged in")
-
-    return st.session_state.user_info
-
 def get_login_layout():
     """Login layout."""
 
