@@ -1,8 +1,9 @@
-use crate::crud::crypto::{generate_api_key, hash_password};
+use crate::crud::crypto::generate_api_key;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::models::auth::models::{ServiceApiKey, ServiceApiKeyCreate, Workspace};
+use crate::crypto::PasswordHandler;
 use crate::state::DbConnection;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
@@ -16,9 +17,10 @@ pub async fn create_service_api_key(
     name: String,
     permissions: ApiKeyPermissionEnum,
     valid_for: Option<Duration>,
+    password_handler: &PasswordHandler
 ) -> Result<(Uuid, String), CRUDError> {
     let api_key = generate_api_key("pt-sk").await;
-    let (key_hash, salt) = hash_password(conn, &api_key).await?;
+    let key_hash = password_handler.hash_password(&api_key);
     let expires_at = match valid_for {
         Some(duration) => Some(Utc::now().naive_utc() + duration),
         None => None,
@@ -29,7 +31,7 @@ pub async fn create_service_api_key(
         workspace_id,
         name,
         key_hash,
-        salt,
+        salt: "".to_string(),
         key_preview: api_key.chars().take(12).collect(),
         permissions,
         expires_at,

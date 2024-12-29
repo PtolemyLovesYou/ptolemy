@@ -22,7 +22,6 @@ diesel::table! {
         id -> Uuid,
         workspace_id -> Uuid,
         name -> Varchar,
-        #[max_length = 72]
         key_hash -> Varchar,
         #[max_length = 16]
         key_preview -> Varchar,

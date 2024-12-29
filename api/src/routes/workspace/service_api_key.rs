@@ -65,6 +65,7 @@ async fn create_service_api_key(
             Some(d) => Some(chrono::Duration::days(d)),
             None => None,
         },
+        &state.password_handler,
     )
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
