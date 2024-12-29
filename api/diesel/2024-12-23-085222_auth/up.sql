@@ -27,6 +27,7 @@ create table workspace_user (
 create table user_api_key (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references users(id) on delete cascade,
+    name varchar not null,
     key_hash varchar not null,
     key_preview varchar not null,
     salt varchar not null,
@@ -37,8 +38,9 @@ create table user_api_key (
 create table service_api_key (
     id uuid primary key default gen_random_uuid(),
     workspace_id uuid not null references workspace(id) on delete cascade,
-    key_hash varchar not null,
-    key_preview varchar not null,
+    name varchar not null,
+    key_hash varchar(72) not null,
+    key_preview varchar(16) not null,
     salt varchar not null,
     permissions api_key_permission not null,
     expires_at timestamp(6)

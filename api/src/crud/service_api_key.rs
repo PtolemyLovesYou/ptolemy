@@ -13,6 +13,7 @@ use uuid::Uuid;
 pub async fn create_service_api_key(
     conn: &mut DbConnection<'_>,
     workspace_id: Uuid,
+    name: String,
     permissions: ApiKeyPermissionEnum,
     valid_for: Option<Duration>,
 ) -> Result<(Uuid, String), CRUDError> {
@@ -26,6 +27,7 @@ pub async fn create_service_api_key(
     let create_model = ServiceApiKeyCreate {
         id: None,
         workspace_id,
+        name,
         key_hash,
         salt,
         key_preview: api_key.chars().take(8).collect(),

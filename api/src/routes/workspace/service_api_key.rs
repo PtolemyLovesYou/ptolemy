@@ -19,6 +19,7 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize)]
 struct CreateApiKeyRequest {
     user_id: Uuid,
+    name: String,
     permission: ApiKeyPermissionEnum,
     duration: Option<i64>,
 }
@@ -58,6 +59,7 @@ async fn create_service_api_key(
     let (api_key_id, api_key) = service_api_key_crud::create_service_api_key(
         &mut conn,
         workspace_id,
+        req.name,
         req.permission,
         match req.duration {
             Some(d) => Some(chrono::Duration::days(d)),
