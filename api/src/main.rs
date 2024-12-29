@@ -1,6 +1,10 @@
 use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{Level, error, info};
+use tower_http::{
+    trace::{self, TraceLayer},
+    LatencyUnit,
+};
 
 use api::crud::{
     crypto::verify_password,
@@ -86,6 +90,26 @@ async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
     }
 }
 
+type HttpTraceLayer = TraceLayer<tower_http::classify::SharedClassifier<tower_http::classify::ServerErrorsAsFailures>>;
+
+fn trace_layer() -> HttpTraceLayer {
+    TraceLayer::new_for_http()
+        .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+        .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
+        .on_response(
+            trace::DefaultOnResponse::new()
+                .level(Level::INFO)
+                .latency_unit(LatencyUnit::Micros),
+        )
+        .on_body_chunk(trace::DefaultOnBodyChunk::new())
+        .on_eos(
+            trace::DefaultOnEos::new()
+                .level(Level::INFO)
+                .latency_unit(LatencyUnit::Micros),
+        )
+        .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
+}
+
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt::init();
@@ -110,7 +134,8 @@ async fn main() -> Result<(), ApiError> {
         .nest("/graphql", graphql_router().await)
         .nest("/workspace", workspace_router(&shared_state).await)
         .nest("/user", user_router(&shared_state).await)
-        .nest("/auth", auth_router(&shared_state).await);
+        .nest("/auth", auth_router(&shared_state).await)
+        .layer(trace_layer());
 
     let server_url = format!("0.0.0.0:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
