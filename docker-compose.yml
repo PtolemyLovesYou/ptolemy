@@ -81,7 +81,7 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      - ./prototype:/app
+      - ./prototype:/app/prototype
     networks:
       - ptolemy
 

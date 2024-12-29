@@ -9,14 +9,16 @@ ENV UV_LINK_MODE=copy
 
 # Install the project's dependencies using the lockfile and settings
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=./prototype/uv.lock,target=uv.lock \
-    --mount=type=bind,source=./prototype/pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project
+    --mount=type=bind,source=./uv.lock,target=uv.lock \
+    --mount=type=bind,source=./pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=./prototype/pyproject.toml,target=prototype/pyproject.toml \
+    uv sync --frozen --no-install-project --package prototype
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
-ADD ./prototype /app
+COPY pyproject.toml uv.lock .
+COPY ./prototype /app/prototype
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+    uv sync --frozen --package prototype
 
-CMD ["uv", "run", "-m", "streamlit", "run", "app.py", "--server.address=0.0.0.0"]
+CMD ["uv", "run", "--package", "prototype", "--directory", "prototype", "-m", "streamlit", "run", "app.py", "--server.address=0.0.0.0"]

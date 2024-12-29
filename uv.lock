@@ -612,16 +612,10 @@ dependencies = [
     { name = "tenacity" },
 ]
 
-[package.optional-dependencies]
-prototype = [
-    { name = "streamlit" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.10" },
     { name = "pydantic", specifier = ">=2.10.4" },
-    { name = "streamlit", marker = "extra == 'prototype'", specifier = ">=1.41.1" },
     { name = "tenacity", specifier = ">=9.0.0" },
 ]
 
