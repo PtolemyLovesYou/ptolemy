@@ -1,9 +1,10 @@
 """Models."""
 from typing import Optional, List
+from datetime import datetime
 from enum import StrEnum
 from urllib.parse import urljoin
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 import streamlit as st
 from .env_settings import API_URL
 
@@ -13,12 +14,35 @@ class UserRole(StrEnum):
     ADMIN = "admin"
     SYSADMIN = "sysadmin"
 
+class ApiKeyPermission(StrEnum):
+    """API Key Permission Enum"""
+    READ_ONLY = "ReadOnly"
+    WRITE_ONLY = "WriteOnly"
+    READ_WRITE = "ReadWrite"
+
 class WorkspaceRole(StrEnum):
     """Workspace role."""
     READER = "reader"
     WRITER = "writer"
     MANAGER = "manager"
     ADMIN = "admin"
+
+class ServiceApiKey(BaseModel):
+    """Service API key."""
+    id: str
+    name: str
+    key_preview: str
+    permissions: ApiKeyPermission
+    expires_at: Optional[str]
+
+    @field_validator('expires_at')
+    @classmethod
+    def validate_expires_at(cls, v: Optional[str]) -> datetime:
+        """Validate expiration date."""
+        if v:
+            return datetime.fromisoformat(v)
+
+        return None
 
 class User(BaseModel):
     """User model."""
@@ -96,3 +120,20 @@ class Workspace(BaseModel):
             return []
 
         return [User(**u) for u in resp.json()]
+
+    @property
+    def api_keys(self) -> List[ServiceApiKey]:
+        """API keys in workspace."""
+        resp = requests.get(
+            urljoin(API_URL, f"/workspace/{self.id}/api_key"),
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to get API keys in workspace: {resp.status_code}"
+                )
+
+            return []
+
+        return [ServiceApiKey(**u) for u in resp.json()]

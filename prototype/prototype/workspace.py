@@ -3,10 +3,52 @@ from typing import Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from .models import Workspace, UserRole, WorkspaceRole
+from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission
 from .user import get_users
 from .auth import get_user_info
 from .env_settings import API_URL
+
+def delete_service_api_key(
+    workspace_id: str,
+    api_key_id: str,
+    ):
+    """Delete service api key."""
+    resp = requests.delete(
+        urljoin(API_URL, f"/workspace/{workspace_id}/api_key/{api_key_id}"),
+        json={"user_id": get_user_info().id},
+        timeout=5,
+    )
+
+    if not resp.ok:
+        st.error(
+            f"Failed to delete API key: {resp.text}"
+)
+
+def create_service_api_key(
+    workspace_id: str,
+    name: str,
+    permission: ApiKeyPermission,
+    duration: Optional[int] = None,
+):
+    """Create service api key."""
+    data = {
+        "user_id": get_user_info().id,
+        "workspace_id": workspace_id,
+        "name": name,
+        "permission": permission,
+        "duration": duration,
+    }
+
+    resp = requests.post(
+        urljoin(API_URL, f"/workspace/{workspace_id}/api_key"),
+        json=data,
+        timeout=5,
+    )
+
+    if not resp.ok:
+        st.toast(
+            f"Failed to create API key: {resp.text}"
+            )
 
 def create_workspace(name: str, admin_id: Optional[str] = None, description: Optional[str] = None):
     """Create workspace."""
@@ -224,6 +266,69 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
 def service_api_key_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Service API Key Management"""
     st.write(f"API Key Management for {workspace.name} {user_workspace_role}")
+    with st.popover("New API Key", use_container_width=True):
+        with st.form("new_api_key", clear_on_submit=True, border=False):
+            new_api_key_name = st.text_input("Name")
+            new_api_key_duration = st.slider(
+                "Duration (Days)",
+                min_value=1,
+                max_value=365,
+                value=30,
+                step=1
+                )
+
+            new_api_key_permission = st.segmented_control(
+                "Permission",
+                options=list(ApiKeyPermission),
+                default=ApiKeyPermission.READ_ONLY
+                )
+
+            submit_new_api_key = st.form_submit_button(label="Create")
+            if submit_new_api_key:
+                create_service_api_key(
+                    workspace.id,
+                    new_api_key_name,
+                    new_api_key_permission,
+                    duration=new_api_key_duration,
+                )
+
+    keys = workspace.api_keys
+
+    with st.form("Service API Key Management", clear_on_submit=True, border=False):
+        api_keys = st.data_editor(
+            [
+                {
+                    "name": k.name,
+                    "permission": k.permissions,
+                    "expires_at": k.expires_at,
+                    "delete": False
+                    } for k in keys
+                ],
+            use_container_width=True,
+            column_config={
+                "name": st.column_config.TextColumn(disabled=True),
+                "permission": st.column_config.SelectboxColumn(
+                    options=list(ApiKeyPermission),
+                    disabled=True,
+                    ),
+                "expires_at": st.column_config.DatetimeColumn(
+                    disabled=True,
+                ),
+                "delete": st.column_config.CheckboxColumn(
+                    disabled=False,
+                    required=True,
+                    ),
+                },
+            )
+
+        submit_api_keys = st.form_submit_button(label="Save")
+
+        if submit_api_keys:
+            for key, key_row in zip(keys, api_keys):
+                if key_row["delete"]:
+                    delete_service_api_key(workspace.id, key.id)
+
+            st.rerun(scope='fragment')
 
 @st.fragment
 def wk_management_view():

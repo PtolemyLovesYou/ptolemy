@@ -7,7 +7,7 @@ use crate::state::DbConnection;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-// use tracing::error;
+use tracing::error;
 use uuid::Uuid;
 
 pub async fn create_service_api_key(
@@ -42,7 +42,10 @@ pub async fn create_service_api_key(
         .await
     {
         Ok(id) => Ok((id, api_key)),
-        Err(_) => Err(CRUDError::InsertError),
+        Err(e) => {
+            error!("Unable to create service_api_key: {}", e);
+            Err(CRUDError::InsertError)
+        },
     }
 }
 
@@ -61,7 +64,10 @@ pub async fn get_service_api_key(
         .await
     {
         Ok(key) => Ok(key),
-        Err(_) => Err(CRUDError::GetError),
+        Err(e) => {
+            error!("Unable to get service_api_key: {}", e);
+            Err(CRUDError::GetError)
+        },
     }
 }
 
@@ -82,7 +88,12 @@ pub async fn get_workspace_service_api_keys(
         .select(ServiceApiKey::as_select())
         .get_results(conn)
         .await
-        .map_err(|_| CRUDError::GetError)?;
+        .map_err(
+            |e| {
+                error!("Unable to get service_api_keys: {}", e);
+                CRUDError::GetError
+            }
+        )?;
 
     Ok(api_keys)
 }
@@ -102,6 +113,9 @@ pub async fn delete_service_api_key(
         .await
     {
         Ok(_) => Ok(()),
-        Err(_) => Err(CRUDError::DeleteError),
+        Err(e) => {
+            error!("Unable to delete service_api_key: {:?}", e);
+            Err(CRUDError::DeleteError)
+        },
     }
 }

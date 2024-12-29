@@ -101,13 +101,21 @@ async fn get_service_api_key(
     Ok(Json(api_key))
 }
 
+#[derive(Debug, Deserialize)]
+struct DeleteServiceApiKeyRequest {
+    user_id: Uuid,
+}
+
 async fn delete_service_api_key(
     state: Arc<AppState>,
     Path((workspace_id, api_key_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<DeleteServiceApiKeyRequest>,
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match service_api_key_crud::delete_service_api_key(&mut conn, &workspace_id, &api_key_id).await
+    ensure_service_key_permissions(&mut conn, &workspace_id, &req.user_id).await?;
+
+    match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id).await
     {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => match e {
@@ -148,7 +156,7 @@ pub async fn service_api_key_router(state: &Arc<AppState>) -> Router {
             "/:workspace_id/api_key/:api_key_id",
             delete({
                 let shared_state = Arc::clone(state);
-                move |path_vars| delete_service_api_key(shared_state, path_vars)
+                move |path_vars, req| delete_service_api_key(shared_state, path_vars, req)
             }),
         )
 }
