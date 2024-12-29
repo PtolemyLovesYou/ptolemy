@@ -221,6 +221,11 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
             st.rerun(scope="fragment")
 
 @st.fragment
+def service_api_key_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
+    """Service API Key Management"""
+    st.write(f"API Key Management for {workspace.name} {user_workspace_role}")
+
+@st.fragment
 def wk_management_view():
     """Get workspace management view."""
     wk_selection_col, new_col = st.columns([3, 1])
@@ -243,21 +248,26 @@ def wk_management_view():
         if selected_workspace is None:
             pass
         else:
+            user_workspace_role = get_user_info().workspace_role(selected_workspace.id)
+
             wk_mgmnt, wk_users, api_keys = st.tabs(
-                ["Workspace Management", "Workspace Users", "API Keys"]
+                ["Workspace", "Users", "Service API Keys"]
                 )
 
             with wk_mgmnt:
                 workspace_form(
                     selected_workspace,
-                    get_user_info().workspace_role(selected_workspace.id)
+                    user_workspace_role,
                     )
 
             with wk_users:
                 wk_user_management_form(
                     selected_workspace,
-                    get_user_info().workspace_role(selected_workspace.id)
+                    user_workspace_role,
                     )
 
             with api_keys:
-                st.write("API keys")
+                service_api_key_management_form(
+                    selected_workspace,
+                    user_workspace_role,
+                    )
