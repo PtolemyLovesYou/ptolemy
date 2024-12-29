@@ -1,7 +1,7 @@
 use crate::crypto::PasswordHandler;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::users::dsl::{
-    display_name, id, is_admin, is_sysadmin, password_hash, salt, status, username, users,
+    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users,
 };
 use crate::models::auth::enums::UserStatusEnum;
 use crate::models::auth::models::{User, UserCreate};
@@ -36,7 +36,6 @@ pub async fn create_user(
             is_sysadmin.eq(&user.is_sysadmin),
             is_admin.eq(&user.is_admin),
             password_hash.eq(&hashed_password),
-            salt.eq(""),
         ))
         .returning(id)
         .get_result(conn)

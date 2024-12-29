@@ -34,8 +34,6 @@ pub struct User {
     pub username: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub password_hash: String,
-    #[serde(skip)] // salt should NOT be serialized under any circumstances
-    pub salt: String,
     pub display_name: Option<String>,
     pub status: UserStatusEnum,
     pub is_sysadmin: bool,
@@ -81,8 +79,6 @@ pub struct UserApiKey {
     pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
-    #[serde(skip)] // salt should NOT be serialized under any circumstances
-    pub salt: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
@@ -97,8 +93,6 @@ pub struct UserApiKeyCreate {
     pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
-    #[serde(skip)] // salt should NOT be serialized under any circumstances
-    pub salt: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
@@ -123,8 +117,6 @@ pub struct ServiceApiKey {
     pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
-    #[serde(skip)] // salt should NOT be serialized under any circumstances
-    pub salt: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
@@ -139,7 +131,6 @@ pub struct ServiceApiKeyCreate {
     pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
-    pub salt: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,

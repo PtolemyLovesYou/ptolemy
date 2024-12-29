@@ -1,9 +1,8 @@
-use crate::crud::crypto::generate_api_key;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::models::auth::models::{ServiceApiKey, ServiceApiKeyCreate, Workspace};
-use crate::crypto::PasswordHandler;
+use crate::crypto::{PasswordHandler, generate_api_key};
 use crate::state::DbConnection;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
@@ -31,7 +30,6 @@ pub async fn create_service_api_key(
         workspace_id,
         name,
         key_hash,
-        salt: "".to_string(),
         key_preview: api_key.chars().take(12).collect(),
         permissions,
         expires_at,
