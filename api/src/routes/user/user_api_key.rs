@@ -24,6 +24,11 @@ struct CreateApiKeyResponse {
     api_key: String,
 }
 
+/// Creates a new user API key.
+///
+/// # Errors
+///
+/// - `INTERNAL_SERVER_ERROR` on any unexpected error.
 async fn create_user_api_key(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
@@ -50,6 +55,11 @@ async fn create_user_api_key(
     }))
 }
 
+/// Returns all API keys for the given user.
+///
+/// # Errors
+///
+/// - `INTERNAL_SERVER_ERROR` on any unexpected error.
 async fn get_user_api_keys(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
@@ -62,6 +72,12 @@ async fn get_user_api_keys(
 
     Ok(Json(api_keys))
 }
+
+/// Retrieves a specific user API key for the given user.
+///
+/// # Errors
+///
+/// - `INTERNAL_SERVER_ERROR` on any unexpected error.
 
 async fn get_user_api_key(
     state: Arc<AppState>,
@@ -76,6 +92,12 @@ async fn get_user_api_key(
     Ok(Json(api_key))
 }
 
+/// Deletes the given user API key.
+///
+/// # Errors
+///
+/// - `INTERNAL_SERVER_ERROR` on any unexpected error.
+/// - `CONFLICT` if the API key does not exist.
 async fn delete_user_api_key(
     state: Arc<AppState>,
     Path((user_id, api_key_id)): Path<(Uuid, Uuid)>,
@@ -92,6 +114,12 @@ async fn delete_user_api_key(
     }
 }
 
+/// API endpoints for user API keys.
+///
+/// - `POST /` Creates a new API key for the given user.
+/// - `GET /` Returns all API keys for the given user.
+/// - `GET /{api_key_id}` Returns the API key identified by `{api_key_id}`.
+/// - `DELETE /{api_key_id}` Deletes the API key identified by `{api_key_id}`.
 pub async fn user_api_key_router(state: &Arc<AppState>) -> Router {
     Router::new()
         // Create service API key [POST]
