@@ -265,8 +265,9 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
 @st.fragment
 def service_api_key_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Service API Key Management"""
-    st.write(f"API Key Management for {workspace.name} {user_workspace_role}")
-    with st.popover("New API Key", use_container_width=True):
+    disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
+
+    with st.popover("New API Key", use_container_width=True, disabled=disabled):
         with st.form("new_api_key", clear_on_submit=True, border=False):
             new_api_key_name = st.text_input("Name")
             new_api_key_duration = st.slider(
@@ -315,13 +316,13 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
                     disabled=True,
                 ),
                 "delete": st.column_config.CheckboxColumn(
-                    disabled=False,
+                    disabled=disabled,
                     required=True,
                     ),
                 },
             )
 
-        submit_api_keys = st.form_submit_button(label="Save")
+        submit_api_keys = st.form_submit_button(label="Save", disabled=disabled)
 
         if submit_api_keys:
             for key, key_row in zip(keys, api_keys):
