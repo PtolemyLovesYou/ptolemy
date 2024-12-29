@@ -4,7 +4,9 @@ use tower_http::{
 };
 use tracing::Level;
 
-type HttpTraceLayer = TraceLayer<tower_http::classify::SharedClassifier<tower_http::classify::ServerErrorsAsFailures>>;
+type HttpTraceLayer = TraceLayer<
+    tower_http::classify::SharedClassifier<tower_http::classify::ServerErrorsAsFailures>,
+>;
 
 pub fn trace_layer() -> HttpTraceLayer {
     TraceLayer::new_for_http()

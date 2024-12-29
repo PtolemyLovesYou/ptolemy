@@ -1,8 +1,8 @@
-use crate::crud::crypto::{generate_api_key, hash_password};
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::models::auth::models::{ServiceApiKey, ServiceApiKeyCreate, Workspace};
+use crate::crypto::{PasswordHandler, generate_api_key};
 use crate::state::DbConnection;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
@@ -16,9 +16,10 @@ pub async fn create_service_api_key(
     name: String,
     permissions: ApiKeyPermissionEnum,
     valid_for: Option<Duration>,
+    password_handler: &PasswordHandler
 ) -> Result<(Uuid, String), CRUDError> {
     let api_key = generate_api_key("pt-sk").await;
-    let (key_hash, salt) = hash_password(conn, &api_key).await?;
+    let key_hash = password_handler.hash_password(&api_key);
     let expires_at = match valid_for {
         Some(duration) => Some(Utc::now().naive_utc() + duration),
         None => None,
@@ -29,7 +30,6 @@ pub async fn create_service_api_key(
         workspace_id,
         name,
         key_hash,
-        salt,
         key_preview: api_key.chars().take(12).collect(),
         permissions,
         expires_at,
@@ -45,7 +45,7 @@ pub async fn create_service_api_key(
         Err(e) => {
             error!("Unable to create service_api_key: {}", e);
             Err(CRUDError::InsertError)
-        },
+        }
     }
 }
 
@@ -67,7 +67,7 @@ pub async fn get_service_api_key(
         Err(e) => {
             error!("Unable to get service_api_key: {}", e);
             Err(CRUDError::GetError)
-        },
+        }
     }
 }
 
@@ -88,12 +88,10 @@ pub async fn get_workspace_service_api_keys(
         .select(ServiceApiKey::as_select())
         .get_results(conn)
         .await
-        .map_err(
-            |e| {
-                error!("Unable to get service_api_keys: {}", e);
-                CRUDError::GetError
-            }
-        )?;
+        .map_err(|e| {
+            error!("Unable to get service_api_keys: {}", e);
+            CRUDError::GetError
+        })?;
 
     Ok(api_keys)
 }
@@ -116,6 +114,6 @@ pub async fn delete_service_api_key(
         Err(e) => {
             error!("Unable to delete service_api_key: {:?}", e);
             Err(CRUDError::DeleteError)
-        },
+        }
     }
 }

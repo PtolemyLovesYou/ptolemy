@@ -1,4 +1,5 @@
 use crate::error::{ApiError, CRUDError};
+use crate::crypto::PasswordHandler;
 use axum::http::StatusCode;
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
@@ -21,6 +22,7 @@ fn get_env_var(name: &str) -> Result<String, ApiError> {
 pub struct AppState {
     pub port: String,
     pub pg_pool: Pool<AsyncPgConnection>,
+    pub password_handler: PasswordHandler,
     pub enable_prometheus: bool,
 }
 
@@ -45,11 +47,13 @@ impl AppState {
 
         let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(db_url);
         let pg_pool = Pool::builder().build(config).await.unwrap();
+        let password_handler = PasswordHandler::new();
 
         let state = Self {
             port,
             pg_pool,
             enable_prometheus,
+            password_handler,
         };
 
         Ok(state)

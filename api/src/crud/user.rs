@@ -1,7 +1,7 @@
-use crate::crud::crypto::{hash_password, verify_password};
+use crate::crypto::PasswordHandler;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::users::dsl::{
-    display_name, id, is_admin, is_sysadmin, password_hash, salt, status, username, users,
+    display_name, id, is_admin, is_sysadmin, password_hash, status, username, users,
 };
 use crate::models::auth::enums::UserStatusEnum;
 use crate::models::auth::models::{User, UserCreate};
@@ -25,8 +25,9 @@ use uuid::Uuid;
 pub async fn create_user(
     conn: &mut DbConnection<'_>,
     user: &UserCreate,
+    password_handler: &PasswordHandler,
 ) -> Result<Uuid, CRUDError> {
-    let (hashed_password, salt_val) = hash_password(conn, &user.password).await?;
+    let hashed_password = password_handler.hash_password(&user.password);
 
     match diesel::insert_into(users)
         .values((
@@ -35,7 +36,6 @@ pub async fn create_user(
             is_sysadmin.eq(&user.is_sysadmin),
             is_admin.eq(&user.is_admin),
             password_hash.eq(&hashed_password),
-            salt.eq(&salt_val),
         ))
         .returning(id)
         .get_result(conn)
@@ -126,12 +126,13 @@ pub async fn change_user_password(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
     user_password: &String,
+    password_handler: &PasswordHandler
 ) -> Result<(), CRUDError> {
-    let (hashed_password, salt_val) = hash_password(conn, &user_password).await?;
+    let hashed_password = password_handler.hash_password(&user_password);
 
     match diesel::update(users)
         .filter(id.eq(user_id))
-        .set((password_hash.eq(hashed_password), salt.eq(salt_val)))
+        .set(password_hash.eq(hashed_password))
         .execute(conn)
         .await
     {
@@ -160,6 +161,7 @@ pub async fn auth_user(
     conn: &mut DbConnection<'_>,
     uname: &String,
     password: &String,
+    password_handler: &PasswordHandler,
 ) -> Result<Option<User>, CRUDError> {
     let user = match users
         .filter(username.eq(&uname))
@@ -181,7 +183,7 @@ pub async fn auth_user(
         return Ok(None);
     }
 
-    let pass_correct = verify_password(conn, &password, &user.salt, &user.password_hash).await?;
+    let pass_correct = password_handler.verify_password(&password, &user.password_hash);
 
     match pass_correct {
         true => Ok(Some(user)),

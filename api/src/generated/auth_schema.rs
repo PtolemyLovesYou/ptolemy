@@ -22,11 +22,9 @@ diesel::table! {
         id -> Uuid,
         workspace_id -> Uuid,
         name -> Varchar,
-        #[max_length = 72]
         key_hash -> Varchar,
         #[max_length = 16]
         key_preview -> Varchar,
-        salt -> Varchar,
         permissions -> ApiKeyPermission,
         expires_at -> Nullable<Timestamp>,
     }
@@ -42,7 +40,6 @@ diesel::table! {
         name -> Varchar,
         key_hash -> Varchar,
         key_preview -> Varchar,
-        salt -> Varchar,
         permissions -> ApiKeyPermission,
         expires_at -> Nullable<Timestamp>,
     }
@@ -56,7 +53,6 @@ diesel::table! {
         id -> Uuid,
         username -> Varchar,
         password_hash -> Varchar,
-        salt -> Varchar,
         display_name -> Nullable<Varchar>,
         status -> UserStatus,
         is_sysadmin -> Bool,

@@ -1,13 +1,13 @@
-use std::sync::Arc;
-use tracing::{error, info};
 use api::crud::admin::ensure_sysadmin;
 use api::error::ApiError;
 use api::observer::service::MyObserver;
 use api::routes::get_router;
 use api::state::AppState;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
+use std::sync::Arc;
 use tokio::try_join;
 use tonic::transport::Server;
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
