@@ -4,8 +4,9 @@ use crate::crud::workspace_user as workspace_user_crud;
 use crate::crud::service_api_key as service_api_key_crud;
 use crate::error::CRUDError;
 use crate::models::auth::enums::{WorkspaceRoleEnum, ApiKeyPermissionEnum};
-use crate::models::auth::models::{User, Workspace, WorkspaceCreate, WorkspaceUser};
+use crate::models::auth::models::{User, Workspace, WorkspaceCreate, WorkspaceUser, ServiceApiKey};
 use crate::state::AppState;
+use crate::state::DbConnection;
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -325,6 +326,23 @@ struct CreateApiKeyResponse {
     api_key: String,
 }
 
+async fn ensure_service_key_permissions(
+    conn: &mut DbConnection<'_>,
+    workspace_id: &Uuid,
+    user_id: &Uuid,
+) -> Result<(), StatusCode> {
+    match workspace_user_crud::get_workspace_user_permission(conn, workspace_id, user_id).await {
+        Ok(role) => match role {
+            WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => Ok(()),
+            _ => Err(StatusCode::FORBIDDEN),
+        },
+        Err(e) => {
+            error!("Unable to get workspace_user permission: {:?}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
 async fn create_service_api_key(
     state: Arc<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -332,27 +350,9 @@ async fn create_service_api_key(
 ) -> Result<Json<CreateApiKeyResponse>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    // ensure user with user_id has permissions to set user role
-    let user_permission = match workspace_user_crud::get_workspace_user_permission(
-        &mut conn,
-        &workspace_id,
-        &req.user_id,
-    )
-    .await
-    {
-        Ok(role) => role,
-        Err(e) => {
-            error!("Unable to get workspace_user permission: {:?}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    ensure_service_key_permissions(&mut conn, &workspace_id, &req.user_id).await?;
 
-    match user_permission {
-        WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager | WorkspaceRoleEnum::Writer => (),
-        _ => return Err(StatusCode::FORBIDDEN),
-    };
-
-    let (api_key_id, api_key) = match service_api_key_crud::create_service_api_key(
+    let (api_key_id, api_key) = service_api_key_crud::create_service_api_key(
         &mut conn,
         workspace_id,
         req.permission,
@@ -361,17 +361,56 @@ async fn create_service_api_key(
             None => None,
         }
     )
-    .await {
-        Ok((i, j)) => (i, j),
-        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR)
-    };
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let resp = CreateApiKeyResponse {
-        id: api_key_id,
-        api_key,
-    };
+    Ok(
+        Json(
+            CreateApiKeyResponse {
+                id: api_key_id,
+                api_key,
+            }
+        )
+    )
+}
 
-    Ok(Json(resp))
+async fn get_service_api_keys(
+    state: Arc<AppState>,
+    Path(workspace_id): Path<Uuid>,
+) -> Result<Json<Vec<ServiceApiKey>>, StatusCode> {
+    let mut conn = state.get_conn_http().await?;
+
+    let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &workspace_id).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(api_keys))
+}
+
+async fn get_service_api_key(
+    state: Arc<AppState>,
+    Path((workspace_id, api_key_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<ServiceApiKey>, StatusCode> {
+    let mut conn = state.get_conn_http().await?;
+
+    let api_key = service_api_key_crud::get_service_api_key(&mut conn, &workspace_id, &api_key_id).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(api_key))
+}
+
+async fn delete_service_api_key(
+    state: Arc<AppState>,
+    Path((workspace_id, api_key_id)): Path<(Uuid, Uuid)>,
+) -> Result<StatusCode, StatusCode> {
+    let mut conn = state.get_conn_http().await?;
+
+    match service_api_key_crud::delete_service_api_key(&mut conn, &workspace_id, &api_key_id).await {
+        Ok(_) => Ok(StatusCode::OK),
+        Err(e) => match e {
+            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
+            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
+    }
 }
 
 pub async fn workspace_router(state: &Arc<AppState>) -> Router {
@@ -446,6 +485,30 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             post({
                 let shared_state = Arc::clone(state);
                 move |workspace_id, req| create_service_api_key(shared_state, workspace_id, req)
+            }),
+        )
+        // Get service API key [GET]
+        .route(
+            "/:workspace_id/api_key/:api_key_id",
+            get({
+                let shared_state = Arc::clone(state);
+                move |path_vars| get_service_api_key(shared_state, path_vars)
+            }),
+        )
+        // Get service API keys [GET]
+        .route(
+            "/:workspace_id/api_key",
+            get({
+                let shared_state = Arc::clone(state);
+                move |workspace_id| get_service_api_keys(shared_state, workspace_id)
+            }),
+        )
+        // Delete service API key [DELETE]
+        .route(
+            "/:workspace_id/api_key/:api_key_id",
+            delete({
+                let shared_state = Arc::clone(state);
+                move |path_vars| delete_service_api_key(shared_state, path_vars)
             }),
         )
 }

@@ -45,10 +45,11 @@ pub async fn create_service_api_key(
 
 pub async fn get_service_api_key(
     conn: &mut DbConnection<'_>,
-    id: &Uuid
+    id: &Uuid,
+    workspace_id: &Uuid
 ) -> Result<ServiceApiKey, CRUDError> {
     match service_api_key::table
-        .filter(service_api_key::id.eq(id))
+        .filter(service_api_key::id.eq(id).and(service_api_key::workspace_id.eq(workspace_id)))
         .get_result(conn)
         .await {
             Ok(key) => Ok(key),
@@ -79,10 +80,11 @@ pub async fn get_workspace_service_api_keys(
 
 pub async fn delete_service_api_key(
     conn: &mut DbConnection<'_>,
-    id: &Uuid
+    id: &Uuid,
+    workspace_id: &Uuid
 ) -> Result<(), CRUDError> {
     match diesel::delete(service_api_key::table)
-        .filter(service_api_key::id.eq(id))
+        .filter(service_api_key::id.eq(id).and(service_api_key::workspace_id.eq(workspace_id)))
         .execute(conn)
         .await {
             Ok(_) => Ok(()),
