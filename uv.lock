@@ -590,12 +590,14 @@ name = "prototype"
 version = "0.1.0"
 source = { virtual = "prototype" }
 dependencies = [
+    { name = "pydantic" },
     { name = "requests" },
     { name = "streamlit" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "pydantic", specifier = ">=2.10.4" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "streamlit", specifier = ">=1.41.1" },
 ]
@@ -606,6 +608,7 @@ version = "0.1.0"
 source = { editable = "ptolemy" }
 dependencies = [
     { name = "aiohttp" },
+    { name = "pydantic" },
     { name = "tenacity" },
 ]
 
@@ -617,6 +620,7 @@ prototype = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.10" },
+    { name = "pydantic", specifier = ">=2.10.4" },
     { name = "streamlit", marker = "extra == 'prototype'", specifier = ">=1.41.1" },
     { name = "tenacity", specifier = ">=9.0.0" },
 ]
