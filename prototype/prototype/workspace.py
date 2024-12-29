@@ -3,9 +3,8 @@ from typing import Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission
+from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission, User
 from .user import get_users
-from .auth import get_user_info
 from .env_settings import API_URL
 
 def delete_service_api_key(
@@ -15,7 +14,7 @@ def delete_service_api_key(
     """Delete service api key."""
     resp = requests.delete(
         urljoin(API_URL, f"/workspace/{workspace_id}/api_key/{api_key_id}"),
-        json={"user_id": get_user_info().id},
+        json={"user_id": User.current_user().id},
         timeout=5,
     )
 
@@ -32,7 +31,7 @@ def create_service_api_key(
 ):
     """Create service api key."""
     data = {
-        "user_id": get_user_info().id,
+        "user_id": User.current_user().id,
         "workspace_id": workspace_id,
         "name": name,
         "permission": permission,
@@ -53,8 +52,8 @@ def create_service_api_key(
 def create_workspace(name: str, admin_id: Optional[str] = None, description: Optional[str] = None):
     """Create workspace."""
     body = {
-        "user_id": get_user_info().id,
-        "workspace_admin_user_id": admin_id or get_user_info().id,
+        "user_id": User.current_user().id,
+        "workspace_admin_user_id": admin_id or User.current_user().id,
         "workspace": {
             "name": name,
             "description": description,
@@ -76,7 +75,7 @@ def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
     """Add user to workspace."""
     resp = requests.post(
         urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
-        json={"user_id": get_user_info().id, "role": role.capitalize()},
+        json={"user_id": User.current_user().id, "role": role.capitalize()},
         timeout=5
     )
 
@@ -92,7 +91,7 @@ def remove_user_from_workspace(workspace_id: str, user_id: str):
     resp = requests.delete(
         urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
         timeout=5,
-        json={"user_id": get_user_info().id},
+        json={"user_id": User.current_user().id},
     )
 
     if not resp.ok:
@@ -104,7 +103,7 @@ def update_workspace_user_role(workspace_id: str, user_id: str, role: WorkspaceR
     """Update workspace user role."""
     resp = requests.put(
         urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
-        json={"user_id": get_user_info().id, "role": role.capitalize()},
+        json={"user_id": User.current_user().id, "role": role.capitalize()},
         timeout=5,
     )
 
@@ -150,7 +149,7 @@ def delete_workspace(workspace_id: str):
     """Delete workspace."""
     resp = requests.delete(
         urljoin(API_URL, f"/workspace/{workspace_id}"),
-        json={"user_id": get_user_info().id},
+        json={"user_id": User.current_user().id},
         timeout=5,
     )
 
@@ -339,7 +338,7 @@ def wk_management_view():
     with wk_selection_col:
         selected_workspace = st.selectbox(
             "Select workspace",
-            options=get_user_info().workspaces,
+            options=User.current_user().workspaces,
             format_func=lambda i: i.name,
             placeholder="Select Workspace",
             label_visibility="collapsed",
@@ -354,7 +353,7 @@ def wk_management_view():
         if selected_workspace is None:
             pass
         else:
-            user_workspace_role = get_user_info().workspace_role(selected_workspace.id)
+            user_workspace_role = User.current_user().workspace_role(selected_workspace.id)
 
             wk_mgmnt, wk_users, api_keys = st.tabs(
                 ["Workspace", "Users", "Service API Keys"]

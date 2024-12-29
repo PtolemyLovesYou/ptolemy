@@ -5,11 +5,10 @@ import requests
 import streamlit as st
 from .env_settings import API_URL
 from .models import User, UserRole
-from .auth import get_user_info
 
 def create_new_user(username: str, password: str, role: str, display_name: Optional[str] = None):
     """Create new user."""
-    user_id = get_user_info().id
+    user_id = User.current_user().id
 
     resp = requests.post(
         urljoin(API_URL, "/user"),
@@ -37,7 +36,7 @@ def delete_user(user_id: str):
     resp = requests.delete(
         urljoin(API_URL, f"/user/{user_id}"),
         json={
-            "user_id": get_user_info().id,
+            "user_id": User.current_user().id,
             },
         timeout=5,
     )
@@ -151,10 +150,10 @@ def usr_management_view():
                         label=f"user_delete_{user.id}",
                         disabled=(
                             user.role == UserRole.SYSADMIN
-                            or user.id == get_user_info().id
+                            or user.id == User.current_user().id
                             or (
                                 user.role == UserRole.ADMIN
-                                and get_user_info().role == UserRole.ADMIN
+                                and User.current_user().role == UserRole.ADMIN
                                 )
                             ),
                         key=f"user_delete_{user.id}",

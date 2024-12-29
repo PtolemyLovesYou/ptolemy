@@ -1,9 +1,9 @@
 """Streamlit prototype app."""
 import streamlit as st
-from prototype.auth import logout, get_login_layout, get_user_info
+from prototype.auth import logout, get_login_layout
 from prototype.user import usr_management_view
 from prototype.workspace import wk_management_view
-from prototype.models import UserRole
+from prototype.models import UserRole, User
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
@@ -40,7 +40,7 @@ def get_layout():
     if not st.session_state.authenticated:
         get_login_layout()
     else:
-        user_info = get_user_info()
+        user_info = User.current_user()
 
         sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
 

@@ -53,6 +53,14 @@ class User(BaseModel):
     display_name: Optional[str] = None
     status: str
 
+    @classmethod
+    def current_user(cls) -> 'User':
+        """Current user."""
+        if st.session_state.user_info is None:
+            raise ValueError("User is not logged in")
+
+        return st.session_state.user_info
+
     @property
     def role(self) -> UserRole:
         """User role."""
