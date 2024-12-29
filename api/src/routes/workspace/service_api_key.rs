@@ -1,7 +1,7 @@
-use crate::crud::workspace_user as workspace_user_crud;
 use crate::crud::service_api_key as service_api_key_crud;
+use crate::crud::workspace_user as workspace_user_crud;
 use crate::error::CRUDError;
-use crate::models::auth::enums::{WorkspaceRoleEnum, ApiKeyPermissionEnum};
+use crate::models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum};
 use crate::models::auth::models::ServiceApiKey;
 use crate::state::AppState;
 use crate::state::DbConnection;
@@ -64,19 +64,15 @@ async fn create_service_api_key(
         match req.duration {
             Some(d) => Some(chrono::Duration::days(d)),
             None => None,
-        }
+        },
     )
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(
-        Json(
-            CreateApiKeyResponse {
-                id: api_key_id,
-                api_key,
-            }
-        )
-    )
+    Ok(Json(CreateApiKeyResponse {
+        id: api_key_id,
+        api_key,
+    }))
 }
 
 async fn get_service_api_keys(
@@ -85,7 +81,8 @@ async fn get_service_api_keys(
 ) -> Result<Json<Vec<ServiceApiKey>>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &workspace_id).await
+    let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &workspace_id)
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(api_keys))
@@ -97,7 +94,8 @@ async fn get_service_api_key(
 ) -> Result<Json<ServiceApiKey>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    let api_key = service_api_key_crud::get_service_api_key(&mut conn, &workspace_id, &api_key_id).await
+    let api_key = service_api_key_crud::get_service_api_key(&mut conn, &workspace_id, &api_key_id)
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(api_key))
@@ -109,7 +107,8 @@ async fn delete_service_api_key(
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match service_api_key_crud::delete_service_api_key(&mut conn, &workspace_id, &api_key_id).await {
+    match service_api_key_crud::delete_service_api_key(&mut conn, &workspace_id, &api_key_id).await
+    {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => match e {
             CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
