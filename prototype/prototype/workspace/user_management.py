@@ -1,13 +1,12 @@
 """Workspace user management."""
 import streamlit as st
-from ..models import Workspace, WorkspaceRole, UserRole
-from ..user import get_users
+from ..models import Workspace, WorkspaceRole, UserRole, User
 
 def add_user_to_workspace_form(workspace: Workspace):
     """Add user to workspace."""
     with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
         valid_users = [
-            i for i in get_users() if (
+            i for i in User.all() if (
                 i.role != UserRole.SYSADMIN
                 and i.id not in [usr.id for usr in workspace.users]
                 )

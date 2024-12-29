@@ -107,6 +107,70 @@ class User(BaseModel):
 
         return st.session_state.user_info
 
+    def delete(self) -> bool:
+        """Delete user."""
+        resp = requests.delete(
+            urljoin(API_URL, f"/user/{self.id}"),
+            json={
+                "user_id": User.current_user().id,
+                },
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to delete user {self.id}"
+                )
+            return False
+
+        return True
+
+    @classmethod
+    def all(cls) -> List['User']:
+        """Get all users."""
+        user_list = requests.get(
+            urljoin(API_URL, "/user/all"),
+            timeout=10,
+        ).json()
+
+        return [User(**u) for u in user_list]
+
+    @classmethod
+    def create(
+        cls,
+        username: str,
+        password: str,
+        role: UserRole,
+        display_name: Optional[str] = None
+        ) -> bool:
+        """Create user."""
+        user_id = User.current_user().id
+
+        resp = requests.post(
+            urljoin(API_URL, "/user"),
+            json={
+                "user_id": user_id,
+                "user": {
+                    "username": username,
+                    "password": password,
+                    "is_admin": role == UserRole.ADMIN,
+                    "is_sysadmin": role == UserRole.SYSADMIN,
+                    "display_name": display_name,
+                    },
+            },
+            timeout=5,
+        )
+
+        if resp.ok:
+            return True
+
+        if resp.status_code == 403:
+            st.error("You lack permissions to create users.")
+        else:
+            st.error(f"Error creating user: {resp.text}")
+
+        return False
+
     @property
     def role(self) -> UserRole:
         """User role."""

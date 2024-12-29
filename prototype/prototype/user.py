@@ -1,59 +1,6 @@
 """User management."""
-from typing import Optional, List
-from urllib.parse import urljoin
-import requests
 import streamlit as st
-from .env_settings import API_URL
 from .models import User, UserRole
-
-def create_new_user(username: str, password: str, role: str, display_name: Optional[str] = None):
-    """Create new user."""
-    user_id = User.current_user().id
-
-    resp = requests.post(
-        urljoin(API_URL, "/user"),
-        json={
-            "user_id": user_id,
-            "user": {
-                "username": username,
-                "password": password,
-                "is_admin": role == UserRole.ADMIN,
-                "is_sysadmin": role == UserRole.SYSADMIN,
-                "display_name": display_name,
-                },
-        },
-        timeout=5,
-    )
-
-    # if status code is forbidden, toast
-    if resp.status_code == 403:
-        st.toast(
-            f"Failed to create user {username}: Unauthorized"
-            )
-
-def delete_user(user_id: str):
-    """Delete user."""
-    resp = requests.delete(
-        urljoin(API_URL, f"/user/{user_id}"),
-        json={
-            "user_id": User.current_user().id,
-            },
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to delete user {user_id}"
-            )
-
-def get_users() -> List[User]:
-    """Get users."""
-    user_list = requests.get(
-        urljoin(API_URL, "/user/all"),
-        timeout=10,
-    ).json()
-
-    return [User(**u) for u in user_list]
 
 @st.fragment
 def usr_management_view():
@@ -82,14 +29,14 @@ def usr_management_view():
                 submit = st.form_submit_button(label="Create")
 
                 if submit:
-                    create_new_user(
+                    User.create(
                         new_usr_username,
                         new_usr_password,
                         new_usr_role,
                         display_name=new_usr_display_name
                     )
 
-    users = get_users()
+    users = User.all()
 
     header_container = st.container()
     with header_container:
@@ -163,6 +110,6 @@ def usr_management_view():
         def delete_users():
             for user in users:
                 if st.session_state[f"user_delete_{user.id}"]:
-                    delete_user(user.id)
+                    user.delete()
 
         st.form_submit_button(label="Save", on_click=delete_users)

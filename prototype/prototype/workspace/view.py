@@ -4,7 +4,6 @@ from .workspace_management import workspace_form
 from .user_management import wk_user_management_form
 from .api_key_management import service_api_key_management_form
 from ..models import User, Workspace, UserRole
-from ..user import get_users
 
 def create_workspace_form():
     """Create workspace form."""
@@ -14,7 +13,7 @@ def create_workspace_form():
         clear_on_submit=True,
         enter_to_submit=False
         ):
-        valid_admins = [i for i in get_users() if i.role != UserRole.SYSADMIN]
+        valid_admins = [i for i in User.all() if i.role != UserRole.SYSADMIN]
         sk_name = st.text_input("Name")
         sk_description = st.text_area("Description")
         sk_admin = st.pills(
