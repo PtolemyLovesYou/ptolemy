@@ -18,8 +18,10 @@ ptolemy = { workspace = true }
 [dependency-groups]
 dev = [
     "black>=24.10.0",
+    "jupyter>=1.1.1",
     "pylint>=3.3.3",
     "pylint-pydantic>=0.3.4",
+    "tqdm>=4.67.1",
 ]
 
 [tool.black]
