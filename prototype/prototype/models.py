@@ -24,10 +24,9 @@ class ApiKeyPermission(StrEnum):
 
 class WorkspaceRole(StrEnum):
     """Workspace role."""
-    READER = "reader"
-    WRITER = "writer"
-    MANAGER = "manager"
-    ADMIN = "admin"
+    USER = "User"
+    MANAGER = "Manager"
+    ADMIN = "Admin"
 
 
 class ServiceApiKey(BaseModel):
@@ -193,7 +192,7 @@ class User(BaseModel):
                 f"Failed to get workspace role: {resp.status_code} {resp.text}"
                 )
 
-            return WorkspaceRole.READER
+            return WorkspaceRole.USER
 
         return WorkspaceRole(str(resp.json()["role"]).lower())
 
@@ -302,7 +301,7 @@ class Workspace(BaseModel):
         """Add user to workspace."""
         resp = requests.post(
             urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
-            json={"user_id": User.current_user().id, "role": role.capitalize()},
+            json={"user_id": User.current_user().id, "role": role},
             timeout=5
         )
 
@@ -334,7 +333,7 @@ class Workspace(BaseModel):
         """Change user role in workspace."""
         resp = requests.put(
             urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
-            json={"user_id": User.current_user().id, "role": role.capitalize()},
+            json={"user_id": User.current_user().id, "role": role},
             timeout=5,
         )
 
