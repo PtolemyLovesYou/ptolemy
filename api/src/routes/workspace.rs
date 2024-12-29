@@ -1,8 +1,9 @@
 use crate::crud::user as user_crud;
 use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
+use crate::crud::service_api_key as service_api_key_crud;
 use crate::error::CRUDError;
-use crate::models::auth::enums::WorkspaceRoleEnum;
+use crate::models::auth::enums::{WorkspaceRoleEnum, ApiKeyPermissionEnum};
 use crate::models::auth::models::{User, Workspace, WorkspaceCreate, WorkspaceUser};
 use crate::state::AppState;
 use axum::{
@@ -11,7 +12,7 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{error, instrument};
 use uuid::Uuid;
@@ -311,6 +312,68 @@ async fn change_workspace_user_role(
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct CreateApiKeyRequest {
+    user_id: Uuid,
+    permission: ApiKeyPermissionEnum,
+    duration: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+struct CreateApiKeyResponse {
+    id: Uuid,
+    api_key: String,
+}
+
+async fn create_service_api_key(
+    state: Arc<AppState>,
+    Path(workspace_id): Path<Uuid>,
+    Json(req): Json<CreateApiKeyRequest>,
+) -> Result<Json<CreateApiKeyResponse>, StatusCode> {
+    let mut conn = state.get_conn_http().await?;
+
+    // ensure user with user_id has permissions to set user role
+    let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        &mut conn,
+        &workspace_id,
+        &req.user_id,
+    )
+    .await
+    {
+        Ok(role) => role,
+        Err(e) => {
+            error!("Unable to get workspace_user permission: {:?}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    match user_permission {
+        WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager | WorkspaceRoleEnum::Writer => (),
+        _ => return Err(StatusCode::FORBIDDEN),
+    };
+
+    let (api_key_id, api_key) = match service_api_key_crud::create_service_api_key(
+        &mut conn,
+        workspace_id,
+        req.permission,
+        match req.duration {
+            Some(d) => Some(chrono::Duration::days(d)),
+            None => None,
+        }
+    )
+    .await {
+        Ok((i, j)) => (i, j),
+        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR)
+    };
+
+    let resp = CreateApiKeyResponse {
+        id: api_key_id,
+        api_key,
+    };
+
+    Ok(Json(resp))
+}
+
 pub async fn workspace_router(state: &Arc<AppState>) -> Router {
     Router::new()
         // Create workspace [POST}]
@@ -375,6 +438,14 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             put({
                 let shared_state = Arc::clone(state);
                 move |path_vars, req| change_workspace_user_role(shared_state, path_vars, req)
+            }),
+        )
+        // Create service API key [POST]
+        .route(
+            "/:workspace_id/api_key",
+            post({
+                let shared_state = Arc::clone(state);
+                move |workspace_id, req| create_service_api_key(shared_state, workspace_id, req)
             }),
         )
 }
