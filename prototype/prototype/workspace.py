@@ -33,7 +33,7 @@ def create_workspace(name: str, admin_id: Optional[str] = None, description: Opt
 def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
     """Add user to workspace."""
     resp = requests.post(
-        urljoin(API_URL, f"/workspace/{workspace_id}/user/{user_id}"),
+        urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
         json={"user_id": get_user_info().id, "role": role.capitalize()},
         timeout=5
     )
@@ -48,7 +48,7 @@ def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
 def remove_user_from_workspace(workspace_id: str, user_id: str):
     """Remove user from workspace."""
     resp = requests.delete(
-        urljoin(API_URL, f"/workspace/{workspace_id}/user/{user_id}"),
+        urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
         timeout=5,
         json={"user_id": get_user_info().id},
     )
@@ -61,7 +61,7 @@ def remove_user_from_workspace(workspace_id: str, user_id: str):
 def update_workspace_user_role(workspace_id: str, user_id: str, role: WorkspaceRole):
     """Update workspace user role."""
     resp = requests.put(
-        urljoin(API_URL, f"/workspace/{workspace_id}/user/{user_id}"),
+        urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
         json={"user_id": get_user_info().id, "role": role.capitalize()},
         timeout=5,
     )

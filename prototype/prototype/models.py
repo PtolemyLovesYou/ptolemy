@@ -42,7 +42,7 @@ class User(BaseModel):
     def workspace_role(self, workspace_id: str) -> WorkspaceRole:
         """Workspace role."""
         resp = requests.get(
-            urljoin(API_URL, f"/workspace/{workspace_id}/user/{self.id}"),
+            urljoin(API_URL, f"/workspace/{workspace_id}/users/{self.id}"),
             timeout=5,
         )
 
