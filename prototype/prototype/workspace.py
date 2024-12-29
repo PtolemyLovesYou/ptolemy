@@ -3,51 +3,9 @@ from typing import Optional
 from urllib.parse import urljoin
 import requests
 import streamlit as st
-from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission, User
+from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission, User, ServiceApiKey
 from .user import get_users
 from .env_settings import API_URL
-
-def delete_service_api_key(
-    workspace_id: str,
-    api_key_id: str,
-    ):
-    """Delete service api key."""
-    resp = requests.delete(
-        urljoin(API_URL, f"/workspace/{workspace_id}/api_key/{api_key_id}"),
-        json={"user_id": User.current_user().id},
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.error(
-            f"Failed to delete API key: {resp.text}"
-)
-
-def create_service_api_key(
-    workspace_id: str,
-    name: str,
-    permission: ApiKeyPermission,
-    duration: Optional[int] = None,
-):
-    """Create service api key."""
-    data = {
-        "user_id": User.current_user().id,
-        "workspace_id": workspace_id,
-        "name": name,
-        "permission": permission,
-        "duration": duration,
-    }
-
-    resp = requests.post(
-        urljoin(API_URL, f"/workspace/{workspace_id}/api_key"),
-        json=data,
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to create API key: {resp.text}"
-            )
 
 def create_workspace(name: str, admin_id: Optional[str] = None, description: Optional[str] = None):
     """Create workspace."""
@@ -285,12 +243,16 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
 
             submit_new_api_key = st.form_submit_button(label="Create")
             if submit_new_api_key:
-                create_service_api_key(
-                    workspace.id,
+                api_key = ServiceApiKey.create(
+                    workspace,
                     new_api_key_name,
                     new_api_key_permission,
                     duration=new_api_key_duration,
                 )
+
+                if api_key is not None:
+                    st.markdown("Copy the API key otherwise it will be lost:")
+                    st.code(api_key, language=None)
 
     keys = workspace.api_keys
 
@@ -299,6 +261,7 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
             [
                 {
                     "name": k.name,
+                    "preview": f"{k.key_preview}...",
                     "permission": k.permissions,
                     "expires_at": k.expires_at,
                     "delete": False
@@ -307,6 +270,7 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
             use_container_width=True,
             column_config={
                 "name": st.column_config.TextColumn(disabled=True),
+                "preview": st.column_config.TextColumn(disabled=True),
                 "permission": st.column_config.SelectboxColumn(
                     options=list(ApiKeyPermission),
                     disabled=True,
@@ -326,7 +290,7 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
         if submit_api_keys:
             for key, key_row in zip(keys, api_keys):
                 if key_row["delete"]:
-                    delete_service_api_key(workspace.id, key.id)
+                    key.delete()
 
             st.rerun(scope='fragment')
 

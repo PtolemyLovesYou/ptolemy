@@ -29,11 +29,13 @@ class WorkspaceRole(StrEnum):
 
 class ServiceApiKey(BaseModel):
     """Service API key."""
+    workspace_id: str
     id: str
     name: str
     key_preview: str
     permissions: ApiKeyPermission
-    expires_at: Optional[str]
+    expires_at: Optional[str] = None
+    api_key: Optional[str] = None
 
     @field_validator('expires_at')
     @classmethod
@@ -43,6 +45,47 @@ class ServiceApiKey(BaseModel):
             return datetime.fromisoformat(v)
 
         return None
+
+    def delete(self) -> None:
+        """Delete API key."""
+        requests.delete(
+            urljoin(API_URL, f"/workspace/{self.workspace_id}/api_key/{self.id}"),
+            json={"user_id": User.current_user().id},
+            timeout=5,
+        )
+
+    @classmethod
+    def create(
+        cls,
+        workspace: 'Workspace',
+        name: str,
+        permission: ApiKeyPermission,
+        duration: Optional[int] = None,
+        ) -> str:
+        """Create API key."""
+        data = {
+            "user_id": User.current_user().id,
+            "workspace_id": workspace.id,
+            "name": name,
+            "permission": permission,
+            "duration": duration,
+        }
+
+        resp = requests.post(
+            urljoin(API_URL, f"/workspace/{workspace.id}/api_key"),
+            json=data,
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.error(
+                f"Failed to create API key: {resp.text}"
+            )
+            return None
+
+        api_key = resp.json()
+
+        return api_key["api_key"]
 
 class User(BaseModel):
     """User model."""
