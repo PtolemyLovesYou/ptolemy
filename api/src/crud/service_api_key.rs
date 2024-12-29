@@ -30,7 +30,7 @@ pub async fn create_service_api_key(
         name,
         key_hash,
         salt,
-        key_preview: api_key.chars().take(8).collect(),
+        key_preview: api_key.chars().take(12).collect(),
         permissions,
         expires_at,
     };
