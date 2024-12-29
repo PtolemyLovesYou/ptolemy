@@ -1,18 +1,17 @@
 """Workspace management view."""
+
 import streamlit as st
 from .workspace_management import workspace_form
 from .user_management import wk_user_management_form
 from .api_key_management import service_api_key_management_form
 from ..models import User, Workspace, UserRole
 
+
 def create_workspace_form():
     """Create workspace form."""
     with st.form(
-        "create_new_wk",
-        border=False,
-        clear_on_submit=True,
-        enter_to_submit=False
-        ):
+        "create_new_wk", border=False, clear_on_submit=True, enter_to_submit=False
+    ):
         valid_admins = [i for i in User.all() if i.role != UserRole.SYSADMIN]
         sk_name = st.text_input("Name")
         sk_description = st.text_area("Description")
@@ -27,11 +26,12 @@ def create_workspace_form():
             wk = Workspace.create(
                 sk_name,
                 admin_id=sk_admin.id if sk_admin else None,
-                description=sk_description
+                description=sk_description,
             )
 
             if wk:
                 st.rerun(scope="fragment")
+
 
 @st.fragment
 def wk_management_view():
@@ -46,7 +46,7 @@ def wk_management_view():
             placeholder="Select Workspace",
             label_visibility="collapsed",
             index=None,
-            )
+        )
 
     with new_col:
         with st.popover(r"\+", use_container_width=True):
@@ -56,26 +56,28 @@ def wk_management_view():
         if selected_workspace is None:
             pass
         else:
-            user_workspace_role = User.current_user().workspace_role(selected_workspace.id)
+            user_workspace_role = User.current_user().workspace_role(
+                selected_workspace.id
+            )
 
             wk_mgmnt, wk_users, api_keys = st.tabs(
                 ["Workspace", "Users", "Service API Keys"]
-                )
+            )
 
             with wk_mgmnt:
                 workspace_form(
                     selected_workspace,
                     user_workspace_role,
-                    )
+                )
 
             with wk_users:
                 wk_user_management_form(
                     selected_workspace,
                     user_workspace_role,
-                    )
+                )
 
             with api_keys:
                 service_api_key_management_form(
                     selected_workspace,
                     user_workspace_role,
-                    )
+                )

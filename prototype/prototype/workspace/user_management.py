@@ -1,23 +1,27 @@
 """Workspace user management."""
+
 import streamlit as st
 from ..models import Workspace, WorkspaceRole, UserRole, User
+
 
 def add_user_to_workspace_form(workspace: Workspace):
     """Add user to workspace."""
     with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
         valid_users = [
-            i for i in User.all() if (
+            i
+            for i in User.all()
+            if (
                 i.role != UserRole.SYSADMIN
                 and i.id not in [usr.id for usr in workspace.users]
-                )
-            ]
+            )
+        ]
 
         sk_user = st.selectbox(
             "User",
             options=valid_users,
             format_func=lambda u: u.username,
             index=None,
-            placeholder="Select user..."
+            placeholder="Select user...",
         )
 
         sk_role = st.segmented_control(
@@ -33,13 +37,16 @@ def add_user_to_workspace_form(workspace: Workspace):
             if success:
                 st.rerun(scope="fragment")
 
+
 @st.fragment
 def wk_user_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace user management form"""
     disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
     users = workspace.users
 
-    with st.popover("Add User to Workspace", use_container_width=True, disabled=disabled):
+    with st.popover(
+        "Add User to Workspace", use_container_width=True, disabled=disabled
+    ):
         add_user_to_workspace_form(workspace)
 
     with st.form("Workspace User Management", clear_on_submit=True, border=False):
@@ -48,9 +55,10 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
                 {
                     "username": u.username,
                     "role": u.workspace_role(workspace.id),
-                    "delete": False
-                    } for u in users
-                ],
+                    "delete": False,
+                }
+                for u in users
+            ],
             use_container_width=True,
             column_config={
                 "username": st.column_config.TextColumn(disabled=True),
@@ -58,13 +66,13 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
                     options=list(WorkspaceRole),
                     disabled=disabled,
                     required=True,
-                    ),
+                ),
                 "delete": st.column_config.CheckboxColumn(
                     disabled=disabled,
                     required=True,
-                    ),
-                },
-            )
+                ),
+            },
+        )
 
         submit_wk_users = st.form_submit_button(label="Save", disabled=disabled)
 

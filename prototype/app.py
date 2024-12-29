@@ -1,4 +1,5 @@
 """Streamlit prototype app."""
+
 import streamlit as st
 from prototype.auth import logout, get_login_layout
 from prototype.user import usr_management_view
@@ -7,33 +8,38 @@ from prototype.models import UserRole, User
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
-if 'authenticated' not in st.session_state:
+if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-if 'user_info' not in st.session_state:
+if "user_info" not in st.session_state:
     st.session_state.user_info = None
 
 if st.session_state.authenticated:
     st.logo("assets/logomark_lime.svg")
+
 
 @st.fragment
 def usr_ak_management_view():
     """Get user API key management view."""
     st.write("User API key management view.")
 
+
 @st.fragment
 def get_ide_view():
     """Code container."""
     st.write("SQL IDE goes here")
+
 
 @st.fragment
 def get_event_explorer_view():
     """Event explorer container."""
     st.write("Event explorer goes here")
 
+
 @st.fragment
 def get_account_management_view():
     """Get account management view."""
     st.write("Account management view")
+
 
 def get_layout():
     """Get layout."""
@@ -42,40 +48,36 @@ def get_layout():
     else:
         user_info = User.current_user()
 
-        sidebar_column, main_column = st.columns([1, 11], border=False, vertical_alignment="bottom")
+        sidebar_column, main_column = st.columns(
+            [1, 11], border=False, vertical_alignment="bottom"
+        )
 
         with sidebar_column:
             sidebar_container = st.container(height=650, border=False)
             with sidebar_container:
                 event_explorer_button = st.button(
-                    "",
-                    use_container_width = True,
-                    icon=":material/monitoring:"
+                    "", use_container_width=True, icon=":material/monitoring:"
                 )
 
                 code_button = st.button(
-                    "",
-                    use_container_width=True,
-                    icon=":material/code:"
+                    "", use_container_width=True, icon=":material/code:"
                 )
 
                 api_keys_button = st.button(
-                    "",
-                    use_container_width = True,
-                    icon=":material/key:"
+                    "", use_container_width=True, icon=":material/key:"
                 )
 
                 workspace_management_button = st.button(
                     "",
-                    use_container_width = True,
+                    use_container_width=True,
                     icon=":material/workspaces:",
                     # Sysadmins can't manage workspaces
-                    disabled=user_info.role == UserRole.SYSADMIN
+                    disabled=user_info.role == UserRole.SYSADMIN,
                 )
 
                 user_management_button = st.button(
                     "",
-                    use_container_width = True,
+                    use_container_width=True,
                     icon=":material/group:",
                     disabled=user_info.role == UserRole.USER,
                 )
@@ -84,9 +86,7 @@ def get_layout():
                 st.container(height=257, border=False)
 
                 account_management_button = st.button(
-                    "",
-                    use_container_width = True,
-                    icon=":material/account_circle:"
+                    "", use_container_width=True, icon=":material/account_circle:"
                 )
 
                 st.button(
@@ -113,5 +113,6 @@ def get_layout():
                     get_account_management_view()
                 else:
                     get_event_explorer_view()
+
 
 get_layout()

@@ -6,12 +6,15 @@ import logging
 from contextlib import contextmanager
 from pydantic import ConfigDict, PrivateAttr, Field
 from .engine import Engine
-from .._core import BlockingObserverClient, ProtoRecord # pylint: disable=no-name-in-module
+from .._core import (
+    BlockingObserverClient,
+    ProtoRecord,
+)  # pylint: disable=no-name-in-module
 from ..exceptions import (
     EngineError,
     PtolemyConnectionError,
     # PublishError
-    )
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,9 @@ class PtolemyEngine(Engine):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _client: BlockingObserverClient = PrivateAttr(default=None)
-    _executor: ThreadPoolExecutor = PrivateAttr(default_factory=lambda: ThreadPoolExecutor(max_workers=1))
+    _executor: ThreadPoolExecutor = PrivateAttr(
+        default_factory=lambda: ThreadPoolExecutor(max_workers=1)
+    )
     _is_connected: bool = PrivateAttr(default=False)
 
     # Configuration

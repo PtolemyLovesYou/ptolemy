@@ -10,13 +10,39 @@ class BlockingObserverClient:
 
 class ProtoRecord:
     @staticmethod
-    def event(tier: str, parent_id: str, name: str, id: Optional[str] = None, parameters: Optional[dict] = None, version: Optional[str] = None, environment: Optional[str] = None) -> None: ...
-    
+    def event(
+        tier: str,
+        parent_id: str,
+        name: str,
+        id: Optional[str] = None,
+        parameters: Optional[dict] = None,
+        version: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> None: ...
     @staticmethod
-    def runtime(tier: str, parent_id: str, start_time: float, end_time: float, id: Optional[str] = None, error_type: Optional[str] = None, error_content: Optional[str] = None) -> None: ...
-    
+    def runtime(
+        tier: str,
+        parent_id: str,
+        start_time: float,
+        end_time: float,
+        id: Optional[str] = None,
+        error_type: Optional[str] = None,
+        error_content: Optional[str] = None,
+    ) -> None: ...
     @staticmethod
-    def io(tier: str, log_type: str, parent_id: str, field_name: str, field_value: Any, id: Optional[str] = None) -> None: ...
-
+    def io(
+        tier: str,
+        log_type: str,
+        parent_id: str,
+        field_name: str,
+        field_value: Any,
+        id: Optional[str] = None,
+    ) -> None: ...
     @staticmethod
-    def metadata(tier: str, parent_id: str, field_name: str, field_value: str, id: Optional[str] = None) -> None: ...
+    def metadata(
+        tier: str,
+        parent_id: str,
+        field_name: str,
+        field_value: str,
+        id: Optional[str] = None,
+    ) -> None: ...

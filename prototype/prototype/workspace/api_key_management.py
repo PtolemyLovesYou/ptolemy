@@ -1,9 +1,13 @@
 """Service API key management form."""
+
 import streamlit as st
 from ..models import Workspace, WorkspaceRole, ApiKeyPermission, ServiceApiKey
 
+
 @st.fragment
-def service_api_key_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
+def service_api_key_management_form(
+    workspace: Workspace, user_workspace_role: WorkspaceRole
+):
     """Service API Key Management"""
     disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
 
@@ -11,18 +15,14 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
         with st.form("new_api_key", clear_on_submit=True, border=False):
             new_api_key_name = st.text_input("Name")
             new_api_key_duration = st.slider(
-                "Duration (Days)",
-                min_value=1,
-                max_value=365,
-                value=30,
-                step=1
-                )
+                "Duration (Days)", min_value=1, max_value=365, value=30, step=1
+            )
 
             new_api_key_permission = st.segmented_control(
                 "Permission",
                 options=list(ApiKeyPermission),
-                default=ApiKeyPermission.READ_ONLY
-                )
+                default=ApiKeyPermission.READ_ONLY,
+            )
 
             submit_new_api_key = st.form_submit_button(label="Create")
             if submit_new_api_key:
@@ -47,9 +47,10 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
                     "preview": f"{k.key_preview}...",
                     "permission": k.permissions,
                     "expires_at": k.expires_at,
-                    "delete": False
-                    } for k in keys
-                ],
+                    "delete": False,
+                }
+                for k in keys
+            ],
             use_container_width=True,
             column_config={
                 "name": st.column_config.TextColumn(disabled=True),
@@ -57,16 +58,16 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
                 "permission": st.column_config.SelectboxColumn(
                     options=list(ApiKeyPermission),
                     disabled=True,
-                    ),
+                ),
                 "expires_at": st.column_config.DatetimeColumn(
                     disabled=True,
                 ),
                 "delete": st.column_config.CheckboxColumn(
                     disabled=disabled,
                     required=True,
-                    ),
-                },
-            )
+                ),
+            },
+        )
 
         submit_api_keys = st.form_submit_button(label="Save", disabled=disabled)
 
@@ -75,4 +76,4 @@ def service_api_key_management_form(workspace: Workspace, user_workspace_role: W
                 if key_row["delete"]:
                     key.delete()
 
-            st.rerun(scope='fragment')
+            st.rerun(scope="fragment")
