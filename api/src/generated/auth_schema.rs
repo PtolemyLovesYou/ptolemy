@@ -31,16 +31,12 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::ApiKeyPermission;
-
     user_api_key (id) {
         id -> Uuid,
         user_id -> Uuid,
         name -> Varchar,
         key_hash -> Varchar,
         key_preview -> Varchar,
-        permissions -> ApiKeyPermission,
         expires_at -> Nullable<Timestamp>,
     }
 }

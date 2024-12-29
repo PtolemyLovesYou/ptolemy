@@ -27,7 +27,7 @@ create table user_api_key (
     name varchar not null,
     key_hash varchar not null,
     key_preview varchar not null,
-    permissions api_key_permission not null,
+    -- permissions api_key_permission not null,
     expires_at timestamp(6)
 );
 

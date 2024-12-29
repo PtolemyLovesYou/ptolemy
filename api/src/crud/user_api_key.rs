@@ -1,6 +1,5 @@
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{user_api_key, users};
-use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::models::auth::models::{UserApiKey, UserApiKeyCreate, User};
 use crate::crypto::{PasswordHandler, generate_api_key};
 use crate::state::DbConnection;
@@ -14,7 +13,6 @@ pub async fn create_user_api_key(
     conn: &mut DbConnection<'_>,
     user_id: Uuid,
     name: String,
-    permissions: ApiKeyPermissionEnum,
     valid_for: Option<Duration>,
     password_handler: &PasswordHandler
 ) -> Result<(Uuid, String), CRUDError> {
@@ -31,7 +29,6 @@ pub async fn create_user_api_key(
         name,
         key_hash,
         key_preview: api_key.chars().take(12).collect(),
-        permissions,
         expires_at,
     };
 
