@@ -94,6 +94,16 @@ class ServiceApiKey(BaseModel):
         return api_key["api_key"]
 
 
+class UserApiKey(BaseModel):
+    """User API Key."""
+    user_id: str
+    id: str
+    name: str
+    key_preview: str
+    expires_at: Optional[str] = None
+    api_key: Optional[str] = None
+
+
 class User(BaseModel):
     """User model."""
 
