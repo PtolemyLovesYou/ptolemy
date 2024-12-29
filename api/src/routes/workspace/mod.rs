@@ -14,7 +14,7 @@ pub async fn workspace_router(state: &Arc<AppState>) -> Router {
             self::workspace_user::workspace_user_router(state).await,
         )
         .nest(
-            "/",
+            "/:workspace_id/api_key",
             self::service_api_key::service_api_key_router(state).await,
         )
 }

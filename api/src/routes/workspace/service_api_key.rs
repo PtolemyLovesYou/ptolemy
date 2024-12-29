@@ -129,7 +129,7 @@ pub async fn service_api_key_router(state: &Arc<AppState>) -> Router {
     Router::new()
         // Create service API key [POST]
         .route(
-            "/:workspace_id/api_key",
+            "/",
             post({
                 let shared_state = Arc::clone(state);
                 move |workspace_id, req| create_service_api_key(shared_state, workspace_id, req)
@@ -137,7 +137,7 @@ pub async fn service_api_key_router(state: &Arc<AppState>) -> Router {
         )
         // Get service API key [GET]
         .route(
-            "/:workspace_id/api_key/:api_key_id",
+            "/:api_key_id",
             get({
                 let shared_state = Arc::clone(state);
                 move |path_vars| get_service_api_key(shared_state, path_vars)
@@ -145,7 +145,7 @@ pub async fn service_api_key_router(state: &Arc<AppState>) -> Router {
         )
         // Get service API keys [GET]
         .route(
-            "/:workspace_id/api_key",
+            "/",
             get({
                 let shared_state = Arc::clone(state);
                 move |workspace_id| get_service_api_keys(shared_state, workspace_id)
@@ -153,7 +153,7 @@ pub async fn service_api_key_router(state: &Arc<AppState>) -> Router {
         )
         // Delete service API key [DELETE]
         .route(
-            "/:workspace_id/api_key/:api_key_id",
+            "/:api_key_id",
             delete({
                 let shared_state = Arc::clone(state);
                 move |path_vars, req| delete_service_api_key(shared_state, path_vars, req)
