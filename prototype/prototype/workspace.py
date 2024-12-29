@@ -1,51 +1,7 @@
 """Workspace management."""
-from urllib.parse import urljoin
-import requests
 import streamlit as st
 from .models import Workspace, UserRole, WorkspaceRole, ApiKeyPermission, User, ServiceApiKey
 from .user import get_users
-from .env_settings import API_URL
-
-def add_user_to_workspace(workspace_id: str, user_id: str, role: WorkspaceRole):
-    """Add user to workspace."""
-    resp = requests.post(
-        urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
-        json={"user_id": User.current_user().id, "role": role.capitalize()},
-        timeout=5
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to add user {user_id} to workspace {workspace_id}: {resp.text}"
-            )
-    else:
-        st.rerun(scope="fragment")
-
-def remove_user_from_workspace(workspace_id: str, user_id: str):
-    """Remove user from workspace."""
-    resp = requests.delete(
-        urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
-        timeout=5,
-        json={"user_id": User.current_user().id},
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to remove user {user_id} from workspace {workspace_id}: {resp.text}"
-            )
-
-def update_workspace_user_role(workspace_id: str, user_id: str, role: WorkspaceRole):
-    """Update workspace user role."""
-    resp = requests.put(
-        urljoin(API_URL, f"/workspace/{workspace_id}/users/{user_id}"),
-        json={"user_id": User.current_user().id, "role": role.capitalize()},
-        timeout=5,
-    )
-
-    if not resp.ok:
-        st.toast(
-            f"Failed to update user {user_id} role in workspace {workspace_id}: {resp.text}"
-            )
 
 def add_user_to_workspace_form(workspace: Workspace):
     """Add user to workspace."""
@@ -74,11 +30,9 @@ def add_user_to_workspace_form(workspace: Workspace):
         sk_submit = st.form_submit_button(label="Submit")
 
         if sk_submit:
-            add_user_to_workspace(
-                workspace.id,
-                sk_user.id,
-                sk_role
-                )
+            success = workspace.add_user(sk_user, sk_role)
+            if success:
+                st.rerun(scope="fragment")
 
 def create_workspace_form():
     """Create workspace form."""
@@ -176,11 +130,11 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
         if submit_wk_users:
             for user, user_row in zip(users, wk_users):
                 if user_row["delete"]:
-                    remove_user_from_workspace(workspace.id, user.id)
+                    workspace.remove_user(user)
                     continue
 
                 if user_row["role"] != user.role:
-                    update_workspace_user_role(workspace.id, user.id, user_row["role"])
+                    workspace.change_user_role(user, user_row["role"])
 
             st.rerun(scope="fragment")
 

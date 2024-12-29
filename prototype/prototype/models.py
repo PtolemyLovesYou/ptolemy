@@ -233,3 +233,51 @@ class Workspace(BaseModel):
             return []
 
         return [ServiceApiKey(**u) for u in resp.json()]
+
+    def add_user(self, user: User, role: WorkspaceRole) -> bool:
+        """Add user to workspace."""
+        resp = requests.post(
+            urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
+            json={"user_id": User.current_user().id, "role": role.capitalize()},
+            timeout=5
+        )
+
+        if not resp.ok:
+            st.error(
+                f"Failed to add user {user.id} to workspace {self.id}: {resp.text}"
+                )
+            return False
+
+        return True
+
+    def remove_user(self, user: User) -> bool:
+        """Remove user from workspace."""
+        resp = requests.delete(
+            urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
+            timeout=5,
+            json={"user_id": User.current_user().id},
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to remove user {user.id} from workspace {self.id}: {resp.text}"
+                )
+            return False
+
+        return True
+
+    def change_user_role(self, user: User, role: WorkspaceRole) -> bool:
+        """Change user role in workspace."""
+        resp = requests.put(
+            urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
+            json={"user_id": User.current_user().id, "role": role.capitalize()},
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(
+                f"Failed to update user {user.id} role in workspace {self.id}: {resp.text}"
+                )
+            return False
+
+        return True
