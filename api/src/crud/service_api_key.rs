@@ -17,7 +17,7 @@ pub async fn create_service_api_key(
     permissions: ApiKeyPermissionEnum,
     valid_for: Option<Duration>,
 ) -> Result<(Uuid, String), CRUDError> {
-    let api_key = generate_api_key().await;
+    let api_key = generate_api_key("pt-sk").await;
     let (key_hash, salt) = hash_password(conn, &api_key).await?;
     let expires_at = match valid_for {
         Some(duration) => Some(Utc::now().naive_utc() + duration),

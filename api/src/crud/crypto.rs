@@ -11,12 +11,14 @@ use tracing::error;
 /// # Returns
 ///
 /// Returns a base64 encoded string containing the generated api key.
-pub async fn generate_api_key() -> String {
+pub async fn generate_api_key(prefix: &str) -> String {
     let rng = SystemRandom::new();
-    let mut api_key = [0u8; 32];
+    let mut api_key = [0u8; 48];
     rng.fill(&mut api_key).unwrap();
     // encode api key as b64
-    base64::engine::general_purpose::STANDARD.encode(api_key)
+    let encoded_api_key = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(api_key);
+
+    format!("{}-{}", prefix, encoded_api_key)
 }
 
 /// Hashes a given password using a generated salt and returns the hashed password.
