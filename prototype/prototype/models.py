@@ -96,12 +96,26 @@ class ServiceApiKey(BaseModel):
 
 class UserApiKey(BaseModel):
     """User API Key."""
+
     user_id: str
     id: str
     name: str
     key_preview: str
     expires_at: Optional[str] = None
     api_key: Optional[str] = None
+
+    def delete(self) -> bool:
+        """Delete API key."""
+        resp = requests.delete(
+            urljoin(API_URL, f"/user/{self.user_id}/api_key/{self.id}"),
+            timeout=5,
+        )
+
+        if resp.ok:
+            return True
+
+        st.toast(f"Failed to delete API key: {resp.text}")
+        return False
 
     @classmethod
     def create(
