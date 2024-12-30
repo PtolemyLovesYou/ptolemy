@@ -2,6 +2,14 @@
 
 pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "field_value_type"))]
+    pub struct FieldValueType;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "tier"))]
+    pub struct Tier;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "workspace_role"))]
     pub struct WorkspaceRole;
 }
@@ -16,6 +24,62 @@ diesel::table! {
         version -> Nullable<Varchar>,
         #[max_length = 8]
         environment -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Tier;
+    use super::sql_types::FieldValueType;
+
+    io (id) {
+        id -> Uuid,
+        tier -> Tier,
+        system_event_id -> Nullable<Uuid>,
+        subsystem_event_id -> Nullable<Uuid>,
+        component_event_id -> Nullable<Uuid>,
+        subcomponent_event_id -> Nullable<Uuid>,
+        field_name -> Nullable<Varchar>,
+        field_value_str -> Nullable<Varchar>,
+        field_value_int -> Nullable<Int8>,
+        field_value_float -> Nullable<Float8>,
+        field_value_bool -> Nullable<Bool>,
+        field_value_json -> Nullable<Json>,
+        field_value_type -> FieldValueType,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Tier;
+
+    metadata (id) {
+        id -> Uuid,
+        tier -> Tier,
+        system_event_id -> Nullable<Uuid>,
+        subsystem_event_id -> Nullable<Uuid>,
+        component_event_id -> Nullable<Uuid>,
+        subcomponent_event_id -> Nullable<Uuid>,
+        field_name -> Varchar,
+        field_value -> Varchar,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Tier;
+
+    runtime (id) {
+        id -> Uuid,
+        tier -> Tier,
+        system_event_id -> Nullable<Uuid>,
+        subsystem_event_id -> Nullable<Uuid>,
+        component_event_id -> Nullable<Uuid>,
+        subcomponent_event_id -> Nullable<Uuid>,
+        start_time -> Timestamp,
+        end_time -> Timestamp,
+        error_type -> Nullable<Varchar>,
+        error_content -> Nullable<Varchar>,
     }
 }
 
@@ -82,6 +146,18 @@ diesel::table! {
 }
 
 diesel::joinable!(component_event -> subsystem_event (subsystem_event_id));
+diesel::joinable!(io -> component_event (component_event_id));
+diesel::joinable!(io -> subcomponent_event (subcomponent_event_id));
+diesel::joinable!(io -> subsystem_event (subsystem_event_id));
+diesel::joinable!(io -> system_event (system_event_id));
+diesel::joinable!(metadata -> component_event (component_event_id));
+diesel::joinable!(metadata -> subcomponent_event (subcomponent_event_id));
+diesel::joinable!(metadata -> subsystem_event (subsystem_event_id));
+diesel::joinable!(metadata -> system_event (system_event_id));
+diesel::joinable!(runtime -> component_event (component_event_id));
+diesel::joinable!(runtime -> subcomponent_event (subcomponent_event_id));
+diesel::joinable!(runtime -> subsystem_event (subsystem_event_id));
+diesel::joinable!(runtime -> system_event (system_event_id));
 diesel::joinable!(subcomponent_event -> component_event (component_event_id));
 diesel::joinable!(subsystem_event -> system_event (system_event_id));
 diesel::joinable!(system_event -> workspace (workspace_id));
@@ -89,6 +165,9 @@ diesel::joinable!(workspace_user -> workspace (workspace_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     component_event,
+    io,
+    metadata,
+    runtime,
     subcomponent_event,
     subsystem_event,
     system_event,
