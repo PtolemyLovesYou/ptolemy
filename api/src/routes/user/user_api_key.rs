@@ -103,8 +103,7 @@ async fn delete_user_api_key(
 ) -> Result<StatusCode, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
-    match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &user_id).await
-    {
+    match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &user_id).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err(e.http_status_code()),
     }

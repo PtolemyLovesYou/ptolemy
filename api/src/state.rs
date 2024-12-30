@@ -1,5 +1,5 @@
-use crate::error::{ApiError, CRUDError};
 use crate::crypto::PasswordHandler;
+use crate::error::{ApiError, CRUDError};
 use axum::http::StatusCode;
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};

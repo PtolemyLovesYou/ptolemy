@@ -1,4 +1,4 @@
-use crate::generated::records_schema::sql_types::FieldValueType;
+use crate::generated::records_schema::sql_types::{FieldValueType, Tier};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{
@@ -7,6 +7,72 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 use std::io::Write;
+
+#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
+#[diesel(sql_type = Tier)]
+pub enum TierEnum {
+    System,
+    Subsystem,
+    Component,
+    Subcomponent,
+}
+
+impl Serialize for TierEnum {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(match *self {
+            TierEnum::System => "system",
+            TierEnum::Subsystem => "subsystem",
+            TierEnum::Component => "component",
+            TierEnum::Subcomponent => "subcomponent",
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for TierEnum {
+    fn deserialize<D>(deserializer: D) -> Result<TierEnum, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "system" => Ok(TierEnum::System),
+            "subsystem" => Ok(TierEnum::Subsystem),
+            "component" => Ok(TierEnum::Component),
+            "subcomponent" => Ok(TierEnum::Subcomponent),
+            _ => Err(serde::de::Error::unknown_variant(
+                s.as_str(),
+                &["system", "subsystem", "component", "subcomponent"],
+            )),
+        }
+    }
+}
+
+impl ToSql<Tier, Pg> for TierEnum {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
+        match *self {
+            TierEnum::System => out.write_all(b"system")?,
+            TierEnum::Subsystem => out.write_all(b"subsystem")?,
+            TierEnum::Component => out.write_all(b"component")?,
+            TierEnum::Subcomponent => out.write_all(b"subcomponent")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSql<Tier, Pg> for TierEnum {
+    fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"system" => Ok(TierEnum::System),
+            b"subsystem" => Ok(TierEnum::Subsystem),
+            b"component" => Ok(TierEnum::Component),
+            b"subcomponent" => Ok(TierEnum::Subcomponent),
+            _ => Err("Unrecognized enum variant".into()),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
 #[diesel(sql_type = FieldValueType)]

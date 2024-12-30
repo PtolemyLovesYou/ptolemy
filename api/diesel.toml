@@ -9,7 +9,7 @@ filter = { only_tables = ["workspace", "users", "workspace_user", "user_api_key"
 [print_schema.records]
 file = "src/generated/records_schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
-filter = { only_tables = ["workspace", "system_event", "system_runtime", "system_io", "system_metadata", "subsystem_event", "subsystem_runtime", "subsystem_io", "subsystem_metadata", "component_event", "component_runtime", "component_io", "component_metadata",  "subcomponent_event", "subcomponent_runtime", "subcomponent_io", "subcomponent_metadata"] }
+filter = { only_tables = ["workspace", "system_event", "subsystem_event", "component_event", "subcomponent_event", "runtime", "io", "metadata"] }
 
 [migrations_directory]
 dir = "/app/diesel"

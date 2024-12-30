@@ -126,7 +126,7 @@ pub async fn change_user_password(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
     user_password: &String,
-    password_handler: &PasswordHandler
+    password_handler: &PasswordHandler,
 ) -> Result<(), CRUDError> {
     let hashed_password = password_handler.hash_password(&user_password);
 

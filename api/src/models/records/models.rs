@@ -1,4 +1,4 @@
-use crate::models::records::enums::FieldValueTypeEnum;
+use crate::models::records::enums::{FieldValueTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
@@ -8,6 +8,35 @@ use ptolemy_core::parser::{
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
+
+fn parse_tier(tier: Tier) -> Result<TierEnum, ParseError> {
+    let parsed_tier = match tier {
+        Tier::System => TierEnum::System,
+        Tier::Subsystem => TierEnum::Subsystem,
+        Tier::Component => TierEnum::Component,
+        Tier::Subcomponent => TierEnum::Subcomponent,
+        _ => {
+            error!("Unknown tier");
+            return Err(ParseError::UndefinedTier);
+        }
+    };
+
+    Ok(parsed_tier)
+}
+
+fn get_foreign_keys(
+    tier: &TierEnum,
+    parent_id: Uuid,
+) -> Result<(Option<Uuid>, Option<Uuid>, Option<Uuid>, Option<Uuid>), ParseError> {
+    let vals = match tier {
+        TierEnum::System => (Some(parent_id), None, None, None),
+        TierEnum::Subsystem => (None, Some(parent_id), None, None),
+        TierEnum::Component => (None, None, Some(parent_id), None),
+        TierEnum::Subcomponent => (None, None, None, Some(parent_id)),
+    };
+
+    Ok(vals)
+}
 
 pub trait EventTable {
     fn from_record(record: &Record) -> Result<Self, ParseError>
@@ -26,73 +55,56 @@ fn parse_timestamp(timestamp: &Option<f32>) -> Result<NaiveDateTime, ParseError>
         .ok_or(ParseError::MissingField)
 }
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
-#[
-    diesel(
-        table_name = crate::generated::records_schema::system_event,
-        table_name = crate::generated::records_schema::subsystem_event,
-        table_name = crate::generated::records_schema::component_event,
-        table_name = crate::generated::records_schema::subcomponent_event,
-    )
-    ]
-pub struct EventRecord {
-    pub id: Uuid,
-    pub parent_id: Uuid,
-    pub name: String,
-    pub parameters: Option<serde_json::Value>,
-    pub version: Option<String>,
-    pub environment: Option<String>,
-}
-
-impl EventRecord {
-    pub fn new(
-        id: Uuid,
-        parent_id: Uuid,
-        name: String,
-        parameters: Option<serde_json::Value>,
-        version: Option<String>,
-        environment: Option<String>,
-    ) -> Self {
-        Self {
-            id,
-            parent_id,
-            name,
-            parameters,
-            version,
-            environment,
+macro_rules! event_table {
+    ($name:ident, $table_name:ident, $parent_fk:ident) => {
+        #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
+        #[diesel(table_name = crate::generated::records_schema::$table_name)]
+        pub struct $name {
+            pub id: Uuid,
+            pub $parent_fk: Uuid,
+            pub name: String,
+            pub parameters: Option<serde_json::Value>,
+            pub version: Option<String>,
+            pub environment: Option<String>,
         }
-    }
+
+        impl EventTable for $name {
+            fn from_record(record: &Record) -> Result<Self, ParseError> {
+                let parameters = parse_parameters(&record.parameters)?;
+
+                let rec = $name {
+                    id: parse_uuid(&record.id).unwrap(),
+                    $parent_fk: parse_uuid(&record.parent_id).unwrap(),
+                    name: record.name.clone().unwrap(),
+                    parameters,
+                    version: record.version.clone(),
+                    environment: record.environment.clone(),
+                };
+
+                Ok(rec)
+            }
+        }
+    };
 }
 
-impl EventTable for EventRecord {
-    fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let parameters = parse_parameters(&record.parameters)?;
-
-        let rec = Self::new(
-            parse_uuid(&record.id).unwrap(),
-            parse_uuid(&record.parent_id).unwrap(),
-            record.name.clone().unwrap(),
-            parameters,
-            record.version.clone(),
-            record.environment.clone(),
-        );
-
-        Ok(rec)
-    }
-}
+event_table!(SystemEventRecord, system_event, workspace_id);
+event_table!(SubsystemEventRecord, subsystem_event, system_event_id);
+event_table!(ComponentEventRecord, component_event, subsystem_event_id);
+event_table!(
+    SubcomponentEventRecord,
+    subcomponent_event,
+    component_event_id
+);
 
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
-#[
-    diesel(
-        table_name = crate::generated::records_schema::system_runtime,
-        table_name = crate::generated::records_schema::subsystem_runtime,
-        table_name = crate::generated::records_schema::component_runtime,
-        table_name = crate::generated::records_schema::subcomponent_runtime,
-    )
-    ]
+#[diesel(table_name = crate::generated::records_schema::runtime)]
 pub struct RuntimeRecord {
     pub id: Uuid,
-    pub parent_id: Uuid,
+    pub tier: TierEnum,
+    pub system_event_id: Option<Uuid>,
+    pub subsystem_event_id: Option<Uuid>,
+    pub component_event_id: Option<Uuid>,
+    pub subcomponent_event_id: Option<Uuid>,
     #[serde(with = "ts_microseconds")]
     pub start_time: NaiveDateTime,
     #[serde(with = "ts_microseconds")]
@@ -101,53 +113,39 @@ pub struct RuntimeRecord {
     pub error_content: Option<String>,
 }
 
-impl RuntimeRecord {
-    pub fn new(
-        id: Uuid,
-        parent_id: Uuid,
-        start_time: NaiveDateTime,
-        end_time: NaiveDateTime,
-        error_type: Option<String>,
-        error_content: Option<String>,
-    ) -> Self {
-        Self {
-            id,
-            parent_id,
-            start_time,
-            end_time,
-            error_type,
-            error_content,
-        }
-    }
-}
-
 impl EventTable for RuntimeRecord {
     fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let rec = Self::new(
-            parse_uuid(&record.id).unwrap(),
-            parse_uuid(&record.parent_id).unwrap(),
-            parse_timestamp(&record.start_time).unwrap(),
-            parse_timestamp(&record.end_time).unwrap(),
-            record.error_type.clone(),
-            record.error_content.clone(),
-        );
+        let tier = parse_tier(record.tier())?;
+
+        let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
+            get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
+
+        let rec = RuntimeRecord {
+            id: parse_uuid(&record.id)?,
+            tier,
+            system_event_id,
+            subsystem_event_id,
+            component_event_id,
+            subcomponent_event_id,
+            start_time: parse_timestamp(&record.start_time)?,
+            end_time: parse_timestamp(&record.end_time)?,
+            error_type: record.error_type.clone(),
+            error_content: record.error_content.clone(),
+        };
 
         Ok(rec)
     }
 }
 
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
-#[
-    diesel(
-        table_name = crate::generated::records_schema::system_io,
-        table_name = crate::generated::records_schema::subsystem_io,
-        table_name = crate::generated::records_schema::component_io,
-        table_name = crate::generated::records_schema::subcomponent_io,
-    )
-    ]
+#[diesel(table_name = crate::generated::records_schema::io)]
 pub struct IORecord {
     pub id: Uuid,
-    pub parent_id: Uuid,
+    pub tier: TierEnum,
+    pub system_event_id: Option<Uuid>,
+    pub subsystem_event_id: Option<Uuid>,
+    pub component_event_id: Option<Uuid>,
+    pub subcomponent_event_id: Option<Uuid>,
     pub field_name: String,
     pub field_value_str: Option<String>,
     pub field_value_int: Option<i64>,
@@ -167,8 +165,19 @@ impl IORecord {
             FieldValueTypeEnum::Json => FieldValue::Json(self.field_value_json.clone().unwrap()),
         }
     }
+}
 
-    pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: FieldValue) -> Self {
+impl EventTable for IORecord {
+    fn from_record(record: &Record) -> Result<Self, ParseError> {
+        let id = parse_uuid(&record.id)?;
+
+        let tier = parse_tier(record.tier())?;
+
+        let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
+            get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
+
+        let field_value_raw = parse_io(&record.field_value)?;
+
         let (
             field_value_type,
             field_value_str,
@@ -176,7 +185,7 @@ impl IORecord {
             field_value_float,
             field_value_bool,
             field_value_json,
-        ) = match field_value {
+        ) = match field_value_raw {
             FieldValue::String(s) => (FieldValueTypeEnum::String, Some(s), None, None, None, None),
             FieldValue::Int(i) => (FieldValueTypeEnum::Int, None, Some(i), None, None, None),
             FieldValue::Float(f) => (FieldValueTypeEnum::Float, None, None, Some(f), None, None),
@@ -184,9 +193,18 @@ impl IORecord {
             FieldValue::Json(j) => (FieldValueTypeEnum::Json, None, None, None, None, Some(j)),
         };
 
-        Self {
+        let field_name = match &record.field_name {
+            Some(n) => n.clone(),
+            None => return Err(ParseError::MissingField),
+        };
+
+        let rec = IORecord {
             id,
-            parent_id,
+            tier,
+            system_event_id,
+            subsystem_event_id,
+            component_event_id,
+            subcomponent_event_id,
             field_name,
             field_value_str,
             field_value_int,
@@ -194,58 +212,47 @@ impl IORecord {
             field_value_bool,
             field_value_json,
             field_value_type,
-        }
-    }
-}
-
-impl EventTable for IORecord {
-    fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let rec = Self::new(
-            parse_uuid(&record.id).unwrap(),
-            parse_uuid(&record.parent_id).unwrap(),
-            record.field_name.clone().unwrap(),
-            parse_io(&record.field_value)?,
-        );
+        };
 
         Ok(rec)
     }
 }
 
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
-#[
-    diesel(
-        table_name = crate::generated::records_schema::system_metadata,
-        table_name = crate::generated::records_schema::subsystem_metadata,
-        table_name = crate::generated::records_schema::component_metadata,
-        table_name = crate::generated::records_schema::subcomponent_metadata,
-    )
-    ]
+#[diesel(table_name = crate::generated::records_schema::metadata)]
 pub struct MetadataRecord {
     pub id: Uuid,
-    pub parent_id: Uuid,
+    pub system_event_id: Option<Uuid>,
+    pub subsystem_event_id: Option<Uuid>,
+    pub component_event_id: Option<Uuid>,
+    pub subcomponent_event_id: Option<Uuid>,
     pub field_name: String,
     pub field_value: String,
 }
 
-impl MetadataRecord {
-    pub fn new(id: Uuid, parent_id: Uuid, field_name: String, field_value: String) -> Self {
-        Self {
-            id,
-            parent_id,
-            field_name,
-            field_value,
-        }
-    }
-}
-
 impl EventTable for MetadataRecord {
     fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let rec = Self::new(
-            parse_uuid(&record.id).unwrap(),
-            parse_uuid(&record.parent_id).unwrap(),
-            record.field_name.clone().unwrap(),
-            parse_metadata(&record.field_value)?,
-        );
+        let id = parse_uuid(&record.id)?;
+
+        let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
+            get_foreign_keys(&TierEnum::System, parse_uuid(&record.parent_id)?)?;
+
+        let field_name = match &record.field_name {
+            Some(n) => n.clone(),
+            None => return Err(ParseError::MissingField),
+        };
+
+        let field_value = parse_metadata(&record.field_value)?;
+
+        let rec = MetadataRecord {
+            id,
+            system_event_id,
+            subsystem_event_id,
+            component_event_id,
+            subcomponent_event_id,
+            field_name,
+            field_value,
+        };
 
         Ok(rec)
     }
