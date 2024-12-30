@@ -1,9 +1,13 @@
+use crate::crud::records::insert::{
+    insert_component_event_records, insert_io_records, insert_metadata_records,
+    insert_runtime_records, insert_subcomponent_event_records, insert_subsystem_event_records,
+    insert_system_event_records,
+};
 use crate::models::records::models::{
     parse_record, ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord,
     SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
 };
 use crate::state::AppState;
-use diesel_async::RunQueryDsl;
 use ptolemy_core::generated::observer::{
     observer_server::Observer, LogType, PublishRequest, PublishResponse, Record, Tier,
 };
@@ -20,25 +24,6 @@ impl MyObserver {
     pub async fn new(state: Arc<AppState>) -> Self {
         Self { state }
     }
-}
-
-macro_rules! insert_records {
-    ($conn:ident, $vals:expr, $table:ident) => {
-        if !$vals.is_empty() {
-            match diesel::insert_into(crate::generated::records_schema::$table::table)
-                .values(&$vals)
-                .execute(&mut $conn)
-                .await
-            {
-                Ok(_) => {
-                    debug!("Pushed {} records to Postgres", $vals.len());
-                }
-                Err(e) => {
-                    error!("Failed to push records to Postgres: {}", e);
-                }
-            };
-        };
-    };
 }
 
 macro_rules! add_record {
@@ -98,14 +83,22 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
         })
         .collect::<Vec<bool>>();
 
-    insert_records!(conn, system_event_rows, system_event);
-    insert_records!(conn, subsystem_event_rows, subsystem_event);
-    insert_records!(conn, component_event_rows, component_event);
-    insert_records!(conn, subcomponent_event_rows, subcomponent_event);
+    insert_system_event_records(&mut conn, system_event_rows)
+        .await
+        .ok();
+    insert_subsystem_event_records(&mut conn, subsystem_event_rows)
+        .await
+        .ok();
+    insert_component_event_records(&mut conn, component_event_rows)
+        .await
+        .ok();
+    insert_subcomponent_event_records(&mut conn, subcomponent_event_rows)
+        .await
+        .ok();
 
-    insert_records!(conn, runtime_rows, runtime);
-    insert_records!(conn, io_rows, io);
-    insert_records!(conn, metadata_rows, metadata);
+    insert_runtime_records(&mut conn, runtime_rows).await.ok();
+    insert_io_records(&mut conn, io_rows).await.ok();
+    insert_metadata_records(&mut conn, metadata_rows).await.ok();
 }
 
 #[tonic::async_trait]
