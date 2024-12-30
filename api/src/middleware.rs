@@ -26,9 +26,8 @@ pub fn trace_layer_rest() -> HttpTraceLayer {
         .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
 }
 
-type GrpcTraceLayer = TraceLayer<
-    tower_http::classify::SharedClassifier<tower_http::classify::GrpcErrorsAsFailures>,
->;
+type GrpcTraceLayer =
+    TraceLayer<tower_http::classify::SharedClassifier<tower_http::classify::GrpcErrorsAsFailures>>;
 
 pub fn trace_layer_grpc() -> GrpcTraceLayer {
     TraceLayer::new_for_grpc()

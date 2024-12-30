@@ -1,15 +1,15 @@
 use api::crud::auth::admin::ensure_sysadmin;
 use api::error::ApiError;
+use api::middleware::trace_layer_grpc;
 use api::observer::service::MyObserver;
 use api::routes::get_router;
-use api::middleware::trace_layer_grpc;
 use api::state::AppState;
 use ptolemy_core::generated::observer::observer_server::ObserverServer;
 use std::sync::Arc;
 use tokio::try_join;
 use tonic::transport::Server;
-use tracing::{error, info};
 use tower::ServiceBuilder;
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
@@ -31,9 +31,7 @@ async fn main() -> Result<(), ApiError> {
     let grpc_addr = "[::]:50051".parse().unwrap();
     let observer = MyObserver::new(shared_state.clone()).await;
 
-    let grpc_trace_layer = ServiceBuilder::new()
-        .layer(trace_layer_grpc())
-        .into_inner();
+    let grpc_trace_layer = ServiceBuilder::new().layer(trace_layer_grpc()).into_inner();
 
     // Axum server setup
     let app = get_router(&shared_state).await;
