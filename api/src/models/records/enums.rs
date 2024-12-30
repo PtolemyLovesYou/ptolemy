@@ -50,7 +50,7 @@ impl<'de> Deserialize<'de> for TierEnum {
     }
 }
 
-impl ToSql<FieldValueType, Pg> for TierEnum {
+impl ToSql<Tier, Pg> for TierEnum {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
         match *self {
             TierEnum::System => out.write_all(b"system")?,
@@ -62,7 +62,7 @@ impl ToSql<FieldValueType, Pg> for TierEnum {
     }
 }
 
-impl FromSql<FieldValueType, Pg> for TierEnum {
+impl FromSql<Tier, Pg> for TierEnum {
     fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
         match bytes.as_bytes() {
             b"system" => Ok(TierEnum::System),

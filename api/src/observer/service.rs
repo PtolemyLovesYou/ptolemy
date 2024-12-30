@@ -1,12 +1,12 @@
 use crate::models::records::models::{
-    parse_record, EventRecord, IORecord, MetadataRecord, RuntimeRecord,
+    parse_record, ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord,
+    SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
 };
 use crate::state::AppState;
 use diesel_async::RunQueryDsl;
 use ptolemy_core::generated::observer::{
     observer_server::Observer, LogType, PublishRequest, PublishResponse, Record, Tier,
 };
-use std::collections::HashMap;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
@@ -41,22 +41,11 @@ macro_rules! insert_records {
     };
 }
 
-macro_rules! rows_hashmap {
-    ($ltype:ident) => {{
-        let mut h: HashMap<Tier, Vec<$ltype>> = HashMap::new();
-        h.insert(Tier::System, Vec::new());
-        h.insert(Tier::Subsystem, Vec::new());
-        h.insert(Tier::Component, Vec::new());
-        h.insert(Tier::Subcomponent, Vec::new());
-        h
-    }};
-}
-
 macro_rules! add_record {
-    ($record_type: ident, $rec: ident, $target:ident, $tier:ident) => {{
+    ($record_type: ident, $rec: ident, $target:ident) => {{
         let rec = parse_record::<$record_type>(&$rec);
         if let Ok(rec) = rec {
-            $target.entry($tier).or_insert_with(Vec::new).push(rec);
+            $target.push(rec);
         }
 
         Some(true)
@@ -66,22 +55,41 @@ macro_rules! add_record {
 async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
     let mut conn = state.pg_pool.get().await.unwrap();
 
-    let mut event_rows = rows_hashmap!(EventRecord);
-    let mut runtime_rows = rows_hashmap!(RuntimeRecord);
-    let mut io_rows = rows_hashmap!(IORecord);
-    let mut metadata_rows = rows_hashmap!(MetadataRecord);
+    let mut system_event_rows: Vec<SystemEventRecord> = Vec::new();
+    let mut subsystem_event_rows: Vec<SubsystemEventRecord> = Vec::new();
+    let mut component_event_rows: Vec<ComponentEventRecord> = Vec::new();
+    let mut subcomponent_event_rows: Vec<SubcomponentEventRecord> = Vec::new();
+
+    let mut runtime_rows: Vec<RuntimeRecord> = Vec::new();
+    let mut io_rows: Vec<IORecord> = Vec::new();
+    let mut metadata_rows: Vec<MetadataRecord> = Vec::new();
 
     let _ = records
         .into_iter()
         .filter_map(|record| {
             let tier = record.tier();
             match record.log_type() {
-                LogType::Event => add_record!(EventRecord, record, event_rows, tier),
-                LogType::Runtime => add_record!(RuntimeRecord, record, runtime_rows, tier),
+                LogType::Event => match tier {
+                    Tier::System => add_record!(SystemEventRecord, record, system_event_rows),
+                    Tier::Subsystem => {
+                        add_record!(SubsystemEventRecord, record, subsystem_event_rows)
+                    }
+                    Tier::Component => {
+                        add_record!(ComponentEventRecord, record, component_event_rows)
+                    }
+                    Tier::Subcomponent => {
+                        add_record!(SubcomponentEventRecord, record, subcomponent_event_rows)
+                    }
+                    _ => {
+                        error!("Got a record with an invalid tier: {:#?}", record);
+                        Some(false)
+                    }
+                },
+                LogType::Runtime => add_record!(RuntimeRecord, record, runtime_rows),
                 LogType::Input | LogType::Output | LogType::Feedback => {
-                    add_record!(IORecord, record, io_rows, tier)
+                    add_record!(IORecord, record, io_rows)
                 }
-                LogType::Metadata => add_record!(MetadataRecord, record, metadata_rows, tier),
+                LogType::Metadata => add_record!(MetadataRecord, record, metadata_rows),
                 LogType::UndeclaredLogType => {
                     error!("Got a record with an undeclared log type: {:#?}", record);
                     Some(false)
@@ -90,33 +98,14 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
         })
         .collect::<Vec<bool>>();
 
-    insert_records!(conn, event_rows[&Tier::System], system_event);
-    insert_records!(conn, event_rows[&Tier::Subsystem], subsystem_event);
-    insert_records!(conn, event_rows[&Tier::Component], component_event);
-    insert_records!(conn, event_rows[&Tier::Subcomponent], subcomponent_event);
+    insert_records!(conn, system_event_rows, system_event);
+    insert_records!(conn, subsystem_event_rows, subsystem_event);
+    insert_records!(conn, component_event_rows, component_event);
+    insert_records!(conn, subcomponent_event_rows, subcomponent_event);
 
-    insert_records!(conn, runtime_rows[&Tier::System], system_runtime);
-    insert_records!(conn, runtime_rows[&Tier::Subsystem], subsystem_runtime);
-    insert_records!(conn, runtime_rows[&Tier::Component], component_runtime);
-    insert_records!(
-        conn,
-        runtime_rows[&Tier::Subcomponent],
-        subcomponent_runtime
-    );
-
-    insert_records!(conn, io_rows[&Tier::System], system_io);
-    insert_records!(conn, io_rows[&Tier::Subsystem], subsystem_io);
-    insert_records!(conn, io_rows[&Tier::Component], component_io);
-    insert_records!(conn, io_rows[&Tier::Subcomponent], subcomponent_io);
-
-    insert_records!(conn, metadata_rows[&Tier::System], system_metadata);
-    insert_records!(conn, metadata_rows[&Tier::Subsystem], subsystem_metadata);
-    insert_records!(conn, metadata_rows[&Tier::Component], component_metadata);
-    insert_records!(
-        conn,
-        metadata_rows[&Tier::Subcomponent],
-        subcomponent_metadata
-    );
+    insert_records!(conn, runtime_rows, runtime);
+    insert_records!(conn, io_rows, io);
+    insert_records!(conn, metadata_rows, metadata);
 }
 
 #[tonic::async_trait]
