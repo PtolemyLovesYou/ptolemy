@@ -47,7 +47,17 @@ create table runtime (
     start_time timestamp(6) not null,
     end_time timestamp(6) not null,
     error_type varchar,
-    error_content varchar
+    error_content varchar,
+    constraint runtime_fk_tier_check check (
+        (tier = 'system' and system_event_id is not null and 
+         subsystem_event_id is null and component_event_id is null and subcomponent_event_id is null) or
+        (tier = 'subsystem' and subsystem_event_id is not null and 
+         system_event_id is null and component_event_id is null and subcomponent_event_id is null) or
+        (tier = 'component' and component_event_id is not null and 
+         system_event_id is null and subsystem_event_id is null and subcomponent_event_id is null) or
+        (tier = 'subcomponent' and subcomponent_event_id is not null and 
+         system_event_id is null and subsystem_event_id is null and component_event_id is null)
+    )
 );
 
 create table io (
@@ -63,7 +73,17 @@ create table io (
     field_value_float float8,
     field_value_bool bool,
     field_value_json json,
-    field_value_type field_value_type not null
+    field_value_type field_value_type not null,
+    constraint io_fk_tier_check check (
+        (tier = 'system' and system_event_id is not null and 
+         subsystem_event_id is null and component_event_id is null and subcomponent_event_id is null) or
+        (tier = 'subsystem' and subsystem_event_id is not null and 
+         system_event_id is null and component_event_id is null and subcomponent_event_id is null) or
+        (tier = 'component' and component_event_id is not null and 
+         system_event_id is null and subsystem_event_id is null and subcomponent_event_id is null) or
+        (tier = 'subcomponent' and subcomponent_event_id is not null and 
+         system_event_id is null and subsystem_event_id is null and component_event_id is null)
+    )
 );
 
 create table metadata (
@@ -74,5 +94,15 @@ create table metadata (
     component_event_id uuid references component_event(id) on delete cascade,
     subcomponent_event_id uuid references subcomponent_event(id) on delete cascade,
     field_name varchar not null,
-    field_value varchar not null
+    field_value varchar not null,
+    constraint metadata_fk_tier_check check (
+        (tier = 'system' and system_event_id is not null and 
+         subsystem_event_id is null and component_event_id is null and subcomponent_event_id is null) or
+        (tier = 'subsystem' and subsystem_event_id is not null and 
+         system_event_id is null and component_event_id is null and subcomponent_event_id is null) or
+        (tier = 'component' and component_event_id is not null and 
+         system_event_id is null and subsystem_event_id is null and subcomponent_event_id is null) or
+        (tier = 'subcomponent' and subcomponent_event_id is not null and 
+         system_event_id is null and subsystem_event_id is null and component_event_id is null)
+    )
 );
