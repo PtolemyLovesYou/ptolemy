@@ -1,4 +1,5 @@
 use crate::models::records::enums::{FieldValueTypeEnum, TierEnum};
+use crate::models::auth::models::Workspace;
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
@@ -56,8 +57,9 @@ fn parse_timestamp(timestamp: &Option<f32>) -> Result<NaiveDateTime, ParseError>
 }
 
 macro_rules! event_table {
-    ($name:ident, $table_name:ident, $parent_fk:ident) => {
-        #[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
+    ($name:ident, $table_name:ident, $parent_table:ident, $parent_fk:ident) => {
+        #[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+        #[diesel(belongs_to($parent_table, foreign_key = $parent_fk))]
         #[diesel(table_name = crate::generated::records_schema::$table_name)]
         pub struct $name {
             pub id: Uuid,
@@ -87,16 +89,21 @@ macro_rules! event_table {
     };
 }
 
-event_table!(SystemEventRecord, system_event, workspace_id);
-event_table!(SubsystemEventRecord, subsystem_event, system_event_id);
-event_table!(ComponentEventRecord, component_event, subsystem_event_id);
+event_table!(SystemEventRecord, system_event, Workspace, workspace_id);
+event_table!(SubsystemEventRecord, subsystem_event, SystemEventRecord, system_event_id);
+event_table!(ComponentEventRecord, component_event, SubsystemEventRecord, subsystem_event_id);
 event_table!(
     SubcomponentEventRecord,
     subcomponent_event,
+    ComponentEventRecord,
     component_event_id
 );
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+#[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
+#[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
+#[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
+#[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
 #[diesel(table_name = crate::generated::records_schema::runtime)]
 pub struct RuntimeRecord {
     pub id: Uuid,
@@ -137,7 +144,11 @@ impl EventTable for RuntimeRecord {
     }
 }
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+#[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
+#[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
+#[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
+#[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
 #[diesel(table_name = crate::generated::records_schema::io)]
 pub struct IORecord {
     pub id: Uuid,
@@ -218,7 +229,11 @@ impl EventTable for IORecord {
     }
 }
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+#[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
+#[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
+#[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
+#[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
 #[diesel(table_name = crate::generated::records_schema::metadata)]
 pub struct MetadataRecord {
     pub id: Uuid,
