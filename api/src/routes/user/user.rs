@@ -1,7 +1,6 @@
 use crate::crud::user as user_crud;
 use crate::crud::workspace as workspace_crud;
 use crate::crud::workspace_user as workspace_user_crud;
-use crate::error::CRUDError;
 use crate::models::auth::models::{User, UserCreate, Workspace};
 use crate::state::AppState;
 use axum::{
@@ -71,11 +70,7 @@ async fn create_user(
             let response = CreateUserResponse { id: result };
             Ok((StatusCode::CREATED, Json(response)))
         }
-        Err(e) => match e {
-            // TODO: make this more specific
-            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -95,7 +90,7 @@ async fn get_all_users(state: Arc<AppState>) -> Result<Json<Vec<User>>, StatusCo
 
     match user_crud::get_all_users(&mut conn).await {
         Ok(result) => Ok(Json(result)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -107,10 +102,7 @@ async fn get_user(
 
     match user_crud::get_user(&mut conn, &user_id).await {
         Ok(result) => Ok(Json(result)),
-        Err(e) => match e {
-            CRUDError::NotFoundError => Err(StatusCode::NOT_FOUND),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -146,7 +138,7 @@ async fn delete_user(
 
     let acting_user = user_crud::get_user(&mut conn, &req.user_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     // if user is not admin or sysadmin, return forbidden
     if !acting_user.is_admin && !acting_user.is_sysadmin {
@@ -155,7 +147,7 @@ async fn delete_user(
 
     let user_to_delete = user_crud::get_user(&mut conn, &user_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     // if acting user is admin and they're trying to delete another admin, return forbidden
     if acting_user.is_admin && user_to_delete.is_admin {
@@ -174,7 +166,7 @@ async fn delete_user(
 
     match user_crud::delete_user(&mut conn, &user_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -201,14 +193,14 @@ async fn get_workspaces_of_user(
 
     let workspace_user_objs = workspace_user_crud::get_workspaces_of_user(&mut conn, &user_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     let mut workspaces: Vec<Workspace> = Vec::new();
 
     for obj in workspace_user_objs {
         match workspace_crud::get_workspace(&mut conn, &obj.workspace_id).await {
             Ok(workspace) => workspaces.push(workspace),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+            Err(e) => return Err(e.http_status_code()),
         }
     }
 

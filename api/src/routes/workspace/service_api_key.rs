@@ -1,6 +1,5 @@
 use crate::crud::service_api_key as service_api_key_crud;
 use crate::crud::workspace_user as workspace_user_crud;
-use crate::error::CRUDError;
 use crate::models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum};
 use crate::models::auth::models::ServiceApiKey;
 use crate::state::AppState;
@@ -13,7 +12,6 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::error;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -40,10 +38,7 @@ async fn ensure_service_key_permissions(
             WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => Ok(()),
             _ => Err(StatusCode::FORBIDDEN),
         },
-        Err(e) => {
-            error!("Unable to get workspace_user permission: {:?}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        Err(e) => Err(e.http_status_code())
     }
 }
 
@@ -68,7 +63,7 @@ async fn create_service_api_key(
         &state.password_handler,
     )
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| e.http_status_code())?;
 
     Ok(Json(CreateApiKeyResponse {
         id: api_key_id,
@@ -84,7 +79,7 @@ async fn get_service_api_keys(
 
     let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &workspace_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     Ok(Json(api_keys))
 }
@@ -97,7 +92,7 @@ async fn get_service_api_key(
 
     let api_key = service_api_key_crud::get_service_api_key(&mut conn, &workspace_id, &api_key_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     Ok(Json(api_key))
 }
@@ -119,10 +114,7 @@ async fn delete_service_api_key(
     match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id).await
     {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => match e {
-            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 

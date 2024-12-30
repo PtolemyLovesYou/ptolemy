@@ -1,5 +1,4 @@
 use crate::crud::user as user_crud;
-use crate::error::CRUDError;
 use crate::models::auth::models::User;
 use crate::state::AppState;
 use axum::{http::StatusCode, routing::post, Json, Router};
@@ -24,10 +23,7 @@ async fn auth_user(
             Some(user) => Ok(Json(user)),
             None => Err(StatusCode::UNAUTHORIZED),
         },
-        Err(e) => match e {
-            CRUDError::NotFoundError => Err(StatusCode::NOT_FOUND),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 

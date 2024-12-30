@@ -1,5 +1,4 @@
 use crate::crud::user_api_key as user_api_key_crud;
-use crate::error::CRUDError;
 use crate::models::auth::models::UserApiKey;
 use crate::state::AppState;
 use axum::{
@@ -47,7 +46,7 @@ async fn create_user_api_key(
         &state.password_handler,
     )
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| e.http_status_code())?;
 
     Ok(Json(CreateApiKeyResponse {
         id: api_key_id,
@@ -68,7 +67,7 @@ async fn get_user_api_keys(
 
     let api_keys = user_api_key_crud::get_user_api_keys(&mut conn, &user_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     Ok(Json(api_keys))
 }
@@ -87,7 +86,7 @@ async fn get_user_api_key(
 
     let api_key = user_api_key_crud::get_user_api_key(&mut conn, &user_id, &api_key_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     Ok(Json(api_key))
 }
@@ -107,10 +106,7 @@ async fn delete_user_api_key(
     match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &user_id).await
     {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => match e {
-            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
