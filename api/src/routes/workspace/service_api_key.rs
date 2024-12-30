@@ -38,7 +38,7 @@ async fn ensure_service_key_permissions(
             WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => Ok(()),
             _ => Err(StatusCode::FORBIDDEN),
         },
-        Err(e) => Err(e.http_status_code())
+        Err(e) => Err(e.http_status_code()),
     }
 }
 

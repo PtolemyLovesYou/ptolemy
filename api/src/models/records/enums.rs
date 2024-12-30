@@ -14,7 +14,7 @@ pub enum TierEnum {
     System,
     Subsystem,
     Component,
-    Subcomponent
+    Subcomponent,
 }
 
 impl Serialize for TierEnum {

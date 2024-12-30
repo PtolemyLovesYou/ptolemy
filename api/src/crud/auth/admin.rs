@@ -15,7 +15,10 @@ pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
 
     for user in users_list {
         if user.is_sysadmin {
-            if state.password_handler.verify_password(&pass, &user.password_hash) {
+            if state
+                .password_handler
+                .verify_password(&pass, &user.password_hash)
+            {
                 return Ok(());
             }
             // update password
