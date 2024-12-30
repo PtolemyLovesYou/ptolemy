@@ -20,7 +20,7 @@ async fn ensure_admin(
 ) -> Result<(), StatusCode> {
     match user_crud::get_user(conn, &user_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|e| e.http_status_code())?
         .is_admin
     {
         true => Ok(()),
@@ -47,7 +47,7 @@ async fn create_workspace(
     // create workspace
     let wk = workspace_crud::create_workspace(&mut conn, &req.workspace)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| e.http_status_code())?;
 
     // add workspace admin
     let wk_admin_id = match req.workspace_admin_user_id {
@@ -65,7 +65,7 @@ async fn create_workspace(
         },
     )
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| e.http_status_code())?;
 
     Ok((StatusCode::CREATED, Json(wk)))
 }
@@ -78,7 +78,7 @@ async fn get_workspace(
 
     match workspace_crud::get_workspace(&mut conn, &workspace_id).await {
         Ok(result) => Ok(Json(result)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -89,7 +89,7 @@ async fn ensure_workspace_admin(
 ) -> Result<(), StatusCode> {
     match workspace_user_crud::get_workspace_user_permission(conn, workspace_id, user_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|e| e.http_status_code())?
         == WorkspaceRoleEnum::Admin
     {
         true => Ok(()),
@@ -114,7 +114,7 @@ async fn delete_workspace(
 
     match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => Err(e.http_status_code()),
     }
 }
 

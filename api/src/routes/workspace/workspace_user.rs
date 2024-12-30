@@ -1,6 +1,5 @@
 use crate::crud::user as user_crud;
 use crate::crud::workspace_user as workspace_user_crud;
-use crate::error::CRUDError;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::models::{User, WorkspaceUser};
 use crate::state::AppState;
@@ -30,7 +29,7 @@ async fn get_workspace_users(
     for obj in wk_users {
         match user_crud::get_user(&mut conn, &obj.user_id).await {
             Ok(user) => users.push(user),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+            Err(e) => return Err(e.http_status_code()),
         }
     }
 
@@ -45,7 +44,7 @@ async fn get_workspace_user(
 
     match workspace_user_crud::get_workspace_user(&mut conn, &workspace_id, &user_id).await {
         Ok(result) => Ok(Json(result)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -73,12 +72,7 @@ async fn add_user_to_workspace(
         Ok(role) => role,
         Err(e) => {
             error!("Unable to get workspace_user permission: {:?}", e);
-            match e {
-                // TODO: make this more specific
-                CRUDError::DatabaseError => return Err(StatusCode::CONFLICT),
-                CRUDError::NotFoundError => return Err(StatusCode::NOT_FOUND),
-                _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-            };
+            return Err(e.http_status_code());
         }
     };
 
@@ -95,10 +89,7 @@ async fn add_user_to_workspace(
 
     match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
         Ok(_) => Ok(StatusCode::CREATED),
-        Err(e) => match e {
-            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -123,10 +114,7 @@ async fn delete_user_from_workspace(
     .await
     {
         Ok(role) => role,
-        Err(e) => {
-            error!("Unable to get workspace_user permission: {:?}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
+        Err(e) => return Err(e.http_status_code()),
     };
 
     match user_permission {
@@ -144,7 +132,7 @@ async fn delete_user_from_workspace(
         .await
     {
         Ok(_) => Ok(StatusCode::OK),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
@@ -172,7 +160,7 @@ async fn change_workspace_user_role(
         Ok(role) => role,
         Err(e) => {
             error!("Unable to get workspace_user permission: {:?}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err(e.http_status_code());
         }
     };
 
@@ -196,10 +184,7 @@ async fn change_workspace_user_role(
     .await
     {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => match e {
-            CRUDError::DatabaseError => Err(StatusCode::CONFLICT),
-            _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
-        },
+        Err(e) => Err(e.http_status_code()),
     }
 }
 
