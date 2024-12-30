@@ -103,6 +103,32 @@ class UserApiKey(BaseModel):
     expires_at: Optional[str] = None
     api_key: Optional[str] = None
 
+    @classmethod
+    def create(
+        cls,
+        name: str,
+        duration: Optional[int] = None,
+    ) -> Optional[str]:
+        """Create API key."""
+        data = {
+            "name": name,
+            "duration": duration,
+        }
+
+        resp = requests.post(
+            urljoin(API_URL, f"/user/{User.current_user().id}/api_key"),
+            json=data,
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.error(f"Failed to create API key: {resp.text}")
+            return None
+
+        api_key = resp.json()
+
+        return api_key["api_key"]
+
 
 class User(BaseModel):
     """User model."""
@@ -222,6 +248,21 @@ class User(BaseModel):
             return []
 
         return [Workspace(**wk) for wk in resp.json()]
+
+    @property
+    def api_keys(self) -> List[UserApiKey]:
+        """User API Keys."""
+        resp = requests.get(
+            urljoin(API_URL, f"/user/{self.id}/api_key"),
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(f"Failed to get API keys: {resp.status_code}")
+
+            return []
+
+        return [UserApiKey(**ak) for ak in resp.json()]
 
 
 class Workspace(BaseModel):
