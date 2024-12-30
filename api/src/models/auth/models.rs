@@ -80,7 +80,7 @@ pub struct UserApiKey {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub key_preview: String,
-    pub permissions: ApiKeyPermissionEnum,
+    // pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
 
@@ -94,7 +94,7 @@ pub struct UserApiKeyCreate {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub key_preview: String,
-    pub permissions: ApiKeyPermissionEnum,
+    // pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }
 

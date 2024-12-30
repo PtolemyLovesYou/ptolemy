@@ -94,6 +94,56 @@ class ServiceApiKey(BaseModel):
         return api_key["api_key"]
 
 
+class UserApiKey(BaseModel):
+    """User API Key."""
+
+    user_id: str
+    id: str
+    name: str
+    key_preview: str
+    expires_at: Optional[str] = None
+    api_key: Optional[str] = None
+
+    def delete(self) -> bool:
+        """Delete API key."""
+        resp = requests.delete(
+            urljoin(API_URL, f"/user/{self.user_id}/api_key/{self.id}"),
+            timeout=5,
+        )
+
+        if resp.ok:
+            return True
+
+        st.toast(f"Failed to delete API key: {resp.text}")
+        return False
+
+    @classmethod
+    def create(
+        cls,
+        name: str,
+        duration: Optional[int] = None,
+    ) -> Optional[str]:
+        """Create API key."""
+        data = {
+            "name": name,
+            "duration": duration,
+        }
+
+        resp = requests.post(
+            urljoin(API_URL, f"/user/{User.current_user().id}/api_key"),
+            json=data,
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.error(f"Failed to create API key: {resp.text}")
+            return None
+
+        api_key = resp.json()
+
+        return api_key["api_key"]
+
+
 class User(BaseModel):
     """User model."""
 
@@ -212,6 +262,21 @@ class User(BaseModel):
             return []
 
         return [Workspace(**wk) for wk in resp.json()]
+
+    @property
+    def api_keys(self) -> List[UserApiKey]:
+        """User API Keys."""
+        resp = requests.get(
+            urljoin(API_URL, f"/user/{self.id}/api_key"),
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.toast(f"Failed to get API keys: {resp.status_code}")
+
+            return []
+
+        return [UserApiKey(**ak) for ak in resp.json()]
 
 
 class Workspace(BaseModel):
