@@ -1,7 +1,6 @@
 pub mod auth;
 pub mod base;
 pub mod graphql;
-pub mod middleware;
 pub mod user;
 pub mod workspace;
 
@@ -12,5 +11,5 @@ pub async fn get_router(state: &std::sync::Arc<crate::state::AppState>) -> axum:
         .nest("/workspace", workspace::workspace_router(state).await)
         // .nest("/graphql", graphql::graphql_router(state).await)
         .nest("/", base::base_router().await)
-        .layer(middleware::trace_layer())
+        .layer(crate::middleware::trace_layer_rest())
 }
