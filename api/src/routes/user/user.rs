@@ -25,6 +25,21 @@ struct CreateUserResponse {
     id: Uuid,
 }
 
+/// Creates a new user.
+///
+/// # Security
+///
+/// This endpoint requires the user to be authenticated, and the user must have the admin or sysadmin role.
+/// The user cannot create a user with a higher role than themselves.
+///
+/// If the user is attempting to create a sysadmin, the request will be rejected.
+///
+/// # Errors
+///
+/// - `400 Bad Request` if the request is malformed
+/// - `403 Forbidden` if the user does not have the required permissions
+/// - `409 Conflict` if the user with the given username already exists
+/// - `500 Internal Server Error` if there is an unexpected error
 async fn create_user(
     state: Arc<AppState>,
     Json(req): Json<CreateUserRequest>,
@@ -64,6 +79,17 @@ async fn create_user(
     }
 }
 
+/// Retrieves a list of all users from the database.
+///
+/// # Arguments
+///
+/// * `state` - An `Arc` wrapped `AppState` reference containing application state.
+///
+/// # Returns
+///
+/// Returns a `Result` containing a JSON response with a vector of `User` objects on success,
+/// or a `StatusCode::INTERNAL_SERVER_ERROR` on failure.
+
 async fn get_all_users(state: Arc<AppState>) -> Result<Json<Vec<User>>, StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
@@ -93,6 +119,24 @@ struct DeleteUserRequest {
     user_id: Uuid,
 }
 
+/// Deletes a user from the database.
+///
+/// # Arguments
+///
+/// * `state` - An `Arc` wrapped `AppState` reference containing application state.
+/// * `Path(user_id)` - The UUID of the user to delete.
+/// * `Json(req)` - A JSON object containing the UUID of the user making the request.
+///
+/// # Returns
+///
+/// Returns a `Result` containing a `StatusCode::NO_CONTENT` on success,
+/// or a `StatusCode` indicating the error on failure.
+///
+/// # Errors
+///
+/// * `StatusCode::FORBIDDEN` - If the acting user is not an admin or sysadmin,
+///   or if the acting user is trying to delete themselves or another admin.
+/// * `StatusCode::INTERNAL_SERVER_ERROR` - If there is an error deleting the user from the database.
 async fn delete_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
@@ -134,6 +178,21 @@ async fn delete_user(
     }
 }
 
+/// Returns a vector of workspaces that the given user is a member of.
+///
+/// # Arguments
+///
+/// * `state` - An `Arc` wrapped `AppState` reference containing application state.
+/// * `Path(user_id)` - The UUID of the user to get workspaces for.
+///
+/// # Returns
+///
+/// Returns a `Result` containing a `Json` object containing a vector of `Workspace` objects on success,
+/// or a `StatusCode` indicating the error on failure.
+///
+/// # Errors
+///
+/// * `StatusCode::INTERNAL_SERVER_ERROR` - If there is an error retrieving the workspaces from the database.
 async fn get_workspaces_of_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
@@ -156,6 +215,22 @@ async fn get_workspaces_of_user(
     Ok(Json(workspaces))
 }
 
+/// Returns a `Router` containing all routes related to users.
+///
+/// # Routes
+///
+/// * `POST /` - Creates a new user in the database.
+/// * `GET /{user_id}` - Retrieves a user from the database.
+/// * `DELETE /{user_id}` - Deletes a user from the database.
+/// * `GET /all` - Retrieves all users from the database.
+/// * `GET /{user_id}/workspaces` - Retrieves all workspaces that the given user is a member of.
+///
+/// # Errors
+///
+/// The routes may return the following errors:
+///
+/// * `StatusCode::INTERNAL_SERVER_ERROR` - If there is an error with the database.
+/// * `StatusCode::FORBIDDEN` - If the acting user is not an admin or sysadmin.
 pub async fn user_base_router(state: &Arc<AppState>) -> Router {
     Router::new()
         .route(
