@@ -1,5 +1,5 @@
-use crate::crud::user as user_crud;
-use crate::crud::workspace_user as workspace_user_crud;
+use crate::crud::auth::user as user_crud;
+use crate::crud::auth::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::models::{User, WorkspaceUser};
 use crate::state::AppState;

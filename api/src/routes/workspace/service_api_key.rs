@@ -1,5 +1,5 @@
-use crate::crud::service_api_key as service_api_key_crud;
-use crate::crud::workspace_user as workspace_user_crud;
+use crate::crud::auth::service_api_key as service_api_key_crud;
+use crate::crud::auth::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum};
 use crate::models::auth::models::ServiceApiKey;
 use crate::state::AppState;

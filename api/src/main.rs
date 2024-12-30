@@ -1,4 +1,4 @@
-use api::crud::admin::ensure_sysadmin;
+use api::crud::auth::admin::ensure_sysadmin;
 use api::error::ApiError;
 use api::observer::service::MyObserver;
 use api::routes::get_router;

@@ -1,4 +1,4 @@
-use crate::crud::user as user_crud;
+use crate::crud::auth::user as user_crud;
 use crate::models::auth::models::User;
 use crate::state::AppState;
 use axum::{http::StatusCode, routing::post, Json, Router};

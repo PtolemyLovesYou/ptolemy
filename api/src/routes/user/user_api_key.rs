@@ -1,4 +1,4 @@
-use crate::crud::user_api_key as user_api_key_crud;
+use crate::crud::auth::user_api_key as user_api_key_crud;
 use crate::models::auth::models::UserApiKey;
 use crate::state::AppState;
 use axum::{

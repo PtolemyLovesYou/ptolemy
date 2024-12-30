@@ -1,4 +1,4 @@
-use crate::crud::user::{change_user_password, create_user, get_all_users};
+use crate::crud::auth::user::{change_user_password, create_user, get_all_users};
 use crate::error::CRUDError;
 use crate::models::auth::models::UserCreate;
 use crate::state::AppState;
