@@ -1,5 +1,5 @@
-use crate::models::records::enums::{FieldValueTypeEnum, TierEnum};
 use crate::models::auth::models::Workspace;
+use crate::models::records::enums::{FieldValueTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
@@ -90,8 +90,18 @@ macro_rules! event_table {
 }
 
 event_table!(SystemEventRecord, system_event, Workspace, workspace_id);
-event_table!(SubsystemEventRecord, subsystem_event, SystemEventRecord, system_event_id);
-event_table!(ComponentEventRecord, component_event, SubsystemEventRecord, subsystem_event_id);
+event_table!(
+    SubsystemEventRecord,
+    subsystem_event,
+    SystemEventRecord,
+    system_event_id
+);
+event_table!(
+    ComponentEventRecord,
+    component_event,
+    SubsystemEventRecord,
+    subsystem_event_id
+);
 event_table!(
     SubcomponentEventRecord,
     subcomponent_event,
