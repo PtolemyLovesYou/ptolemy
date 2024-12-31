@@ -1,0 +1,13 @@
+INSTALL postgres;
+LOAD postgres;
+
+CREATE SECRET (
+    TYPE POSTGRES,
+    HOST '{{ postgres_host }}',
+    PORT {{ postgres_port }},
+    DATABASE {{ postgres_db }},
+    USER '{{ postgres_user }}',
+    PASSWORD '{{ postgres_password }}'
+);
+
+ATTACH '' AS ptolemy (TYPE POSTGRES, READ_ONLY);

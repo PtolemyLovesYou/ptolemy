@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import requests
 from pydantic import BaseModel, field_validator
 import streamlit as st
-from .env_settings import API_URL
+from ..env_settings import API_URL
 
 
 class UserRole(StrEnum):
