@@ -8,3 +8,4 @@ drop table subsystem_event;
 drop table system_event;
 drop type field_value_type;
 drop type tier;
+drop type io_type;

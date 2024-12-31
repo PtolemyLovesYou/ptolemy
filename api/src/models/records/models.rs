@@ -1,5 +1,5 @@
 use crate::models::auth::models::Workspace;
-use crate::models::records::enums::{FieldValueTypeEnum, TierEnum};
+use crate::models::records::enums::{FieldValueTypeEnum, TierEnum, IoTypeEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
@@ -163,6 +163,7 @@ impl EventTable for RuntimeRecord {
 pub struct IORecord {
     pub id: Uuid,
     pub tier: TierEnum,
+    pub io_type: IoTypeEnum,
     pub system_event_id: Option<Uuid>,
     pub subsystem_event_id: Option<Uuid>,
     pub component_event_id: Option<Uuid>,
@@ -193,6 +194,15 @@ impl EventTable for IORecord {
         let id = parse_uuid(&record.id)?;
 
         let tier = parse_tier(record.tier())?;
+        let io_type = match record.log_type() {
+            LogType::Input => IoTypeEnum::Input,
+            LogType::Output => IoTypeEnum::Output,
+            LogType::Feedback => IoTypeEnum::Feedback,
+            _ => {
+                error!("Unknown record type");
+                return Err(ParseError::UndefinedLogType);
+            }
+        };
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
@@ -222,6 +232,7 @@ impl EventTable for IORecord {
         let rec = IORecord {
             id,
             tier,
+            io_type,
             system_event_id,
             subsystem_event_id,
             component_event_id,
