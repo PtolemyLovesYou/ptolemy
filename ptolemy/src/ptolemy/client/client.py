@@ -33,6 +33,7 @@ class Ptolemy(BaseModel):
 
     engine: Annotated[Engine, Field(default_factory=PtolemyEngine)]
     workspace_id: ID
+    tier: Optional[Tier] = None
 
     autoflush: bool = False
 
@@ -101,15 +102,8 @@ class Ptolemy(BaseModel):
             ]
         )
 
-        if self._tier == Tier.SYSTEM and self.autoflush:
+        if self.tier == Tier.SYSTEM and self.autoflush:
             self.engine.flush()  # pylint: disable=no-member
-
-    def tier(self, tier: Tier) -> Self:
-        """Set tier."""
-        if self._tier is not None:
-            raise ValueError("Tier already set")
-        self._tier = tier
-        return self
 
     def child(
         self,
@@ -119,19 +113,19 @@ class Ptolemy(BaseModel):
         environment: Optional[str] = None,
     ) -> "Ptolemy":
         """Spawn a child log."""
-        if self._tier is None:
+        if self.tier is None:
             raise ValueError("Tier not set")
 
-        if self._tier.child is None:
-            raise ValueError(f"Cannot spawn child of tier {self._tier}")
+        if self.tier.child is None:
+            raise ValueError(f"Cannot spawn child of tier {self.tier}")
 
         return (
             Ptolemy(
                 engine=self.engine,
                 workspace_id=self.workspace_id,
                 autoflush=self.autoflush,
+                tier=self.tier.child
             )
-            .tier(self._tier.child)
             .event(
                 name=name,
                 parameters=parameters,
@@ -154,10 +148,10 @@ class Ptolemy(BaseModel):
                 engine=self.engine,
                 workspace_id=self.workspace_id,
                 autoflush=self.autoflush,
+                tier=Tier.SYSTEM,
             )
-            .tier(Tier.SYSTEM)
             .event(
-                parent_id=self.workspace_id,
+                parent_id=self.workspace_id.hex,
                 name=name,
                 parameters=parameters,
                 version=version,
@@ -191,13 +185,13 @@ class Ptolemy(BaseModel):
         if self._event is not None:
             raise ValueError("Event already set")
 
-        if self._tier != Tier.SYSTEM and parent_id is None:
+        if self.tier != Tier.SYSTEM and parent_id is None:
             raise ValueError("Parent ID is required for non-system events")
 
         self._event = ProtoRecord.event(
-            self._tier.value,
+            self.tier.value,
             name,
-            parent_id.hex or self.workspace_id,
+            parent_id or self.workspace_id.hex,
             id=None,
             parameters=parameters,
             version=version,
@@ -239,7 +233,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Runtime already set")
 
         self._runtime = ProtoRecord.runtime(
-            self._tier.value,
+            self.tier.value,
             self._event.id,
             start_time=start_time,
             end_time=end_time,
@@ -269,7 +263,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Inputs already set")
 
         self._inputs = [
-            ProtoRecord.io(self._tier, LogType.INPUT.value, self._event.id, k, v)
+            ProtoRecord.io(self.tier, LogType.INPUT.value, self._event.id, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -302,7 +296,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Outputs already set")
 
         self._outputs = [
-            ProtoRecord.io(self._tier, self._event.id, LogType.OUTPUT.value, k, v)
+            ProtoRecord.io(self.tier, self._event.id, LogType.OUTPUT.value, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -326,7 +320,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Feedback already set")
 
         self._feedback = [
-            ProtoRecord.io(self._tier, self._event.id, LogType.FEEDBACK.value, k, v)
+            ProtoRecord.io(self.tier, self._event.id, LogType.FEEDBACK.value, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -358,7 +352,7 @@ class Ptolemy(BaseModel):
 
         self._metadata = [
             ProtoRecord.metadata(
-                self._tier, self._event.id, LogType.METADATA.value, k, v
+                self.tier, self._event.id, LogType.METADATA.value, k, v
             )
             for k, v in kwargs.items()
         ]
