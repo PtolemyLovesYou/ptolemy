@@ -14,7 +14,6 @@ services:
       - ptolemy
     depends_on:
       - postgres
-      - clickhouse
   postgres:
     container_name: postgres
     image: postgres:17
