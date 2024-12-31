@@ -20,7 +20,7 @@ build-client:
 
 .PHONY: docs
 docs:
-	uv run --directory docs -m mkdocs serve
+	uv run --directory docs -m mkdocs serve -a localhost:8080
 
 .PHONY: run-prototype-app
 run-prototype-app:
