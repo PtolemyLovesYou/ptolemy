@@ -37,4 +37,5 @@ class DuckDB(BaseModel):
             )
 
         conn.execute(setup_script)
+
         return cls(conn=conn)
