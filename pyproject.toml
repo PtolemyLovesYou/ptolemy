@@ -9,11 +9,12 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["ptolemy", "prototype"]
+members = ["ptolemy", "prototype", "docs"]
 
 [tool.uv.sources]
 prototype = { workspace = true }
 ptolemy = { workspace = true }
+docs = { workspace = true }
 
 [dependency-groups]
 dev = [

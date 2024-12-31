@@ -20,7 +20,7 @@ build-client:
 
 .PHONY: docs
 docs:
-	cd docs && uv run mkdocs serve
+	uv run --directory docs -m mkdocs serve
 
 .PHONY: run-prototype-app
 run-prototype-app:
