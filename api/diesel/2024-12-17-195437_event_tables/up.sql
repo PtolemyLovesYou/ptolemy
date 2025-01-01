@@ -1,5 +1,6 @@
 create type field_value_type as enum ('str', 'int', 'float', 'bool', 'json');
 create type tier as enum ('system', 'subsystem', 'component', 'subcomponent');
+create type io_type as enum ('input', 'output', 'feedback');
 
 create table system_event (
     id uuid primary key,
@@ -63,6 +64,7 @@ create table runtime (
 create table io (
     id uuid primary key,
     tier tier not null,
+    io_type io_type not null,
     system_event_id uuid references system_event(id) on delete cascade,
     subsystem_event_id uuid references subsystem_event(id) on delete cascade,
     component_event_id uuid references component_event(id) on delete cascade,

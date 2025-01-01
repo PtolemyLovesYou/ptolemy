@@ -1,4 +1,4 @@
-use crate::generated::records_schema::sql_types::{FieldValueType, Tier};
+use crate::generated::records_schema::sql_types::{FieldValueType, Tier, IoType};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{
@@ -7,6 +7,67 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 use std::io::Write;
+
+#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
+#[diesel(sql_type = IoType)]
+pub enum IoTypeEnum {
+    Input,
+    Output,
+    Feedback,
+}
+
+impl Serialize for IoTypeEnum {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(match *self {
+            IoTypeEnum::Input => "input",
+            IoTypeEnum::Output => "output",
+            IoTypeEnum::Feedback => "feedback",
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for IoTypeEnum {
+    fn deserialize<D>(deserializer: D) -> Result<IoTypeEnum, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "input" => Ok(IoTypeEnum::Input),
+            "output" => Ok(IoTypeEnum::Output),
+            "feedback" => Ok(IoTypeEnum::Feedback),
+            _ => Err(serde::de::Error::unknown_variant(
+                s.as_str(),
+                &["input", "output", "feedback"],
+            )),
+        }
+    }
+}
+
+impl ToSql<IoType, Pg> for IoTypeEnum {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
+        match *self {
+            IoTypeEnum::Input => out.write_all(b"input")?,
+            IoTypeEnum::Output => out.write_all(b"output")?,
+            IoTypeEnum::Feedback => out.write_all(b"feedback")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSql<IoType, Pg> for IoTypeEnum {
+    fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"input" => Ok(IoTypeEnum::Input),
+            b"output" => Ok(IoTypeEnum::Output),
+            b"feedback" => Ok(IoTypeEnum::Feedback),
+            _ => Err("Unrecognized enum variant".into()),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
 #[diesel(sql_type = Tier)]

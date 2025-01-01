@@ -6,6 +6,10 @@ pub mod sql_types {
     pub struct FieldValueType;
 
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "io_type"))]
+    pub struct IoType;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "tier"))]
     pub struct Tier;
 
@@ -30,11 +34,13 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Tier;
+    use super::sql_types::IoType;
     use super::sql_types::FieldValueType;
 
     io (id) {
         id -> Uuid,
         tier -> Tier,
+        io_type -> IoType,
         system_event_id -> Nullable<Uuid>,
         subsystem_event_id -> Nullable<Uuid>,
         component_event_id -> Nullable<Uuid>,

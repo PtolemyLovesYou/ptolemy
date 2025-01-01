@@ -6,6 +6,7 @@ from prototype.user import usr_management_view
 from prototype.workspace.view import wk_management_view
 from prototype.profile import profile_view
 from prototype.models import UserRole, User
+from prototype.sql_ide import get_ide_view
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
@@ -22,12 +23,6 @@ if st.session_state.authenticated:
 def usr_ak_management_view():
     """Get user API key management view."""
     st.write("User API key management view.")
-
-
-@st.fragment
-def get_ide_view():
-    """Code container."""
-    st.write("SQL IDE goes here")
 
 
 @st.fragment
