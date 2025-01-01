@@ -1,4 +1,4 @@
-use crate::generated::records_schema::sql_types::{FieldValueType, Tier, IoType};
+use crate::generated::records_schema::sql_types::{FieldValueType, IoType, Tier};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{

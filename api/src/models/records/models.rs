@@ -1,5 +1,5 @@
 use crate::models::auth::models::Workspace;
-use crate::models::records::enums::{FieldValueTypeEnum, TierEnum, IoTypeEnum};
+use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy_core::generated::observer::{LogType, Record, Tier};
