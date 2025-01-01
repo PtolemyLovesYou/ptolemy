@@ -4,7 +4,7 @@ use api::run::{run_grpc_server, run_rest_api};
 use api::state::AppState;
 use std::sync::Arc;
 use tokio::try_join;
-use tracing::error;
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
@@ -26,6 +26,9 @@ async fn main() -> Result<(), ApiError> {
         run_rest_api(shared_state.clone()),
         run_grpc_server(shared_state.clone())
     )?;
+
+    info!("Ptolemy REST API running on http://0.0.0.0:{} <3", shared_state.port);
+    info!("Ptolemy gRPC server running on [::]:50051 <3");
 
     Ok(())
 }
