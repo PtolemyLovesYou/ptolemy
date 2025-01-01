@@ -3,8 +3,14 @@ services:
     container_name: api
     build:
       dockerfile: api/Dockerfile
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ptolemy
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      # disable if the debug logs get too annoying
+      RUST_LOG: info,api=debug,ptolemy-core=debug
     ports:
       - "8000:8000"
       - "50051:50051"
@@ -17,20 +23,26 @@ services:
   postgres:
     container_name: postgres
     image: postgres:17
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ptolemy
     ports:
       - "5432:5432"
     volumes:
       - postgres:/var/lib/postgresql
     networks:
       - ptolemy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
   app:
     container_name: app
     build:
       dockerfile: prototype/Dockerfile
-    env_file:
-      - .env
     ports:
       - "8501:8501"
     volumes:

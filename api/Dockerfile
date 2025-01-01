@@ -67,11 +67,23 @@ RUN useradd -m -u 1001 appuser
 RUN chmod +x /usr/local/bin/api \
     && chown appuser:appuser /usr/local/bin/api
 
+# Before switching to appuser, copy and set up the entrypoint script
+COPY ./api/entrypoint.sh /entrypoint.sh
+RUN chmod 755 /entrypoint.sh && \
+    chown appuser:appuser /entrypoint.sh
+
 USER appuser
 
 ENV API_PORT=8000
+ENV OBSERVER_PORT=50051
+ENV PTOLEMY_ENV=PROD
+
+ENV PTOLEMY_USER=admin
+ENV PTOLEMY_PASS=admin
 
 WORKDIR /app
 
+ENTRYPOINT ["/entrypoint.sh"]
+
 # Execute the binary using full path
-CMD ["/usr/local/bin/api"]
+# CMD ["/usr/local/bin/api"]
