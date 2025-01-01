@@ -24,8 +24,16 @@ def get_ide_view():
         submit = st.form_submit_button(label="Run")
 
     if submit:
-        result = cs.sql(code)
-        if result is not None:
-            result = result.df()
-            st.session_state.ide_data = result
-            get_results()
+        try:
+            result = cs.sql(code)
+            error = None
+        except Exception as e: # pylint: disable=broad-except
+            result = None
+            error = e
+        if error is not None:
+            st.error(error)
+        else:
+            if result is not None:
+                result = result.df()
+                st.session_state.ide_data = result
+                get_results()
