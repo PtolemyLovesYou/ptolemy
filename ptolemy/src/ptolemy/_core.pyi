@@ -21,7 +21,7 @@ class ProtoRecord:
         parameters: Optional[dict] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...
     @staticmethod
     def runtime(
         tier: str,
@@ -31,7 +31,7 @@ class ProtoRecord:
         id: Optional[str] = None,
         error_type: Optional[str] = None,
         error_content: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...
     @staticmethod
     def io(
         tier: str,
@@ -40,7 +40,7 @@ class ProtoRecord:
         field_name: str,
         field_value: Any,
         id: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...
     @staticmethod
     def metadata(
         tier: str,
@@ -48,4 +48,4 @@ class ProtoRecord:
         field_name: str,
         field_value: str,
         id: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...

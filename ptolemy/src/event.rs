@@ -130,7 +130,9 @@ pub enum ProtoRecordEnum {
 
 #[derive(Clone, Debug)]
 #[pyclass(frozen, name = "ProtoRecord")]
-pub struct PyProtoRecord;
+pub struct PyProtoRecord {
+    record: ProtoRecord,
+}
 
 #[pymethods]
 impl PyProtoRecord {
@@ -145,7 +147,7 @@ impl PyProtoRecord {
         parameters: Option<Parameters>,
         version: Option<Bound<'_, PyString>>,
         environment: Option<Bound<'_, PyString>>,
-    ) -> PyResult<ProtoRecord> {
+    ) -> PyResult<Self> {
         let tier_raw = tier.extract::<String>()?;
         let parent_id_raw = parent_id.extract::<String>()?;
         let id_raw = match id {
@@ -184,7 +186,12 @@ impl PyProtoRecord {
                 id,
                 record_data: ProtoRecordEnum::Event(record_data),
             };
-            Ok(rec)
+            
+            Ok(
+                Self {
+                    record: rec,
+                }
+            )
         })
     }
 
@@ -199,7 +206,7 @@ impl PyProtoRecord {
         id: Option<Bound<'_, PyString>>,
         error_type: Option<Bound<'_, PyString>>,
         error_content: Option<Bound<'_, PyString>>,
-    ) -> PyResult<ProtoRecord> {
+    ) -> PyResult<Self> {
         let tier_raw = tier.extract::<String>()?;
         let parent_id_raw = parent_id.extract::<String>()?;
         let id_raw = match id {
@@ -243,7 +250,11 @@ impl PyProtoRecord {
                 record_data: ProtoRecordEnum::Runtime(record_data),
             };
 
-            Ok(rec)
+            Ok(
+                Self {
+                    record: rec,
+                }
+            )
         })
     }
 
@@ -257,7 +268,7 @@ impl PyProtoRecord {
         field_name: Bound<'_, PyString>,
         field_value: JsonSerializable,
         id: Option<Bound<'_, PyString>>,
-    ) -> PyResult<ProtoRecord> {
+    ) -> PyResult<Self> {
         let tier_raw = tier.extract::<String>()?;
         let log_type_raw = log_type.extract::<String>()?;
         let parent_id_raw = parent_id.extract::<String>()?;
@@ -303,7 +314,11 @@ impl PyProtoRecord {
                 record_data,
             };
 
-            Ok(rec)
+            Ok(
+                Self {
+                    record: rec,
+                }
+            )
         })
     }
 
@@ -316,7 +331,7 @@ impl PyProtoRecord {
         field_name: Bound<'_, PyString>,
         field_value: Bound<'_, PyString>,
         id: Option<Bound<'_, PyString>>,
-    ) -> PyResult<ProtoRecord> {
+    ) -> PyResult<Self> {
         let tier_raw = tier.extract::<String>()?;
         let parent_id_raw = parent_id.extract::<String>()?;
         let id_raw = match id {
@@ -347,7 +362,11 @@ impl PyProtoRecord {
                 record_data: ProtoRecordEnum::Metadata(record_data),
             };
 
-            Ok(rec)
+            Ok(
+                Self {
+                    record: rec
+                }
+            )
             }
         )
     }
