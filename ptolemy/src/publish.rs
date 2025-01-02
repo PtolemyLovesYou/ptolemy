@@ -133,7 +133,7 @@ impl BlockingObserverClient {
         parameters: Option<Parameters>,
         version: Option<String>,
         environment: Option<String>,
-    ) -> bool {
+    ) -> PyResult<String> {
         py.allow_threads(|| {
             let record_data = ProtoEvent {
                 name,
@@ -142,16 +142,18 @@ impl BlockingObserverClient {
                 environment,
             };
 
+            let id = Uuid::new_v4();
+
             let record = ProtoRecord {
                 tier: detect_tier(tier),
                 parent_id: get_uuid(parent_id).unwrap(),
-                id: Uuid::new_v4(),
+                id: id.clone(),
                 record_data: ProtoRecordEnum::Event(record_data),
             };
 
             self.push_record_front(record);
 
-            true
+            Ok(id.to_string())
         })
     }
 
@@ -165,7 +167,7 @@ impl BlockingObserverClient {
         end_time: f32,
         error_type: Option<String>,
         error_content: Option<String>,
-    ) -> bool {
+    ) -> PyResult<String> {
         py.allow_threads(|| {
             let record_data = ProtoRuntime {
                 start_time,
@@ -174,16 +176,18 @@ impl BlockingObserverClient {
                 error_content,
             };
 
+            let id = Uuid::new_v4();
+
             let record = ProtoRecord {
                 tier: detect_tier(tier),
                 parent_id: get_uuid(parent_id).unwrap(),
-                id: Uuid::new_v4(),
+                id: id.clone(),
                 record_data: ProtoRecordEnum::Runtime(record_data),
             };
 
             self.queue_records(vec![record]);
 
-            true
+            Ok(id.to_string())
         })
     }
 
@@ -193,7 +197,7 @@ impl BlockingObserverClient {
         tier: &str,
         parent_id: &str,
         data: Parameters,
-    ) -> bool {
+    ) -> PyResult<()> {
         py.allow_threads(|| {
             let parent_id = get_uuid(parent_id).unwrap();
             let records: Vec<ProtoRecord> = data
@@ -216,7 +220,7 @@ impl BlockingObserverClient {
 
             self.queue_records(records);
 
-            true
+            Ok(())
         })
     }
 
@@ -226,7 +230,7 @@ impl BlockingObserverClient {
         tier: &str,
         parent_id: &str,
         data: Parameters,
-    ) -> bool {
+    ) -> PyResult<()> {
         py.allow_threads(|| {
             let parent_id = get_uuid(parent_id).unwrap();
             let records: Vec<ProtoRecord> = data
@@ -249,7 +253,7 @@ impl BlockingObserverClient {
 
             self.queue_records(records);
 
-            true
+            Ok(())
         })
     }
 
@@ -259,7 +263,7 @@ impl BlockingObserverClient {
         tier: &str,
         parent_id: &str,
         data: Parameters,
-    ) -> bool {
+    ) -> PyResult<()> {
         py.allow_threads(|| {
             let parent_id = get_uuid(parent_id).unwrap();
             let records: Vec<ProtoRecord> = data
@@ -282,7 +286,7 @@ impl BlockingObserverClient {
 
             self.queue_records(records);
 
-            true
+            Ok(())
         })
     }
 
@@ -292,7 +296,7 @@ impl BlockingObserverClient {
         tier: &str,
         parent_id: &str,
         data: BTreeMap<String, String>,
-    ) -> bool {
+    ) -> PyResult<()> {
         py.allow_threads(|| {
             let parent_id = get_uuid(parent_id).unwrap();
             let records: Vec<ProtoRecord> = data
@@ -314,7 +318,7 @@ impl BlockingObserverClient {
 
             self.queue_records(records);
 
-            true
+            Ok(())
         })
     }
 
