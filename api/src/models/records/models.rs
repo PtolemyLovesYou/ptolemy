@@ -2,9 +2,9 @@ use crate::models::auth::models::Workspace;
 use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
-use ptolemy_core::generated::observer::{LogType, Record, Tier};
+use ptolemy_core::generated::observer::{Record, Tier, record::RecordData};
 use ptolemy_core::parser::{
-    parse_io, parse_metadata, parse_parameters, parse_uuid, FieldValue, ParseError,
+    parse_io, parse_parameters, parse_uuid, FieldValue, ParseError,
 };
 use serde::{Deserialize, Serialize};
 use tracing::error;
@@ -45,15 +45,12 @@ pub trait EventTable {
         Self: Sized;
 }
 
-fn parse_timestamp(timestamp: &Option<f32>) -> Result<NaiveDateTime, ParseError> {
-    timestamp
-        .map(|ts| {
-            let seconds = ts.trunc() as i64;
-            let nanoseconds = (ts.fract() * 1e9) as u32;
-            DateTime::from_timestamp(seconds, nanoseconds)
-        })
-        .map(|dt| dt.unwrap().naive_utc())
-        .ok_or(ParseError::MissingField)
+fn parse_timestamp(timestamp: &f32) -> Result<NaiveDateTime, ParseError> {
+    let seconds = timestamp.trunc() as i64;
+    let nanoseconds = (timestamp.fract() * 1e9) as u32;
+
+    let dt = DateTime::from_timestamp(seconds, nanoseconds);
+    Ok(dt.unwrap().naive_utc())
 }
 
 macro_rules! event_table {
@@ -72,15 +69,29 @@ macro_rules! event_table {
 
         impl EventTable for $name {
             fn from_record(record: &Record) -> Result<Self, ParseError> {
-                let parameters = parse_parameters(&record.parameters)?;
+                let id = parse_uuid(&record.id).unwrap();
+                let $parent_fk = parse_uuid(&record.parent_id).unwrap();
+                
+                let record_data = match &record.record_data {
+                    Some(RecordData::Event(record_data)) => record_data,
+                    _ => {
+                        error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                        return Err(ParseError::UndefinedLogType);
+                    }
+                };
+
+                let name = record_data.name.clone();
+                let parameters = parse_parameters(&record_data.parameters)?;
+                let version = record_data.version.clone();
+                let environment = record_data.environment.clone();
 
                 let rec = $name {
-                    id: parse_uuid(&record.id).unwrap(),
-                    $parent_fk: parse_uuid(&record.parent_id).unwrap(),
-                    name: record.name.clone().unwrap(),
+                    id,
+                    $parent_fk,
+                    name,
                     parameters,
-                    version: record.version.clone(),
-                    environment: record.environment.clone(),
+                    version,
+                    environment
                 };
 
                 Ok(rec)
@@ -136,18 +147,32 @@ impl EventTable for RuntimeRecord {
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
+        
+        let record_data = match &record.record_data {
+            Some(RecordData::Runtime(record_data)) => record_data,
+            _ => {
+                error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                return Err(ParseError::UndefinedLogType);
+            }
+        };
+
+        let id = parse_uuid(&record.id).unwrap();
+        let start_time = parse_timestamp(&record_data.start_time).unwrap();
+        let end_time = parse_timestamp(&record_data.end_time).unwrap();
+        let error_type = record_data.error_type.clone();
+        let error_content = record_data.error_content.clone();
 
         let rec = RuntimeRecord {
-            id: parse_uuid(&record.id)?,
+            id,
             tier,
             system_event_id,
             subsystem_event_id,
             component_event_id,
             subcomponent_event_id,
-            start_time: parse_timestamp(&record.start_time)?,
-            end_time: parse_timestamp(&record.end_time)?,
-            error_type: record.error_type.clone(),
-            error_content: record.error_content.clone(),
+            start_time,
+            end_time,
+            error_type,
+            error_content,
         };
 
         Ok(rec)
@@ -194,12 +219,13 @@ impl EventTable for IORecord {
         let id = parse_uuid(&record.id)?;
 
         let tier = parse_tier(record.tier())?;
-        let io_type = match record.log_type() {
-            LogType::Input => IoTypeEnum::Input,
-            LogType::Output => IoTypeEnum::Output,
-            LogType::Feedback => IoTypeEnum::Feedback,
+
+        let (io_type, field_name, field_value) = match record.record_data.clone().unwrap() {
+            RecordData::Input(i) => (IoTypeEnum::Input, i.field_name, i.field_value),
+            RecordData::Output(o) => (IoTypeEnum::Output, o.field_name, o.field_value),
+            RecordData::Feedback(f) => (IoTypeEnum::Feedback, f.field_name, f.field_value),
             _ => {
-                error!("Unknown record type");
+                error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
                 return Err(ParseError::UndefinedLogType);
             }
         };
@@ -207,7 +233,7 @@ impl EventTable for IORecord {
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
 
-        let field_value_raw = parse_io(&record.field_value)?;
+        let field_value_raw = parse_io(&field_value)?;
 
         let (
             field_value_type,
@@ -222,11 +248,6 @@ impl EventTable for IORecord {
             FieldValue::Float(f) => (FieldValueTypeEnum::Float, None, None, Some(f), None, None),
             FieldValue::Bool(b) => (FieldValueTypeEnum::Bool, None, None, None, Some(b), None),
             FieldValue::Json(j) => (FieldValueTypeEnum::Json, None, None, None, None, Some(j)),
-        };
-
-        let field_name = match &record.field_name {
-            Some(n) => n.clone(),
-            None => return Err(ParseError::MissingField),
         };
 
         let rec = IORecord {
@@ -273,12 +294,17 @@ impl EventTable for MetadataRecord {
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(&TierEnum::System, parse_uuid(&record.parent_id)?)?;
 
-        let field_name = match &record.field_name {
-            Some(n) => n.clone(),
-            None => return Err(ParseError::MissingField),
+        let record_data = match record.record_data.clone().unwrap() {
+            RecordData::Metadata(m) => m,
+            _ => {
+                error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                return Err(ParseError::UndefinedLogType);
+            }
         };
 
-        let field_value = parse_metadata(&record.field_value)?;
+        let field_name = record_data.field_name.clone();
+
+        let field_value = record_data.field_value.clone();
 
         let rec = MetadataRecord {
             id,
@@ -305,21 +331,14 @@ pub fn parse_record<T: EventTable>(record: &Record) -> Result<T, ParseError> {
         t => t,
     };
 
-    let parsed: Result<T, ParseError> = match record.log_type() {
-        LogType::UndeclaredLogType => {
-            error!("Got a record with an undeclared log type: {:#?}", record);
-            return Err(ParseError::UndefinedLogType);
-        }
-        _ => T::from_record(record),
-    };
+    let parsed: Result<T, ParseError> = T::from_record(record);
 
     match parsed {
         Ok(p) => Ok(p),
         Err(e) => {
             error!(
-                "Unable to parse record {:?}.{:?}: {:?}",
+                "Unable to parse record {:?}: {:?}",
                 record.tier(),
-                record.log_type(),
                 e
             );
             Err(e)
