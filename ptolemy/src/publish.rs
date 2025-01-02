@@ -1,11 +1,25 @@
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use std::collections::VecDeque;
+use std::collections::{VecDeque, BTreeMap};
 use std::sync::{Arc, Mutex};
+use uuid::Uuid;
 use tonic::transport::Channel;
 
 use crate::config::ObserverConfig;
-use crate::event::{ProtoRecord, PyProtoRecord};
+use crate::event::{
+    detect_tier,
+    get_uuid,
+    Parameters,
+    ProtoEvent,
+    ProtoRuntime,
+    ProtoInput,
+    ProtoOutput,
+    ProtoFeedback,
+    ProtoMetadata,
+    ProtoRecord,
+    ProtoRecordEnum,
+    PyProtoRecord
+};
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
 };
@@ -107,6 +121,201 @@ impl BlockingObserverClient {
     pub fn new(batch_size: usize) -> Self {
         let config = ObserverConfig::new();
         BlockingObserverClient::connect(config, batch_size).unwrap()
+    }
+
+    #[pyo3(signature = (tier, name, parent_id, parameters=None, version=None, environment=None))]
+    pub fn queue_event_record(
+        &mut self,
+        py: Python<'_>,
+        tier: &str,
+        name: String,
+        parent_id: &str,
+        parameters: Option<Parameters>,
+        version: Option<String>,
+        environment: Option<String>,
+    ) -> bool {
+        py.allow_threads(|| {
+            let record_data = ProtoEvent {
+                name,
+                parameters,
+                version,
+                environment,
+            };
+
+            let record = ProtoRecord {
+                tier: detect_tier(tier),
+                parent_id: get_uuid(parent_id).unwrap(),
+                id: Uuid::new_v4(),
+                record_data: ProtoRecordEnum::Event(record_data),
+            };
+
+            self.push_record_front(record);
+
+            true
+        })
+    }
+
+    #[pyo3(signature = (tier, parent_id, start_time, end_time, error_type=None, error_content=None))]
+    pub fn queue_runtime_record(
+        &mut self,
+        py: Python<'_>,
+        tier: &str,
+        parent_id: &str,
+        start_time: f32,
+        end_time: f32,
+        error_type: Option<String>,
+        error_content: Option<String>,
+    ) -> bool {
+        py.allow_threads(|| {
+            let record_data = ProtoRuntime {
+                start_time,
+                end_time,
+                error_type,
+                error_content,
+            };
+
+            let record = ProtoRecord {
+                tier: detect_tier(tier),
+                parent_id: get_uuid(parent_id).unwrap(),
+                id: Uuid::new_v4(),
+                record_data: ProtoRecordEnum::Runtime(record_data),
+            };
+
+            self.queue_records(vec![record]);
+
+            true
+        })
+    }
+
+    pub fn queue_input_records(
+        &mut self,
+        py: Python<'_>,
+        tier: &str,
+        parent_id: &str,
+        data: Parameters,
+    ) -> bool {
+        py.allow_threads(|| {
+            let parent_id = get_uuid(parent_id).unwrap();
+            let records: Vec<ProtoRecord> = data
+                .into_inner()
+                .into_iter()
+                .map(|(k, v)| {
+                    let record_data = ProtoInput {
+                        field_name: k.to_string(),
+                        field_value: v.clone()
+                    };
+
+                    ProtoRecord {
+                        tier: detect_tier(tier),
+                        parent_id,
+                        id: Uuid::new_v4(),
+                        record_data: ProtoRecordEnum::Input(record_data),
+                    }
+                })
+                .collect();
+
+            self.queue_records(records);
+
+            true
+        })
+    }
+
+    pub fn queue_output_records(
+        &mut self,
+        py: Python<'_>,
+        tier: &str,
+        parent_id: &str,
+        data: Parameters,
+    ) -> bool {
+        py.allow_threads(|| {
+            let parent_id = get_uuid(parent_id).unwrap();
+            let records: Vec<ProtoRecord> = data
+                .into_inner()
+                .into_iter()
+                .map(|(k, v)| {
+                    let record_data = ProtoOutput {
+                        field_name: k.to_string(),
+                        field_value: v.clone()
+                    };
+
+                    ProtoRecord {
+                        tier: detect_tier(tier),
+                        parent_id,
+                        id: Uuid::new_v4(),
+                        record_data: ProtoRecordEnum::Output(record_data),
+                    }
+                })
+                .collect();
+
+            self.queue_records(records);
+
+            true
+        })
+    }
+
+    pub fn queue_feedback_records(
+        &mut self,
+        py: Python<'_>,
+        tier: &str,
+        parent_id: &str,
+        data: Parameters,
+    ) -> bool {
+        py.allow_threads(|| {
+            let parent_id = get_uuid(parent_id).unwrap();
+            let records: Vec<ProtoRecord> = data
+                .into_inner()
+                .into_iter()
+                .map(|(k, v)| {
+                    let record_data = ProtoFeedback {
+                        field_name: k.to_string(),
+                        field_value: v.clone()
+                    };
+
+                    ProtoRecord {
+                        tier: detect_tier(tier),
+                        parent_id,
+                        id: Uuid::new_v4(),
+                        record_data: ProtoRecordEnum::Feedback(record_data),
+                    }
+                })
+                .collect();
+
+            self.queue_records(records);
+
+            true
+        })
+    }
+
+    pub fn queue_metadata_records(
+        &mut self,
+        py: Python<'_>,
+        tier: &str,
+        parent_id: &str,
+        data: BTreeMap<String, String>,
+    ) -> bool {
+        py.allow_threads(|| {
+            let parent_id = get_uuid(parent_id).unwrap();
+            let records: Vec<ProtoRecord> = data
+                .into_iter()
+                .map(|(k, v)| {
+                    let record_data = ProtoMetadata {
+                        field_name: k.to_string(),
+                        field_value: v.clone()
+                    };
+
+                    ProtoRecord {
+                        tier: detect_tier(tier),
+                        parent_id,
+                        id: Uuid::new_v4(),
+                        record_data: ProtoRecordEnum::Metadata(record_data),
+                    }
+                })
+                .collect();
+
+            self.queue_records(records);
+
+            true
+        })
     }
 
     pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, PyProtoRecord>) -> bool {

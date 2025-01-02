@@ -13,10 +13,10 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct ProtoEvent {
-    name: String,
-    parameters: Option<Parameters>,
-    version: Option<String>,
-    environment: Option<String>,
+    pub name: String,
+    pub parameters: Option<Parameters>,
+    pub version: Option<String>,
+    pub environment: Option<String>,
 }
 
 impl ProtoEvent {
@@ -41,10 +41,10 @@ impl ProtoEvent {
 
 #[derive(Clone, Debug)]
 pub struct ProtoRuntime {
-    start_time: f32,
-    end_time: f32,
-    error_type: Option<String>,
-    error_content: Option<String>,
+    pub start_time: f32,
+    pub end_time: f32,
+    pub error_type: Option<String>,
+    pub error_content: Option<String>,
 }
 
 impl ProtoRuntime {
@@ -60,8 +60,8 @@ impl ProtoRuntime {
 
 #[derive(Clone, Debug)]
 pub struct ProtoInput {
-    field_name: String,
-    field_value: JsonSerializable,
+    pub field_name: String,
+    pub field_value: JsonSerializable,
 }
 
 impl ProtoInput {
@@ -75,8 +75,8 @@ impl ProtoInput {
 
 #[derive(Clone, Debug)]
 pub struct ProtoOutput {
-    field_name: String,
-    field_value: JsonSerializable,
+    pub field_name: String,
+    pub field_value: JsonSerializable,
 }
 
 impl ProtoOutput {
@@ -90,8 +90,8 @@ impl ProtoOutput {
 
 #[derive(Clone, Debug)]
 pub struct ProtoFeedback {
-    field_name: String,
-    field_value: JsonSerializable,
+    pub field_name: String,
+    pub field_value: JsonSerializable,
 }
 
 impl ProtoFeedback {
@@ -105,8 +105,8 @@ impl ProtoFeedback {
 
 #[derive(Clone, Debug)]
 pub struct ProtoMetadata {
-    field_name: String,
-    field_value: String,
+    pub field_name: String,
+    pub field_value: String,
 }
 
 impl ProtoMetadata {
@@ -415,11 +415,11 @@ impl PyProtoRecord {
 
 #[derive(Clone, Debug)]
 pub struct ProtoRecord {
-    tier: Tier,
-    parent_id: Uuid,
-    id: Uuid,
+    pub tier: Tier,
+    pub parent_id: Uuid,
+    pub id: Uuid,
 
-    record_data: ProtoRecordEnum,
+    pub record_data: ProtoRecordEnum,
 }
 
 impl ProtoRecord {
@@ -445,7 +445,7 @@ impl ProtoRecord {
     }
 }
 
-fn get_uuid(id: &str) -> PyResult<Uuid> {
+pub fn get_uuid(id: &str) -> PyResult<Uuid> {
     match Uuid::parse_str(&id) {
         Ok(i) => Ok(i),
         Err(e) => {
@@ -493,6 +493,12 @@ pub fn detect_log_type(log_type: &str) -> LogType {
 #[pyo3(transparent)]
 pub struct Parameters {
     inner: BTreeMap<String, JsonSerializable>,
+}
+
+impl Parameters {
+    pub fn into_inner(self) -> BTreeMap<String, JsonSerializable> {
+        self.inner
+    }
 }
 
 fn tier_to_string(tier: &Tier) -> PyResult<String> {
