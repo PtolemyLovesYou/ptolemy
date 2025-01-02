@@ -1,7 +1,10 @@
 // use ptolemy_core::generated::observer;
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
-use ptolemy_core::generated::observer::{LogType, Record, Tier};
+use ptolemy_core::generated::observer::{
+    record::RecordData, EventRecord, FeedbackRecord, InputRecord, LogType, MetadataRecord,
+    OutputRecord, Record, RuntimeRecord, Tier,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyFloat, PyString};
@@ -9,66 +12,151 @@ use std::collections::BTreeMap;
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-#[pyclass(frozen)]
-pub struct ProtoRecord {
-    tier: Tier,
-    log_type: LogType,
-    parent_id: Uuid,
-    id: Uuid,
-
-    // event fields
-    name: Option<String>,
+pub struct ProtoEvent {
+    name: String,
     parameters: Option<Parameters>,
     version: Option<String>,
     environment: Option<String>,
-
-    // runtime fields
-    start_time: Option<f32>,
-    end_time: Option<f32>,
-    error_type: Option<String>,
-    error_content: Option<String>,
-
-    // IO fields
-    field_name: Option<String>,
-    field_value_io: Option<JsonSerializable>,
-
-    // Metadata field
-    field_value_str: Option<String>,
 }
 
-impl ProtoRecord {
-    pub fn proto(&self) -> Record {
-        Record {
-            tier: self.tier.into(),
-            log_type: self.log_type.into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.id.to_string(),
-            name: self.name.clone(),
-            parameters: match &self.parameters {
-                Some(p) => parameters_to_value(p),
-                None => None,
-            },
-            environment: self.environment.clone(),
-            version: self.version.clone(),
+impl ProtoEvent {
+    pub fn proto(&self) -> EventRecord {
+        let name = self.name.clone();
+        let parameters = match &self.parameters {
+            Some(p) => parameters_to_value(p),
+            None => None,
+        };
+
+        let version = self.version.clone();
+        let environment = self.environment.clone();
+
+        EventRecord {
+            name,
+            parameters,
+            version,
+            environment,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ProtoRuntime {
+    start_time: f32,
+    end_time: f32,
+    error_type: Option<String>,
+    error_content: Option<String>,
+}
+
+impl ProtoRuntime {
+    pub fn proto(&self) -> RuntimeRecord {
+        RuntimeRecord {
             start_time: self.start_time,
             end_time: self.end_time,
             error_type: self.error_type.clone(),
             error_content: self.error_content.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ProtoInput {
+    field_name: String,
+    field_value: JsonSerializable,
+}
+
+impl ProtoInput {
+    pub fn proto(&self) -> InputRecord {
+        InputRecord {
             field_name: self.field_name.clone(),
-            field_value: match self.log_type {
-                LogType::Input | LogType::Output | LogType::Feedback => {
-                    json_serializable_to_value(&self.field_value_io)
-                }
-                LogType::Metadata => match &self.field_value_str {
-                    Some(m) => Some(Value {
-                        kind: Some(Kind::StringValue(m.clone())),
-                    }),
-                    None => {
-                        panic!("Field value should be present for Metadata!!")
-                    }
-                },
-                _ => None,
-            },
+            field_value: json_serializable_to_value(&Some(self.field_value.clone())),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ProtoOutput {
+    field_name: String,
+    field_value: JsonSerializable,
+}
+
+impl ProtoOutput {
+    pub fn proto(&self) -> OutputRecord {
+        OutputRecord {
+            field_name: self.field_name.clone(),
+            field_value: json_serializable_to_value(&Some(self.field_value.clone())),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ProtoFeedback {
+    field_name: String,
+    field_value: JsonSerializable,
+}
+
+impl ProtoFeedback {
+    pub fn proto(&self) -> FeedbackRecord {
+        FeedbackRecord {
+            field_name: self.field_name.clone(),
+            field_value: json_serializable_to_value(&Some(self.field_value.clone())),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ProtoMetadata {
+    field_name: String,
+    field_value: String,
+}
+
+impl ProtoMetadata {
+    pub fn proto(&self) -> MetadataRecord {
+        MetadataRecord {
+            field_name: self.field_name.clone(),
+            field_value: self.field_value.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ProtoRecordEnum {
+    Event(ProtoEvent),
+    Runtime(ProtoRuntime),
+    Input(ProtoInput),
+    Output(ProtoOutput),
+    Feedback(ProtoFeedback),
+    Metadata(ProtoMetadata),
+}
+
+#[derive(Clone, Debug)]
+#[pyclass(frozen)]
+pub struct ProtoRecord {
+    tier: Tier,
+    parent_id: Uuid,
+    id: Uuid,
+
+    record_data: ProtoRecordEnum,
+}
+
+impl ProtoRecord {
+    pub fn proto(&self) -> Record {
+        let tier = self.tier.into();
+        let parent_id = self.parent_id.to_string();
+        let id = self.id.to_string();
+        let record_data = match &self.record_data {
+            ProtoRecordEnum::Event(e) => RecordData::Event(e.proto()),
+            ProtoRecordEnum::Runtime(r) => RecordData::Runtime(r.proto()),
+            ProtoRecordEnum::Input(i) => RecordData::Input(i.proto()),
+            ProtoRecordEnum::Output(o) => RecordData::Output(o.proto()),
+            ProtoRecordEnum::Feedback(f) => RecordData::Feedback(f.proto()),
+            ProtoRecordEnum::Metadata(m) => RecordData::Metadata(m.proto()),
+        };
+
+        Record {
+            tier,
+            parent_id,
+            id,
+            record_data: Some(record_data),
         }
     }
 }
@@ -86,12 +174,12 @@ impl ProtoRecord {
         version: Option<Bound<'_, PyString>>,
         environment: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
-        let rec = Self {
-            tier: detect_tier(&tier.extract::<String>()?),
-            log_type: LogType::Event,
-            parent_id: get_uuid(Some(parent_id))?,
-            id: get_uuid(id)?,
-            name: Some(name.extract::<String>()?),
+        let tier = detect_tier(&tier.extract::<String>()?);
+        let id = get_uuid(id)?;
+        let parent_id = get_uuid(Some(parent_id))?;
+
+        let record_data = ProtoEvent {
+            name: name.extract::<String>()?,
             parameters,
             version: match version {
                 Some(v) => v.extract()?,
@@ -101,13 +189,12 @@ impl ProtoRecord {
                 Some(e) => e.extract()?,
                 None => None,
             },
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: None,
-            field_value_io: None,
-            field_value_str: None,
+        };
+        let rec = Self {
+            tier,
+            parent_id,
+            id,
+            record_data: ProtoRecordEnum::Event(record_data),
         };
         Ok(rec)
     }
@@ -123,6 +210,12 @@ impl ProtoRecord {
         error_type: Option<Bound<'_, PyString>>,
         error_content: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
+        let tier = detect_tier(&tier.extract::<String>()?);
+        let id = get_uuid(id)?;
+        let parent_id = get_uuid(Some(parent_id))?;
+        let start_time = start_time.extract::<f32>()?;
+        let end_time = end_time.extract::<f32>()?;
+
         let error_type: Option<String> = match error_type {
             Some(e) => e.extract()?,
             None => None,
@@ -133,22 +226,18 @@ impl ProtoRecord {
             None => None,
         };
 
-        let rec = Self {
-            tier: detect_tier(&tier.extract::<String>()?),
-            log_type: LogType::Runtime,
-            parent_id: get_uuid(Some(parent_id))?,
-            id: get_uuid(id)?,
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: start_time.extract()?,
-            end_time: end_time.extract()?,
+        let record_data = ProtoRuntime {
+            start_time,
+            end_time,
             error_type,
             error_content,
-            field_name: None,
-            field_value_io: None,
-            field_value_str: None,
+        };
+
+        let rec = Self {
+            tier,
+            parent_id,
+            id,
+            record_data: ProtoRecordEnum::Runtime(record_data),
         };
 
         Ok(rec)
@@ -164,22 +253,38 @@ impl ProtoRecord {
         field_value: JsonSerializable,
         id: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
+        let tier = detect_tier(&tier.extract::<String>()?);
+        let log_type = detect_log_type(&log_type.extract::<String>()?);
+        let id = get_uuid(id)?;
+        let parent_id = get_uuid(Some(parent_id))?;
+
+        let field_name = field_name.extract::<String>()?;
+
+        let record_data = match &log_type {
+            LogType::Input => ProtoRecordEnum::Input(ProtoInput {
+                field_name,
+                field_value,
+            }),
+            LogType::Output => ProtoRecordEnum::Output(ProtoOutput {
+                field_name,
+                field_value,
+            }),
+            LogType::Feedback => ProtoRecordEnum::Feedback(ProtoFeedback {
+                field_name,
+                field_value,
+            }),
+            _ => {
+                return Err(PyValueError::new_err(
+                    "Invalid log type. This shouldn't happen. Contact the maintainers.",
+                ));
+            }
+        };
+
         let rec = Self {
-            tier: detect_tier(&tier.extract::<String>()?),
-            log_type: detect_log_type(&log_type.extract::<String>()?),
-            parent_id: get_uuid(Some(parent_id))?,
-            id: get_uuid(id)?,
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: Some(field_name.extract::<String>()?),
-            field_value_io: Some(field_value),
-            field_value_str: None,
+            tier,
+            parent_id,
+            id,
+            record_data,
         };
 
         Ok(rec)
@@ -194,22 +299,22 @@ impl ProtoRecord {
         field_value: Bound<'_, PyString>,
         id: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
+        let tier = detect_tier(&tier.extract::<String>()?);
+        let parent_id = get_uuid(Some(parent_id))?;
+        let id = get_uuid(id)?;
+        let field_name = field_name.extract::<String>()?;
+        let field_value = field_value.extract()?;
+
+        let record_data = ProtoMetadata {
+            field_name,
+            field_value,
+        };
+
         let rec = Self {
-            tier: detect_tier(&tier.extract::<String>()?),
-            log_type: LogType::Metadata,
-            parent_id: get_uuid(Some(parent_id))?,
-            id: get_uuid(id)?,
-            name: None,
-            parameters: None,
-            version: None,
-            environment: None,
-            start_time: None,
-            end_time: None,
-            error_type: None,
-            error_content: None,
-            field_name: Some(field_name.extract::<String>()?),
-            field_value_io: None,
-            field_value_str: Some(field_value.extract()?),
+            tier,
+            parent_id,
+            id,
+            record_data: ProtoRecordEnum::Metadata(record_data),
         };
 
         Ok(rec)
@@ -222,16 +327,13 @@ impl ProtoRecord {
 
     #[getter]
     fn log_type(&self) -> PyResult<String> {
-        let log_type = match self.log_type {
-            LogType::Event => "event".to_string(),
-            LogType::Runtime => "runtime".to_string(),
-            LogType::Input => "input".to_string(),
-            LogType::Output => "output".to_string(),
-            LogType::Feedback => "feedback".to_string(),
-            LogType::Metadata => "metadata".to_string(),
-            LogType::UndeclaredLogType => {
-                panic!("Undeclared log type!")
-            }
+        let log_type = match self.record_data {
+            ProtoRecordEnum::Event(_) => "event".to_string(),
+            ProtoRecordEnum::Runtime(_) => "runtime".to_string(),
+            ProtoRecordEnum::Input(_) => "input".to_string(),
+            ProtoRecordEnum::Output(_) => "output".to_string(),
+            ProtoRecordEnum::Feedback(_) => "feedback".to_string(),
+            ProtoRecordEnum::Metadata(_) => "metadata".to_string(),
         };
 
         Ok(log_type)

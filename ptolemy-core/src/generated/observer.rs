@@ -28,13 +28,13 @@ pub struct Record {
     pub parent_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub id: ::prost::alloc::string::String,
-    #[prost(oneof = "record::RecordType", tags = "4, 5, 6, 7, 8, 9")]
-    pub record_type: ::core::option::Option<record::RecordType>,
+    #[prost(oneof = "record::RecordData", tags = "4, 5, 6, 7, 8, 9")]
+    pub record_data: ::core::option::Option<record::RecordData>,
 }
 /// Nested message and enum types in `Record`.
 pub mod record {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum RecordType {
+    pub enum RecordData {
         #[prost(message, tag = "4")]
         Event(super::EventRecord),
         #[prost(message, tag = "5")]

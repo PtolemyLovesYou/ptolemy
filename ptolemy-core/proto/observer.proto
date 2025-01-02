@@ -47,7 +47,7 @@ message Record {
     string parent_id = 2;
     string id = 3;
 
-    oneof record_type {
+    oneof record_data {
         EventRecord event = 4;
         RuntimeRecord runtime = 5;
         InputRecord input = 6;
