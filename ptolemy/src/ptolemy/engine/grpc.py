@@ -1,7 +1,7 @@
 """GRPC Engine with robust error handling and retries."""
 
-from concurrent.futures import ThreadPoolExecutor
-from typing import Iterable
+from concurrent.futures import ThreadPoolExecutor, Future
+from typing import Iterable, Optional, Any
 import logging
 from contextlib import contextmanager
 from pydantic import ConfigDict, PrivateAttr, Field
@@ -10,6 +10,7 @@ from .._core import ( # pylint: disable=no-name-in-module
     BlockingObserverClient,
     ProtoRecord,
 )
+from ..utils import ID, Tier, LogType
 from ..exceptions import (
     EngineError,
     PtolemyConnectionError,
@@ -89,3 +90,85 @@ class PtolemyEngine(Engine):
         with self._error_handling("flush"):
             future = self._executor.submit(self._client.flush)
             future.result()
+
+    def create_event(
+        self,
+        tier: Tier,
+        parent_id: ID,
+        name: str,
+        parameters: Optional[dict] = None,
+        version: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> Future:
+
+        event_future = self._executor.submit(
+            ProtoRecord.event,
+            tier.value,
+            name,
+            parent_id,
+            parameters=parameters,
+            version=version,
+            environment=environment,
+        )
+
+        return event_future
+
+    def create_runtime(
+        self,
+        tier: Tier,
+        parent_id: ID,
+        start_time: float,
+        end_time: float,
+        error_type: Optional[str] = None,
+        error_content: Optional[str] = None,
+    ) -> Future:
+
+        runtime_future = self._executor.submit(
+            ProtoRecord.runtime,
+            tier.value,
+            parent_id,
+            start_time,
+            end_time,
+            error_type=error_type,
+            error_content=error_content,
+        )
+
+        return runtime_future
+
+    def create_io(
+        self,
+        tier: Tier,
+        log_type: LogType,
+        parent_id: ID,
+        field_name: str,
+        field_value: Any,
+    ) -> Future:
+
+        input_future = self._executor.submit(
+            ProtoRecord.io,
+            tier.value,
+            log_type.value,
+            parent_id,
+            field_name,
+            field_value,
+        )
+
+        return input_future
+
+    def create_metadata(
+        self,
+        tier: Tier,
+        parent_id: ID,
+        field_name: str,
+        field_value: str,
+    ) -> Future:
+
+        metadata_future = self._executor.submit(
+            ProtoRecord.metadata,
+            tier.value,
+            parent_id,
+            field_name,
+            field_value,
+        )
+
+        return metadata_future

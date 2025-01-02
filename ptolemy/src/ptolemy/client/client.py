@@ -188,15 +188,14 @@ class Ptolemy(BaseModel):
         if self.tier != Tier.SYSTEM and parent_id is None:
             raise ValueError("Parent ID is required for non-system events")
 
-        self._event = ProtoRecord.event(
-            self.tier.value,
-            name,
+        self._event = self.engine.create_event(
+            self.tier,
             parent_id or self.workspace_id.hex,
-            id=None,
+            name,
             parameters=parameters,
             version=version,
             environment=environment,
-        )
+        ).result()
 
         return self
 
@@ -232,15 +231,14 @@ class Ptolemy(BaseModel):
         if self._runtime is not None:
             raise ValueError("Runtime already set")
 
-        self._runtime = ProtoRecord.runtime(
-            self.tier.value,
+        self._runtime = self.engine.create_runtime(
+            self.tier,
             self._event.id,
-            start_time=start_time,
-            end_time=end_time,
-            id=None,
+            start_time,
+            end_time,
             error_type=error_type,
             error_content=error_content,
-        )
+        ).result()
 
         return self
 
@@ -263,7 +261,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Inputs already set")
 
         self._inputs = [
-            ProtoRecord.io(self.tier, LogType.INPUT.value, self._event.id, k, v)
+            self.engine.create_io(self.tier, LogType.INPUT, self._event.id, k, v).result()
             for k, v in kwargs.items()
         ]
 
@@ -296,7 +294,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Outputs already set")
 
         self._outputs = [
-            ProtoRecord.io(self.tier, self._event.id, LogType.OUTPUT.value, k, v)
+            self.engine.create_io(self.tier, LogType.OUTPUT, self._event.id, k, v).result()
             for k, v in kwargs.items()
         ]
 
@@ -320,7 +318,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Feedback already set")
 
         self._feedback = [
-            ProtoRecord.io(self.tier, self._event.id, LogType.FEEDBACK.value, k, v)
+            self.engine.create_io(self.tier, LogType.FEEDBACK, self._event.id, k, v).result()
             for k, v in kwargs.items()
         ]
 
@@ -351,9 +349,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Metadata already set")
 
         self._metadata = [
-            ProtoRecord.metadata(
-                self.tier, self._event.id, LogType.METADATA.value, k, v
-            )
+            self.engine.create_metadata(self.tier, self._event.id, k, v).result()
             for k, v in kwargs.items()
         ]
 
