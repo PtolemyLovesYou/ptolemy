@@ -1,15 +1,11 @@
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
-use uuid::Uuid;
 
 use crate::config::ObserverConfig;
-use crate::event::{
-    detect_tier, get_uuid, Parameters, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata,
-    ProtoOutput, ProtoRecord, ProtoRecordEnum, ProtoRuntime, PyProtoRecord,
-};
+use crate::event::{ProtoRecord, PyProtoRecord,};
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
 };
