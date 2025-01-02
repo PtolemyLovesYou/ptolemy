@@ -19,7 +19,7 @@ pub struct BlockingObserverClient {
 }
 
 impl BlockingObserverClient {
-    pub fn connect(
+    fn connect(
         config: ObserverConfig,
         batch_size: usize,
     ) -> Result<BlockingObserverClient, Box<dyn std::error::Error>> {
@@ -38,7 +38,7 @@ impl BlockingObserverClient {
         })
     }
 
-    pub fn publish_request(
+    fn publish_request(
         &mut self,
         records: Vec<Record>,
     ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
@@ -50,7 +50,7 @@ impl BlockingObserverClient {
         })
     }
 
-    pub fn send_batch(&mut self) -> bool {
+    fn send_batch(&mut self) -> bool {
         let records = {
             let mut queue = self.queue.lock().unwrap();
             let n_to_drain = self.batch_size.min(queue.len());
@@ -73,6 +73,32 @@ impl BlockingObserverClient {
             }
         }
     }
+
+    fn queue_records(&mut self, records: Vec<ProtoRecord>) {
+        let should_send_batch: bool;
+
+        let mut queue = self.queue.lock().unwrap();
+        queue.extend(records);
+        should_send_batch = queue.len() >= self.batch_size;
+        drop(queue);
+
+        if should_send_batch {
+            self.send_batch();
+        }
+    }
+
+    fn push_record_front(&mut self, record: ProtoRecord) {
+        let should_send_batch: bool;
+
+        let mut queue = self.queue.lock().unwrap();
+        queue.push_front(record);
+        should_send_batch = queue.len() >= self.batch_size;
+        drop(queue);
+
+        if should_send_batch {
+            self.send_batch();
+        }
+    }
 }
 
 #[pymethods]
@@ -87,18 +113,8 @@ impl BlockingObserverClient {
         let rec = record.extract::<PyProtoRecord>().unwrap();
 
         py.allow_threads(|| {
-            let should_send_batch;
-
-            {
-                let mut queue = self.queue.lock().unwrap();
-                queue.push_front(rec.into());
-                should_send_batch = queue.len() >= self.batch_size;
-                drop(queue)
-            }; // Lock is released here
-
-            if should_send_batch {
-                self.send_batch();
-            }
+            let rec = rec.into();
+            self.push_record_front(rec);
         });
 
         true
@@ -108,18 +124,8 @@ impl BlockingObserverClient {
         let records: Vec<PyProtoRecord> = records.extract().unwrap();
 
         py.allow_threads(|| {
-            let should_send_batch;
-
-            {
-                let mut queue = self.queue.lock().unwrap();
-                queue.extend(records.into_iter().map(|r| r.into()));
-                should_send_batch = queue.len() >= self.batch_size;
-                drop(queue)
-            }; // Lock is released here
-
-            if should_send_batch {
-                self.send_batch();
-            }
+            let recs: Vec<ProtoRecord> = records.into_iter().map(|r| r.into()).collect();
+            self.queue_records(recs);
         });
 
         true

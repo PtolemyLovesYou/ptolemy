@@ -134,6 +134,12 @@ pub struct PyProtoRecord {
     inner: ProtoRecord,
 }
 
+impl PyProtoRecord {
+    pub fn new(inner: ProtoRecord) -> Self {
+        PyProtoRecord { inner }
+    }
+}
+
 impl From<PyProtoRecord> for ProtoRecord {
     fn from(value: PyProtoRecord) -> Self {
         value.inner
