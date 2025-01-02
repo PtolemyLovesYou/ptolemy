@@ -244,7 +244,7 @@ impl PyProtoRecord {
     #[pyo3(name="event", signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
     fn event_py(
         py: Python<'_>,
-        tier: &str,
+        tier: PyTier,
         name: String,
         parent_id: &str,
         id: Option<&str>,
@@ -253,7 +253,6 @@ impl PyProtoRecord {
         environment: Option<String>,
     ) -> PyResult<Self> {
         py.allow_threads(|| {
-            let tier = detect_tier(&tier);
             let parent_id = get_uuid(&parent_id)?;
             let id = match id {
                 Some(i) => get_uuid(i)?,
@@ -264,7 +263,7 @@ impl PyProtoRecord {
             
             Ok(
                 Self {
-                    inner: ProtoRecord::new(tier, parent_id, id, record_data),
+                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
                 }
             )
         })
@@ -274,7 +273,7 @@ impl PyProtoRecord {
     #[pyo3(name="runtime", signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
     fn runtime_py(
         py: Python<'_>,
-        tier: &str,
+        tier: PyTier,
         parent_id: &str,
         start_time: f32,
         end_time: f32,
@@ -283,8 +282,6 @@ impl PyProtoRecord {
         error_content: Option<String>,
     ) -> PyResult<Self> {
         py.allow_threads(|| {
-            let tier = detect_tier(tier);
-
             let parent_id = get_uuid(parent_id)?;
             let id = match id {
                 None => Uuid::new_v4(),
@@ -295,7 +292,7 @@ impl PyProtoRecord {
 
             Ok(
                 Self {
-                    inner: ProtoRecord::new(tier, parent_id, id, record_data),
+                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
                 }
             )
         })
@@ -305,7 +302,7 @@ impl PyProtoRecord {
     #[pyo3(name="io", signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
     fn io_py(
         py: Python<'_>,
-        tier: &str,
+        tier: PyTier,
         log_type: &str,
         parent_id: &str,
         field_name: String,
@@ -313,7 +310,6 @@ impl PyProtoRecord {
         id: Option<&str>,
     ) -> PyResult<Self> {
         py.allow_threads(|| {
-            let tier = detect_tier(tier);
             let log_type = detect_log_type(log_type);
             let parent_id = get_uuid(parent_id)?;
             let id = match id {
@@ -334,7 +330,7 @@ impl PyProtoRecord {
 
             Ok(
                 Self {
-                    inner: ProtoRecord::new(tier, parent_id, id, record_data)
+                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data)
                 }
             )
         })
@@ -344,14 +340,13 @@ impl PyProtoRecord {
     #[pyo3(name="metadata", signature = (tier, parent_id, field_name, field_value, id=None))]
     fn metadata_py(
         py: Python<'_>,
-        tier: &str,
+        tier: PyTier,
         parent_id: &str,
         field_name: String,
         field_value: String,
         id: Option<&str>,
     ) -> PyResult<Self> {
         py.allow_threads( || {
-            let tier = detect_tier(&tier);
             let parent_id = get_uuid(&parent_id)?;
             let id = match id {
                 None => Uuid::new_v4(),
@@ -362,7 +357,7 @@ impl PyProtoRecord {
 
             Ok(
                 Self {
-                    inner: ProtoRecord::new(tier, parent_id, id, record_data)
+                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data)
                 }
             )
             }
@@ -371,7 +366,17 @@ impl PyProtoRecord {
 
     #[getter]
     fn tier(&self) -> PyResult<String> {
-        tier_to_string(&self.inner.tier)
+        match self.inner.tier {
+            Tier::System => Ok("system".to_string()),
+            Tier::Subsystem => Ok("subsystem".to_string()),
+            Tier::Component => Ok("component".to_string()),
+            Tier::Subcomponent => Ok("subcomponent".to_string()),
+            Tier::UndeclaredTier => {
+                return Err(PyValueError::new_err(
+                    "Undeclared tier. This shouldn't happen. Contact the maintainers.",
+                ));
+            }
+        }
     }
 
     #[getter]
@@ -419,9 +424,6 @@ impl ProtoRecord {
     }
 
     pub fn proto(&self) -> Record {
-        let tier = self.tier.into();
-        let parent_id = self.parent_id.to_string();
-        let id = self.id.to_string();
         let record_data = match &self.record_data {
             ProtoRecordEnum::Event(e) => RecordData::Event(e.proto()),
             ProtoRecordEnum::Runtime(r) => RecordData::Runtime(r.proto()),
@@ -432,9 +434,9 @@ impl ProtoRecord {
         };
 
         Record {
-            tier,
-            parent_id,
-            id,
+            tier: self.tier.into(),
+            parent_id: self.parent_id.to_string(),
+            id: self.id.to_string(),
             record_data: Some(record_data),
         }
     }
@@ -485,6 +487,28 @@ pub fn detect_log_type(log_type: &str) -> LogType {
 }
 
 #[derive(FromPyObject, Clone, Debug)]
+pub struct PyTier {
+    value: String,
+}
+
+impl PyTier {
+    pub fn into_tier(self) -> Tier {
+        match self.value.as_str() {
+            "system" => Some(Tier::System),
+            "subsystem" => Some(Tier::Subsystem),
+            "component" => Some(Tier::Component),
+            "subcomponent" => Some(Tier::Subcomponent),
+            _ => None,
+        }
+        .unwrap_or_else(|| panic!("Unknown tier {}", self.value))
+    }
+
+    pub fn to_string(&self) -> String {
+        self.value.clone()
+    }
+}
+
+#[derive(FromPyObject, Clone, Debug)]
 #[pyo3(transparent)]
 pub struct Parameters {
     inner: BTreeMap<String, JsonSerializable>,
@@ -494,22 +518,6 @@ impl Parameters {
     pub fn into_inner(self) -> BTreeMap<String, JsonSerializable> {
         self.inner
     }
-}
-
-fn tier_to_string(tier: &Tier) -> PyResult<String> {
-    let tier = match tier {
-        Tier::System => "system",
-        Tier::Subsystem => "subsystem",
-        Tier::Component => "component",
-        Tier::Subcomponent => "subcomponent",
-        Tier::UndeclaredTier => {
-            return Err(PyValueError::new_err(
-                "Undeclared tier. This shouldn't happen. Contact the maintainers.",
-            ));
-        }
-    };
-
-    Ok(tier.to_string())
 }
 
 fn parameters_to_value(params: &Parameters) -> Option<Value> {
