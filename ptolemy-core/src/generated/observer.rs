@@ -24,35 +24,80 @@ pub struct RecordPublishJob {
 pub struct Record {
     #[prost(enumeration = "Tier", tag = "1")]
     pub tier: i32,
-    #[prost(enumeration = "LogType", tag = "2")]
-    pub log_type: i32,
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub parent_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
+    #[prost(string, tag = "3")]
     pub id: ::prost::alloc::string::String,
-    /// event
-    #[prost(string, optional, tag = "5")]
-    pub name: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(message, optional, tag = "6")]
+    #[prost(oneof = "record::RecordData", tags = "4, 5, 6, 7, 8, 9")]
+    pub record_data: ::core::option::Option<record::RecordData>,
+}
+/// Nested message and enum types in `Record`.
+pub mod record {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum RecordData {
+        #[prost(message, tag = "4")]
+        Event(super::EventRecord),
+        #[prost(message, tag = "5")]
+        Runtime(super::RuntimeRecord),
+        #[prost(message, tag = "6")]
+        Input(super::InputRecord),
+        #[prost(message, tag = "7")]
+        Output(super::OutputRecord),
+        #[prost(message, tag = "8")]
+        Feedback(super::FeedbackRecord),
+        #[prost(message, tag = "9")]
+        Metadata(super::MetadataRecord),
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventRecord {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
     pub parameters: ::core::option::Option<::prost_types::Value>,
-    #[prost(string, optional, tag = "7")]
+    #[prost(string, optional, tag = "3")]
     pub version: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "8")]
+    #[prost(string, optional, tag = "4")]
     pub environment: ::core::option::Option<::prost::alloc::string::String>,
-    /// runtime
-    #[prost(float, optional, tag = "9")]
-    pub start_time: ::core::option::Option<f32>,
-    #[prost(float, optional, tag = "10")]
-    pub end_time: ::core::option::Option<f32>,
-    #[prost(string, optional, tag = "11")]
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RuntimeRecord {
+    #[prost(float, tag = "1")]
+    pub start_time: f32,
+    #[prost(float, tag = "2")]
+    pub end_time: f32,
+    #[prost(string, optional, tag = "3")]
     pub error_type: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "12")]
+    #[prost(string, optional, tag = "4")]
     pub error_content: ::core::option::Option<::prost::alloc::string::String>,
-    /// input/output/feedback/metadata
-    #[prost(string, optional, tag = "13")]
-    pub field_name: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(message, optional, tag = "14")]
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InputRecord {
+    #[prost(string, tag = "1")]
+    pub field_name: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
     pub field_value: ::core::option::Option<::prost_types::Value>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OutputRecord {
+    #[prost(string, tag = "1")]
+    pub field_name: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub field_value: ::core::option::Option<::prost_types::Value>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FeedbackRecord {
+    #[prost(string, tag = "1")]
+    pub field_name: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub field_value: ::core::option::Option<::prost_types::Value>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MetadataRecord {
+    #[prost(string, tag = "1")]
+    pub field_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub field_value: ::prost::alloc::string::String,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

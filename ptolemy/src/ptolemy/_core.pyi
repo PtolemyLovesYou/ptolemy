@@ -1,7 +1,9 @@
+"""Header file for ptolemy core."""
 from __future__ import annotations
-from typing import List, Optional, Any, Union
+from typing import List, Optional, Any
 
 class BlockingObserverClient:
+    """Blocking Observer Client."""
     def __init__(self, batch_size: int) -> None: ...
     def queue(self, records: List[ProtoRecord]) -> bool: ...
     def queue_event(self, record: ProtoRecord) -> bool: ...
@@ -9,6 +11,7 @@ class BlockingObserverClient:
     def flush(self) -> bool: ...
 
 class ProtoRecord:
+    """Handler for ProtoRecord."""
     @staticmethod
     def event(
         tier: str,
@@ -18,7 +21,7 @@ class ProtoRecord:
         parameters: Optional[dict] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...
     @staticmethod
     def runtime(
         tier: str,
@@ -28,7 +31,7 @@ class ProtoRecord:
         id: Optional[str] = None,
         error_type: Optional[str] = None,
         error_content: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...
     @staticmethod
     def io(
         tier: str,
@@ -37,7 +40,7 @@ class ProtoRecord:
         field_name: str,
         field_value: Any,
         id: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...
     @staticmethod
     def metadata(
         tier: str,
@@ -45,4 +48,4 @@ class ProtoRecord:
         field_name: str,
         field_value: str,
         id: Optional[str] = None,
-    ) -> None: ...
+    ) -> 'ProtoRecord': ...

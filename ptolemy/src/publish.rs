@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
 
 use crate::config::ObserverConfig;
-use crate::event::ProtoRecord;
+use crate::event::{ProtoRecord, PyProtoRecord};
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
 };
@@ -19,7 +19,7 @@ pub struct BlockingObserverClient {
 }
 
 impl BlockingObserverClient {
-    pub fn connect(
+    fn connect(
         config: ObserverConfig,
         batch_size: usize,
     ) -> Result<BlockingObserverClient, Box<dyn std::error::Error>> {
@@ -38,7 +38,7 @@ impl BlockingObserverClient {
         })
     }
 
-    pub fn publish_request(
+    fn publish_request(
         &mut self,
         records: Vec<Record>,
     ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
@@ -50,7 +50,7 @@ impl BlockingObserverClient {
         })
     }
 
-    pub fn send_batch(&mut self) -> bool {
+    fn send_batch(&mut self) -> bool {
         let records = {
             let mut queue = self.queue.lock().unwrap();
             let n_to_drain = self.batch_size.min(queue.len());
@@ -73,6 +73,32 @@ impl BlockingObserverClient {
             }
         }
     }
+
+    fn queue_records(&mut self, records: Vec<ProtoRecord>) {
+        let should_send_batch: bool;
+
+        let mut queue = self.queue.lock().unwrap();
+        queue.extend(records);
+        should_send_batch = queue.len() >= self.batch_size;
+        drop(queue);
+
+        if should_send_batch {
+            self.send_batch();
+        }
+    }
+
+    fn push_record_front(&mut self, record: ProtoRecord) {
+        let should_send_batch: bool;
+
+        let mut queue = self.queue.lock().unwrap();
+        queue.push_front(record);
+        should_send_batch = queue.len() >= self.batch_size;
+        drop(queue);
+
+        if should_send_batch {
+            self.send_batch();
+        }
+    }
 }
 
 #[pymethods]
@@ -83,43 +109,23 @@ impl BlockingObserverClient {
         BlockingObserverClient::connect(config, batch_size).unwrap()
     }
 
-    pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, ProtoRecord>) -> bool {
-        let rec = record.extract::<ProtoRecord>().unwrap();
+    pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, PyProtoRecord>) -> bool {
+        let rec = record.extract::<PyProtoRecord>().unwrap();
 
         py.allow_threads(|| {
-            let should_send_batch;
-
-            {
-                let mut queue = self.queue.lock().unwrap();
-                queue.push_front(rec);
-                should_send_batch = queue.len() >= self.batch_size;
-                drop(queue)
-            }; // Lock is released here
-
-            if should_send_batch {
-                self.send_batch();
-            }
+            let rec = rec.into();
+            self.push_record_front(rec);
         });
 
         true
     }
 
     pub fn queue(&mut self, py: Python<'_>, records: Bound<'_, PyList>) -> bool {
-        let records: Vec<ProtoRecord> = records.extract().unwrap();
+        let records: Vec<PyProtoRecord> = records.extract().unwrap();
 
         py.allow_threads(|| {
-            let should_send_batch;
-
-            {
-                let mut queue = self.queue.lock().unwrap();
-                queue.extend(records.into_iter());
-                should_send_batch = queue.len() >= self.batch_size;
-                drop(queue)
-            }; // Lock is released here
-
-            if should_send_batch {
-                self.send_batch();
-            }
+            let recs: Vec<ProtoRecord> = records.into_iter().map(|r| r.into()).collect();
+            self.queue_records(recs);
         });
 
         true

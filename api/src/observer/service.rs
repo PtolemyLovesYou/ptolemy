@@ -9,7 +9,8 @@ use crate::models::records::models::{
 };
 use crate::state::AppState;
 use ptolemy_core::generated::observer::{
-    observer_server::Observer, LogType, PublishRequest, PublishResponse, Record, Tier,
+    observer_server::Observer, PublishRequest, PublishResponse,
+    Record, Tier, record::RecordData,
 };
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -27,8 +28,9 @@ impl MyObserver {
 }
 
 macro_rules! add_record {
-    ($record_type: ident, $rec: ident, $target:ident) => {{
+    ($record_type: ident, $rec:ident, $target:ident) => {{
         let rec = parse_record::<$record_type>(&$rec);
+
         if let Ok(rec) = rec {
             $target.push(rec);
         }
@@ -53,8 +55,17 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
         .into_iter()
         .filter_map(|record| {
             let tier = record.tier();
-            match record.log_type() {
-                LogType::Event => match tier {
+
+            let record_data = match &record.record_data {
+                Some(r) => r,
+                None => {
+                    error!("Got a record with no data: {:#?}", record);
+                    return Some(false);
+                }
+            };
+
+            match record_data {
+                RecordData::Event(_) => match tier {
                     Tier::System => add_record!(SystemEventRecord, record, system_event_rows),
                     Tier::Subsystem => {
                         add_record!(SubsystemEventRecord, record, subsystem_event_rows)
@@ -70,15 +81,11 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
                         Some(false)
                     }
                 },
-                LogType::Runtime => add_record!(RuntimeRecord, record, runtime_rows),
-                LogType::Input | LogType::Output | LogType::Feedback => {
-                    add_record!(IORecord, record, io_rows)
-                }
-                LogType::Metadata => add_record!(MetadataRecord, record, metadata_rows),
-                LogType::UndeclaredLogType => {
-                    error!("Got a record with an undeclared log type: {:#?}", record);
-                    Some(false)
-                }
+                RecordData::Runtime(_) => add_record!(RuntimeRecord, record, runtime_rows),
+                RecordData::Input(_) => add_record!(IORecord, record, io_rows),
+                RecordData::Output(_) => add_record!(IORecord, record, io_rows),
+                RecordData::Feedback(_) => add_record!(IORecord, record, io_rows),
+                RecordData::Metadata(_) => add_record!(MetadataRecord, record, metadata_rows),
             }
         })
         .collect::<Vec<bool>>();

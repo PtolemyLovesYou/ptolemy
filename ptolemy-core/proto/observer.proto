@@ -43,24 +43,50 @@ enum Tier {
 
 message Record {
     Tier tier = 1;
-    LogType log_type = 2;
 
-    string parent_id = 3;
-    string id = 4;
+    string parent_id = 2;
+    string id = 3;
 
-    // event
-    optional string name = 5;
-    optional google.protobuf.Value parameters = 6;
-    optional string version = 7;
-    optional string environment = 8;
+    oneof record_data {
+        EventRecord event = 4;
+        RuntimeRecord runtime = 5;
+        InputRecord input = 6;
+        OutputRecord output = 7;
+        FeedbackRecord feedback = 8;
+        MetadataRecord metadata = 9;
+    }
+}
 
-    // runtime
-    optional float start_time = 9;
-    optional float end_time = 10;
-    optional string error_type = 11;
-    optional string error_content = 12;
+message EventRecord {
+    string name = 1;
+    optional google.protobuf.Value parameters = 2;
+    optional string version = 3;
+    optional string environment = 4;
+}
 
-    // input/output/feedback/metadata
-    optional string field_name = 13;
-    optional google.protobuf.Value field_value = 14;
+message RuntimeRecord {
+    float start_time = 1;
+    float end_time = 2;
+    optional string error_type = 3;
+    optional string error_content = 4;
+}
+
+message InputRecord {
+    string field_name = 1;
+    google.protobuf.Value field_value = 2;
+}
+
+message OutputRecord {
+    string field_name = 1;
+    google.protobuf.Value field_value = 2;
+}
+
+message FeedbackRecord {
+    string field_name = 1;
+    google.protobuf.Value field_value = 2;
+}
+
+message MetadataRecord {
+    string field_name = 1;
+    string field_value = 2;
 }
