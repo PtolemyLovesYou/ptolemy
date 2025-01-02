@@ -130,6 +130,231 @@ pub enum ProtoRecordEnum {
 
 #[derive(Clone, Debug)]
 #[pyclass(frozen)]
+pub struct ProtoRecordHandler;
+
+#[pymethods]
+impl ProtoRecordHandler {
+    #[staticmethod]
+    #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
+    fn event(
+        py: Python<'_>,
+        tier: Bound<'_, PyString>,
+        name: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        id: Option<Bound<'_, PyString>>,
+        parameters: Option<Parameters>,
+        version: Option<Bound<'_, PyString>>,
+        environment: Option<Bound<'_, PyString>>,
+    ) -> PyResult<ProtoRecord> {
+        let tier_raw = tier.extract::<String>()?;
+        let parent_id_raw = parent_id.extract::<String>()?;
+        let id_raw = match id {
+            None => None,
+            Some(i) => Some(i.extract::<String>()?),
+        };
+        let name = name.extract::<String>()?;
+
+        let version = match version {
+            None => None,
+            Some(v) => Some(v.extract::<String>()?),
+        };
+        let environment = match environment {
+            None => None,
+            Some(e) => Some(e.extract::<String>()?),
+        };
+
+        py.allow_threads(|| {
+            let tier = detect_tier(&tier_raw);
+            let parent_id = get_uuid(&parent_id_raw)?;
+            let id = match id_raw {
+                Some(i) => get_uuid(&i)?,
+                None => Uuid::new_v4(),
+            };
+
+            let record_data = ProtoEvent {
+                name,
+                parameters,
+                version,
+                environment,
+            };
+
+            let rec = ProtoRecord {
+                tier,
+                parent_id,
+                id,
+                record_data: ProtoRecordEnum::Event(record_data),
+            };
+            Ok(rec)
+        })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
+    fn runtime(
+        py: Python<'_>,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        start_time: Bound<'_, PyFloat>,
+        end_time: Bound<'_, PyFloat>,
+        id: Option<Bound<'_, PyString>>,
+        error_type: Option<Bound<'_, PyString>>,
+        error_content: Option<Bound<'_, PyString>>,
+    ) -> PyResult<ProtoRecord> {
+        let tier_raw = tier.extract::<String>()?;
+        let parent_id_raw = parent_id.extract::<String>()?;
+        let id_raw = match id {
+            None => None,
+            Some(i) => Some(i.extract::<String>()?),
+        };
+
+        let start_time = start_time.extract::<f32>()?;
+        let end_time = end_time.extract::<f32>()?;
+
+        let error_type: Option<String> = match error_type {
+            Some(e) => e.extract()?,
+            None => None,
+        };
+
+        let error_content: Option<String> = match error_content {
+            Some(e) => e.extract()?,
+            None => None,
+        };
+
+        py.allow_threads(|| {
+            let record_data = ProtoRuntime {
+                start_time,
+                end_time,
+                error_type,
+                error_content,
+            };
+
+            let tier = detect_tier(&tier_raw);
+
+            let parent_id = get_uuid(&parent_id_raw)?;
+            let id = match id_raw {
+                None => Uuid::new_v4(),
+                Some(i) => get_uuid(&i)?,
+            };
+
+            let rec = ProtoRecord {
+                tier,
+                parent_id,
+                id,
+                record_data: ProtoRecordEnum::Runtime(record_data),
+            };
+
+            Ok(rec)
+        })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
+    fn io(
+        py: Python<'_>,
+        tier: Bound<'_, PyString>,
+        log_type: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: JsonSerializable,
+        id: Option<Bound<'_, PyString>>,
+    ) -> PyResult<ProtoRecord> {
+        let tier_raw = tier.extract::<String>()?;
+        let log_type_raw = log_type.extract::<String>()?;
+        let parent_id_raw = parent_id.extract::<String>()?;
+        let id_raw = match id {
+            None => None,
+            Some(i) => Some(i.extract::<String>()?),
+        };
+        let field_name = field_name.extract::<String>()?;
+
+        py.allow_threads(|| {
+            let tier = detect_tier(&tier_raw);
+            let log_type = detect_log_type(&log_type_raw);
+            let parent_id = get_uuid(&parent_id_raw)?;
+            let id = match id_raw {
+                Some(i) => get_uuid(&i)?,
+                None => Uuid::new_v4(),
+            };
+
+            let record_data = match &log_type {
+                LogType::Input => ProtoRecordEnum::Input(ProtoInput {
+                    field_name,
+                    field_value,
+                }),
+                LogType::Output => ProtoRecordEnum::Output(ProtoOutput {
+                    field_name,
+                    field_value,
+                }),
+                LogType::Feedback => ProtoRecordEnum::Feedback(ProtoFeedback {
+                    field_name,
+                    field_value,
+                }),
+                _ => {
+                    return Err(PyValueError::new_err(
+                        "Invalid log type. This shouldn't happen. Contact the maintainers.",
+                    ));
+                },
+            };
+
+            let rec = ProtoRecord {
+                tier,
+                parent_id,
+                id,
+                record_data,
+            };
+
+            Ok(rec)
+        })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
+    fn metadata(
+        py: Python<'_>,
+        tier: Bound<'_, PyString>,
+        parent_id: Bound<'_, PyString>,
+        field_name: Bound<'_, PyString>,
+        field_value: Bound<'_, PyString>,
+        id: Option<Bound<'_, PyString>>,
+    ) -> PyResult<ProtoRecord> {
+        let tier_raw = tier.extract::<String>()?;
+        let parent_id_raw = parent_id.extract::<String>()?;
+        let id_raw = match id {
+            None => None,
+            Some(i) => Some(i.extract::<String>()?),
+        };
+
+        let field_name = field_name.extract::<String>()?;
+        let field_value = field_value.extract::<String>()?;
+
+        py.allow_threads( || {
+            let tier = detect_tier(&tier_raw);
+            let parent_id = get_uuid(&parent_id_raw)?;
+            let id = match id_raw {
+                None => Uuid::new_v4(),
+                Some(i) => get_uuid(&i)?,
+            };
+
+            let record_data = ProtoMetadata {
+                field_name,
+                field_value,
+            };
+
+            let rec = ProtoRecord {
+                tier,
+                parent_id,
+                id,
+                record_data: ProtoRecordEnum::Metadata(record_data),
+            };
+
+            Ok(rec)
+            }
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+#[pyclass(frozen)]
 pub struct ProtoRecord {
     tier: Tier,
     parent_id: Uuid,
@@ -163,177 +388,6 @@ impl ProtoRecord {
 
 #[pymethods]
 impl ProtoRecord {
-    #[staticmethod]
-    #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
-    fn event(
-        tier: Bound<'_, PyString>,
-        name: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Option<Bound<'_, PyString>>,
-        parameters: Option<Parameters>,
-        version: Option<Bound<'_, PyString>>,
-        environment: Option<Bound<'_, PyString>>,
-    ) -> PyResult<Self> {
-        let tier = detect_tier(&tier.extract::<String>()?);
-        let parent_id = get_uuid(parent_id)?;
-        let id = match id {
-            Some(i) => get_uuid(i)?,
-            None => Uuid::new_v4(),
-        };
-
-        let record_data = ProtoEvent {
-            name: name.extract::<String>()?,
-            parameters,
-            version: match version {
-                Some(v) => v.extract()?,
-                None => None,
-            },
-            environment: match environment {
-                Some(e) => e.extract()?,
-                None => None,
-            },
-        };
-        let rec = Self {
-            tier,
-            parent_id,
-            id,
-            record_data: ProtoRecordEnum::Event(record_data),
-        };
-        Ok(rec)
-    }
-
-    #[staticmethod]
-    #[pyo3(signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
-    fn runtime(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        start_time: Bound<'_, PyFloat>,
-        end_time: Bound<'_, PyFloat>,
-        id: Option<Bound<'_, PyString>>,
-        error_type: Option<Bound<'_, PyString>>,
-        error_content: Option<Bound<'_, PyString>>,
-    ) -> PyResult<Self> {
-        let tier = detect_tier(&tier.extract::<String>()?);
-        let parent_id = get_uuid(parent_id)?;
-        let id = match id {
-            Some(i) => get_uuid(i)?,
-            None => Uuid::new_v4(),
-        };
-
-        let start_time = start_time.extract::<f32>()?;
-        let end_time = end_time.extract::<f32>()?;
-
-        let error_type: Option<String> = match error_type {
-            Some(e) => e.extract()?,
-            None => None,
-        };
-
-        let error_content: Option<String> = match error_content {
-            Some(e) => e.extract()?,
-            None => None,
-        };
-
-        let record_data = ProtoRuntime {
-            start_time,
-            end_time,
-            error_type,
-            error_content,
-        };
-
-        let rec = Self {
-            tier,
-            parent_id,
-            id,
-            record_data: ProtoRecordEnum::Runtime(record_data),
-        };
-
-        Ok(rec)
-    }
-
-    #[staticmethod]
-    #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
-    fn io(
-        tier: Bound<'_, PyString>,
-        log_type: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: JsonSerializable,
-        id: Option<Bound<'_, PyString>>,
-    ) -> PyResult<Self> {
-        let tier = detect_tier(&tier.extract::<String>()?);
-        let log_type = detect_log_type(&log_type.extract::<String>()?);
-        let parent_id = get_uuid(parent_id)?;
-        let id = match id {
-            Some(i) => get_uuid(i)?,
-            None => Uuid::new_v4(),
-        };
-
-        let field_name = field_name.extract::<String>()?;
-
-        let record_data = match &log_type {
-            LogType::Input => ProtoRecordEnum::Input(ProtoInput {
-                field_name,
-                field_value,
-            }),
-            LogType::Output => ProtoRecordEnum::Output(ProtoOutput {
-                field_name,
-                field_value,
-            }),
-            LogType::Feedback => ProtoRecordEnum::Feedback(ProtoFeedback {
-                field_name,
-                field_value,
-            }),
-            _ => {
-                return Err(PyValueError::new_err(
-                    "Invalid log type. This shouldn't happen. Contact the maintainers.",
-                ));
-            }
-        };
-
-        let rec = Self {
-            tier,
-            parent_id,
-            id,
-            record_data,
-        };
-
-        Ok(rec)
-    }
-
-    #[staticmethod]
-    #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
-    fn metadata(
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: Bound<'_, PyString>,
-        id: Option<Bound<'_, PyString>>,
-    ) -> PyResult<Self> {
-        let tier = detect_tier(&tier.extract::<String>()?);
-        let parent_id = get_uuid(parent_id)?;
-        let id = match id {
-            Some(i) => get_uuid(i)?,
-            None => Uuid::new_v4(),
-        };
-
-        let field_name = field_name.extract::<String>()?;
-        let field_value = field_value.extract()?;
-
-        let record_data = ProtoMetadata {
-            field_name,
-            field_value,
-        };
-
-        let rec = Self {
-            tier,
-            parent_id,
-            id,
-            record_data: ProtoRecordEnum::Metadata(record_data),
-        };
-
-        Ok(rec)
-    }
-
     #[getter]
     fn tier(&self) -> PyResult<String> {
         tier_to_string(&self.tier)
@@ -359,9 +413,8 @@ impl ProtoRecord {
     }
 }
 
-fn get_uuid(id: Bound<'_, PyString>) -> PyResult<Uuid> {
-    let id_ub: String = id.extract()?;
-    match Uuid::parse_str(&id_ub) {
+fn get_uuid(id: &str) -> PyResult<Uuid> {
+    match Uuid::parse_str(&id) {
         Ok(i) => Ok(i),
         Err(e) => {
             let error_msg = format!("Unable to parse UUID: {}", e);

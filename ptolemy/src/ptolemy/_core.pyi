@@ -1,7 +1,9 @@
+"""Header file for ptolemy core."""
 from __future__ import annotations
-from typing import List, Optional, Any, Union
+from typing import List, Optional, Any
 
 class BlockingObserverClient:
+    """Blocking Observer Client."""
     def __init__(self, batch_size: int) -> None: ...
     def queue(self, records: List[ProtoRecord]) -> bool: ...
     def queue_event(self, record: ProtoRecord) -> bool: ...
@@ -9,6 +11,10 @@ class BlockingObserverClient:
     def flush(self) -> bool: ...
 
 class ProtoRecord:
+    """Proto Record."""
+
+class ProtoRecordHandler:
+    """Handler for ProtoRecord."""
     @staticmethod
     def event(
         tier: str,

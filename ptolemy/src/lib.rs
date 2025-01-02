@@ -1,4 +1,4 @@
-use crate::event::ProtoRecord;
+use crate::event::{ProtoRecord, ProtoRecordHandler};
 use crate::publish::BlockingObserverClient;
 use pyo3::prelude::*;
 
@@ -13,5 +13,6 @@ pub mod publish;
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BlockingObserverClient>()?;
     m.add_class::<ProtoRecord>()?;
+    m.add_class::<ProtoRecordHandler>()?;
     Ok(())
 }

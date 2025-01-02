@@ -6,10 +6,10 @@ import logging
 from contextlib import contextmanager
 from pydantic import ConfigDict, PrivateAttr, Field
 from .engine import Engine
-from .._core import (
+from .._core import ( # pylint: disable=no-name-in-module
     BlockingObserverClient,
     ProtoRecord,
-)  # pylint: disable=no-name-in-module
+)
 from ..exceptions import (
     EngineError,
     PtolemyConnectionError,
@@ -63,7 +63,7 @@ class PtolemyEngine(Engine):
 
     def queue_event(self, record: ProtoRecord) -> None:
         with self._error_handling("queue"):
-            future = self._executor.submit(self._client.queue_event, record)
+            self._executor.submit(self._client.queue_event, record)
 
     def queue(self, records: Iterable[ProtoRecord]) -> None:
         """
@@ -76,7 +76,7 @@ class PtolemyEngine(Engine):
             EngineError: If queuing fails
         """
         with self._error_handling("queue"):
-            future = self._executor.submit(self._client.queue, list(records))
+            self._executor.submit(self._client.queue, list(records))
             # future.result()
 
     def flush(self) -> None:
