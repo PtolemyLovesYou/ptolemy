@@ -123,13 +123,13 @@ impl BlockingObserverClient {
         BlockingObserverClient::connect(config, batch_size).unwrap()
     }
 
-    #[pyo3(signature = (tier, name, parent_id, parameters=None, version=None, environment=None))]
+    #[pyo3(signature = (tier, parent_id, name, parameters=None, version=None, environment=None))]
     pub fn queue_event_record(
         &mut self,
         py: Python<'_>,
         tier: &str,
-        name: String,
         parent_id: &str,
+        name: String,
         parameters: Option<Parameters>,
         version: Option<String>,
         environment: Option<String>,
