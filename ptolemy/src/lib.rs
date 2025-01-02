@@ -1,12 +1,9 @@
 use crate::client::PtolemyClient;
-use crate::event::PyProtoRecord;
-use crate::publish::BlockingObserverClient;
 use pyo3::prelude::*;
 
 pub mod client;
 pub mod config;
 pub mod event;
-pub mod publish;
 pub mod types;
 
 /// A Python module implemented in Rust. The name of this function must match
@@ -14,8 +11,6 @@ pub mod types;
 /// import the module.
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<BlockingObserverClient>()?;
-    m.add_class::<PyProtoRecord>()?;
     m.add_class::<PtolemyClient>()?;
     Ok(())
 }
