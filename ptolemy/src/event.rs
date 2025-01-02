@@ -134,6 +134,12 @@ pub struct PyProtoRecord {
     inner: ProtoRecord,
 }
 
+impl From<PyProtoRecord> for ProtoRecord {
+    fn from(value: PyProtoRecord) -> Self {
+        value.inner
+    }
+}
+
 #[pymethods]
 impl PyProtoRecord {
     #[staticmethod]
@@ -370,10 +376,38 @@ impl PyProtoRecord {
             }
         )
     }
+
+    #[getter]
+    fn tier(&self) -> PyResult<String> {
+        tier_to_string(&self.inner.tier)
+    }
+
+    #[getter]
+    fn log_type(&self) -> PyResult<String> {
+        let log_type = match self.inner.record_data {
+            ProtoRecordEnum::Event(_) => "event".to_string(),
+            ProtoRecordEnum::Runtime(_) => "runtime".to_string(),
+            ProtoRecordEnum::Input(_) => "input".to_string(),
+            ProtoRecordEnum::Output(_) => "output".to_string(),
+            ProtoRecordEnum::Feedback(_) => "feedback".to_string(),
+            ProtoRecordEnum::Metadata(_) => "metadata".to_string(),
+        };
+
+        Ok(log_type)
+    }
+
+    #[getter]
+    fn id(&self) -> PyResult<String> {
+        Ok(self.inner.id.to_string())
+    }
+
+    #[getter]
+    fn parent_id(&self) -> PyResult<String> {
+        Ok(self.inner.parent_id.to_string())
+    }
 }
 
 #[derive(Clone, Debug)]
-#[pyclass(frozen)]
 pub struct ProtoRecord {
     tier: Tier,
     parent_id: Uuid,
@@ -402,33 +436,6 @@ impl ProtoRecord {
             id,
             record_data: Some(record_data),
         }
-    }
-}
-
-#[pymethods]
-impl ProtoRecord {
-    #[getter]
-    fn tier(&self) -> PyResult<String> {
-        tier_to_string(&self.tier)
-    }
-
-    #[getter]
-    fn log_type(&self) -> PyResult<String> {
-        let log_type = match self.record_data {
-            ProtoRecordEnum::Event(_) => "event".to_string(),
-            ProtoRecordEnum::Runtime(_) => "runtime".to_string(),
-            ProtoRecordEnum::Input(_) => "input".to_string(),
-            ProtoRecordEnum::Output(_) => "output".to_string(),
-            ProtoRecordEnum::Feedback(_) => "feedback".to_string(),
-            ProtoRecordEnum::Metadata(_) => "metadata".to_string(),
-        };
-
-        Ok(log_type)
-    }
-
-    #[getter]
-    fn id(&self) -> PyResult<String> {
-        Ok(self.id.to_string())
     }
 }
 

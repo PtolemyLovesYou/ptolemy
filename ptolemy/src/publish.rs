@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
 
 use crate::config::ObserverConfig;
-use crate::event::ProtoRecord;
+use crate::event::{ProtoRecord, PyProtoRecord};
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
 };
@@ -83,15 +83,15 @@ impl BlockingObserverClient {
         BlockingObserverClient::connect(config, batch_size).unwrap()
     }
 
-    pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, ProtoRecord>) -> bool {
-        let rec = record.extract::<ProtoRecord>().unwrap();
+    pub fn queue_event(&mut self, py: Python<'_>, record: Bound<'_, PyProtoRecord>) -> bool {
+        let rec = record.extract::<PyProtoRecord>().unwrap();
 
         py.allow_threads(|| {
             let should_send_batch;
 
             {
                 let mut queue = self.queue.lock().unwrap();
-                queue.push_front(rec);
+                queue.push_front(rec.into());
                 should_send_batch = queue.len() >= self.batch_size;
                 drop(queue)
             }; // Lock is released here
@@ -105,14 +105,14 @@ impl BlockingObserverClient {
     }
 
     pub fn queue(&mut self, py: Python<'_>, records: Bound<'_, PyList>) -> bool {
-        let records: Vec<ProtoRecord> = records.extract().unwrap();
+        let records: Vec<PyProtoRecord> = records.extract().unwrap();
 
         py.allow_threads(|| {
             let should_send_batch;
 
             {
                 let mut queue = self.queue.lock().unwrap();
-                queue.extend(records.into_iter());
+                queue.extend(records.into_iter().map(|r| r.into()));
                 should_send_batch = queue.len() >= self.batch_size;
                 drop(queue)
             }; // Lock is released here
