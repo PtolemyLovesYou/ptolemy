@@ -1,5 +1,6 @@
 use crate::event::PyProtoRecord;
 use crate::publish::BlockingObserverClient;
+use crate::client::PtolemyClient;
 use pyo3::prelude::*;
 
 pub mod client;
@@ -15,5 +16,6 @@ pub mod types;
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BlockingObserverClient>()?;
     m.add_class::<PyProtoRecord>()?;
+    m.add_class::<PtolemyClient>()?;
     Ok(())
 }
