@@ -1,23 +1,36 @@
 """Engine abstract class."""
 
-from typing import Iterable, Optional, Any
+from typing import Iterable, Optional, Any, Union
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel, ConfigDict
 
 from .._core import ProtoRecord  # pylint: disable=no-name-in-module
 from ..utils import ID, Tier, LogType
 
+class ProtoFuture(RootModel):
+    """ProtoFuture."""
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    root: Union[ProtoRecord, Future]
+
+    @property
+    def result(self) -> ProtoRecord:
+        """Get result."""
+        if isinstance(self.root, Future):
+            self.root = self.root.result()
+
+        return self.root
 
 class Engine(BaseModel, ABC):
     """Engine abstract class."""
 
     @abstractmethod
-    def queue_event(self, record: ProtoRecord):
+    def queue_event(self, record: ProtoFuture):
         """Queue event."""
 
     @abstractmethod
-    def queue(self, records: Iterable[ProtoRecord]):
+    def queue(self, records: Iterable[ProtoFuture]):
         """Queue records."""
 
     @abstractmethod
@@ -33,7 +46,7 @@ class Engine(BaseModel, ABC):
         parameters: Optional[dict] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> Future:
+    ) -> ProtoFuture:
         """Create event record asynchronously."""
 
     @abstractmethod
@@ -45,7 +58,7 @@ class Engine(BaseModel, ABC):
         end_time: float,
         error_type: Optional[str] = None,
         error_content: Optional[str] = None,
-    ) -> Future:
+    ) -> ProtoFuture:
         """Create runtime record asynchronously."""
 
     @abstractmethod
@@ -56,7 +69,7 @@ class Engine(BaseModel, ABC):
         parent_id: ID,
         field_name: str,
         field_value: Any,
-    ) -> Future:
+    ) -> ProtoFuture:
         """Create IO record asynchronously."""
 
     @abstractmethod
@@ -66,5 +79,5 @@ class Engine(BaseModel, ABC):
         parent_id: ID,
         field_name: str,
         field_value: str,
-    ) -> Future:
+    ) -> ProtoFuture:
         """Create metadata record asynchronously."""

@@ -4,15 +4,13 @@ from typing import List, Self, Optional, Any, Annotated
 import time
 import traceback as tb
 from pydantic import BaseModel, PrivateAttr, Field, ConfigDict
-from ..engine.engine import Engine
+from ..engine.engine import Engine, ProtoFuture
 from ..engine.grpc import PtolemyEngine
 from ..utils import (
     LogType,
     Tier,
     ID,
 )
-from .._core import ProtoRecord  # pylint: disable=no-name-in-module
-
 
 class Ptolemy(BaseModel):
     """Ptolemy client."""
@@ -21,12 +19,12 @@ class Ptolemy(BaseModel):
 
     _tier: Tier = PrivateAttr(default=None)
 
-    _event: ProtoRecord = PrivateAttr(default=None)
-    _runtime: ProtoRecord = PrivateAttr(default=None)
-    _inputs: List[ProtoRecord] = PrivateAttr(default=None)
-    _outputs: List[ProtoRecord] = PrivateAttr(default=None)
-    _feedback: List[ProtoRecord] = PrivateAttr(default=None)
-    _metadata: List[ProtoRecord] = PrivateAttr(default=None)
+    _event: ProtoFuture = PrivateAttr(default=None)
+    _runtime: ProtoFuture = PrivateAttr(default=None)
+    _inputs: List[ProtoFuture] = PrivateAttr(default=None)
+    _outputs: List[ProtoFuture] = PrivateAttr(default=None)
+    _feedback: List[ProtoFuture] = PrivateAttr(default=None)
+    _metadata: List[ProtoFuture] = PrivateAttr(default=None)
 
     _start_time: float = PrivateAttr(default=None)
     _end_time: float = PrivateAttr(default=None)
@@ -131,7 +129,7 @@ class Ptolemy(BaseModel):
                 parameters=parameters,
                 version=version,
                 environment=environment,
-                parent_id=self._event.id,
+                parent_id=self._event.result.id,
             )
         )
 
@@ -195,7 +193,7 @@ class Ptolemy(BaseModel):
             parameters=parameters,
             version=version,
             environment=environment,
-        ).result()
+        )
 
         return self
 
@@ -233,12 +231,12 @@ class Ptolemy(BaseModel):
 
         self._runtime = self.engine.create_runtime(
             self.tier,
-            self._event.id,
+            self._event.result.id,
             start_time,
             end_time,
             error_type=error_type,
             error_content=error_content,
-        ).result()
+        )
 
         return self
 
@@ -261,7 +259,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Inputs already set")
 
         self._inputs = [
-            self.engine.create_io(self.tier, LogType.INPUT, self._event.id, k, v).result()
+            self.engine.create_io(self.tier, LogType.INPUT, self._event.result.id, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -294,7 +292,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Outputs already set")
 
         self._outputs = [
-            self.engine.create_io(self.tier, LogType.OUTPUT, self._event.id, k, v).result()
+            self.engine.create_io(self.tier, LogType.OUTPUT, self._event.result.id, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -318,7 +316,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Feedback already set")
 
         self._feedback = [
-            self.engine.create_io(self.tier, LogType.FEEDBACK, self._event.id, k, v).result()
+            self.engine.create_io(self.tier, LogType.FEEDBACK, self._event.result.id, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -349,7 +347,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Metadata already set")
 
         self._metadata = [
-            self.engine.create_metadata(self.tier, self._event.id, k, v).result()
+            self.engine.create_metadata(self.tier, self._event.result.id, k, v)
             for k, v in kwargs.items()
         ]
 

@@ -5,7 +5,7 @@ from typing import Iterable, Optional, Any
 import logging
 from contextlib import contextmanager
 from pydantic import ConfigDict, PrivateAttr, Field
-from .engine import Engine
+from .engine import Engine, ProtoFuture
 from .._core import ( # pylint: disable=no-name-in-module
     BlockingObserverClient,
     ProtoRecord,
@@ -65,11 +65,11 @@ class PtolemyEngine(Engine):
             self._is_connected = False
             raise EngineError(f"Failed during {operation}") from e
 
-    def queue_event(self, record: ProtoRecord) -> None:
+    def queue_event(self, record: ProtoFuture) -> None:
         with self._error_handling("queue"):
-            self._publish_executor.submit(self._client.queue_event, record)
+            self._publish_executor.submit(self._client.queue_event, record.result)
 
-    def queue(self, records: Iterable[ProtoRecord]) -> None:
+    def queue(self, records: Iterable[ProtoFuture]) -> None:
         """
         Queue records for batch processing.
 
@@ -80,7 +80,7 @@ class PtolemyEngine(Engine):
             EngineError: If queuing fails
         """
         with self._error_handling("queue"):
-            self._publish_executor.submit(self._client.queue, list(records))
+            self._publish_executor.submit(self._client.queue, [i.result for i in records])
             # future.result()
 
     def flush(self) -> None:
@@ -102,7 +102,7 @@ class PtolemyEngine(Engine):
         parameters: Optional[dict] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> Future:
+    ) -> ProtoFuture:
 
         event_future = self._conversion_executor.submit(
             ProtoRecord.event,
@@ -114,7 +114,7 @@ class PtolemyEngine(Engine):
             environment=environment,
         )
 
-        return event_future
+        return ProtoFuture(root=event_future)
 
     def create_runtime(
         self,
@@ -136,7 +136,7 @@ class PtolemyEngine(Engine):
             error_content=error_content,
         )
 
-        return runtime_future
+        return ProtoFuture(root=runtime_future)
 
     def create_io(
         self,
@@ -147,7 +147,7 @@ class PtolemyEngine(Engine):
         field_value: Any,
     ) -> Future:
 
-        input_future = self._conversion_executor.submit(
+        io_future = self._conversion_executor.submit(
             ProtoRecord.io,
             tier.value,
             log_type.value,
@@ -156,7 +156,7 @@ class PtolemyEngine(Engine):
             field_value,
         )
 
-        return input_future
+        return ProtoFuture(root=io_future)
 
     def create_metadata(
         self,
@@ -174,4 +174,4 @@ class PtolemyEngine(Engine):
             field_value,
         )
 
-        return metadata_future
+        return ProtoFuture(root=metadata_future)
