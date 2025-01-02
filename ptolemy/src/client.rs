@@ -7,7 +7,6 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
 use uuid::Uuid;
-// use crate::event::PyProtoRecord;
 use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
