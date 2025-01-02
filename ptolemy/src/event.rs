@@ -7,8 +7,8 @@ use ptolemy_core::generated::observer::{
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyFloat, PyString};
 use std::collections::BTreeMap;
+use std::f32;
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -20,6 +20,20 @@ pub struct ProtoEvent {
 }
 
 impl ProtoEvent {
+    pub fn new(
+        name: String,
+        parameters: Option<Parameters>,
+        version: Option<String>,
+        environment: Option<String>,
+    ) -> Self {
+        Self {
+            name,
+            parameters,
+            version,
+            environment,
+        }
+    }
+
     pub fn proto(&self) -> EventRecord {
         let name = self.name.clone();
         let parameters = match &self.parameters {
@@ -37,6 +51,10 @@ impl ProtoEvent {
             environment,
         }
     }
+
+    pub fn into_enum(self) -> ProtoRecordEnum {
+        ProtoRecordEnum::Event(self)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -48,6 +66,20 @@ pub struct ProtoRuntime {
 }
 
 impl ProtoRuntime {
+    pub fn new(
+        start_time: f32,
+        end_time: f32,
+        error_type: Option<String>,
+        error_content: Option<String>,
+    ) -> Self {
+        Self {
+            start_time,
+            end_time,
+            error_type,
+            error_content,
+        }
+    }
+
     pub fn proto(&self) -> RuntimeRecord {
         RuntimeRecord {
             start_time: self.start_time,
@@ -55,6 +87,10 @@ impl ProtoRuntime {
             error_type: self.error_type.clone(),
             error_content: self.error_content.clone(),
         }
+    }
+
+    pub fn into_enum(self) -> ProtoRecordEnum {
+        ProtoRecordEnum::Runtime(self)
     }
 }
 
@@ -65,11 +101,25 @@ pub struct ProtoInput {
 }
 
 impl ProtoInput {
+    pub fn new(
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> Self {
+        Self {
+            field_name,
+            field_value,
+        }
+    }
+
     pub fn proto(&self) -> InputRecord {
         InputRecord {
             field_name: self.field_name.clone(),
             field_value: json_serializable_to_value(&Some(self.field_value.clone())),
         }
+    }
+
+    pub fn into_enum(self) -> ProtoRecordEnum {
+        ProtoRecordEnum::Input(self)
     }
 }
 
@@ -80,11 +130,25 @@ pub struct ProtoOutput {
 }
 
 impl ProtoOutput {
+    pub fn new(
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> Self {
+        Self {
+            field_name,
+            field_value,
+        }
+    }
+
     pub fn proto(&self) -> OutputRecord {
         OutputRecord {
             field_name: self.field_name.clone(),
             field_value: json_serializable_to_value(&Some(self.field_value.clone())),
         }
+    }
+
+    pub fn into_enum(self) -> ProtoRecordEnum {
+        ProtoRecordEnum::Output(self)
     }
 }
 
@@ -95,11 +159,25 @@ pub struct ProtoFeedback {
 }
 
 impl ProtoFeedback {
+    pub fn new(
+        field_name: String,
+        field_value: JsonSerializable,
+    ) -> Self {
+        Self {
+            field_name,
+            field_value,
+        }
+    }
+
     pub fn proto(&self) -> FeedbackRecord {
         FeedbackRecord {
             field_name: self.field_name.clone(),
             field_value: json_serializable_to_value(&Some(self.field_value.clone())),
         }
+    }
+
+    pub fn into_enum(self) -> ProtoRecordEnum {
+        ProtoRecordEnum::Feedback(self)
     }
 }
 
@@ -110,11 +188,25 @@ pub struct ProtoMetadata {
 }
 
 impl ProtoMetadata {
+    pub fn new(
+        field_name: String,
+        field_value: String,
+    ) -> Self {
+        Self {
+            field_name,
+            field_value,
+        }
+    }
+
     pub fn proto(&self) -> MetadataRecord {
         MetadataRecord {
             field_name: self.field_name.clone(),
             field_value: self.field_value.clone(),
         }
+    }
+    
+    pub fn into_enum(self) -> ProtoRecordEnum {
+        ProtoRecordEnum::Metadata(self)
     }
 }
 
@@ -152,56 +244,27 @@ impl PyProtoRecord {
     #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
     fn event(
         py: Python<'_>,
-        tier: Bound<'_, PyString>,
-        name: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        id: Option<Bound<'_, PyString>>,
+        tier: &str,
+        name: String,
+        parent_id: &str,
+        id: Option<&str>,
         parameters: Option<Parameters>,
-        version: Option<Bound<'_, PyString>>,
-        environment: Option<Bound<'_, PyString>>,
+        version: Option<String>,
+        environment: Option<String>,
     ) -> PyResult<Self> {
-        let tier_raw = tier.extract::<String>()?;
-        let parent_id_raw = parent_id.extract::<String>()?;
-        let id_raw = match id {
-            None => None,
-            Some(i) => Some(i.extract::<String>()?),
-        };
-        let name = name.extract::<String>()?;
-
-        let version = match version {
-            None => None,
-            Some(v) => Some(v.extract::<String>()?),
-        };
-        let environment = match environment {
-            None => None,
-            Some(e) => Some(e.extract::<String>()?),
-        };
-
         py.allow_threads(|| {
-            let tier = detect_tier(&tier_raw);
-            let parent_id = get_uuid(&parent_id_raw)?;
-            let id = match id_raw {
-                Some(i) => get_uuid(&i)?,
+            let tier = detect_tier(&tier);
+            let parent_id = get_uuid(&parent_id)?;
+            let id = match id {
+                Some(i) => get_uuid(i)?,
                 None => Uuid::new_v4(),
             };
 
-            let record_data = ProtoEvent {
-                name,
-                parameters,
-                version,
-                environment,
-            };
-
-            let rec = ProtoRecord {
-                tier,
-                parent_id,
-                id,
-                record_data: ProtoRecordEnum::Event(record_data),
-            };
+            let record_data = ProtoEvent::new(name, parameters, version, environment).into_enum();
             
             Ok(
                 Self {
-                    inner: rec,
+                    inner: ProtoRecord::new(tier, parent_id, id, record_data),
                 }
             )
         })
@@ -211,60 +274,28 @@ impl PyProtoRecord {
     #[pyo3(signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
     fn runtime(
         py: Python<'_>,
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        start_time: Bound<'_, PyFloat>,
-        end_time: Bound<'_, PyFloat>,
-        id: Option<Bound<'_, PyString>>,
-        error_type: Option<Bound<'_, PyString>>,
-        error_content: Option<Bound<'_, PyString>>,
+        tier: &str,
+        parent_id: &str,
+        start_time: f32,
+        end_time: f32,
+        id: Option<&str>,
+        error_type: Option<String>,
+        error_content: Option<String>,
     ) -> PyResult<Self> {
-        let tier_raw = tier.extract::<String>()?;
-        let parent_id_raw = parent_id.extract::<String>()?;
-        let id_raw = match id {
-            None => None,
-            Some(i) => Some(i.extract::<String>()?),
-        };
-
-        let start_time = start_time.extract::<f32>()?;
-        let end_time = end_time.extract::<f32>()?;
-
-        let error_type: Option<String> = match error_type {
-            Some(e) => e.extract()?,
-            None => None,
-        };
-
-        let error_content: Option<String> = match error_content {
-            Some(e) => e.extract()?,
-            None => None,
-        };
-
         py.allow_threads(|| {
-            let record_data = ProtoRuntime {
-                start_time,
-                end_time,
-                error_type,
-                error_content,
-            };
+            let tier = detect_tier(tier);
 
-            let tier = detect_tier(&tier_raw);
-
-            let parent_id = get_uuid(&parent_id_raw)?;
-            let id = match id_raw {
+            let parent_id = get_uuid(parent_id)?;
+            let id = match id {
                 None => Uuid::new_v4(),
-                Some(i) => get_uuid(&i)?,
+                Some(i) => get_uuid(i)?,
             };
 
-            let rec = ProtoRecord {
-                tier,
-                parent_id,
-                id,
-                record_data: ProtoRecordEnum::Runtime(record_data),
-            };
+            let record_data = ProtoRuntime::new(start_time, end_time, error_type, error_content).into_enum();
 
             Ok(
                 Self {
-                    inner: rec,
+                    inner: ProtoRecord::new(tier, parent_id, id, record_data),
                 }
             )
         })
@@ -274,44 +305,26 @@ impl PyProtoRecord {
     #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
     fn io(
         py: Python<'_>,
-        tier: Bound<'_, PyString>,
-        log_type: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
+        tier: &str,
+        log_type: &str,
+        parent_id: &str,
+        field_name: String,
         field_value: JsonSerializable,
-        id: Option<Bound<'_, PyString>>,
+        id: Option<&str>,
     ) -> PyResult<Self> {
-        let tier_raw = tier.extract::<String>()?;
-        let log_type_raw = log_type.extract::<String>()?;
-        let parent_id_raw = parent_id.extract::<String>()?;
-        let id_raw = match id {
-            None => None,
-            Some(i) => Some(i.extract::<String>()?),
-        };
-        let field_name = field_name.extract::<String>()?;
-
         py.allow_threads(|| {
-            let tier = detect_tier(&tier_raw);
-            let log_type = detect_log_type(&log_type_raw);
-            let parent_id = get_uuid(&parent_id_raw)?;
-            let id = match id_raw {
-                Some(i) => get_uuid(&i)?,
+            let tier = detect_tier(tier);
+            let log_type = detect_log_type(log_type);
+            let parent_id = get_uuid(parent_id)?;
+            let id = match id {
+                Some(i) => get_uuid(i)?,
                 None => Uuid::new_v4(),
             };
 
             let record_data = match &log_type {
-                LogType::Input => ProtoRecordEnum::Input(ProtoInput {
-                    field_name,
-                    field_value,
-                }),
-                LogType::Output => ProtoRecordEnum::Output(ProtoOutput {
-                    field_name,
-                    field_value,
-                }),
-                LogType::Feedback => ProtoRecordEnum::Feedback(ProtoFeedback {
-                    field_name,
-                    field_value,
-                }),
+                LogType::Input => ProtoInput::new(field_name, field_value).into_enum(),
+                LogType::Output => ProtoOutput::new(field_name, field_value).into_enum(),
+                LogType::Feedback => ProtoFeedback::new(field_name, field_value).into_enum(),
                 _ => {
                     return Err(PyValueError::new_err(
                         "Invalid log type. This shouldn't happen. Contact the maintainers.",
@@ -319,16 +332,9 @@ impl PyProtoRecord {
                 },
             };
 
-            let rec = ProtoRecord {
-                tier,
-                parent_id,
-                id,
-                record_data,
-            };
-
             Ok(
                 Self {
-                    inner: rec,
+                    inner: ProtoRecord::new(tier, parent_id, id, record_data)
                 }
             )
         })
@@ -338,45 +344,25 @@ impl PyProtoRecord {
     #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
     fn metadata(
         py: Python<'_>,
-        tier: Bound<'_, PyString>,
-        parent_id: Bound<'_, PyString>,
-        field_name: Bound<'_, PyString>,
-        field_value: Bound<'_, PyString>,
-        id: Option<Bound<'_, PyString>>,
+        tier: &str,
+        parent_id: &str,
+        field_name: String,
+        field_value: String,
+        id: Option<&str>,
     ) -> PyResult<Self> {
-        let tier_raw = tier.extract::<String>()?;
-        let parent_id_raw = parent_id.extract::<String>()?;
-        let id_raw = match id {
-            None => None,
-            Some(i) => Some(i.extract::<String>()?),
-        };
-
-        let field_name = field_name.extract::<String>()?;
-        let field_value = field_value.extract::<String>()?;
-
         py.allow_threads( || {
-            let tier = detect_tier(&tier_raw);
-            let parent_id = get_uuid(&parent_id_raw)?;
-            let id = match id_raw {
+            let tier = detect_tier(&tier);
+            let parent_id = get_uuid(&parent_id)?;
+            let id = match id {
                 None => Uuid::new_v4(),
-                Some(i) => get_uuid(&i)?,
+                Some(i) => get_uuid(i)?,
             };
 
-            let record_data = ProtoMetadata {
-                field_name,
-                field_value,
-            };
-
-            let rec = ProtoRecord {
-                tier,
-                parent_id,
-                id,
-                record_data: ProtoRecordEnum::Metadata(record_data),
-            };
+            let record_data = ProtoMetadata::new(field_name, field_value).into_enum();
 
             Ok(
                 Self {
-                    inner: rec
+                    inner: ProtoRecord::new(tier, parent_id, id, record_data)
                 }
             )
             }
@@ -423,6 +409,15 @@ pub struct ProtoRecord {
 }
 
 impl ProtoRecord {
+    pub fn new(tier: Tier, parent_id: Uuid, id: Uuid, record_data: ProtoRecordEnum) -> Self {
+        Self {
+            tier,
+            parent_id,
+            id,
+            record_data,
+        }
+    }
+
     pub fn proto(&self) -> Record {
         let tier = self.tier.into();
         let parent_id = self.parent_id.to_string();
