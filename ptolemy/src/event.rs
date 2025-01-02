@@ -241,8 +241,8 @@ impl From<PyProtoRecord> for ProtoRecord {
 #[pymethods]
 impl PyProtoRecord {
     #[staticmethod]
-    #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
-    fn event(
+    #[pyo3(name="event", signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
+    fn event_py(
         py: Python<'_>,
         tier: &str,
         name: String,
@@ -271,8 +271,8 @@ impl PyProtoRecord {
     }
 
     #[staticmethod]
-    #[pyo3(signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
-    fn runtime(
+    #[pyo3(name="runtime", signature = (tier, parent_id, start_time, end_time, id=None, error_type=None, error_content=None))]
+    fn runtime_py(
         py: Python<'_>,
         tier: &str,
         parent_id: &str,
@@ -302,8 +302,8 @@ impl PyProtoRecord {
     }
 
     #[staticmethod]
-    #[pyo3(signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
-    fn io(
+    #[pyo3(name="io", signature = (tier, log_type, parent_id, field_name, field_value, id=None))]
+    fn io_py(
         py: Python<'_>,
         tier: &str,
         log_type: &str,
@@ -341,8 +341,8 @@ impl PyProtoRecord {
     }
 
     #[staticmethod]
-    #[pyo3(signature = (tier, parent_id, field_name, field_value, id=None))]
-    fn metadata(
+    #[pyo3(name="metadata", signature = (tier, parent_id, field_name, field_value, id=None))]
+    fn metadata_py(
         py: Python<'_>,
         tier: &str,
         parent_id: &str,
