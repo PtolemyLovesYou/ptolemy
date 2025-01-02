@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 pub trait Proto {
     fn proto(&self) -> RecordData;
-    fn into_enum(self) -> ProtoRecordEnum;
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum;
 }
 
 #[derive(Clone, Debug)]
@@ -58,8 +58,8 @@ impl Proto for ProtoEvent {
         })
     }
 
-    fn into_enum(self) -> ProtoRecordEnum {
-        ProtoRecordEnum::Event(self)
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum {
+        ProtoRecordEnum::Event(ProtoRecord::new(tier, parent_id, id, self))
     }
 }
 
@@ -97,8 +97,8 @@ impl Proto for ProtoRuntime {
         })
     }
 
-    fn into_enum(self) -> ProtoRecordEnum {
-        ProtoRecordEnum::Runtime(self)
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum {
+        ProtoRecordEnum::Runtime(ProtoRecord::new(tier, parent_id, id, self))
     }
 }
 
@@ -125,8 +125,8 @@ impl Proto for ProtoInput {
         })
     }
 
-    fn into_enum(self) -> ProtoRecordEnum {
-        ProtoRecordEnum::Input(self)
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum {
+        ProtoRecordEnum::Input(ProtoRecord::new(tier, parent_id, id, self))
     }
 }
 
@@ -153,8 +153,8 @@ impl Proto for ProtoOutput {
         })
     }
 
-    fn into_enum(self) -> ProtoRecordEnum {
-        ProtoRecordEnum::Output(self)
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum {
+        ProtoRecordEnum::Output(ProtoRecord::new(tier, parent_id, id, self))
     }
 }
 
@@ -181,8 +181,8 @@ impl Proto for ProtoFeedback {
         })
     }
 
-    fn into_enum(self) -> ProtoRecordEnum {
-        ProtoRecordEnum::Feedback(self)
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum {
+        ProtoRecordEnum::Feedback(ProtoRecord::new(tier, parent_id, id, self))
     }
 }
 
@@ -209,29 +209,64 @@ impl Proto for ProtoMetadata {
         })
     }
 
-    fn into_enum(self) -> ProtoRecordEnum {
-        ProtoRecordEnum::Metadata(self)
+    fn into_enum(self, tier: Tier, parent_id: Uuid, id: Uuid) -> ProtoRecordEnum {
+        ProtoRecordEnum::Metadata(ProtoRecord::new(tier, parent_id, id, self))
     }
 }
 
 #[derive(Clone, Debug)]
 pub enum ProtoRecordEnum {
-    Event(ProtoEvent),
-    Runtime(ProtoRuntime),
-    Input(ProtoInput),
-    Output(ProtoOutput),
-    Feedback(ProtoFeedback),
-    Metadata(ProtoMetadata),
+    Event(ProtoRecord<ProtoEvent>),
+    Runtime(ProtoRecord<ProtoRuntime>),
+    Input(ProtoRecord<ProtoInput>),
+    Output(ProtoRecord<ProtoOutput>),
+    Feedback(ProtoRecord<ProtoFeedback>),
+    Metadata(ProtoRecord<ProtoMetadata>),
+}
+
+impl ProtoRecordEnum {
+    pub fn id(&self) -> Uuid {
+        match self {
+            ProtoRecordEnum::Event(e) => e.id,
+            ProtoRecordEnum::Runtime(r) => r.id,
+            ProtoRecordEnum::Input(i) => i.id,
+            ProtoRecordEnum::Output(o) => o.id,
+            ProtoRecordEnum::Feedback(f) => f.id,
+            ProtoRecordEnum::Metadata(m) => m.id,
+        }
+    }
+
+    pub fn tier(&self) -> Tier {
+        match self {
+            ProtoRecordEnum::Event(e) => e.tier,
+            ProtoRecordEnum::Runtime(r) => r.tier,
+            ProtoRecordEnum::Input(i) => i.tier,
+            ProtoRecordEnum::Output(o) => o.tier,
+            ProtoRecordEnum::Feedback(f) => f.tier,
+            ProtoRecordEnum::Metadata(m) => m.tier,
+        }
+    }
+
+    pub fn parent_id(&self) -> Uuid {
+        match self {
+            ProtoRecordEnum::Event(e) => e.parent_id,
+            ProtoRecordEnum::Runtime(r) => r.parent_id,
+            ProtoRecordEnum::Input(i) => i.parent_id,
+            ProtoRecordEnum::Output(o) => o.parent_id,
+            ProtoRecordEnum::Feedback(f) => f.parent_id,
+            ProtoRecordEnum::Metadata(m) => m.parent_id,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
 #[pyclass(frozen, name = "ProtoRecord")]
 pub struct PyProtoRecord {
-    inner: ProtoRecord,
+    inner: ProtoRecordEnum,
 }
 
 impl PyProtoRecord {
-    pub fn new(inner: ProtoRecord) -> Self {
+    pub fn new(inner: ProtoRecordEnum) -> Self {
         PyProtoRecord { inner }
     }
 
@@ -244,8 +279,8 @@ impl PyProtoRecord {
         version: Option<String>,
         environment: Option<String>,
     ) -> Self {
-        let record_data = ProtoEvent::new(name, parameters, version, environment).into_enum();
-        PyProtoRecord::new(ProtoRecord::new(tier, parent_id, id, record_data))
+        let record = ProtoEvent::new(name, parameters, version, environment).into_enum(tier, parent_id, id);
+        PyProtoRecord::new(record)
     }
 
     pub fn runtime(
@@ -257,9 +292,8 @@ impl PyProtoRecord {
         error_type: Option<String>,
         error_content: Option<String>,
     ) -> Self {
-        let record_data =
-            ProtoRuntime::new(start_time, end_time, error_type, error_content).into_enum();
-        PyProtoRecord::new(ProtoRecord::new(tier, parent_id, id, record_data))
+        let record = ProtoRuntime::new(start_time, end_time, error_type, error_content).into_enum(tier, parent_id, id);
+        PyProtoRecord::new(record)
     }
 
     pub fn input(
@@ -269,8 +303,8 @@ impl PyProtoRecord {
         field_name: String,
         field_value: JsonSerializable,
     ) -> Self {
-        let record_data = ProtoInput::new(field_name, field_value).into_enum();
-        PyProtoRecord::new(ProtoRecord::new(tier, parent_id, id, record_data))
+        let record = ProtoInput::new(field_name, field_value).into_enum(tier, parent_id, id);
+        PyProtoRecord::new(record)
     }
 
     pub fn output(
@@ -280,8 +314,8 @@ impl PyProtoRecord {
         field_name: String,
         field_value: JsonSerializable,
     ) -> Self {
-        let record_data = ProtoOutput::new(field_name, field_value).into_enum();
-        PyProtoRecord::new(ProtoRecord::new(tier, parent_id, id, record_data))
+        let record = ProtoOutput::new(field_name, field_value).into_enum(tier, parent_id, id);
+        PyProtoRecord::new(record)
     }
 
     pub fn feedback(
@@ -291,8 +325,8 @@ impl PyProtoRecord {
         field_name: String,
         field_value: JsonSerializable,
     ) -> Self {
-        let record_data = ProtoFeedback::new(field_name, field_value).into_enum();
-        PyProtoRecord::new(ProtoRecord::new(tier, parent_id, id, record_data))
+        let record = ProtoFeedback::new(field_name, field_value).into_enum(tier, parent_id, id);
+        PyProtoRecord::new(record)
     }
 
     pub fn metadata(
@@ -302,14 +336,19 @@ impl PyProtoRecord {
         field_name: String,
         field_value: String,
     ) -> Self {
-        let record_data = ProtoMetadata::new(field_name, field_value).into_enum();
-        PyProtoRecord::new(ProtoRecord::new(tier, parent_id, id, record_data))
+        let record = ProtoMetadata::new(field_name, field_value).into_enum(tier, parent_id, id);
+        PyProtoRecord::new(record)
     }
-}
 
-impl From<PyProtoRecord> for ProtoRecord {
-    fn from(value: PyProtoRecord) -> Self {
-        value.inner
+    pub fn proto(&self) -> Record {
+        match &self.inner {
+            ProtoRecordEnum::Event(e) => e.proto(),
+            ProtoRecordEnum::Runtime(r) => r.proto(),
+            ProtoRecordEnum::Input(i) => i.proto(),
+            ProtoRecordEnum::Output(o) => o.proto(),
+            ProtoRecordEnum::Feedback(f) => f.proto(),
+            ProtoRecordEnum::Metadata(m) => m.proto(),
+        }
     }
 }
 
@@ -456,7 +495,7 @@ impl PyProtoRecord {
 
     #[getter]
     fn tier(&self) -> PyResult<String> {
-        match self.inner.tier {
+        match self.inner.tier() {
             Tier::System => Ok("system".to_string()),
             Tier::Subsystem => Ok("subsystem".to_string()),
             Tier::Component => Ok("component".to_string()),
@@ -471,7 +510,7 @@ impl PyProtoRecord {
 
     #[getter]
     fn log_type(&self) -> PyResult<String> {
-        let log_type = match self.inner.record_data {
+        let log_type = match self.inner {
             ProtoRecordEnum::Event(_) => "event".to_string(),
             ProtoRecordEnum::Runtime(_) => "runtime".to_string(),
             ProtoRecordEnum::Input(_) => "input".to_string(),
@@ -485,26 +524,26 @@ impl PyProtoRecord {
 
     #[getter]
     fn id(&self) -> PyResult<String> {
-        Ok(self.inner.id.to_string())
+        Ok(self.inner.id().to_string())
     }
 
     #[getter]
     fn parent_id(&self) -> PyResult<String> {
-        Ok(self.inner.parent_id.to_string())
+        Ok(self.inner.parent_id().to_string())
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct ProtoRecord {
+pub struct ProtoRecord<T: Proto> {
     pub tier: Tier,
     pub parent_id: Uuid,
     pub id: Uuid,
 
-    pub record_data: ProtoRecordEnum,
+    pub record_data: T,
 }
 
-impl ProtoRecord {
-    pub fn new(tier: Tier, parent_id: Uuid, id: Uuid, record_data: ProtoRecordEnum) -> Self {
+impl<T: Proto> ProtoRecord<T> {
+    pub fn new(tier: Tier, parent_id: Uuid, id: Uuid, record_data: T) -> Self {
         Self {
             tier,
             parent_id,
@@ -514,20 +553,11 @@ impl ProtoRecord {
     }
 
     pub fn proto(&self) -> Record {
-        let record_data = match &self.record_data {
-            ProtoRecordEnum::Event(e) => e.proto(),
-            ProtoRecordEnum::Runtime(r) => r.proto(),
-            ProtoRecordEnum::Input(i) => i.proto(),
-            ProtoRecordEnum::Output(o) => o.proto(),
-            ProtoRecordEnum::Feedback(f) => f.proto(),
-            ProtoRecordEnum::Metadata(m) => m.proto(),
-        };
-
         Record {
             tier: self.tier.into(),
             parent_id: self.parent_id.to_string(),
             id: self.id.to_string(),
-            record_data: Some(record_data),
+            record_data: Some(self.record_data.proto()),
         }
     }
 }

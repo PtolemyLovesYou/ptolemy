@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
 
 use crate::config::ObserverConfig;
-use crate::event::{ProtoRecord, PyProtoRecord};
+use crate::event::PyProtoRecord;
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
 };
@@ -14,7 +14,7 @@ use ptolemy_core::generated::observer::{
 pub struct BlockingObserverClient {
     client: ObserverClient<Channel>,
     rt: tokio::runtime::Runtime,
-    queue: Arc<Mutex<VecDeque<ProtoRecord>>>,
+    queue: Arc<Mutex<VecDeque<Record>>>,
     batch_size: usize,
 }
 
@@ -54,7 +54,7 @@ impl BlockingObserverClient {
         let records = {
             let mut queue = self.queue.lock().unwrap();
             let n_to_drain = self.batch_size.min(queue.len());
-            let drain = queue.drain(..n_to_drain).collect::<Vec<ProtoRecord>>();
+            let drain = queue.drain(..n_to_drain).collect::<Vec<Record>>();
             drop(queue);
             drain
         }; // Lock is released here
@@ -63,9 +63,7 @@ impl BlockingObserverClient {
             return true;
         }
 
-        let parsed_records: Vec<Record> = records.into_iter().map(|r| r.proto()).collect();
-
-        match self.publish_request(parsed_records) {
+        match self.publish_request(records) {
             Ok(_) => true,
             Err(e) => {
                 println!("Error publishing records: {}", e);
@@ -74,7 +72,7 @@ impl BlockingObserverClient {
         }
     }
 
-    fn queue_records(&mut self, records: Vec<ProtoRecord>) {
+    fn queue_records(&mut self, records: Vec<Record>) {
         let should_send_batch: bool;
 
         let mut queue = self.queue.lock().unwrap();
@@ -87,7 +85,7 @@ impl BlockingObserverClient {
         }
     }
 
-    fn push_record_front(&mut self, record: ProtoRecord) {
+    fn push_record_front(&mut self, record: Record) {
         let should_send_batch: bool;
 
         let mut queue = self.queue.lock().unwrap();
@@ -113,8 +111,7 @@ impl BlockingObserverClient {
         let rec = record.extract::<PyProtoRecord>().unwrap();
 
         py.allow_threads(|| {
-            let rec = rec.into();
-            self.push_record_front(rec);
+            self.push_record_front(rec.proto());
         });
 
         true
@@ -124,7 +121,7 @@ impl BlockingObserverClient {
         let records: Vec<PyProtoRecord> = records.extract().unwrap();
 
         py.allow_threads(|| {
-            let recs: Vec<ProtoRecord> = records.into_iter().map(|r| r.into()).collect();
+            let recs: Vec<Record> = records.into_iter().map(|r| r.proto()).collect();
             self.queue_records(recs);
         });
 
