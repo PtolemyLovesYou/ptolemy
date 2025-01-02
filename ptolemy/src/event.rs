@@ -279,7 +279,8 @@ impl PyProtoRecord {
         version: Option<String>,
         environment: Option<String>,
     ) -> Self {
-        let record = ProtoEvent::new(name, parameters, version, environment).into_enum(tier, parent_id, id);
+        let record =
+            ProtoEvent::new(name, parameters, version, environment).into_enum(tier, parent_id, id);
         PyProtoRecord::new(record)
     }
 
@@ -292,7 +293,8 @@ impl PyProtoRecord {
         error_type: Option<String>,
         error_content: Option<String>,
     ) -> Self {
-        let record = ProtoRuntime::new(start_time, end_time, error_type, error_content).into_enum(tier, parent_id, id);
+        let record = ProtoRuntime::new(start_time, end_time, error_type, error_content)
+            .into_enum(tier, parent_id, id);
         PyProtoRecord::new(record)
     }
 

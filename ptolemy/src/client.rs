@@ -1,36 +1,19 @@
-use std::collections::{VecDeque, HashMap};
-use std::sync::{Arc, Mutex};
-use pyo3::prelude::*;
+use crate::config::ObserverConfig;
+use crate::types::{JsonSerializable, Parameters};
 use pyo3::exceptions::PyValueError;
-use pyo3::types::{PyDict, PyType, PyTraceback};
-use pyo3::exceptions::PyBaseException;
+use pyo3::prelude::*;
+use pyo3::types::PyDict;
+use std::collections::{HashMap, VecDeque};
+use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
 use uuid::Uuid;
-use crate::config::ObserverConfig;
-use crate::types::{Parameters, JsonSerializable};
 // use crate::event::PyProtoRecord;
-use ptolemy_core::generated::observer::{
-    observer_client::ObserverClient, PublishRequest, PublishResponse, Record, Tier
+use crate::event::{
+    ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
-use crate::event::{ProtoRecord, ProtoEvent, ProtoInput, ProtoOutput, ProtoFeedback, ProtoRuntime, ProtoMetadata};
-
-pub fn format_full_traceback(
-    exc_type: Bound<'_, PyType>, 
-    exc_value: Bound<'_, PyBaseException>, 
-    tb: Bound<'_, PyTraceback>
-) -> PyResult<String> {
-    Python::with_gil(|py| {
-        let traceback = py.import_bound("traceback")?;
-        let format_exception = traceback.getattr("format_exception")?;
-        let tb_list = format_exception.call1((
-            exc_type.as_borrowed(), 
-            exc_value.as_borrowed(), 
-            tb.as_borrowed()
-        ))?;
-        let tb_string: String = tb_list.extract()?;
-        Ok(tb_string)
-    })
-}
+use ptolemy_core::generated::observer::{
+    observer_client::ObserverClient, PublishRequest, PublishResponse, Record, Tier,
+};
 
 #[derive(Clone, Debug)]
 pub struct PtolemyClientState {
@@ -40,8 +23,6 @@ pub struct PtolemyClientState {
     output: Option<Vec<ProtoRecord<ProtoOutput>>>,
     feedback: Option<Vec<ProtoRecord<ProtoFeedback>>>,
     metadata: Option<Vec<ProtoRecord<ProtoMetadata>>>,
-    start_time: Option<f32>,
-    end_time: Option<f32>,
 }
 
 impl PtolemyClientState {
@@ -53,8 +34,6 @@ impl PtolemyClientState {
             output: None,
             feedback: None,
             metadata: None,
-            start_time: None,
-            end_time: None,
         }
     }
 
@@ -88,20 +67,6 @@ impl PtolemyClientState {
             None => panic!("No event set!"),
         }
     }
-
-    pub fn start(&mut self) {
-        match self.start_time {
-            None => self.start_time = Some(std::time::Instant::now().elapsed().as_secs_f32()),
-            Some(_) => panic!("Start time already set!"),
-        }
-    }
-
-    pub fn end(&mut self) {
-        match self.end_time {
-            None => self.end_time = Some(std::time::Instant::now().elapsed().as_secs_f32()),
-            Some(_) => panic!("End time already set!"),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -120,81 +85,29 @@ pub struct PtolemyClient {
 #[pymethods]
 impl PtolemyClient {
     #[new]
-    fn new(
-        workspace_id: String,
-        autoflush: bool,
-        batch_size: usize,
-    ) -> PyResult<Self> {
+    fn new(workspace_id: String, autoflush: bool, batch_size: usize) -> PyResult<Self> {
         let config = ObserverConfig::new();
 
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
 
-        let client = rt.block_on(ObserverClient::connect(config.to_string())).unwrap();
+        let client = rt
+            .block_on(ObserverClient::connect(config.to_string()))
+            .unwrap();
         let queue = Arc::new(Mutex::new(VecDeque::new()));
 
-        Ok(
-            Self {
-                workspace_id: Uuid::parse_str(&workspace_id).unwrap(),
-                tier: None,
-                autoflush,
-                state: PtolemyClientState::new(),
-                client: Arc::new(Mutex::new(client)),
-                rt: Arc::new(rt),
-                queue,
-                batch_size,
-            }
-        )
+        Ok(Self {
+            workspace_id: Uuid::parse_str(&workspace_id).unwrap(),
+            tier: None,
+            autoflush,
+            state: PtolemyClientState::new(),
+            client: Arc::new(Mutex::new(client)),
+            rt: Arc::new(rt),
+            queue,
+            batch_size,
+        })
     }
-
-    // fn __enter__(&mut self) -> PyResult<()> {
-    //     match self.state.start_time {
-    //         None => (),
-    //         Some(_) => {
-    //             return Err(PyValueError::new_err("Already started"));
-    //         }
-    //     }
-
-    //     self.state.start();
-
-    //     Ok(())
-    // }
-
-    // #[pyo3(signature=(exc_type, exc_value, tb))]
-    // fn __exit__(&mut self, exc_type: Option<Bound<'_, PyType>>, exc_value: Option<Bound<'_, PyBaseException>>, tb: Option<Bound<'_, PyTraceback>>) -> PyResult<()> {
-    //     self.state.end();
-
-    //     let tier = match self.tier {
-    //         Some(t) => t,
-    //         None => {
-    //             return Err(PyValueError::new_err("No tier set"));
-    //         }
-    //     };
-
-    //     let (error_type, error_content) = match (exc_type, exc_value, tb) {
-    //         (Some(exc_type), Some(exc_value), Some(tb)) => {
-    //             let error_type = exc_type.getattr("__name__")?.extract::<String>()?;
-    //             let error_content = format_full_traceback(exc_type, exc_value, tb)?;
-    //             (Some(error_type), Some(error_content))
-    //         },
-    //         _ => (None, None),
-    //     };
-
-    //     self.state.set_runtime(
-    //         ProtoRecord::new(
-    //             tier,
-    //             match tier {
-    //                 Tier::System => self.workspace_id,
-    //                 _ => self.state.event_id(),
-    //             },
-    //             Uuid::new_v4(),
-    //             ProtoRuntime::new(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content),
-    //         )
-    //     );
-
-    //     Ok(())
-    // }
 
     #[pyo3(signature=(name, parameters=None, version=None, environment=None))]
     fn trace(
@@ -239,8 +152,16 @@ impl PtolemyClient {
             Tier::System => Tier::Subsystem,
             Tier::Subsystem => Tier::Component,
             Tier::Component => Tier::Subcomponent,
-            Tier::Subcomponent => return Err(PyValueError::new_err("Cannot create a child of a subcomponent!")),
-            Tier::UndeclaredTier => return Err(PyValueError::new_err("Undeclared tier. This shouldn't happen. Contact the maintainers.")),
+            Tier::Subcomponent => {
+                return Err(PyValueError::new_err(
+                    "Cannot create a child of a subcomponent!",
+                ))
+            }
+            Tier::UndeclaredTier => {
+                return Err(PyValueError::new_err(
+                    "Undeclared tier. This shouldn't happen. Contact the maintainers.",
+                ))
+            }
         };
 
         let mut client = Self {
@@ -279,7 +200,11 @@ impl PtolemyClient {
             Tier::Subsystem => self.state.event_id(),
             Tier::Component => self.state.event_id(),
             Tier::Subcomponent => self.state.event_id(),
-            Tier::UndeclaredTier => return Err(PyValueError::new_err("Undeclared tier. This shouldn't happen. Contact the maintainers.")),
+            Tier::UndeclaredTier => {
+                return Err(PyValueError::new_err(
+                    "Undeclared tier. This shouldn't happen. Contact the maintainers.",
+                ))
+            }
         };
 
         let event = ProtoRecord::new(
@@ -320,10 +245,7 @@ impl PtolemyClient {
     }
 
     #[pyo3(signature = (**kwds))]
-    fn inputs(
-        &mut self,
-        kwds: Option<Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    fn inputs(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
         let tier = match self.tier {
             Some(t) => t,
             None => {
@@ -343,7 +265,7 @@ impl PtolemyClient {
                     tier.clone(),
                     self.state.event_id(),
                     Uuid::new_v4(),
-                    ProtoInput::new(field_name, field_val)
+                    ProtoInput::new(field_name, field_val),
                 )
             })
             .collect();
@@ -354,10 +276,7 @@ impl PtolemyClient {
     }
 
     #[pyo3(signature = (**kwds))]
-    fn outputs(
-        &mut self,
-        kwds: Option<Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    fn outputs(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
         let tier = match self.tier {
             Some(t) => t,
             None => {
@@ -377,7 +296,7 @@ impl PtolemyClient {
                     tier.clone(),
                     self.state.event_id(),
                     Uuid::new_v4(),
-                    ProtoOutput::new(field_name, field_val)
+                    ProtoOutput::new(field_name, field_val),
                 )
             })
             .collect();
@@ -388,17 +307,14 @@ impl PtolemyClient {
     }
 
     #[pyo3(signature = (**kwds))]
-    fn feedback(
-        &mut self,
-        kwds: Option<Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    fn feedback(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
         let tier = match self.tier {
             Some(t) => t,
             None => {
                 return Err(PyValueError::new_err("No tier set!"));
             }
         };
-        
+
         let feedback_vec = match kwds {
             Some(k) => k.extract::<HashMap<String, JsonSerializable>>()?,
             None => return Ok(()),
@@ -411,7 +327,7 @@ impl PtolemyClient {
                     tier.clone(),
                     self.state.event_id(),
                     Uuid::new_v4(),
-                    ProtoFeedback::new(field_name, field_val)
+                    ProtoFeedback::new(field_name, field_val),
                 )
             })
             .collect();
@@ -422,17 +338,14 @@ impl PtolemyClient {
     }
 
     #[pyo3(signature = (**kwds))]
-    fn metadata(
-        &mut self,
-        kwds: Option<Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    fn metadata(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
         let tier = match self.tier {
             Some(t) => t,
             None => {
                 return Err(PyValueError::new_err("No tier set!"));
             }
         };
-        
+
         let metadata_vec = match kwds {
             Some(k) => k.extract::<HashMap<String, String>>()?,
             None => return Ok(()),
@@ -445,7 +358,7 @@ impl PtolemyClient {
                     tier.clone(),
                     self.state.event_id(),
                     Uuid::new_v4(),
-                    ProtoMetadata::new(field_name, field_val)
+                    ProtoMetadata::new(field_name, field_val),
                 )
             })
             .collect();
@@ -471,38 +384,34 @@ impl PtolemyClient {
 
     pub fn push_io(&mut self, py: Python<'_>) -> PyResult<bool> {
         py.allow_threads(|| {
-            let runtime_record = match &self.state.runtime {
+            let mut recs: Vec<Record> = match &self.state.runtime {
                 Some(r) => vec![r.proto()],
                 None => {
                     return Err(PyValueError::new_err("No runtime set!"));
                 }
             };
 
-            let input_records = match &self.state.input {
-                Some(r) => r.into_iter().map(|r| r.proto()).collect(),
-                None => Vec::new(),
+            match &self.state.input {
+                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
+                None => (),
             };
 
-            let output_records = match &self.state.output {
-                Some(r) => r.into_iter().map(|r| r.proto()).collect(),
-                None => Vec::new(),
+            match &self.state.output {
+                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
+                None => (),
             };
 
-            let feedback_records = match &self.state.feedback {
-                Some(r) => r.into_iter().map(|r| r.proto()).collect(),
-                None => Vec::new(),
+            match &self.state.feedback {
+                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
+                None => (),
             };
 
-            let metadata_records = match &self.state.metadata {
-                Some(r) => r.into_iter().map(|r| r.proto()).collect(),
-                None => Vec::new(),
+            match &self.state.metadata {
+                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
+                None => (),
             };
 
-            self.queue_records(runtime_record);
-            self.queue_records(input_records);
-            self.queue_records(output_records);
-            self.queue_records(feedback_records);
-            self.queue_records(metadata_records);
+            self.queue_records(recs);
 
             Ok(true)
         })

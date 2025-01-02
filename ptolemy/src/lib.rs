@@ -1,6 +1,6 @@
+use crate::client::PtolemyClient;
 use crate::event::PyProtoRecord;
 use crate::publish::BlockingObserverClient;
-use crate::client::PtolemyClient;
 use pyo3::prelude::*;
 
 pub mod client;
