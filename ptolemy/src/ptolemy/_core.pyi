@@ -11,9 +11,6 @@ class BlockingObserverClient:
     def flush(self) -> bool: ...
 
 class ProtoRecord:
-    """Proto Record."""
-
-class ProtoRecordHandler:
     """Handler for ProtoRecord."""
     @staticmethod
     def event(

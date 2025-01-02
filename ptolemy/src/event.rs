@@ -129,11 +129,11 @@ pub enum ProtoRecordEnum {
 }
 
 #[derive(Clone, Debug)]
-#[pyclass(frozen)]
-pub struct ProtoRecordHandler;
+#[pyclass(frozen, name = "ProtoRecord")]
+pub struct PyProtoRecord;
 
 #[pymethods]
-impl ProtoRecordHandler {
+impl PyProtoRecord {
     #[staticmethod]
     #[pyo3(signature = (tier, name, parent_id, id=None, parameters=None, version=None, environment=None))]
     fn event(

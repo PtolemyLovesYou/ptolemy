@@ -11,7 +11,7 @@ from ..utils import (
     Tier,
     ID,
 )
-from .._core import ProtoRecord, ProtoRecordHandler  # pylint: disable=no-name-in-module
+from .._core import ProtoRecord  # pylint: disable=no-name-in-module
 
 
 class Ptolemy(BaseModel):
@@ -188,7 +188,7 @@ class Ptolemy(BaseModel):
         if self.tier != Tier.SYSTEM and parent_id is None:
             raise ValueError("Parent ID is required for non-system events")
 
-        self._event = ProtoRecordHandler.event(
+        self._event = ProtoRecord.event(
             self.tier.value,
             name,
             parent_id or self.workspace_id.hex,
@@ -232,7 +232,7 @@ class Ptolemy(BaseModel):
         if self._runtime is not None:
             raise ValueError("Runtime already set")
 
-        self._runtime = ProtoRecordHandler.runtime(
+        self._runtime = ProtoRecord.runtime(
             self.tier.value,
             self._event.id,
             start_time=start_time,
@@ -263,7 +263,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Inputs already set")
 
         self._inputs = [
-            ProtoRecordHandler.io(self.tier, LogType.INPUT.value, self._event.id, k, v)
+            ProtoRecord.io(self.tier, LogType.INPUT.value, self._event.id, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -296,7 +296,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Outputs already set")
 
         self._outputs = [
-            ProtoRecordHandler.io(self.tier, self._event.id, LogType.OUTPUT.value, k, v)
+            ProtoRecord.io(self.tier, self._event.id, LogType.OUTPUT.value, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -320,7 +320,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Feedback already set")
 
         self._feedback = [
-            ProtoRecordHandler.io(self.tier, self._event.id, LogType.FEEDBACK.value, k, v)
+            ProtoRecord.io(self.tier, self._event.id, LogType.FEEDBACK.value, k, v)
             for k, v in kwargs.items()
         ]
 
@@ -351,7 +351,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Metadata already set")
 
         self._metadata = [
-            ProtoRecordHandler.metadata(
+            ProtoRecord.metadata(
                 self.tier, self._event.id, LogType.METADATA.value, k, v
             )
             for k, v in kwargs.items()
