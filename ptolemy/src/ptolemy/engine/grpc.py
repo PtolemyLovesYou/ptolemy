@@ -106,7 +106,7 @@ class PtolemyEngine(Engine):
 
         event_future = self._conversion_executor.submit(
             ProtoRecord.event,
-            tier.value,
+            tier,
             name,
             parent_id,
             parameters=parameters,
@@ -128,7 +128,7 @@ class PtolemyEngine(Engine):
 
         runtime_future = self._conversion_executor.submit(
             ProtoRecord.runtime,
-            tier.value,
+            tier,
             parent_id,
             start_time,
             end_time,
@@ -149,7 +149,7 @@ class PtolemyEngine(Engine):
 
         io_future = self._conversion_executor.submit(
             ProtoRecord.io,
-            tier.value,
+            tier,
             log_type.value,
             parent_id,
             field_name,
@@ -168,7 +168,7 @@ class PtolemyEngine(Engine):
 
         metadata_future = self._conversion_executor.submit(
             ProtoRecord.metadata,
-            tier.value,
+            tier,
             parent_id,
             field_name,
             field_value,
