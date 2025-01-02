@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use tonic::transport::Channel;
 
 use crate::config::ObserverConfig;
-use crate::event::{ProtoRecord, PyProtoRecord,};
+use crate::event::{ProtoRecord, PyProtoRecord};
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
 };

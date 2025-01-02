@@ -1,6 +1,6 @@
-use uuid::Uuid;
-use pyo3::prelude::*;
 use ptolemy_core::generated::observer::Tier;
+use pyo3::prelude::*;
+use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 #[pyclass]
@@ -11,5 +11,4 @@ pub struct PtolemyClient {
 }
 
 #[pymethods]
-impl PtolemyClient {
-}
+impl PtolemyClient {}
