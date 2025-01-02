@@ -22,7 +22,10 @@ async fn main() -> Result<(), ApiError> {
         }
     };
 
-    info!("Ptolemy REST API running on http://0.0.0.0:{} <3", shared_state.port);
+    info!(
+        "Ptolemy REST API running on http://0.0.0.0:{} <3",
+        shared_state.port
+    );
     info!("Ptolemy gRPC server running on [::]:50051 <3");
 
     try_join!(

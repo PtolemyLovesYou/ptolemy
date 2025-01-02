@@ -9,8 +9,7 @@ use crate::models::records::models::{
 };
 use crate::state::AppState;
 use ptolemy_core::generated::observer::{
-    observer_server::Observer, PublishRequest, PublishResponse,
-    Record, Tier, record::RecordData,
+    observer_server::Observer, record::RecordData, PublishRequest, PublishResponse, Record, Tier,
 };
 use std::sync::Arc;
 use tonic::{Request, Response, Status};

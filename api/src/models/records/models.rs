@@ -2,10 +2,8 @@ use crate::models::auth::models::Workspace;
 use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
-use ptolemy_core::generated::observer::{Record, Tier, record::RecordData};
-use ptolemy_core::parser::{
-    parse_io, parse_parameters, parse_uuid, FieldValue, ParseError,
-};
+use ptolemy_core::generated::observer::{record::RecordData, Record, Tier};
+use ptolemy_core::parser::{parse_io, parse_parameters, parse_uuid, FieldValue, ParseError};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
@@ -71,11 +69,14 @@ macro_rules! event_table {
             fn from_record(record: &Record) -> Result<Self, ParseError> {
                 let id = parse_uuid(&record.id).unwrap();
                 let $parent_fk = parse_uuid(&record.parent_id).unwrap();
-                
+
                 let record_data = match &record.record_data {
                     Some(RecordData::Event(record_data)) => record_data,
                     _ => {
-                        error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                        error!(
+                            "Incorrect record type: {:?}. This shouldn't happen.",
+                            record.record_data
+                        );
                         return Err(ParseError::UndefinedLogType);
                     }
                 };
@@ -91,7 +92,7 @@ macro_rules! event_table {
                     name,
                     parameters,
                     version,
-                    environment
+                    environment,
                 };
 
                 Ok(rec)
@@ -147,11 +148,14 @@ impl EventTable for RuntimeRecord {
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
-        
+
         let record_data = match &record.record_data {
             Some(RecordData::Runtime(record_data)) => record_data,
             _ => {
-                error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                error!(
+                    "Incorrect record type: {:?}. This shouldn't happen.",
+                    record.record_data
+                );
                 return Err(ParseError::UndefinedLogType);
             }
         };
@@ -225,7 +229,10 @@ impl EventTable for IORecord {
             RecordData::Output(o) => (IoTypeEnum::Output, o.field_name, o.field_value),
             RecordData::Feedback(f) => (IoTypeEnum::Feedback, f.field_name, f.field_value),
             _ => {
-                error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                error!(
+                    "Incorrect record type: {:?}. This shouldn't happen.",
+                    record.record_data
+                );
                 return Err(ParseError::UndefinedLogType);
             }
         };
@@ -297,7 +304,10 @@ impl EventTable for MetadataRecord {
         let record_data = match record.record_data.clone().unwrap() {
             RecordData::Metadata(m) => m,
             _ => {
-                error!("Incorrect record type: {:?}. This shouldn't happen.", record.record_data);
+                error!(
+                    "Incorrect record type: {:?}. This shouldn't happen.",
+                    record.record_data
+                );
                 return Err(ParseError::UndefinedLogType);
             }
         };
@@ -336,11 +346,7 @@ pub fn parse_record<T: EventTable>(record: &Record) -> Result<T, ParseError> {
     match parsed {
         Ok(p) => Ok(p),
         Err(e) => {
-            error!(
-                "Unable to parse record {:?}: {:?}",
-                record.tier(),
-                e
-            );
+            error!("Unable to parse record {:?}: {:?}", record.tier(), e);
             Err(e)
         }
     }

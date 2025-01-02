@@ -101,10 +101,7 @@ pub struct ProtoInput {
 }
 
 impl ProtoInput {
-    pub fn new(
-        field_name: String,
-        field_value: JsonSerializable,
-    ) -> Self {
+    pub fn new(field_name: String, field_value: JsonSerializable) -> Self {
         Self {
             field_name,
             field_value,
@@ -130,10 +127,7 @@ pub struct ProtoOutput {
 }
 
 impl ProtoOutput {
-    pub fn new(
-        field_name: String,
-        field_value: JsonSerializable,
-    ) -> Self {
+    pub fn new(field_name: String, field_value: JsonSerializable) -> Self {
         Self {
             field_name,
             field_value,
@@ -159,10 +153,7 @@ pub struct ProtoFeedback {
 }
 
 impl ProtoFeedback {
-    pub fn new(
-        field_name: String,
-        field_value: JsonSerializable,
-    ) -> Self {
+    pub fn new(field_name: String, field_value: JsonSerializable) -> Self {
         Self {
             field_name,
             field_value,
@@ -188,10 +179,7 @@ pub struct ProtoMetadata {
 }
 
 impl ProtoMetadata {
-    pub fn new(
-        field_name: String,
-        field_value: String,
-    ) -> Self {
+    pub fn new(field_name: String, field_value: String) -> Self {
         Self {
             field_name,
             field_value,
@@ -204,7 +192,7 @@ impl ProtoMetadata {
             field_value: self.field_value.clone(),
         }
     }
-    
+
     pub fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Metadata(self)
     }
@@ -260,12 +248,10 @@ impl PyProtoRecord {
             };
 
             let record_data = ProtoEvent::new(name, parameters, version, environment).into_enum();
-            
-            Ok(
-                Self {
-                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
-                }
-            )
+
+            Ok(Self {
+                inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
+            })
         })
     }
 
@@ -288,13 +274,12 @@ impl PyProtoRecord {
                 Some(i) => get_uuid(i)?,
             };
 
-            let record_data = ProtoRuntime::new(start_time, end_time, error_type, error_content).into_enum();
+            let record_data =
+                ProtoRuntime::new(start_time, end_time, error_type, error_content).into_enum();
 
-            Ok(
-                Self {
-                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
-                }
-            )
+            Ok(Self {
+                inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
+            })
         })
     }
 
@@ -325,14 +310,12 @@ impl PyProtoRecord {
                     return Err(PyValueError::new_err(
                         "Invalid log type. This shouldn't happen. Contact the maintainers.",
                     ));
-                },
+                }
             };
 
-            Ok(
-                Self {
-                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data)
-                }
-            )
+            Ok(Self {
+                inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
+            })
         })
     }
 
@@ -346,7 +329,7 @@ impl PyProtoRecord {
         field_value: String,
         id: Option<&str>,
     ) -> PyResult<Self> {
-        py.allow_threads( || {
+        py.allow_threads(|| {
             let parent_id = get_uuid(&parent_id)?;
             let id = match id {
                 None => Uuid::new_v4(),
@@ -355,13 +338,10 @@ impl PyProtoRecord {
 
             let record_data = ProtoMetadata::new(field_name, field_value).into_enum();
 
-            Ok(
-                Self {
-                    inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data)
-                }
-            )
-            }
-        )
+            Ok(Self {
+                inner: ProtoRecord::new(tier.into_tier(), parent_id, id, record_data),
+            })
+        })
     }
 
     #[getter]

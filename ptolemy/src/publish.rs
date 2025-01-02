@@ -1,24 +1,14 @@
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use std::collections::{VecDeque, BTreeMap};
+use std::collections::{BTreeMap, VecDeque};
 use std::sync::{Arc, Mutex};
-use uuid::Uuid;
 use tonic::transport::Channel;
+use uuid::Uuid;
 
 use crate::config::ObserverConfig;
 use crate::event::{
-    detect_tier,
-    get_uuid,
-    Parameters,
-    ProtoEvent,
-    ProtoRuntime,
-    ProtoInput,
-    ProtoOutput,
-    ProtoFeedback,
-    ProtoMetadata,
-    ProtoRecord,
-    ProtoRecordEnum,
-    PyProtoRecord
+    detect_tier, get_uuid, Parameters, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata,
+    ProtoOutput, ProtoRecord, ProtoRecordEnum, ProtoRuntime, PyProtoRecord,
 };
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
@@ -206,7 +196,7 @@ impl BlockingObserverClient {
                 .map(|(k, v)| {
                     let record_data = ProtoInput {
                         field_name: k.to_string(),
-                        field_value: v.clone()
+                        field_value: v.clone(),
                     };
 
                     ProtoRecord {
@@ -239,7 +229,7 @@ impl BlockingObserverClient {
                 .map(|(k, v)| {
                     let record_data = ProtoOutput {
                         field_name: k.to_string(),
-                        field_value: v.clone()
+                        field_value: v.clone(),
                     };
 
                     ProtoRecord {
@@ -272,7 +262,7 @@ impl BlockingObserverClient {
                 .map(|(k, v)| {
                     let record_data = ProtoFeedback {
                         field_name: k.to_string(),
-                        field_value: v.clone()
+                        field_value: v.clone(),
                     };
 
                     ProtoRecord {
@@ -304,7 +294,7 @@ impl BlockingObserverClient {
                 .map(|(k, v)| {
                     let record_data = ProtoMetadata {
                         field_name: k.to_string(),
-                        field_value: v.clone()
+                        field_value: v.clone(),
                     };
 
                     ProtoRecord {
