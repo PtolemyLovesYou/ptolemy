@@ -55,8 +55,17 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
         .into_iter()
         .filter_map(|record| {
             let tier = record.tier();
-            match record.record_data {
-                Some(RecordData::Event(_)) => match tier {
+
+            let record_data = match &record.record_data {
+                Some(r) => r,
+                None => {
+                    error!("Got a record with no data: {:#?}", record);
+                    return Some(false);
+                }
+            };
+
+            match record_data {
+                RecordData::Event(_) => match tier {
                     Tier::System => add_record!(SystemEventRecord, record, system_event_rows),
                     Tier::Subsystem => {
                         add_record!(SubsystemEventRecord, record, subsystem_event_rows)
@@ -72,15 +81,11 @@ async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
                         Some(false)
                     }
                 },
-                Some(RecordData::Runtime(_)) => add_record!(RuntimeRecord, record, runtime_rows),
-                Some(RecordData::Input(_)) => add_record!(IORecord, record, io_rows),
-                Some(RecordData::Output(_)) => add_record!(IORecord, record, io_rows),
-                Some(RecordData::Feedback(_)) => add_record!(IORecord, record, io_rows),
-                Some(RecordData::Metadata(_)) => add_record!(MetadataRecord, record, metadata_rows),
-                None => {
-                    error!("Got a record with no record data: {:#?}", record);
-                    Some(false)
-                }
+                RecordData::Runtime(_) => add_record!(RuntimeRecord, record, runtime_rows),
+                RecordData::Input(_) => add_record!(IORecord, record, io_rows),
+                RecordData::Output(_) => add_record!(IORecord, record, io_rows),
+                RecordData::Feedback(_) => add_record!(IORecord, record, io_rows),
+                RecordData::Metadata(_) => add_record!(MetadataRecord, record, metadata_rows),
             }
         })
         .collect::<Vec<bool>>();
