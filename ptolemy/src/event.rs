@@ -175,8 +175,11 @@ impl ProtoRecord {
         environment: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
         let tier = detect_tier(&tier.extract::<String>()?);
-        let id = get_uuid(id)?;
-        let parent_id = get_uuid(Some(parent_id))?;
+        let parent_id = get_uuid(parent_id)?;
+        let id = match id {
+            Some(i) => get_uuid(i)?,
+            None => Uuid::new_v4(),
+        };
 
         let record_data = ProtoEvent {
             name: name.extract::<String>()?,
@@ -211,8 +214,12 @@ impl ProtoRecord {
         error_content: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
         let tier = detect_tier(&tier.extract::<String>()?);
-        let id = get_uuid(id)?;
-        let parent_id = get_uuid(Some(parent_id))?;
+        let parent_id = get_uuid(parent_id)?;
+        let id = match id {
+            Some(i) => get_uuid(i)?,
+            None => Uuid::new_v4(),
+        };
+
         let start_time = start_time.extract::<f32>()?;
         let end_time = end_time.extract::<f32>()?;
 
@@ -255,8 +262,11 @@ impl ProtoRecord {
     ) -> PyResult<Self> {
         let tier = detect_tier(&tier.extract::<String>()?);
         let log_type = detect_log_type(&log_type.extract::<String>()?);
-        let id = get_uuid(id)?;
-        let parent_id = get_uuid(Some(parent_id))?;
+        let parent_id = get_uuid(parent_id)?;
+        let id = match id {
+            Some(i) => get_uuid(i)?,
+            None => Uuid::new_v4(),
+        };
 
         let field_name = field_name.extract::<String>()?;
 
@@ -300,8 +310,12 @@ impl ProtoRecord {
         id: Option<Bound<'_, PyString>>,
     ) -> PyResult<Self> {
         let tier = detect_tier(&tier.extract::<String>()?);
-        let parent_id = get_uuid(Some(parent_id))?;
-        let id = get_uuid(id)?;
+        let parent_id = get_uuid(parent_id)?;
+        let id = match id {
+            Some(i) => get_uuid(i)?,
+            None => Uuid::new_v4(),
+        };
+
         let field_name = field_name.extract::<String>()?;
         let field_value = field_value.extract()?;
 
@@ -345,19 +359,14 @@ impl ProtoRecord {
     }
 }
 
-fn get_uuid(id: Option<Bound<'_, PyString>>) -> PyResult<Uuid> {
-    match id {
-        Some(i) => {
-            let id_ub: String = i.extract()?;
-            match Uuid::parse_str(&id_ub) {
-                Ok(i) => Ok(i),
-                Err(e) => {
-                    let error_msg = format!("Unable to parse UUID: {}", e);
-                    Err(PyValueError::new_err(error_msg))
-                }
-            }
+fn get_uuid(id: Bound<'_, PyString>) -> PyResult<Uuid> {
+    let id_ub: String = id.extract()?;
+    match Uuid::parse_str(&id_ub) {
+        Ok(i) => Ok(i),
+        Err(e) => {
+            let error_msg = format!("Unable to parse UUID: {}", e);
+            Err(PyValueError::new_err(error_msg))
         }
-        None => return Ok(Uuid::new_v4()),
     }
 }
 
