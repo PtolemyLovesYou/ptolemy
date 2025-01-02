@@ -26,8 +26,11 @@ class PtolemyEngine(Engine):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _client: BlockingObserverClient = PrivateAttr(default=None)
-    _executor: ThreadPoolExecutor = PrivateAttr(
+    _publish_executor: ThreadPoolExecutor = PrivateAttr(
         default_factory=lambda: ThreadPoolExecutor(max_workers=1)
+    )
+    _conversion_executor: ThreadPoolExecutor = PrivateAttr(
+        default_factory=lambda: ThreadPoolExecutor(max_workers=3)
     )
     _is_connected: bool = PrivateAttr(default=False)
 
@@ -64,7 +67,7 @@ class PtolemyEngine(Engine):
 
     def queue_event(self, record: ProtoRecord) -> None:
         with self._error_handling("queue"):
-            self._executor.submit(self._client.queue_event, record)
+            self._publish_executor.submit(self._client.queue_event, record)
 
     def queue(self, records: Iterable[ProtoRecord]) -> None:
         """
@@ -77,7 +80,7 @@ class PtolemyEngine(Engine):
             EngineError: If queuing fails
         """
         with self._error_handling("queue"):
-            self._executor.submit(self._client.queue, list(records))
+            self._publish_executor.submit(self._client.queue, list(records))
             # future.result()
 
     def flush(self) -> None:
@@ -88,7 +91,7 @@ class PtolemyEngine(Engine):
             EngineError: If flush operation fails
         """
         with self._error_handling("flush"):
-            future = self._executor.submit(self._client.flush)
+            future = self._publish_executor.submit(self._client.flush)
             future.result()
 
     def create_event(
@@ -101,7 +104,7 @@ class PtolemyEngine(Engine):
         environment: Optional[str] = None,
     ) -> Future:
 
-        event_future = self._executor.submit(
+        event_future = self._conversion_executor.submit(
             ProtoRecord.event,
             tier.value,
             name,
@@ -123,7 +126,7 @@ class PtolemyEngine(Engine):
         error_content: Optional[str] = None,
     ) -> Future:
 
-        runtime_future = self._executor.submit(
+        runtime_future = self._conversion_executor.submit(
             ProtoRecord.runtime,
             tier.value,
             parent_id,
@@ -144,7 +147,7 @@ class PtolemyEngine(Engine):
         field_value: Any,
     ) -> Future:
 
-        input_future = self._executor.submit(
+        input_future = self._conversion_executor.submit(
             ProtoRecord.io,
             tier.value,
             log_type.value,
@@ -163,7 +166,7 @@ class PtolemyEngine(Engine):
         field_value: str,
     ) -> Future:
 
-        metadata_future = self._executor.submit(
+        metadata_future = self._conversion_executor.submit(
             ProtoRecord.metadata,
             tier.value,
             parent_id,
