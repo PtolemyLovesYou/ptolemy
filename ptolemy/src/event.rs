@@ -131,7 +131,7 @@ pub enum ProtoRecordEnum {
 #[derive(Clone, Debug)]
 #[pyclass(frozen, name = "ProtoRecord")]
 pub struct PyProtoRecord {
-    record: ProtoRecord,
+    inner: ProtoRecord,
 }
 
 #[pymethods]
@@ -189,7 +189,7 @@ impl PyProtoRecord {
             
             Ok(
                 Self {
-                    record: rec,
+                    inner: rec,
                 }
             )
         })
@@ -252,7 +252,7 @@ impl PyProtoRecord {
 
             Ok(
                 Self {
-                    record: rec,
+                    inner: rec,
                 }
             )
         })
@@ -316,7 +316,7 @@ impl PyProtoRecord {
 
             Ok(
                 Self {
-                    record: rec,
+                    inner: rec,
                 }
             )
         })
@@ -364,7 +364,7 @@ impl PyProtoRecord {
 
             Ok(
                 Self {
-                    record: rec
+                    inner: rec
                 }
             )
             }
