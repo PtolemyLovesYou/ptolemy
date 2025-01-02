@@ -11,6 +11,11 @@ use std::collections::BTreeMap;
 use std::f32;
 use uuid::Uuid;
 
+pub trait Proto {
+    fn proto(&self) -> RecordData;
+    fn into_enum(self) -> ProtoRecordEnum;
+}
+
 #[derive(Clone, Debug)]
 pub struct ProtoEvent {
     pub name: String,
@@ -33,8 +38,10 @@ impl ProtoEvent {
             environment,
         }
     }
+}
 
-    pub fn proto(&self) -> EventRecord {
+impl Proto for ProtoEvent {
+    fn proto(&self) -> RecordData {
         let name = self.name.clone();
         let parameters = match &self.parameters {
             Some(p) => parameters_to_value(p),
@@ -44,15 +51,15 @@ impl ProtoEvent {
         let version = self.version.clone();
         let environment = self.environment.clone();
 
-        EventRecord {
+        RecordData::Event(EventRecord {
             name,
             parameters,
             version,
             environment,
-        }
+        })
     }
 
-    pub fn into_enum(self) -> ProtoRecordEnum {
+    fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Event(self)
     }
 }
@@ -79,17 +86,20 @@ impl ProtoRuntime {
             error_content,
         }
     }
+}
 
-    pub fn proto(&self) -> RuntimeRecord {
-        RuntimeRecord {
+impl Proto for ProtoRuntime {
+
+    fn proto(&self) -> RecordData {
+        RecordData::Runtime(RuntimeRecord {
             start_time: self.start_time,
             end_time: self.end_time,
             error_type: self.error_type.clone(),
             error_content: self.error_content.clone(),
-        }
+        })
     }
 
-    pub fn into_enum(self) -> ProtoRecordEnum {
+    fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Runtime(self)
     }
 }
@@ -107,15 +117,17 @@ impl ProtoInput {
             field_value,
         }
     }
+}
 
-    pub fn proto(&self) -> InputRecord {
-        InputRecord {
+impl Proto for ProtoInput {
+    fn proto(&self) -> RecordData {
+        RecordData::Input(InputRecord {
             field_name: self.field_name.clone(),
             field_value: json_serializable_to_value(&Some(self.field_value.clone())),
-        }
+        })
     }
 
-    pub fn into_enum(self) -> ProtoRecordEnum {
+    fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Input(self)
     }
 }
@@ -133,15 +145,17 @@ impl ProtoOutput {
             field_value,
         }
     }
+}
 
-    pub fn proto(&self) -> OutputRecord {
-        OutputRecord {
+impl Proto for ProtoOutput {
+    fn proto(&self) -> RecordData {
+        RecordData::Output(OutputRecord {
             field_name: self.field_name.clone(),
             field_value: json_serializable_to_value(&Some(self.field_value.clone())),
-        }
+        })
     }
 
-    pub fn into_enum(self) -> ProtoRecordEnum {
+    fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Output(self)
     }
 }
@@ -159,15 +173,17 @@ impl ProtoFeedback {
             field_value,
         }
     }
+}
 
-    pub fn proto(&self) -> FeedbackRecord {
-        FeedbackRecord {
+impl Proto for ProtoFeedback {
+    fn proto(&self) -> RecordData {
+        RecordData::Feedback(FeedbackRecord {
             field_name: self.field_name.clone(),
             field_value: json_serializable_to_value(&Some(self.field_value.clone())),
-        }
+        })
     }
 
-    pub fn into_enum(self) -> ProtoRecordEnum {
+    fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Feedback(self)
     }
 }
@@ -185,15 +201,17 @@ impl ProtoMetadata {
             field_value,
         }
     }
+}
 
-    pub fn proto(&self) -> MetadataRecord {
-        MetadataRecord {
+impl Proto for ProtoMetadata {
+    fn proto(&self) -> RecordData {
+        RecordData::Metadata(MetadataRecord {
             field_name: self.field_name.clone(),
             field_value: self.field_value.clone(),
-        }
+        })
     }
 
-    pub fn into_enum(self) -> ProtoRecordEnum {
+    fn into_enum(self) -> ProtoRecordEnum {
         ProtoRecordEnum::Metadata(self)
     }
 }
@@ -458,12 +476,12 @@ impl ProtoRecord {
 
     pub fn proto(&self) -> Record {
         let record_data = match &self.record_data {
-            ProtoRecordEnum::Event(e) => RecordData::Event(e.proto()),
-            ProtoRecordEnum::Runtime(r) => RecordData::Runtime(r.proto()),
-            ProtoRecordEnum::Input(i) => RecordData::Input(i.proto()),
-            ProtoRecordEnum::Output(o) => RecordData::Output(o.proto()),
-            ProtoRecordEnum::Feedback(f) => RecordData::Feedback(f.proto()),
-            ProtoRecordEnum::Metadata(m) => RecordData::Metadata(m.proto()),
+            ProtoRecordEnum::Event(e) => e.proto(),
+            ProtoRecordEnum::Runtime(r) => r.proto(),
+            ProtoRecordEnum::Input(i) => i.proto(),
+            ProtoRecordEnum::Output(o) => o.proto(),
+            ProtoRecordEnum::Feedback(f) => f.proto(),
+            ProtoRecordEnum::Metadata(m) => m.proto(),
         };
 
         Record {
