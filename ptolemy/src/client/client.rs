@@ -46,7 +46,7 @@ macro_rules! set_io {
 }
 
 #[derive(Debug, Clone)]
-#[pyclass(name="Ptolemy")]
+#[pyclass(name = "Ptolemy")]
 pub struct PtolemyClient {
     workspace_id: Uuid,
     parent_id: Option<Uuid>,
