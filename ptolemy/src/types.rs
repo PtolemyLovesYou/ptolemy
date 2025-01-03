@@ -1,7 +1,6 @@
 // use ptolemy_core::generated::observer;
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
-use ptolemy_core::generated::observer::{LogType, Tier};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::collections::BTreeMap;
@@ -51,52 +50,6 @@ pub enum JsonSerializable {
     Bool(bool),
     Dict(BTreeMap<String, Option<JsonSerializable>>),
     List(Vec<Option<JsonSerializable>>),
-}
-
-pub fn detect_tier(tier: &str) -> Tier {
-    match tier {
-        "system" => Some(Tier::System),
-        "subsystem" => Some(Tier::Subsystem),
-        "component" => Some(Tier::Component),
-        "subcomponent" => Some(Tier::Subcomponent),
-        _ => None,
-    }
-    .unwrap_or_else(|| panic!("Unknown tier {}", tier))
-}
-
-pub fn detect_log_type(log_type: &str) -> LogType {
-    match log_type {
-        "event" => Some(LogType::Event),
-        "runtime" => Some(LogType::Runtime),
-        "input" => Some(LogType::Input),
-        "output" => Some(LogType::Output),
-        "feedback" => Some(LogType::Feedback),
-        "metadata" => Some(LogType::Metadata),
-        _ => None,
-    }
-    .unwrap_or_else(|| panic!("Unknown log type {}", log_type))
-}
-
-#[derive(FromPyObject, Clone, Debug)]
-pub struct PyTier {
-    value: String,
-}
-
-impl PyTier {
-    pub fn into_tier(self) -> Tier {
-        match self.value.as_str() {
-            "system" => Some(Tier::System),
-            "subsystem" => Some(Tier::Subsystem),
-            "component" => Some(Tier::Component),
-            "subcomponent" => Some(Tier::Subcomponent),
-            _ => None,
-        }
-        .unwrap_or_else(|| panic!("Unknown tier {}", self.value))
-    }
-
-    pub fn to_string(&self) -> String {
-        self.value.clone()
-    }
 }
 
 #[derive(FromPyObject, Clone, Debug)]
