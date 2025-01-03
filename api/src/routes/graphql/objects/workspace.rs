@@ -1,29 +1,71 @@
 use crate::models::auth::models::Workspace;
-use juniper::graphql_object;
+use crate::crud::auth::{
+    workspace_user as workspace_user_crud,
+    user as user_crud,
+};
+use crate::state::AppState;
+use juniper::{graphql_object, GraphQLObject};
+
+#[derive(GraphQLObject)]
+pub struct WorkspaceUser {
+    id: String,
+    username: String,
+    display_name: Option<String>,
+    role: String,
+}
 
 #[graphql_object]
 impl Workspace {
-    fn id(&self) -> String {
+    async fn id(&self) -> String {
         self.id.to_string()
     }
 
-    fn name(&self) -> String {
+    async fn name(&self) -> String {
         self.name.clone()
     }
 
-    fn description(&self) -> Option<String> {
+    async fn description(&self) -> Option<String> {
         self.description.clone()
     }
 
-    fn archived(&self) -> bool {
+    async fn archived(&self) -> bool {
         self.archived
     }
 
-    fn created_at(&self) -> String {
+    async fn created_at(&self) -> String {
         self.created_at.to_string()
     }
 
-    fn updated_at(&self) -> String {
+    async fn updated_at(&self) -> String {
         self.updated_at.to_string()
+    }
+
+    async fn users(&self, ctx: &AppState) -> Vec<WorkspaceUser> {
+        #[allow(unused_mut)]
+        let mut conn = ctx.get_conn_http().await.unwrap();
+
+        let workspace_users = workspace_user_crud::get_workspace_users(
+            &mut conn,
+            &self.id,
+        )
+        .await
+        .unwrap();
+
+        let mut users: Vec<WorkspaceUser> = vec![];
+
+        for workspace_user in workspace_users {
+            let user = user_crud::get_user(&mut conn, &workspace_user.user_id)
+                .await
+                .unwrap();
+
+            users.push(WorkspaceUser {
+                id: user.id.to_string(),
+                username: user.username,
+                display_name: user.display_name,
+                role: format!("{:?}", workspace_user.role),
+            })
+        }
+
+        users
     }
 }
