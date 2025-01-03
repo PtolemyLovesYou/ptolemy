@@ -116,7 +116,7 @@ impl PtolemyClient {
 
         // if autoflush, flush
         if self.autoflush {
-            Python::with_gil(|py| { self.flush(py)});
+            let _ = Python::with_gil(|py| { self.flush(py)});
         }
 
         // if no error, return Ok(()), otherwise raise existing exception
@@ -321,12 +321,12 @@ impl PtolemyClient {
         })
     }
 
-    pub fn flush(&mut self, py: Python<'_>) -> bool {
+    pub fn flush(&mut self, py: Python<'_>) -> PyResult<bool> {
         py.allow_threads(|| {
             let mut client = self.client.lock().unwrap();
             client.flush();
             drop(client);
-            true
+            Ok(true)
         })
     }
 }
