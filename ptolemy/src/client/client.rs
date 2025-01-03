@@ -13,6 +13,40 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
+macro_rules! set_io {
+    ($self:ident, $kwds:ident, $field_val_type:ident, $proto_struct:ident, $set_fn:ident) => {
+        {
+            let tier = match $self.tier {
+                Some(t) => t,
+                None => {
+                    return Err(PyValueError::new_err("No tier set!"));
+                }
+            };
+
+            let io_vec = match $kwds {
+                Some(k) => k.extract::<HashMap<String, $field_val_type>>()?,
+                None => return Ok(()),
+            };
+
+            let io: Vec<ProtoRecord<$proto_struct>> = io_vec
+                .into_iter()
+                .map(|(field_name, field_val)| {
+                    ProtoRecord::new(
+                        tier.clone(),
+                        $self.state.event_id().unwrap(),
+                        Uuid::new_v4(),
+                        $proto_struct::new(field_name, field_val),
+                    )
+                })
+                .collect();
+
+            $self.state.$set_fn(io);
+
+            Ok(())
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 #[pyclass]
 pub struct PtolemyClient {
@@ -39,9 +73,7 @@ impl PtolemyClient {
         })
     }
 
-    fn __enter__(
-        &mut self,
-    ) -> PyResult<()> {
+    fn __enter__(&mut self) -> PyResult<()> {
         // First verify we have an event
         self.state.event_id()?;
         self.state.start();
@@ -244,126 +276,22 @@ impl PtolemyClient {
 
     #[pyo3(signature = (**kwds))]
     fn inputs(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        let tier = match self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
-
-        let inputs_vec = match kwds {
-            Some(k) => k.extract::<HashMap<String, JsonSerializable>>()?,
-            None => return Ok(()),
-        };
-
-        let inputs: Vec<ProtoRecord<ProtoInput>> = inputs_vec
-            .into_iter()
-            .map(|(field_name, field_val)| {
-                ProtoRecord::new(
-                    tier.clone(),
-                    self.state.event_id().unwrap(),
-                    Uuid::new_v4(),
-                    ProtoInput::new(field_name, field_val),
-                )
-            })
-            .collect();
-
-        self.state.set_input(inputs);
-
-        Ok(())
+        set_io!(self, kwds, JsonSerializable, ProtoInput, set_input)
     }
 
     #[pyo3(signature = (**kwds))]
     fn outputs(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        let tier = match self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
-
-        let outputs_vec = match kwds {
-            Some(k) => k.extract::<HashMap<String, JsonSerializable>>()?,
-            None => return Ok(()),
-        };
-
-        let outputs: Vec<ProtoRecord<ProtoOutput>> = outputs_vec
-            .into_iter()
-            .map(|(field_name, field_val)| {
-                ProtoRecord::new(
-                    tier.clone(),
-                    self.state.event_id().unwrap(),
-                    Uuid::new_v4(),
-                    ProtoOutput::new(field_name, field_val),
-                )
-            })
-            .collect();
-
-        self.state.set_output(outputs);
-
-        Ok(())
+        set_io!(self, kwds, JsonSerializable, ProtoOutput, set_output)
     }
 
     #[pyo3(signature = (**kwds))]
     fn feedback(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        let tier = match self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
-
-        let feedback_vec = match kwds {
-            Some(k) => k.extract::<HashMap<String, JsonSerializable>>()?,
-            None => return Ok(()),
-        };
-
-        let feedback: Vec<ProtoRecord<ProtoFeedback>> = feedback_vec
-            .into_iter()
-            .map(|(field_name, field_val)| {
-                ProtoRecord::new(
-                    tier.clone(),
-                    self.state.event_id().unwrap(),
-                    Uuid::new_v4(),
-                    ProtoFeedback::new(field_name, field_val),
-                )
-            })
-            .collect();
-
-        self.state.set_feedback(feedback);
-
-        Ok(())
+        set_io!(self, kwds, JsonSerializable, ProtoFeedback, set_feedback)
     }
 
     #[pyo3(signature = (**kwds))]
     fn metadata(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        let tier = match self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
-
-        let metadata_vec = match kwds {
-            Some(k) => k.extract::<HashMap<String, String>>()?,
-            None => return Ok(()),
-        };
-
-        let metadata: Vec<ProtoRecord<ProtoMetadata>> = metadata_vec
-            .into_iter()
-            .map(|(field_name, field_val)| {
-                ProtoRecord::new(
-                    tier.clone(),
-                    self.state.event_id().unwrap(),
-                    Uuid::new_v4(),
-                    ProtoMetadata::new(field_name, field_val),
-                )
-            })
-            .collect();
-
-        self.state.set_metadata(metadata);
-
-        Ok(())
+        set_io!(self, kwds, String, ProtoMetadata, set_metadata)
     }
 
     pub fn push_event(&mut self, py: Python<'_>) -> PyResult<bool> {
