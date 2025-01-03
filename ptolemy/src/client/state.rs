@@ -7,6 +7,7 @@ use crate::event::{
     ProtoRecord,
     ProtoRuntime,
 };
+use ptolemy_core::generated::observer::Record;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -103,5 +104,44 @@ impl PtolemyClientState {
             Some(event) => Ok(event.id),
             None => Err(PyValueError::new_err("No event set!")),
         }
+    }
+
+    pub fn io_records(&self) -> PyResult<Vec<Record>> {
+        // Add runtime. If doesn't exist, throw PyValueError
+        let runtime = match &self.runtime {
+            Some(r) => r.proto(),
+            None => {
+                return Err(PyValueError::new_err("No runtime set!"));
+            }
+        };
+
+        let inputs = match &self.input {
+            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            None => vec![],
+        };
+
+        let outputs = match &self.output {
+            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            None => vec![],
+        };
+
+        let feedback = match &self.feedback {
+            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            None => vec![],
+        };
+
+        let metadata = match &self.metadata {
+            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            None => vec![],
+        };
+
+        let records = std::iter::once(runtime)
+            .chain(inputs)
+            .chain(outputs)
+            .chain(feedback)
+            .chain(metadata)
+            .collect();
+
+        Ok(records)
     }
 }

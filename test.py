@@ -15,7 +15,7 @@ client = PtolemyClient(
     batch_size=1024
     )
 
-N = 1000
+N = 10000
 
 start = time.time()
 for _ in tqdm(list(range(N))):

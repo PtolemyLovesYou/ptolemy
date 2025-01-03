@@ -5,7 +5,7 @@ use crate::types::{JsonSerializable, Parameters};
 use crate::client::utils::{Traceback, ExcType, ExcValue, format_traceback};
 use crate::client::state::PtolemyClientState;
 use crate::client::observer_handler::ObserverHandler;
-use ptolemy_core::generated::observer::{Record, Tier};
+use ptolemy_core::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -313,35 +313,8 @@ impl PtolemyClient {
 
     pub fn push_io(&mut self, py: Python<'_>) -> PyResult<bool> {
         py.allow_threads(|| {
-            let mut recs: Vec<Record> = match &self.state.runtime {
-                Some(r) => vec![r.proto()],
-                None => {
-                    return Err(PyValueError::new_err("No runtime set!"));
-                }
-            };
-
-            match &self.state.input {
-                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
-                None => (),
-            };
-
-            match &self.state.output {
-                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
-                None => (),
-            };
-
-            match &self.state.feedback {
-                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
-                None => (),
-            };
-
-            match &self.state.metadata {
-                Some(r) => recs.extend(r.into_iter().map(|r| r.proto())),
-                None => (),
-            };
-
             let mut client = self.client.lock().unwrap();
-            client.queue_records(recs);
+            client.queue_records(self.state.io_records()?);
             drop(client);
 
             Ok(true)
