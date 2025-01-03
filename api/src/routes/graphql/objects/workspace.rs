@@ -53,6 +53,7 @@ impl Workspace {
 
         let mut users: Vec<WorkspaceUser> = vec![];
 
+        // TODO: Better error handling
         for workspace_user in workspace_users {
             let user = user_crud::get_user(&mut conn, &workspace_user.user_id)
                 .await
