@@ -1,4 +1,4 @@
-use crate::client::observer_handler::ObserverHandler;
+use crate::client::server_handler::ServerHandler;
 use crate::client::state::PtolemyClientState;
 use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::event::{
@@ -53,14 +53,14 @@ pub struct PtolemyClient {
     tier: Option<Tier>,
     autoflush: bool,
     state: PtolemyClientState,
-    grpc_client: Arc<Mutex<ObserverHandler>>,
+    grpc_client: Arc<Mutex<ServerHandler>>,
 }
 
 #[pymethods]
 impl PtolemyClient {
     #[new]
     fn new(workspace_id: PyUuid, autoflush: bool, batch_size: usize) -> PyResult<Self> {
-        let grpc_client = Arc::new(Mutex::new(ObserverHandler::new(batch_size)?));
+        let grpc_client = Arc::new(Mutex::new(ServerHandler::new(batch_size)?));
         Ok(Self {
             workspace_id: workspace_id.to_uuid()?,
             parent_id: None,

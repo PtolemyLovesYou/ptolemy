@@ -7,14 +7,14 @@ use std::collections::VecDeque;
 use tonic::transport::Channel;
 
 #[derive(Debug)]
-pub struct ObserverHandler {
+pub struct ServerHandler {
     client: ObserverClient<Channel>,
     queue: VecDeque<Record>,
     rt: tokio::runtime::Runtime,
     batch_size: usize,
 }
 
-impl ObserverHandler {
+impl ServerHandler {
     pub fn new(batch_size: usize) -> PyResult<Self> {
         let config = ObserverConfig::new();
         let rt = tokio::runtime::Builder::new_current_thread()
@@ -35,7 +35,7 @@ impl ObserverHandler {
     }
 }
 
-impl ObserverHandler {
+impl ServerHandler {
     pub fn publish_request(
         &mut self,
         records: Vec<Record>,
