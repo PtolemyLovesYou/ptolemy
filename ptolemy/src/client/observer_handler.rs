@@ -11,7 +11,7 @@ pub struct ObserverHandler {
     client: ObserverClient<Channel>,
     queue: VecDeque<Record>,
     rt: tokio::runtime::Runtime,
-    batch_size: usize
+    batch_size: usize,
 }
 
 impl ObserverHandler {
@@ -26,14 +26,12 @@ impl ObserverHandler {
             .block_on(ObserverClient::connect(config.to_string()))
             .unwrap();
 
-        Ok(
-            Self {
-                client,
-                rt,
-                queue,
-                batch_size,
-            }
-        )
+        Ok(Self {
+            client,
+            rt,
+            queue,
+            batch_size,
+        })
     }
 }
 

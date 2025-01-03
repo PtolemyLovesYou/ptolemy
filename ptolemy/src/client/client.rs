@@ -1,10 +1,10 @@
+use crate::client::observer_handler::ObserverHandler;
+use crate::client::state::PtolemyClientState;
+use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::types::{JsonSerializable, Parameters};
-use crate::client::utils::{Traceback, ExcType, ExcValue, format_traceback};
-use crate::client::state::PtolemyClientState;
-use crate::client::observer_handler::ObserverHandler;
 use ptolemy_core::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -14,37 +14,35 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 macro_rules! set_io {
-    ($self:ident, $kwds:ident, $field_val_type:ident, $proto_struct:ident, $set_fn:ident) => {
-        {
-            let tier = match $self.tier {
-                Some(t) => t,
-                None => {
-                    return Err(PyValueError::new_err("No tier set!"));
-                }
-            };
+    ($self:ident, $kwds:ident, $field_val_type:ident, $proto_struct:ident, $set_fn:ident) => {{
+        let tier = match $self.tier {
+            Some(t) => t,
+            None => {
+                return Err(PyValueError::new_err("No tier set!"));
+            }
+        };
 
-            let io_vec = match $kwds {
-                Some(k) => k.extract::<HashMap<String, $field_val_type>>()?,
-                None => return Ok(()),
-            };
+        let io_vec = match $kwds {
+            Some(k) => k.extract::<HashMap<String, $field_val_type>>()?,
+            None => return Ok(()),
+        };
 
-            let io: Vec<ProtoRecord<$proto_struct>> = io_vec
-                .into_iter()
-                .map(|(field_name, field_val)| {
-                    ProtoRecord::new(
-                        tier.clone(),
-                        $self.state.event_id().unwrap(),
-                        Uuid::new_v4(),
-                        $proto_struct::new(field_name, field_val),
-                    )
-                })
-                .collect();
+        let io: Vec<ProtoRecord<$proto_struct>> = io_vec
+            .into_iter()
+            .map(|(field_name, field_val)| {
+                ProtoRecord::new(
+                    tier.clone(),
+                    $self.state.event_id().unwrap(),
+                    Uuid::new_v4(),
+                    $proto_struct::new(field_name, field_val),
+                )
+            })
+            .collect();
 
-            $self.state.$set_fn(io);
+        $self.state.$set_fn(io);
 
-            Ok(())
-        }
-    }
+        Ok(())
+    }};
 }
 
 #[derive(Debug, Clone)]
@@ -79,7 +77,7 @@ impl PtolemyClient {
         self.state.start();
 
         // queue event
-        Python::with_gil(|py| {self.push_event(py).unwrap()});
+        Python::with_gil(|py| self.push_event(py).unwrap());
 
         Ok(())
     }
@@ -93,38 +91,40 @@ impl PtolemyClient {
     ) -> PyResult<()> {
         self.state.end();
 
-        let (error_type, error_content) = match (exc_type.clone(), exc_value.clone(), traceback.clone()) {
-            (Some(exc_type), Some(exc_value), Some(traceback)) => {
-                let error_type = exc_type.to_string();
-                let traceback = format_traceback(exc_type, exc_value, traceback).unwrap();
-                (Some(error_type), Some(traceback))
-            },
-            _ => (None, None),
-        };
+        let (error_type, error_content) =
+            match (exc_type.clone(), exc_value.clone(), traceback.clone()) {
+                (Some(exc_type), Some(exc_value), Some(traceback)) => {
+                    let error_type = exc_type.to_string();
+                    let traceback = format_traceback(exc_type, exc_value, traceback).unwrap();
+                    (Some(error_type), Some(traceback))
+                }
+                _ => (None, None),
+            };
 
-        self.state.set_runtime(
-            ProtoRecord::new(
-                self.tier.unwrap(),
-                self.state.event_id()?,
-                Uuid::new_v4(),
-                ProtoRuntime::new(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content),
-            )
-        );
+        self.state.set_runtime(ProtoRecord::new(
+            self.tier.unwrap(),
+            self.state.event_id()?,
+            Uuid::new_v4(),
+            ProtoRuntime::new(
+                self.state.start_time.unwrap(),
+                self.state.end_time.unwrap(),
+                error_type,
+                error_content,
+            ),
+        ));
 
         // push io
-        Python::with_gil(|py| {self.push_io(py).unwrap()});
+        Python::with_gil(|py| self.push_io(py).unwrap());
 
         // if autoflush, flush
         if self.autoflush {
-            let _ = Python::with_gil(|py| { self.flush(py)});
+            let _ = Python::with_gil(|py| self.flush(py));
         }
 
         // if no error, return Ok(()), otherwise raise existing exception
         match exc_value {
             None => Ok(()),
-            Some(e) => {
-                Err(PyValueError::new_err(e.to_string()))
-            }
+            Some(e) => Err(PyValueError::new_err(e.to_string())),
         }
     }
 
@@ -141,18 +141,16 @@ impl PtolemyClient {
             parent_id: None,
             tier: Some(Tier::System),
             autoflush: self.autoflush,
-            state: PtolemyClientState::new(),  // This creates fresh state
+            state: PtolemyClientState::new(), // This creates fresh state
             client: self.client.clone(),
         };
-    
-        client.state.set_event(
-            ProtoRecord::new(
-                Tier::System,
-                self.workspace_id,
-                Uuid::new_v4(),
-                ProtoEvent::new(name, parameters, version, environment),
-            )
-        );
+
+        client.state.set_event(ProtoRecord::new(
+            Tier::System,
+            self.workspace_id,
+            Uuid::new_v4(),
+            ProtoEvent::new(name, parameters, version, environment),
+        ));
 
         // Add explicit verification
         client.state.event_id()?;
@@ -219,15 +217,13 @@ impl PtolemyClient {
                 return Err(PyValueError::new_err("No tier set!"));
             }
         };
-    
+
         let parent_id = match tier {
             Tier::System => self.workspace_id,
-            Tier::Subsystem | Tier::Component | Tier::Subcomponent => {
-                match self.parent_id {
-                    Some(id) => id,
-                    None => {
-                        return Err(PyValueError::new_err("No parent set!"));
-                    }
+            Tier::Subsystem | Tier::Component | Tier::Subcomponent => match self.parent_id {
+                Some(id) => id,
+                None => {
+                    return Err(PyValueError::new_err("No parent set!"));
                 }
             },
             Tier::UndeclaredTier => {
@@ -236,14 +232,14 @@ impl PtolemyClient {
                 ))
             }
         };
-    
+
         let event = ProtoRecord::new(
             tier,
             parent_id,
             Uuid::new_v4(),
             ProtoEvent::new(name, parameters, version, environment),
         );
-        
+
         self.state.set_event(event);
         Ok(())
     }

@@ -1,11 +1,5 @@
 use crate::event::{
-    ProtoEvent,
-    ProtoFeedback,
-    ProtoInput,
-    ProtoMetadata,
-    ProtoOutput,
-    ProtoRecord,
-    ProtoRuntime,
+    ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use ptolemy_core::generated::observer::Record;
 use pyo3::exceptions::PyValueError;
