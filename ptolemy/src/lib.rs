@@ -1,4 +1,4 @@
-use crate::client::PtolemyClient;
+use crate::client::client::PtolemyClient;
 use pyo3::prelude::*;
 
 pub mod client;

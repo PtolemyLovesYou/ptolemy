@@ -3,6 +3,8 @@ use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::types::{JsonSerializable, Parameters};
+use crate::client::utils::{Traceback, ExcType, ExcValue, format_traceback};
+use crate::client::state::PtolemyClientState;
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record, Tier,
 };
@@ -11,117 +13,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
 use tonic::transport::Channel;
 use uuid::Uuid;
-
-fn format_traceback(exc_type: Bound<'_, pyo3::types::PyType>, exc_value: Bound<'_, pyo3::exceptions::PyBaseException>, traceback: Bound<'_, pyo3::types::PyTraceback>) -> PyResult<String> {
-    Python::with_gil(|py| {
-        let traceback_module = py.import_bound("traceback")?;
-        let format_result = traceback_module
-            .getattr("format_exception")?
-            .call1((exc_type, exc_value, traceback));
-            
-        match format_result {
-            Ok(result) => result.extract(),
-            Err(e) => Ok(format!("Error formatting traceback: {}", e))
-        }
-    })
-}
-
-#[derive(Clone, Debug)]
-pub struct PtolemyClientState {
-    event: Option<ProtoRecord<ProtoEvent>>,
-    runtime: Option<ProtoRecord<ProtoRuntime>>,
-    input: Option<Vec<ProtoRecord<ProtoInput>>>,
-    output: Option<Vec<ProtoRecord<ProtoOutput>>>,
-    feedback: Option<Vec<ProtoRecord<ProtoFeedback>>>,
-    metadata: Option<Vec<ProtoRecord<ProtoMetadata>>>,
-    start_time: Option<f32>,
-    end_time: Option<f32>,
-}
-
-impl PtolemyClientState {
-    pub fn new() -> Self {
-        Self {
-            event: None,
-            runtime: None,
-            input: None,
-            output: None,
-            feedback: None,
-            metadata: None,
-            start_time: None,
-            end_time: None,
-        }
-    }
-
-    pub fn start(&mut self) {
-        match self.start_time.is_none() {
-            true => {
-                // set start time to current time in f32
-                self.start_time = Some(
-                    SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis() as f32
-                        / 1000.0,
-                );
-            }
-            false => {
-                panic!("Start time already set!");
-            }
-        }
-    }
-
-    pub fn end(&mut self) {
-        match self.end_time.is_none() {
-            true => {
-                // set end time to current time in f32
-                self.end_time = Some(
-                    SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_millis() as f32
-                        / 1000.0,
-                );
-            }
-            false => {
-                panic!("End time already set!");
-            }
-        }
-    }
-
-    pub fn set_event(&mut self, event: ProtoRecord<ProtoEvent>) {
-        self.event = Some(event);
-    }
-
-    pub fn set_runtime(&mut self, runtime: ProtoRecord<ProtoRuntime>) {
-        self.runtime = Some(runtime);
-    }
-
-    pub fn set_input(&mut self, input: Vec<ProtoRecord<ProtoInput>>) {
-        self.input = Some(input);
-    }
-
-    pub fn set_output(&mut self, output: Vec<ProtoRecord<ProtoOutput>>) {
-        self.output = Some(output);
-    }
-
-    pub fn set_feedback(&mut self, feedback: Vec<ProtoRecord<ProtoFeedback>>) {
-        self.feedback = Some(feedback);
-    }
-
-    pub fn set_metadata(&mut self, metadata: Vec<ProtoRecord<ProtoMetadata>>) {
-        self.metadata = Some(metadata);
-    }
-
-    pub fn event_id(&self) -> PyResult<Uuid> {
-        match &self.event {
-            Some(event) => Ok(event.id),
-            None => Err(PyValueError::new_err("No event set!")),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 #[pyclass]
@@ -181,9 +74,9 @@ impl PtolemyClient {
     #[pyo3(signature=(exc_type, exc_value, traceback))]
     fn __exit__(
         &mut self,
-        exc_type: Option<Bound<'_, pyo3::types::PyType>>,
-        exc_value: Option<Bound<'_, pyo3::exceptions::PyBaseException>>,
-        traceback: Option<Bound<'_, pyo3::types::PyTraceback>>,
+        exc_type: Option<ExcType<'_>>,
+        exc_value: Option<ExcValue<'_>>,
+        traceback: Option<Traceback<'_>>,
     ) -> PyResult<()> {
         self.state.end();
 
