@@ -53,21 +53,21 @@ pub struct PtolemyClient {
     tier: Option<Tier>,
     autoflush: bool,
     state: PtolemyClientState,
-    client: Arc<Mutex<ObserverHandler>>,
+    grpc_client: Arc<Mutex<ObserverHandler>>,
 }
 
 #[pymethods]
 impl PtolemyClient {
     #[new]
     fn new(workspace_id: PyUuid, autoflush: bool, batch_size: usize) -> PyResult<Self> {
-        let client = Arc::new(Mutex::new(ObserverHandler::new(batch_size)?));
+        let grpc_client = Arc::new(Mutex::new(ObserverHandler::new(batch_size)?));
         Ok(Self {
             workspace_id: workspace_id.to_uuid()?,
             parent_id: None,
             tier: None,
             autoflush,
             state: PtolemyClientState::new(),
-            client,
+            grpc_client,
         })
     }
 
@@ -142,7 +142,7 @@ impl PtolemyClient {
             tier: Some(Tier::System),
             autoflush: self.autoflush,
             state: PtolemyClientState::new(), // This creates fresh state
-            client: self.client.clone(),
+            grpc_client: self.grpc_client.clone(),
         };
 
         client.state.set_event(ProtoRecord::new(
@@ -195,7 +195,7 @@ impl PtolemyClient {
             tier: Some(child_tier),
             autoflush: self.autoflush,
             state: PtolemyClientState::new(),
-            client: self.client.clone(),
+            grpc_client: self.grpc_client.clone(),
         };
 
         client.event(name, parameters, version, environment)?;
@@ -299,7 +299,7 @@ impl PtolemyClient {
                 }
             };
 
-            let mut client = self.client.lock().unwrap();
+            let mut client = self.grpc_client.lock().unwrap();
             client.push_record_front(rec);
             drop(client);
 
@@ -309,7 +309,7 @@ impl PtolemyClient {
 
     pub fn push_io(&mut self, py: Python<'_>) -> PyResult<bool> {
         py.allow_threads(|| {
-            let mut client = self.client.lock().unwrap();
+            let mut client = self.grpc_client.lock().unwrap();
             client.queue_records(self.state.io_records()?);
             drop(client);
 
@@ -319,7 +319,7 @@ impl PtolemyClient {
 
     pub fn flush(&mut self, py: Python<'_>) -> PyResult<bool> {
         py.allow_threads(|| {
-            let mut client = self.client.lock().unwrap();
+            let mut client = self.grpc_client.lock().unwrap();
             client.flush();
             drop(client);
             Ok(true)
