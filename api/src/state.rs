@@ -75,3 +75,5 @@ impl AppState {
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
     }
 }
+
+impl juniper::Context for AppState {}
