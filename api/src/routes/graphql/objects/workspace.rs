@@ -16,11 +16,7 @@ impl Workspace {
     }
 
     fn archived(&self) -> bool {
-        // TODO: semantics here aren't strong enough
-        match self.archived {
-            Some(s) => s,
-            None => false,
-        }
+        self.archived
     }
 
     fn created_at(&self) -> String {
