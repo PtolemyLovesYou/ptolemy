@@ -3,24 +3,11 @@ use axum::{
     routing::{get, on, MethodFilter},
     Router,
 };
-use juniper::{graphql_object, EmptyMutation, EmptySubscription, RootNode};
+use juniper::{EmptyMutation, EmptySubscription};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use std::sync::Arc;
 use crate::state::AppState;
-
-#[derive(Clone, Copy, Debug)]
-pub struct Query;
-
-#[graphql_object]
-#[graphql(context = AppState)]
-impl Query {
-    async fn ping(_ctx: &AppState) -> String {
-        "Pong!".to_string()
-    }
-}
-
-type Schema =
-    RootNode<'static, Query, EmptyMutation<AppState>, EmptySubscription<AppState>>;
+use crate::routes::graphql::query::{Query, Schema};
 
 // Define an AppState struct to hold both schema and context
 #[derive(Clone)]
