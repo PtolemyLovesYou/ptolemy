@@ -1,19 +1,16 @@
-use crate::config::ObserverConfig;
 use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::types::{JsonSerializable, Parameters};
 use crate::client::utils::{Traceback, ExcType, ExcValue, format_traceback};
 use crate::client::state::PtolemyClientState;
-use ptolemy_core::generated::observer::{
-    observer_client::ObserverClient, PublishRequest, PublishResponse, Record, Tier,
-};
+use crate::client::observer_handler::ObserverHandler;
+use ptolemy_core::generated::observer::{Record, Tier};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tonic::transport::Channel;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -24,37 +21,21 @@ pub struct PtolemyClient {
     tier: Option<Tier>,
     autoflush: bool,
     state: PtolemyClientState,
-    rt: Arc<tokio::runtime::Runtime>,
-    client: Arc<Mutex<ObserverClient<Channel>>>,
-    queue: Arc<Mutex<VecDeque<Record>>>,
-    batch_size: usize,
+    client: Arc<Mutex<ObserverHandler>>,
 }
 
 #[pymethods]
 impl PtolemyClient {
     #[new]
     fn new(workspace_id: String, autoflush: bool, batch_size: usize) -> PyResult<Self> {
-        let config = ObserverConfig::new();
-
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()?;
-
-        let client = rt
-            .block_on(ObserverClient::connect(config.to_string()))
-            .unwrap();
-        let queue = Arc::new(Mutex::new(VecDeque::new()));
-
+        let client = Arc::new(Mutex::new(ObserverHandler::new(batch_size)?));
         Ok(Self {
             workspace_id: Uuid::parse_str(&workspace_id).unwrap(),
             parent_id: None,
             tier: None,
             autoflush,
             state: PtolemyClientState::new(),
-            client: Arc::new(Mutex::new(client)),
-            rt: Arc::new(rt),
-            queue,
-            batch_size,
+            client,
         })
     }
 
@@ -130,9 +111,6 @@ impl PtolemyClient {
             autoflush: self.autoflush,
             state: PtolemyClientState::new(),  // This creates fresh state
             client: self.client.clone(),
-            rt: self.rt.clone(),
-            queue: self.queue.clone(),
-            batch_size: self.batch_size,
         };
     
         client.state.set_event(
@@ -188,9 +166,6 @@ impl PtolemyClient {
             autoflush: self.autoflush,
             state: PtolemyClientState::new(),
             client: self.client.clone(),
-            rt: self.rt.clone(),
-            queue: self.queue.clone(),
-            batch_size: self.batch_size.clone(),
         };
 
         client.event(name, parameters, version, environment)?;
@@ -399,7 +374,10 @@ impl PtolemyClient {
                     return Err(PyValueError::new_err("No event set!"));
                 }
             };
-            self.push_record_front(rec);
+
+            let mut client = self.client.lock().unwrap();
+            client.push_record_front(rec);
+            drop(client);
 
             Ok(true)
         })
@@ -434,7 +412,9 @@ impl PtolemyClient {
                 None => (),
             };
 
-            self.queue_records(recs);
+            let mut client = self.client.lock().unwrap();
+            client.queue_records(recs);
+            drop(client);
 
             Ok(true)
         })
@@ -442,81 +422,10 @@ impl PtolemyClient {
 
     pub fn flush(&mut self, py: Python<'_>) -> bool {
         py.allow_threads(|| {
-            while {
-                let size = self.queue.lock().unwrap().len();
-                size > 0
-            } {
-                if !self.send_batch() {
-                    return false;
-                }
-            }
+            let mut client = self.client.lock().unwrap();
+            client.flush();
+            drop(client);
             true
         })
-    }
-}
-
-impl PtolemyClient {
-    pub fn publish_request(
-        &mut self,
-        records: Vec<Record>,
-    ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
-        self.rt.block_on(async {
-            let publish_request = tonic::Request::new(PublishRequest { records: records });
-            let mut client = self.client.lock().unwrap();
-            let response = client.publish(publish_request).await?;
-            drop(client);
-
-            Ok(response.into_inner())
-        })
-    }
-
-    pub fn send_batch(&mut self) -> bool {
-        let records = {
-            let mut queue = self.queue.lock().unwrap();
-            let n_to_drain = self.batch_size.min(queue.len());
-            let drain = queue.drain(..n_to_drain).collect::<Vec<Record>>();
-            drop(queue);
-            drain
-        }; // Lock is released here
-
-        if records.is_empty() {
-            return true;
-        }
-
-        println!("Sending {} records to server", records.len());
-
-        match self.publish_request(records) {
-            Ok(_) => true,
-            Err(e) => {
-                println!("Error publishing records: {}", e);
-                false
-            }
-        }
-    }
-
-    pub fn queue_records(&mut self, records: Vec<Record>) {
-        let should_send_batch: bool;
-
-        let mut queue = self.queue.lock().unwrap();
-        queue.extend(records);
-        should_send_batch = queue.len() >= self.batch_size;
-        drop(queue);
-
-        if should_send_batch {
-            self.send_batch();
-        }
-    }
-
-    pub fn push_record_front(&mut self, record: Record) {
-        let should_send_batch: bool;
-
-        let mut queue = self.queue.lock().unwrap();
-        queue.push_front(record);
-        should_send_batch = queue.len() >= self.batch_size;
-        drop(queue);
-
-        if should_send_batch {
-            self.send_batch();
-        }
     }
 }
