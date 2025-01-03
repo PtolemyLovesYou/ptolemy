@@ -336,9 +336,6 @@ impl PtolemyClient {
             Uuid::new_v4(),
             ProtoEvent::new(name, parameters, version, environment),
         );
-    
-        // Add debug logging
-        println!("Setting event: {:?}", event);
         
         self.state.set_event(event);
         Ok(())
