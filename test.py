@@ -3,13 +3,13 @@
 import os
 import time
 from tqdm.auto import tqdm
-from ptolemy import PtolemyClient
+from ptolemy import Ptolemy
 
 os.environ["OBSERVER_HOST"] = "localhost"
 os.environ["OBSERVER_PORT"] = "50051"
 
 print('got here')
-client = PtolemyClient(
+client = Ptolemy(
     workspace_id='d01152e4-ea36-493e-9641-5104dd3f7a20',
     autoflush=False,
     batch_size=1024

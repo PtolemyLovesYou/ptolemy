@@ -1,28 +1,29 @@
 """Header file for ptolemy core."""
+
 # pylint: disable=unused-argument,missing-function-docstring
 from __future__ import annotations
 from typing import Optional, Any, Dict
 
-class PtolemyClient:
+class Ptolemy:
     """Ptolemy Client."""
 
     def __init__(
         self, workspace_id: str, autoflush: bool, batch_size: int
-    ) -> "PtolemyClient": ...
+    ) -> "Ptolemy": ...
     def trace(
         self,
         name: str,
         parameters: Optional[Dict[str, Any]] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> "PtolemyClient": ...
+    ) -> "Ptolemy": ...
     def child(
         self,
         name: str,
         parameters: Optional[Dict[str, Any]] = None,
         version: Optional[str] = None,
         environment: Optional[str] = None,
-    ) -> "PtolemyClient": ...
+    ) -> "Ptolemy": ...
     def event(
         self,
         name: str,
