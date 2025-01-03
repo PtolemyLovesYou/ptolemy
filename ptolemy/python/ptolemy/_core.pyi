@@ -1,5 +1,5 @@
 """Header file for ptolemy core."""
-
+# pylint: disable=unused-argument,missing-function-docstring
 from __future__ import annotations
 from typing import Optional, Any, Dict
 
