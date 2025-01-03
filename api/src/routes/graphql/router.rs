@@ -1,3 +1,5 @@
+use crate::routes::graphql::query::{Query, Schema};
+use crate::state::AppState;
 use axum::{
     extract::State,
     routing::{get, on, MethodFilter},
@@ -6,8 +8,6 @@ use axum::{
 use juniper::{EmptyMutation, EmptySubscription};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use std::sync::Arc;
-use crate::state::AppState;
-use crate::routes::graphql::query::{Query, Schema};
 
 // Define an AppState struct to hold both schema and context
 #[derive(Clone)]

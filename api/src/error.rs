@@ -1,4 +1,5 @@
 use axum::http::StatusCode;
+use juniper::FieldError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -30,5 +31,10 @@ impl CRUDError {
             CRUDError::ConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
             CRUDError::UpdateError => StatusCode::INTERNAL_SERVER_ERROR,
         }
+    }
+
+    pub fn juniper_field_error(&self) -> FieldError {
+        // TODO: Make this more descriptive
+        FieldError::from(format!("CRUD Error: {:?}", self))
     }
 }

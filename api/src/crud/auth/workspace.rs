@@ -38,6 +38,40 @@ pub async fn create_workspace(
     }
 }
 
+pub async fn search_workspaces(
+    conn: &mut DbConnection<'_>,
+    id: Option<Uuid>,
+    name: Option<String>,
+    archived: Option<bool>,
+) -> Result<Vec<Workspace>, CRUDError> {
+    use crate::generated::auth_schema::workspace::dsl;
+
+    let mut query = dsl::workspace.into_boxed();
+
+    if let Some(id) = id {
+        query = query.filter(dsl::id.eq(id));
+    }
+
+    if let Some(name) = name {
+        query = query.filter(dsl::name.eq(name));
+    }
+
+    if let Some(archived) = archived {
+        query = query.filter(dsl::archived.eq(archived));
+    }
+
+    match query.get_results(conn).await {
+        Ok(result) => Ok(result),
+        Err(e) => {
+            error!("Failed to get workspaces: {}", e);
+            return match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            };
+        }
+    }
+}
+
 /// Retrieves a workspace by its UUID.
 ///
 /// # Arguments
