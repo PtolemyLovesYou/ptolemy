@@ -1,18 +1,33 @@
 use crate::config::ObserverConfig;
+use crate::event::{
+    ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
+};
 use crate::types::{JsonSerializable, Parameters};
+use ptolemy_core::generated::observer::{
+    observer_client::ObserverClient, PublishRequest, PublishResponse, Record, Tier,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tonic::transport::Channel;
 use uuid::Uuid;
-use crate::event::{
-    ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
-};
-use ptolemy_core::generated::observer::{
-    observer_client::ObserverClient, PublishRequest, PublishResponse, Record, Tier,
-};
+
+fn format_traceback(exc_type: Bound<'_, pyo3::types::PyType>, exc_value: Bound<'_, pyo3::exceptions::PyBaseException>, traceback: Bound<'_, pyo3::types::PyTraceback>) -> PyResult<String> {
+    Python::with_gil(|py| {
+        let traceback_module = py.import_bound("traceback")?;
+        let format_result = traceback_module
+            .getattr("format_exception")?
+            .call1((exc_type, exc_value, traceback));
+            
+        match format_result {
+            Ok(result) => result.extract(),
+            Err(e) => Ok(format!("Error formatting traceback: {}", e))
+        }
+    })
+}
 
 #[derive(Clone, Debug)]
 pub struct PtolemyClientState {
@@ -22,6 +37,8 @@ pub struct PtolemyClientState {
     output: Option<Vec<ProtoRecord<ProtoOutput>>>,
     feedback: Option<Vec<ProtoRecord<ProtoFeedback>>>,
     metadata: Option<Vec<ProtoRecord<ProtoMetadata>>>,
+    start_time: Option<f32>,
+    end_time: Option<f32>,
 }
 
 impl PtolemyClientState {
@@ -33,6 +50,44 @@ impl PtolemyClientState {
             output: None,
             feedback: None,
             metadata: None,
+            start_time: None,
+            end_time: None,
+        }
+    }
+
+    pub fn start(&mut self) {
+        match self.start_time.is_none() {
+            true => {
+                // set start time to current time in f32
+                self.start_time = Some(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() as f32
+                        / 1000.0,
+                );
+            }
+            false => {
+                panic!("Start time already set!");
+            }
+        }
+    }
+
+    pub fn end(&mut self) {
+        match self.end_time.is_none() {
+            true => {
+                // set end time to current time in f32
+                self.end_time = Some(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() as f32
+                        / 1000.0,
+                );
+            }
+            false => {
+                panic!("End time already set!");
+            }
         }
     }
 
@@ -68,7 +123,7 @@ impl PtolemyClientState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[pyclass]
 pub struct PtolemyClient {
     workspace_id: Uuid,
@@ -108,6 +163,58 @@ impl PtolemyClient {
         })
     }
 
+    fn __enter__(
+        &mut self,
+    ) -> PyResult<()> {
+        // First verify we have an event
+        if self.state.event.is_none() {
+            return Err(PyValueError::new_err("Context manager entered with no event set"));
+        }
+        self.state.start();
+        Ok(())
+    }
+
+    #[pyo3(signature=(exc_type, exc_value, traceback))]
+    fn __exit__(
+        &mut self,
+        exc_type: Option<Bound<'_, pyo3::types::PyType>>,
+        exc_value: Option<Bound<'_, pyo3::exceptions::PyBaseException>>,
+        traceback: Option<Bound<'_, pyo3::types::PyTraceback>>,
+    ) -> PyResult<()> {
+        self.state.end();
+
+        let (error_type, error_content) = match (exc_type.clone(), exc_value.clone(), traceback.clone()) {
+            (Some(exc_type), Some(exc_value), Some(traceback)) => {
+                let error_type = exc_type.to_string();
+                let traceback = format_traceback(exc_type, exc_value, traceback).unwrap();
+                (Some(error_type), Some(traceback))
+            },
+            _ => (None, None),
+        };
+
+        self.state.set_runtime(
+            ProtoRecord::new(
+                self.tier.unwrap(),
+                self.state.event_id(),
+                Uuid::new_v4(),
+                ProtoRuntime::new(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content),
+            )
+        );
+
+        // if autoflush, flush
+        if self.autoflush {
+            Python::with_gil(|py| { self.flush(py)});
+        }
+
+        // if no error, return Ok(()), otherwise raise existing exception
+        match exc_value {
+            None => Ok(()),
+            Some(e) => {
+                Err(PyValueError::new_err(e.to_string()))
+            }
+        }
+    }
+
     #[pyo3(signature=(name, parameters=None, version=None, environment=None))]
     fn trace(
         &mut self,
@@ -120,15 +227,20 @@ impl PtolemyClient {
             workspace_id: self.workspace_id,
             tier: Some(Tier::System),
             autoflush: self.autoflush,
-            state: PtolemyClientState::new(),
+            state: PtolemyClientState::new(),  // This creates fresh state
             client: self.client.clone(),
             rt: self.rt.clone(),
             queue: self.queue.clone(),
-            batch_size: self.batch_size.clone(),
+            batch_size: self.batch_size,
         };
-
+    
         client.event(name, parameters, version, environment)?;
-
+        
+        // Add explicit verification
+        if client.state.event.is_none() {
+            return Err(PyValueError::new_err("Failed to set event in trace()"));
+        }
+    
         Ok(client)
     }
 
@@ -193,7 +305,7 @@ impl PtolemyClient {
                 return Err(PyValueError::new_err("No tier set!"));
             }
         };
-
+    
         let parent_id = match tier {
             Tier::System => self.workspace_id,
             Tier::Subsystem => self.state.event_id(),
@@ -205,14 +317,17 @@ impl PtolemyClient {
                 ))
             }
         };
-
+    
         let event = ProtoRecord::new(
             tier,
             parent_id,
             Uuid::new_v4(),
             ProtoEvent::new(name, parameters, version, environment),
         );
-
+    
+        // Add debug logging
+        println!("Setting event: {:?}", event);
+        
         self.state.set_event(event);
         Ok(())
     }
