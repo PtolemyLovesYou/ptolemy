@@ -11,7 +11,7 @@ os.environ["OBSERVER_PORT"] = "50051"
 print('got here')
 client = PtolemyClient(
     workspace_id='d01152e4-ea36-493e-9641-5104dd3f7a20',
-    autoflush=True,
+    autoflush=False,
     batch_size=1024
     )
 

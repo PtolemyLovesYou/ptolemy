@@ -171,6 +171,10 @@ impl PtolemyClient {
         // First verify we have an event
         self.state.event_id()?;
         self.state.start();
+
+        // queue event
+        Python::with_gil(|py| {self.push_event(py).unwrap()});
+
         Ok(())
     }
 
@@ -200,6 +204,9 @@ impl PtolemyClient {
                 ProtoRuntime::new(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content),
             )
         );
+
+        // push io
+        Python::with_gil(|py| {self.push_io(py).unwrap()});
 
         // if autoflush, flush
         if self.autoflush {
@@ -582,6 +589,8 @@ impl PtolemyClient {
         if records.is_empty() {
             return true;
         }
+
+        println!("Sending {} records to server", records.len());
 
         match self.publish_request(records) {
             Ok(_) => true,
