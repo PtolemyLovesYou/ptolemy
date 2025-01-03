@@ -1,14 +1,42 @@
 """Header file for ptolemy core."""
+
 from __future__ import annotations
 from typing import Optional, Any, Dict
 
 class PtolemyClient:
     """Ptolemy Client."""
-    def __init__(self, workspace_id: str, autoflush: bool, batch_size: int) -> 'PtolemyClient': ...
-    def trace(self, name: str, parameters: Optional[Dict[str, Any]] = None, version: Optional[str] = None, environment: Optional[str] = None) -> 'PtolemyClient': ...
-    def child(self, name: str, parameters: Optional[Dict[str, Any]] = None, version: Optional[str] = None, environment: Optional[str] = None) -> 'PtolemyClient': ...
-    def event(self, name: str, parameters: Optional[Dict[str, Any]] = None, version: Optional[str] = None, environment: Optional[str] = None) -> None: ...
-    def runtime(self, start_time: float, end_time: float, error_type: Optional[str] = None, error_content: Optional[str] = None) -> None: ...
+
+    def __init__(
+        self, workspace_id: str, autoflush: bool, batch_size: int
+    ) -> "PtolemyClient": ...
+    def trace(
+        self,
+        name: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        version: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> "PtolemyClient": ...
+    def child(
+        self,
+        name: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        version: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> "PtolemyClient": ...
+    def event(
+        self,
+        name: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        version: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> None: ...
+    def runtime(
+        self,
+        start_time: float,
+        end_time: float,
+        error_type: Optional[str] = None,
+        error_content: Optional[str] = None,
+    ) -> None: ...
     def inputs(self, **kwds: Any) -> None: ...
     def outputs(self, **kwds: Any) -> None: ...
     def feedback(self, **kwds: Any) -> None: ...
