@@ -7,6 +7,32 @@ use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
+#[derive(Clone, Debug, FromPyObject)]
+pub struct PyUuidObj {
+    hex: String,
+}
+
+impl PyUuidObj {
+    pub fn to_uuid(&self) -> PyResult<Uuid> {
+        get_uuid(&self.hex)
+    }
+}
+
+#[derive(Clone, Debug, FromPyObject)]
+pub enum PyUuid {
+    String(String),
+    PyUuid(PyUuidObj),
+}
+
+impl PyUuid {
+    pub fn to_uuid(&self) -> PyResult<Uuid> {
+        match self {
+            PyUuid::String(uuid) => Ok(get_uuid(uuid)?),
+            PyUuid::PyUuid(uuid) => uuid.to_uuid(),
+        }
+    }
+}
+
 pub fn get_uuid(id: &str) -> PyResult<Uuid> {
     match Uuid::parse_str(&id) {
         Ok(i) => Ok(i),
