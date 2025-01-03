@@ -4,7 +4,7 @@ use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
-use crate::types::{JsonSerializable, Parameters};
+use crate::types::{JsonSerializable, Parameters, PyUuid};
 use ptolemy_core::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -59,10 +59,10 @@ pub struct PtolemyClient {
 #[pymethods]
 impl PtolemyClient {
     #[new]
-    fn new(workspace_id: String, autoflush: bool, batch_size: usize) -> PyResult<Self> {
+    fn new(workspace_id: PyUuid, autoflush: bool, batch_size: usize) -> PyResult<Self> {
         let client = Arc::new(Mutex::new(ObserverHandler::new(batch_size)?));
         Ok(Self {
-            workspace_id: Uuid::parse_str(&workspace_id).unwrap(),
+            workspace_id: workspace_id.to_uuid()?,
             parent_id: None,
             tier: None,
             autoflush,

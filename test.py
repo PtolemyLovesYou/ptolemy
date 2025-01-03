@@ -2,15 +2,18 @@
 
 import os
 import time
+import uuid
 from tqdm.auto import tqdm
 from ptolemy import Ptolemy
 
 os.environ["OBSERVER_HOST"] = "localhost"
 os.environ["OBSERVER_PORT"] = "50051"
 
+workspace_id = uuid.UUID(hex='d01152e4-ea36-493e-9641-5104dd3f7a20')
+
 print('got here')
 client = Ptolemy(
-    workspace_id='d01152e4-ea36-493e-9641-5104dd3f7a20',
+    workspace_id=workspace_id,
     autoflush=False,
     batch_size=1024
     )
