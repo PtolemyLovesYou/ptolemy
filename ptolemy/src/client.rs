@@ -115,10 +115,10 @@ impl PtolemyClientState {
         self.metadata = Some(metadata);
     }
 
-    pub fn event_id(&self) -> Uuid {
+    pub fn event_id(&self) -> PyResult<Uuid> {
         match &self.event {
-            Some(event) => event.id,
-            None => panic!("No event set!"),
+            Some(event) => Ok(event.id),
+            None => Err(PyValueError::new_err("No event set!")),
         }
     }
 }
@@ -127,6 +127,7 @@ impl PtolemyClientState {
 #[pyclass]
 pub struct PtolemyClient {
     workspace_id: Uuid,
+    parent_id: Option<Uuid>,
     tier: Option<Tier>,
     autoflush: bool,
     state: PtolemyClientState,
@@ -153,6 +154,7 @@ impl PtolemyClient {
 
         Ok(Self {
             workspace_id: Uuid::parse_str(&workspace_id).unwrap(),
+            parent_id: None,
             tier: None,
             autoflush,
             state: PtolemyClientState::new(),
@@ -167,9 +169,7 @@ impl PtolemyClient {
         &mut self,
     ) -> PyResult<()> {
         // First verify we have an event
-        if self.state.event.is_none() {
-            return Err(PyValueError::new_err("Context manager entered with no event set"));
-        }
+        self.state.event_id()?;
         self.state.start();
         Ok(())
     }
@@ -195,7 +195,7 @@ impl PtolemyClient {
         self.state.set_runtime(
             ProtoRecord::new(
                 self.tier.unwrap(),
-                self.state.event_id(),
+                self.state.event_id()?,
                 Uuid::new_v4(),
                 ProtoRuntime::new(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content),
             )
@@ -225,6 +225,7 @@ impl PtolemyClient {
     ) -> PyResult<Self> {
         let mut client = Self {
             workspace_id: self.workspace_id,
+            parent_id: None,
             tier: Some(Tier::System),
             autoflush: self.autoflush,
             state: PtolemyClientState::new(),  // This creates fresh state
@@ -234,13 +235,18 @@ impl PtolemyClient {
             batch_size: self.batch_size,
         };
     
-        client.event(name, parameters, version, environment)?;
-        
+        client.state.set_event(
+            ProtoRecord::new(
+                Tier::System,
+                self.workspace_id,
+                Uuid::new_v4(),
+                ProtoEvent::new(name, parameters, version, environment),
+            )
+        );
+
         // Add explicit verification
-        if client.state.event.is_none() {
-            return Err(PyValueError::new_err("Failed to set event in trace()"));
-        }
-    
+        client.state.event_id()?;
+
         Ok(client)
     }
 
@@ -276,7 +282,8 @@ impl PtolemyClient {
         };
 
         let mut client = Self {
-            workspace_id: self.state.event_id(),
+            workspace_id: self.workspace_id,
+            parent_id: Some(self.state.event_id()?),
             tier: Some(child_tier),
             autoflush: self.autoflush,
             state: PtolemyClientState::new(),
@@ -308,9 +315,14 @@ impl PtolemyClient {
     
         let parent_id = match tier {
             Tier::System => self.workspace_id,
-            Tier::Subsystem => self.state.event_id(),
-            Tier::Component => self.state.event_id(),
-            Tier::Subcomponent => self.state.event_id(),
+            Tier::Subsystem | Tier::Component | Tier::Subcomponent => {
+                match self.parent_id {
+                    Some(id) => id,
+                    None => {
+                        return Err(PyValueError::new_err("No parent set!"));
+                    }
+                }
+            },
             Tier::UndeclaredTier => {
                 return Err(PyValueError::new_err(
                     "Undeclared tier. This shouldn't happen. Contact the maintainers.",
@@ -349,7 +361,7 @@ impl PtolemyClient {
 
         let runtime = ProtoRecord::new(
             tier,
-            self.state.event_id(),
+            self.state.event_id()?,
             Uuid::new_v4(),
             ProtoRuntime::new(start_time, end_time, error_type, error_content),
         );
@@ -377,7 +389,7 @@ impl PtolemyClient {
             .map(|(field_name, field_val)| {
                 ProtoRecord::new(
                     tier.clone(),
-                    self.state.event_id(),
+                    self.state.event_id().unwrap(),
                     Uuid::new_v4(),
                     ProtoInput::new(field_name, field_val),
                 )
@@ -408,7 +420,7 @@ impl PtolemyClient {
             .map(|(field_name, field_val)| {
                 ProtoRecord::new(
                     tier.clone(),
-                    self.state.event_id(),
+                    self.state.event_id().unwrap(),
                     Uuid::new_v4(),
                     ProtoOutput::new(field_name, field_val),
                 )
@@ -439,7 +451,7 @@ impl PtolemyClient {
             .map(|(field_name, field_val)| {
                 ProtoRecord::new(
                     tier.clone(),
-                    self.state.event_id(),
+                    self.state.event_id().unwrap(),
                     Uuid::new_v4(),
                     ProtoFeedback::new(field_name, field_val),
                 )
@@ -470,7 +482,7 @@ impl PtolemyClient {
             .map(|(field_name, field_val)| {
                 ProtoRecord::new(
                     tier.clone(),
-                    self.state.event_id(),
+                    self.state.event_id().unwrap(),
                     Uuid::new_v4(),
                     ProtoMetadata::new(field_name, field_val),
                 )

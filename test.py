@@ -1,13 +1,12 @@
-
+"""Test log."""
 
 import os
-from tqdm.auto import tqdm
 import time
+from tqdm.auto import tqdm
+from ptolemy import PtolemyClient
 
 os.environ["OBSERVER_HOST"] = "localhost"
 os.environ["OBSERVER_PORT"] = "50051"
-
-from ptolemy import PtolemyClient
 
 print('got here')
 client = PtolemyClient(
@@ -22,7 +21,13 @@ start = time.time()
 for _ in tqdm(list(range(N))):
     sys = client.trace("test_trace", version='1.2.3', environment='dev')
     with sys:
-        sys.inputs(foo={"bar": "baz"}, baz=1, qux=True, test_str="this is a string", test_float=0.93)
+        sys.inputs(
+            foo={"bar": "baz"},
+            baz=1,
+            qux=True,
+            test_str="this is a string",
+            test_float=0.93
+            )
         subsys = sys.child("sub_trace", version='1.2.3', environment='dev')
         with subsys:
             comp = subsys.child("comp_trace", version='1.2.3', environment='dev')
