@@ -1,10 +1,10 @@
 # For my own vanity...
-*.sql linguist-language=SQL
-*.sql.j2 linguist-langauge=SQL
-
 *.gql linguist-detectable
 *.sql linguist-detectable
 *.sql.j2 linguist-detectable
+*.yaml linguist-detectable
+*.yml linguist-detectable
+*.toml linguist-detectable
 
 .venv/ -linguist-detectable
 target/ -linguist-detectable
