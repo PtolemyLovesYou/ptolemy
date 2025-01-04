@@ -1,5 +1,6 @@
 schema {
   query: Query
+  mutation: Mutation
 }
 
 enum ApiKeyPermissionEnum {
@@ -29,6 +30,10 @@ enum WorkspaceRoleEnum {
 scalar LocalDateTime
 
 scalar Uuid
+
+type Mutation {
+  ping: String!
+}
 
 type Query {
   ping: String!

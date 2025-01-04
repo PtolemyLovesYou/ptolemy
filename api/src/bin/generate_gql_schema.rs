@@ -1,10 +1,10 @@
-use api::graphql::Query;
-use juniper::{EmptyMutation, EmptySubscription, RootNode};
+use api::graphql::{Query, Mutation};
+use juniper::{EmptySubscription, RootNode};
 
 fn main() {
     let schema = RootNode::new(
         Query {},
-        EmptyMutation::<()>::new(),
+        Mutation {},
         EmptySubscription::<()>::new(),
     );
 
