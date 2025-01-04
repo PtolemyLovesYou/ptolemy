@@ -1,4 +1,4 @@
-use crate::routes::graphql::query::{Query, Schema};
+use crate::graphql::query::{Query, Schema};
 use crate::state::AppState;
 use axum::{
     extract::State,
