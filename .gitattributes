@@ -10,6 +10,8 @@
 .venv/ -linguist-detectable
 target/ -linguist-detectable
 
+*.sql.j2 linguist-language=sql
+
 # Set generated code as undetectable >:)
 api/src/generated/*.rs -linguist-detectable
 ptolemy-core/src/generated/*.rs -linguist-detectable
