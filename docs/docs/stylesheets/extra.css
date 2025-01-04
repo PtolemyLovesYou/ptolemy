@@ -4,3 +4,8 @@
     --md-accent-fg-color:         #AAFF00;
     --md-accent-bg-color:         #AAFF00;
   }
+
+/* Maximum space for text block */
+.md-grid {
+  max-width: 100%; /* or 100%, if you want to stretch to full-width */
+}
