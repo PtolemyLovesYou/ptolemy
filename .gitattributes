@@ -5,8 +5,13 @@
 *.yaml linguist-detectable
 *.yml linguist-detectable
 *.toml linguist-detectable
+*.proto linguist-detectable
 
 .venv/ -linguist-detectable
 target/ -linguist-detectable
 
 *.gql linguist-language=GraphQL
+
+# Set generated code as undetectable >:)
+api/src/generated/*.rs -linguist-detectable
+ptolemy-core/src/generated/*.rs -linguist-detectable
