@@ -76,6 +76,8 @@ type Mutation {
   changeWorkspaceUserRole(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
   createServiceApiKey(userId: Uuid!, workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
   deleteServiceApiKey(userId: Uuid!, workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
+  createUserApiKey(userId: Uuid!, name: String!, durationDays: Int): CreateApiKeyResult!
+  deleteUserApiKey(userId: Uuid!, apiKeyId: Uuid!): DeletionResult!
 }
 
 type Query {

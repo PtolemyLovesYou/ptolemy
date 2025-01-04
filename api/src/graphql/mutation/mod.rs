@@ -3,6 +3,7 @@ use crate::crud::auth::{
     workspace as workspace_crud,
     workspace_user as workspace_user_crud,
     service_api_key as service_api_key_crud,
+    user_api_key as user_api_key_crud,
 };
 use crate::{
     models::auth::enums::{WorkspaceRoleEnum, ApiKeyPermissionEnum},
@@ -486,6 +487,73 @@ impl Mutation {
             Err(e) => deletion_error!(
                 "service_api_key",
                 format!("Failed to delete service API key: {:?}", e)
+            ),
+        }
+    }
+
+    async fn create_user_api_key(
+        &self,
+        ctx: &AppState,
+        user_id: Uuid,
+        name: String,
+        duration_days: Option<i32>,
+    ) -> MutationResult<CreateApiKeyResponse> {
+        let mut conn = match ctx.get_conn_http().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                return mutation_error!(
+                    "database",
+                    format!("Failed to get database connection: {}", e)
+                )
+            }
+        };
+
+        let duration = match duration_days {
+            None => None,
+            Some(days) => Some(days as i64).map(chrono::Duration::days),
+        };
+
+        match user_api_key_crud::create_user_api_key(
+            &mut conn,
+            user_id,
+            name,
+            duration,
+            &ctx.password_handler,
+        )
+        .await
+        {
+            Ok((api_key_id, api_key)) => MutationResult(Ok(CreateApiKeyResponse {
+                id: api_key_id,
+                api_key,
+            })),
+            Err(e) => mutation_error!(
+                "user_api_key",
+                format!("Failed to create user API key: {:?}", e)
+            ),
+        }
+    }
+
+    async fn delete_user_api_key(
+        &self,
+        ctx: &AppState,
+        user_id: Uuid,
+        api_key_id: Uuid,
+    ) -> DeletionResult {
+        let mut conn = match ctx.get_conn_http().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                return deletion_error!(
+                    "database",
+                    format!("Failed to get database connection: {}", e)
+                )
+            }
+        };
+
+        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &user_id).await {
+            Ok(_) => DeletionResult(Ok(())),
+            Err(e) => deletion_error!(
+                "user_api_key",
+                format!("Failed to delete user API key: {:?}", e)
             ),
         }
     }

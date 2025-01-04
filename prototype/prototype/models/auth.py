@@ -129,16 +129,29 @@ class UserApiKey(BaseModel):
 
     def delete(self) -> bool:
         """Delete API key."""
-        resp = requests.delete(
-            urljoin(API_URL, f"/user/{self.user_id}/api_key/{self.id}"),
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query(user, "delete_user_api_key"),
+                "variables": {
+                    "userId": self.user_id,
+                    "apiKeyId": self.id,
+                },
+            },
             timeout=5,
         )
 
-        if resp.ok:
-            return True
+        if not resp.ok:
+            st.toast(f"Failed to delete API key: {resp.text}")
 
-        st.toast(f"Failed to delete API key: {resp.text}")
-        return False
+        data = resp.json()['data']['deleteUserApiKey']
+
+        if data['success']:
+            st.toast(f"Successfully deleted API key {self.id}")
+            return True
+        else:
+            st.toast(f"Failed to delete API key {self.id}: {data['error']}")
+            return False
 
     @classmethod
     def create(
@@ -147,24 +160,29 @@ class UserApiKey(BaseModel):
         duration: Optional[int] = None,
     ) -> Optional[str]:
         """Create API key."""
-        data = {
-            "name": name,
-            "duration": duration,
-        }
-
         resp = requests.post(
-            urljoin(API_URL, f"/user/{User.current_user().id}/api_key"),
-            json=data,
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query(user, "create_user_api_key"),
+                "variables": {
+                    "userId": User.current_user().id,
+                    "name": name,
+                    "durationDays": duration,
+                },
+            },
             timeout=5,
         )
 
         if not resp.ok:
-            st.error(f"Failed to create API key: {resp.text}")
+            st.toast(f"Failed to create API key: {resp.text}")
             return None
 
-        api_key = resp.json()
+        data = resp.json()['data']['createUserApiKey']
+        if not data['success']:
+            st.toast(f"Failed to create API key: {data['error']}")
+            return None
 
-        return api_key["api_key"]
+        return data['apiKey']['apiKey']
 
 class WorkspaceUser(BaseModel):
     """Workspace user."""
