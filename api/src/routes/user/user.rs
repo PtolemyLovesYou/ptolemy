@@ -1,10 +1,10 @@
 use crate::crud::auth::user as user_crud;
-use crate::models::auth::models::{User, UserCreate};
+use crate::models::auth::models::UserCreate;
 use crate::state::AppState;
 use axum::{
     extract::Path,
     http::StatusCode,
-    routing::{delete, get, post},
+    routing::{delete, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -68,18 +68,6 @@ async fn create_user(
             let response = CreateUserResponse { id: result };
             Ok((StatusCode::CREATED, Json(response)))
         }
-        Err(e) => Err(e.http_status_code()),
-    }
-}
-
-async fn get_user(
-    state: Arc<AppState>,
-    Path(user_id): Path<Uuid>,
-) -> Result<Json<User>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    match user_crud::get_user(&mut conn, &user_id).await {
-        Ok(result) => Ok(Json(result)),
         Err(e) => Err(e.http_status_code()),
     }
 }
@@ -171,13 +159,6 @@ pub async fn user_base_router(state: &Arc<AppState>) -> Router {
             post({
                 let shared_state = Arc::clone(state);
                 move |user| create_user(shared_state, user)
-            }),
-        )
-        .route(
-            "/:user_id",
-            get({
-                let shared_state = Arc::clone(state);
-                move |user_id| get_user(shared_state, user_id)
             }),
         )
         .route(
