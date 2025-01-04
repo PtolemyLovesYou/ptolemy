@@ -106,8 +106,8 @@ type UserApiKey {
 }
 
 type UserMutation {
-  createUser(userData: UserCreate!): UserResult!
-  deleteUser(id: Uuid!): DeletionResult!
+  create(userData: UserCreate!): UserResult!
+  delete(id: Uuid!): DeletionResult!
   createUserApiKey(name: String!, durationDays: Int): CreateApiKeyResult!
   deleteUserApiKey(apiKeyId: Uuid!): DeletionResult!
 }
@@ -138,7 +138,7 @@ type WorkspaceMutation {
   create(adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
   delete(workspaceId: Uuid!): DeletionResult!
   addUser(workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
-  removeUser(workspaceId: Uuid!, targetUserId: Uuid!): DeletionResult!
+  removeUser(workspaceId: Uuid!, userId: Uuid!): DeletionResult!
   changeWorkspaceUserRole(workspaceId: Uuid!, userId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
   createServiceApiKey(workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
   deleteServiceApiKey(workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!

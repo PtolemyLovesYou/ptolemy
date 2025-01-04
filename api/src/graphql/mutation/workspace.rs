@@ -168,7 +168,7 @@ impl WorkspaceMutation {
         &self,
         ctx: &AppState,
         workspace_id: Uuid,
-        target_user_id: Uuid,
+        user_id: Uuid,
     ) -> DeletionResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
@@ -204,7 +204,7 @@ impl WorkspaceMutation {
                 let target_permission = match workspace_user_crud::get_workspace_user_permission(
                     &mut conn,
                     &workspace_id,
-                    &target_user_id,
+                    &user_id,
                 )
                 .await
                 {
@@ -224,7 +224,7 @@ impl WorkspaceMutation {
             _ => return deletion_error!("permission", "Insufficient permissions"),
         }
 
-        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &target_user_id)
+        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id)
             .await
         {
             Ok(_) => DeletionResult(Ok(())),

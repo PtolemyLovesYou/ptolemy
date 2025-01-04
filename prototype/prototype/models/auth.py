@@ -60,7 +60,7 @@ class ServiceApiKey(BaseModel):
             "userId": User.current_user().id,
         }
 
-        data = execute_gql_query(query, variables)
+        data = execute_gql_query(query, variables).get('workspace')
         if "error" in data:
             return False
 
@@ -94,7 +94,7 @@ class ServiceApiKey(BaseModel):
             "userId": User.current_user().id,
         }
 
-        data = execute_gql_query(query, variables)
+        data = execute_gql_query(query, variables).get('workspace')
         if "error" in data:
             return None
 
@@ -411,7 +411,7 @@ class Workspace(BaseModel):
         if "error" in data:
             return False
 
-        result = data.get("deleteWorkspace", {})
+        result = data.get('workspace').get("delete", {})
         success = result.get("success", False)
 
         if success:
@@ -439,12 +439,13 @@ class Workspace(BaseModel):
             "adminUserId": admin_id or User.current_user().id,
         }
 
-        data = execute_gql_query(query, variables)
+        data = execute_gql_query(query, variables).get('workspace')
+        st.error(str(data))
         if "error" in data:
             return None
 
         try:
-            workspace_data = data["createWorkspace"]["workspace"]
+            workspace_data = data["create"]["workspace"]
             return Workspace(
                 id=workspace_data["id"],
                 name=workspace_data["name"],
@@ -520,7 +521,7 @@ class Workspace(BaseModel):
         if "error" in data:
             return False
 
-        result = data.get("addUserToWorkspace", {})
+        result = data.get('workspace').get("addUser", {})
         success = result.get("success", False)
 
         if success:
@@ -534,7 +535,7 @@ class Workspace(BaseModel):
 
     def remove_user(self, usr: "User") -> bool:
         """Remove user from workspace."""
-        query = resources.read_text(workspace, "delete_user.gql")
+        query = resources.read_text(workspace, "remove_user.gql")
         variables = {
             "userId": User.current_user().id,
             "targetUserId": usr.id,
@@ -545,7 +546,7 @@ class Workspace(BaseModel):
         if "error" in data:
             return False
 
-        result = data.get("deleteUserFromWorkspace", {})
+        result = data.get('workspace').get("removeUser", {})
         success = result.get("success", False)
 
         if success:
@@ -571,7 +572,7 @@ class Workspace(BaseModel):
         if "error" in data:
             return False
 
-        result = data.get("changeWorkspaceUserRole", {})
+        result = data.get('workspace').get("changeWorkspaceUserRole", {})
         success = result.get("success", False)
 
         if success:
