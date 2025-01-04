@@ -67,17 +67,8 @@ type DeletionResult {
 }
 
 type Mutation {
-  createUser(userId: Uuid!, userData: UserCreate!): UserResult!
-  deleteUser(userId: Uuid!, id: Uuid!): DeletionResult!
-  createWorkspace(userId: Uuid!, adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
-  deleteWorkspace(userId: Uuid!, workspaceId: Uuid!): DeletionResult!
-  addUserToWorkspace(userId: Uuid!, workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
-  deleteUserFromWorkspace(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!): DeletionResult!
-  changeWorkspaceUserRole(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
-  createServiceApiKey(userId: Uuid!, workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
-  deleteServiceApiKey(userId: Uuid!, workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
-  createUserApiKey(userId: Uuid!, name: String!, durationDays: Int): CreateApiKeyResult!
-  deleteUserApiKey(userId: Uuid!, apiKeyId: Uuid!): DeletionResult!
+  user(userId: Uuid!): UserMutation!
+  workspace(userId: Uuid!): WorkspaceMutation!
 }
 
 type Query {
@@ -114,6 +105,13 @@ type UserApiKey {
   expiresAt: LocalDateTime
 }
 
+type UserMutation {
+  create(userData: UserCreate!): UserResult!
+  delete(id: Uuid!): DeletionResult!
+  createUserApiKey(name: String!, durationDays: Int): CreateApiKeyResult!
+  deleteUserApiKey(apiKeyId: Uuid!): DeletionResult!
+}
+
 type UserResult {
   success: Boolean!
   user: User
@@ -134,6 +132,16 @@ type Workspace {
   updatedAt: LocalDateTime!
   users(userId: Uuid): [WorkspaceUser!]!
   serviceApiKeys: [ServiceApiKey!]!
+}
+
+type WorkspaceMutation {
+  create(adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
+  delete(workspaceId: Uuid!): DeletionResult!
+  addUser(workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
+  removeUser(workspaceId: Uuid!, userId: Uuid!): DeletionResult!
+  changeWorkspaceUserRole(workspaceId: Uuid!, userId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
+  createServiceApiKey(workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
+  deleteServiceApiKey(workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
 }
 
 type WorkspaceResult {

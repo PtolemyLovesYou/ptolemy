@@ -1,4 +1,4 @@
-use crate::models::auth::models::{User, Workspace, WorkspaceUser, ServiceApiKey};
+use crate::models::auth::models::{ServiceApiKey, User, Workspace, WorkspaceUser};
 use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject};
 use uuid::Uuid;

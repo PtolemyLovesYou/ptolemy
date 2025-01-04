@@ -1,9 +1,11 @@
-mutation DeleteUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
-  deleteUserFromWorkspace(targetUserId: $targetUserId, userId: $userId, workspaceId: $workspaceId) {
-    error {
-      field
-      message
+mutation RemoveUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
+  workspace(userId: $userId) {
+    removeUser(userId: $targetUserId, workspaceId: $workspaceId) {
+      error {
+        field
+        message
+      }
+      success
     }
-    success
   }
 }

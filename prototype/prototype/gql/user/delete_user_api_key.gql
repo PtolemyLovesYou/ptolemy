@@ -1,9 +1,11 @@
 mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
-  deleteUserApiKey(apiKeyId: $apiKeyId, userId: $userId) {
-    error {
-      field
-      message
+  user(userId: $userId) {
+    deleteUserApiKey(apiKeyId: $apiKeyId) {
+      error {
+        field
+        message
+      }
+      success
     }
-    success
   }
 }

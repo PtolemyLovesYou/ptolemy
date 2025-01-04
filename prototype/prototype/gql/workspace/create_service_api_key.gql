@@ -1,18 +1,19 @@
 mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!, $userId: Uuid!, $workspaceId: Uuid!, $durationDays: Int) {
-  createServiceApiKey(
-    name: $name
-    permission: $permission
-    userId: $userId
-    workspaceId: $workspaceId
-    durationDays: $durationDays
-  ) {
-    error {
-      field
-      message
-    }
-    success
-    apiKey {
-      apiKey
+  workspace(userId: $userId) {
+    createServiceApiKey(
+      name: $name
+      permission: $permission
+      workspaceId: $workspaceId
+      durationDays: $durationDays
+    ) {
+      error {
+        field
+        message
+      }
+      success
+      apiKey {
+        apiKey
+      }
     }
   }
 }
