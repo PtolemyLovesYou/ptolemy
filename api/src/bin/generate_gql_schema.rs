@@ -1,4 +1,4 @@
-use api::routes::graphql::query::Query;
+use api::graphql::query::Query;
 use juniper::{EmptyMutation, EmptySubscription, RootNode};
 
 fn main() {
