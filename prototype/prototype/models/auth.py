@@ -268,9 +268,15 @@ class User(BaseModel):
     @property
     def workspaces(self) -> List["Workspace"]:
         """Workspaces belonging to user."""
-        resp = requests.get(
-            urljoin(API_URL, f"user/{self.id}/workspaces"),
+        resp = requests.post(
+            GQL_ROUTE,
             timeout=5,
+            json={
+                "query": get_gql_query("user_workspaces"),
+                "variables": {
+                    "Id": self.id,
+                }
+            }
         )
 
         if not resp.ok:
@@ -278,7 +284,16 @@ class User(BaseModel):
 
             return []
 
-        return [Workspace(**wk) for wk in resp.json()]
+        workspace_info = resp.json()['data']['user'][0]['workspaces']
+
+        return [
+            Workspace(
+                id=wk['id'],
+                description=wk['description'] or None,
+                name=wk['name'],
+                archived=wk['archived']
+                ) for wk in workspace_info or []
+            ]
 
     @property
     def api_keys(self) -> List[UserApiKey]:

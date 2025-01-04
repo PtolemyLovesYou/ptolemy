@@ -1,7 +1,5 @@
 use crate::crud::auth::user as user_crud;
-use crate::crud::auth::workspace as workspace_crud;
-use crate::crud::auth::workspace_user as workspace_user_crud;
-use crate::models::auth::models::{User, UserCreate, Workspace};
+use crate::models::auth::models::{User, UserCreate};
 use crate::state::AppState;
 use axum::{
     extract::Path,
@@ -150,43 +148,6 @@ async fn delete_user(
     }
 }
 
-/// Returns a vector of workspaces that the given user is a member of.
-///
-/// # Arguments
-///
-/// * `state` - An `Arc` wrapped `AppState` reference containing application state.
-/// * `Path(user_id)` - The UUID of the user to get workspaces for.
-///
-/// # Returns
-///
-/// Returns a `Result` containing a `Json` object containing a vector of `Workspace` objects on success,
-/// or a `StatusCode` indicating the error on failure.
-///
-/// # Errors
-///
-/// * `StatusCode::INTERNAL_SERVER_ERROR` - If there is an error retrieving the workspaces from the database.
-async fn get_workspaces_of_user(
-    state: Arc<AppState>,
-    Path(user_id): Path<Uuid>,
-) -> Result<Json<Vec<Workspace>>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    let workspace_user_objs = workspace_user_crud::get_workspaces_of_user(&mut conn, &user_id)
-        .await
-        .map_err(|e| e.http_status_code())?;
-
-    let mut workspaces: Vec<Workspace> = Vec::new();
-
-    for obj in workspace_user_objs {
-        match workspace_crud::get_workspace(&mut conn, &obj.workspace_id).await {
-            Ok(workspace) => workspaces.push(workspace),
-            Err(e) => return Err(e.http_status_code()),
-        }
-    }
-
-    Ok(Json(workspaces))
-}
-
 /// Returns a `Router` containing all routes related to users.
 ///
 /// # Routes
@@ -224,13 +185,6 @@ pub async fn user_base_router(state: &Arc<AppState>) -> Router {
             delete({
                 let shared_state = Arc::clone(state);
                 move |user_id, req| delete_user(shared_state, user_id, req)
-            }),
-        )
-        .route(
-            "/:user_id/workspaces",
-            get({
-                let shared_state = Arc::clone(state);
-                move |user_id| get_workspaces_of_user(shared_state, user_id)
             }),
         )
 }
