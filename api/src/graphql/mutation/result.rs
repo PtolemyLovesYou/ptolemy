@@ -1,4 +1,5 @@
-// use crate::models::auth::models::{User, Workspace};
+use crate::models::auth::models::{User, Workspace};
+use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject};
 
 #[derive(GraphQLObject)]
@@ -40,4 +41,28 @@ macro_rules! deletion_error {
             message: $message.to_string(),
         }]))
     };
+}
+
+#[graphql_object]
+#[graphql(name = "UserResult")]
+impl MutationResult<User> {
+    pub fn user(&self, _ctx: &AppState) -> Option<&User> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
+}
+
+#[graphql_object]
+#[graphql(name = "WorkspaceResult")]
+impl MutationResult<Workspace> {
+    pub fn workspace(&self, _ctx: &AppState) -> Option<&Workspace> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
 }
