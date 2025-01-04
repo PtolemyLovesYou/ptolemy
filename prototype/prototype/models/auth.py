@@ -361,16 +361,30 @@ class Workspace(BaseModel):
 
     def delete(self) -> bool:
         """Delete workspace."""
-        resp = requests.delete(
-            urljoin(API_URL, f"/workspace/{self.id}"),
-            json={"user_id": User.current_user().id},
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("delete_workspace"),
+                "variables": {
+                    "workspaceId": self.id,
+                    "userId": User.current_user().id
+                    }
+                },
             timeout=5,
         )
 
         if not resp.ok:
-            st.error(f"Failed to delete workspace {self.id}: {resp.text}")
+            st.toast(f"Failed to delete workspace {self.id}: {resp.status_code} {resp.text}")
+            return False
 
-        return resp.ok
+        data = resp.json()['data']['deleteWorkspace']
+
+        if data['success']:
+            st.toast(f"Successfully deleted workspace {self.id}")
+            return True
+
+        st.toast(f"Failed to delete workspace {self.id}: {data['error']}")
+        return False
 
     @classmethod
     def create(
