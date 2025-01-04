@@ -4,59 +4,13 @@ use crate::{
     models::auth::models::{User, UserCreate},
     state::AppState,
 };
-use juniper::{graphql_object, GraphQLObject};
+use juniper::graphql_object;
 use uuid::Uuid;
 
-#[derive(GraphQLObject)]
-struct ValidationError {
-    field: String,
-    message: String,
-}
+pub mod result;
 
-struct DeletionResult(Result<(), Vec<ValidationError>>);
-
-#[graphql_object]
-#[graphql(name = "DeletionResult")]
-impl DeletionResult {
-    fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
-    fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
-
-struct MutationResult<T>(Result<T, Vec<ValidationError>>);
-
-#[graphql_object]
-#[graphql(name = "UserResult")]
-impl MutationResult<User> {
-    fn user(&self, _ctx: &AppState) -> Option<&User> {
-        self.0.as_ref().ok()
-    }
-
-    fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
-
-macro_rules! mutation_error {
-    ($field:expr, $message:expr) => {
-        MutationResult(Err(vec![ValidationError {
-            field: $field.to_string(),
-            message: $message.to_string(),
-        }]))
-    };
-}
-
-macro_rules! deletion_error {
-    ($field:expr, $message:expr) => {
-        DeletionResult(Err(vec![ValidationError {
-            field: $field.to_string(),
-            message: $message.to_string(),
-        }]))
-    };
-}
+use self::result::{MutationResult, DeletionResult, ValidationError};
+use crate::{mutation_error, deletion_error};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Mutation;
@@ -109,7 +63,7 @@ impl Mutation {
         }
 
         match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
-            Ok(result) => MutationResult(Ok(result)),
+            Ok(result) => MutationResult::new(Ok(result)),
             Err(e) => mutation_error!("user", format!("Failed to create user: {:?}", e)),
         }
     }
@@ -152,7 +106,7 @@ impl Mutation {
         }
 
         match user_crud::delete_user(&mut conn, &id).await {
-            Ok(_) => DeletionResult(Ok(())),
+            Ok(_) => DeletionResult::new(Ok(())),
             Err(e) => deletion_error!("user", format!("Failed to delete user: {:?}", e)),
         }
     }
