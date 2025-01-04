@@ -10,11 +10,12 @@
 .venv/ -linguist-detectable
 target/ -linguist-detectable
 
-*.gql linguist-language=GraphQL
-
 # Set generated code as undetectable >:)
 api/src/generated/*.rs -linguist-detectable
 ptolemy-core/src/generated/*.rs -linguist-detectable
+
+# Set migrations as detectable
+api/diesel/**/*.sql linguist-detectable
 
 # Set prototype python files as undetectable
 prototype/**/*.py -linguist-detectable
