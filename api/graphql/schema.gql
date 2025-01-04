@@ -33,6 +33,12 @@ input WorkspaceCreate {
   description: String
 }
 
+input WorkspaceUserCreate {
+  userId: Uuid!
+  workspaceId: Uuid!
+  role: WorkspaceRoleEnum!
+}
+
 """
   Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
 
@@ -54,6 +60,9 @@ type Mutation {
   deleteUser(userId: Uuid!, id: Uuid!): DeletionResult!
   createWorkspace(userId: Uuid!, adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
   deleteWorkspace(userId: Uuid!, workspaceId: Uuid!): DeletionResult!
+  addUserToWorkspace(userId: Uuid!, workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
+  deleteUserFromWorkspace(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!): DeletionResult!
+  changeWorkspaceUserRole(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
 }
 
 type Query {
@@ -121,4 +130,9 @@ type WorkspaceUser {
   username: String!
   displayName: String
   role: WorkspaceRoleEnum!
+}
+
+type WorkspaceUserResult {
+  workspaceUser: WorkspaceUser
+  error: [ValidationError!]
 }

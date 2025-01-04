@@ -2,7 +2,7 @@ use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace_user;
 use crate::generated::auth_schema::workspace_user::dsl;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::WorkspaceUser;
+use crate::models::auth::models::{WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -21,14 +21,15 @@ use uuid::Uuid;
 /// This function will return `CRUDError::InsertError` if there is an error inserting the user into the database.
 pub async fn create_workspace_user(
     conn: &mut DbConnection<'_>,
-    wk_user: &WorkspaceUser,
-) -> Result<(), CRUDError> {
+    wk_user: &WorkspaceUserCreate,
+) -> Result<WorkspaceUser, CRUDError> {
     match diesel::insert_into(workspace_user::table)
         .values(wk_user)
-        .execute(conn)
+        .returning(WorkspaceUser::as_returning())
+        .get_result(conn)
         .await
     {
-        Ok(_) => Ok(()),
+        Ok(w) => Ok(w),
         Err(e) => {
             error!("Unable to add workspace_user: {}", e);
             match e {
@@ -84,14 +85,15 @@ pub async fn set_workspace_user_role(
     wk_id: &Uuid,
     us_id: &Uuid,
     role: &WorkspaceRoleEnum,
-) -> Result<(), CRUDError> {
+) -> Result<WorkspaceUser, CRUDError> {
     match diesel::update(workspace_user::table)
         .filter(dsl::workspace_id.eq(wk_id).and(dsl::user_id.eq(us_id)))
         .set(dsl::role.eq(role))
-        .execute(conn)
+        .returning(WorkspaceUser::as_returning())
+        .get_result(conn)
         .await
     {
-        Ok(_) => Ok(()),
+        Ok(w) => Ok(w),
         Err(e) => {
             error!("Unable to update workspace_user role: {}", e);
             match e {

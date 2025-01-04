@@ -1,4 +1,4 @@
-use crate::models::auth::models::{User, Workspace};
+use crate::models::auth::models::{User, Workspace, WorkspaceUser};
 use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject};
 
@@ -16,6 +16,7 @@ impl DeletionResult {
     fn success(&self) -> bool {
         self.0.as_ref().is_ok()
     }
+
     fn error(&self) -> Option<&[ValidationError]> {
         self.0.as_ref().err().map(Vec::as_slice)
     }
@@ -46,7 +47,27 @@ macro_rules! deletion_error {
 #[graphql_object]
 #[graphql(name = "UserResult")]
 impl MutationResult<User> {
+    pub fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+
     pub fn user(&self, _ctx: &AppState) -> Option<&User> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
+}
+
+#[graphql_object]
+#[graphql(name = "WorkspaceUserResult")]
+impl MutationResult<WorkspaceUser> {
+    pub fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+
+    pub fn workspace_user(&self, _ctx: &AppState) -> Option<&WorkspaceUser> {
         self.0.as_ref().ok()
     }
 
@@ -58,6 +79,10 @@ impl MutationResult<User> {
 #[graphql_object]
 #[graphql(name = "WorkspaceResult")]
 impl MutationResult<Workspace> {
+    pub fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+
     pub fn workspace(&self, _ctx: &AppState) -> Option<&Workspace> {
         self.0.as_ref().ok()
     }

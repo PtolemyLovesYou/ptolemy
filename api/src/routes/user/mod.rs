@@ -13,9 +13,8 @@ pub mod user_api_key;
 ///
 /// Note that the user API key routes are nested under `/:user_id/api_key/`.
 pub async fn user_router(state: &Arc<AppState>) -> Router {
-    Router::new()
-        .nest(
-            "/:user_id/api_key",
-            self::user_api_key::user_api_key_router(state).await,
-        )
+    Router::new().nest(
+        "/:user_id/api_key",
+        self::user_api_key::user_api_key_router(state).await,
+    )
 }
