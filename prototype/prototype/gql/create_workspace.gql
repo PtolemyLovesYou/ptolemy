@@ -1,4 +1,4 @@
-mutation MyMutation($userId: Uuid!, $name: String!, $description: String, $adminUserId: Uuid!) {
+mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $adminUserId: Uuid!) {
   createWorkspace(
     userId: $userId
     workspaceData: {name: $name, description: $description}
