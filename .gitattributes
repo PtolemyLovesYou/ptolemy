@@ -1,0 +1,8 @@
+# For my own vanity...
+*.sql linguist-language=SQL
+
+*.gql linguist-detectable
+*.sql linguist-detectable
+
+.venv/ -linguist-detectable
+target/ -linguist-detectable
