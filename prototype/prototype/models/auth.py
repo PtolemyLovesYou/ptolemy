@@ -3,12 +3,19 @@
 from typing import Optional, List
 from datetime import datetime
 from enum import StrEnum
+from importlib import resources
 from urllib.parse import urljoin
 import requests
 from pydantic import BaseModel, field_validator
 import streamlit as st
 from ..env_settings import API_URL
+from .. import gql
 
+def get_gql_query(name: str) -> str:
+    """Get GQL query."""
+    return resources.read_text(gql, f"{name}.gql")
+
+GQL_ROUTE = urljoin(API_URL, "/graphql")
 
 class UserRole(StrEnum):
     """User role."""
@@ -181,12 +188,22 @@ class User(BaseModel):
     @classmethod
     def all(cls) -> List["User"]:
         """Get all users."""
-        user_list = requests.get(
-            urljoin(API_URL, "/user/all"),
+        user_list = requests.post(
+            GQL_ROUTE,
+            json={"query": get_gql_query("all_users")},
             timeout=10,
         ).json()
 
-        return [User(**u) for u in user_list]
+        return [
+            User(
+                id=d["id"],
+                username=d["username"],
+                is_admin=d["isAdmin"],
+                is_sysadmin=d["isSysadmin"],
+                status=d["status"],
+                display_name=d["displayName"],
+                ) for d in user_list["data"]["user"]
+            ]
 
     @classmethod
     def create(
