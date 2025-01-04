@@ -40,6 +40,7 @@ scalar LocalDateTime
 scalar Uuid
 
 type DeletionResult {
+  success: Boolean!
   error: [ValidationError!]
 }
 
