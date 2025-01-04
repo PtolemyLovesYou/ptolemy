@@ -24,7 +24,7 @@ impl UserMutation {
 
 #[graphql_object]
 impl UserMutation {
-    async fn create_user(&self, ctx: &AppState, user_data: UserCreate) -> MutationResult<User> {
+    async fn create(&self, ctx: &AppState, user_data: UserCreate) -> MutationResult<User> {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
@@ -65,7 +65,7 @@ impl UserMutation {
         }
     }
 
-    async fn delete_user(&self, ctx: &AppState, id: Uuid) -> DeletionResult {
+    async fn delete(&self, ctx: &AppState, id: Uuid) -> DeletionResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {

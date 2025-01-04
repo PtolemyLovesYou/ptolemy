@@ -1,12 +1,14 @@
 mutation CreateUserApiKey($name: String!, $userId: Uuid!, $durationDays: Int) {
-  createUserApiKey(name: $name, userId: $userId, durationDays: $durationDays) {
-    apiKey {
-      apiKey
+  user(userId: $userId) {
+    createUserApiKey(name: $name, durationDays: $durationDays) {
+      apiKey {
+        apiKey
+      }
+      error {
+        field
+        message
+      }
+      success
     }
-    error {
-      field
-      message
-    }
-    success
   }
 }

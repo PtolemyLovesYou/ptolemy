@@ -162,7 +162,7 @@ class UserApiKey(BaseModel):
         if "error" in data:
             return False
 
-        result = data.get("deleteUserApiKey", {})
+        result = data.get('user', {}).get("deleteUserApiKey", {})
         success = result.get("success", False)
 
         if success:
@@ -193,7 +193,7 @@ class UserApiKey(BaseModel):
             return None
 
         try:
-            result = data["createUserApiKey"]
+            result = data['user']["createUserApiKey"]
             if not result.get("success"):
                 st.toast(
                     f"Failed to create API key: {result.get('error', 'Unknown error')}"
@@ -239,7 +239,7 @@ class User(BaseModel):
         if "error" in data:
             return False
 
-        result = data.get("deleteUser", {})
+        result = data.get('user').get("delete", {})
         success = result.get("success", False)
 
         if success:
@@ -292,18 +292,26 @@ class User(BaseModel):
         query = resources.read_text(user, "create.gql")
         variables = {
             "userId": User.current_user().id,
-            "Username": username,
-            "Password": password,
+            "username": username,
+            "password": password,
             "isAdmin": role == UserRole.ADMIN,
             "displayName": display_name,
         }
 
         data = execute_gql_query(query, variables)
-        if "error" in data:
-            st.error("You lack permissions to create users.")
-            return False
 
-        return True
+        try:
+            result = data['user']["create"]
+            if not result.get("success"):
+                st.toast(
+                    f"Failed to create user: {result.get('error', 'Unknown error')}"
+                )
+                return False
+
+            return True
+        except (KeyError, TypeError):
+            st.error(str(data))
+            return False
 
     @property
     def role(self) -> UserRole:
