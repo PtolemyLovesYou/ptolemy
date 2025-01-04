@@ -1,10 +1,10 @@
 # For my own vanity...
 *.gql linguist-detectable
-*.sql linguist-detectable
-*.sql.j2 linguist-detectable
-*.yaml linguist-detectable
-*.yml linguist-detectable
-*.toml linguist-detectable
+# *.sql linguist-detectable
+# *.sql.j2 linguist-detectable
+# *.yaml linguist-detectable
+# *.yml linguist-detectable
+# *.toml linguist-detectable
 *.proto linguist-detectable
 
 .venv/ -linguist-detectable
