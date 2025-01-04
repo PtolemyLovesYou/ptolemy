@@ -12,6 +12,18 @@ use crate::graphql::mutation::mutation::Mutation;
 use crate::{mutation_error, deletion_error};
 
 #[graphql_object]
+#[graphql(name = "UserResult")]
+impl MutationResult<User> {
+    pub fn user(&self, _ctx: &AppState) -> Option<&User> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
+}
+
+#[graphql_object]
 #[graphql(context = AppState)]
 impl Mutation {
     async fn create_user(
@@ -55,7 +67,7 @@ impl Mutation {
         }
 
         match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
-            Ok(result) => MutationResult::new(Ok(result)),
+            Ok(result) => MutationResult(Ok(result)),
             Err(e) => mutation_error!("user", format!("Failed to create user: {:?}", e)),
         }
     }
@@ -98,7 +110,7 @@ impl Mutation {
         }
 
         match user_crud::delete_user(&mut conn, &id).await {
-            Ok(_) => DeletionResult::new(Ok(())),
+            Ok(_) => DeletionResult(Ok(())),
             Err(e) => deletion_error!("user", format!("Failed to delete user: {:?}", e)),
         }
     }
