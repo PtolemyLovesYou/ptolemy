@@ -54,6 +54,8 @@ plugins:
   - plantuml:
         puml_url: https://www.plantuml.com/plantuml/
         verbose: true
+        theme:
+          dark: material/light-green-dark
 
 markdown_extensions:
   - attr_list

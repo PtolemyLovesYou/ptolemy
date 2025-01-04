@@ -2,7 +2,7 @@
 
 ```puml
 @startuml DatabaseSchema
-!theme crt-amber
+
 skinparam linetype ortho
 
 ' Enums
