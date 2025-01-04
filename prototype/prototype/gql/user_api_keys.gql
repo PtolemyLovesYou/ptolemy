@@ -1,4 +1,4 @@
-query UserApiKeys($Id: String) {
+query UserApiKeys($Id: Uuid) {
   user(id: $Id) {
     userApiKeys {
       expiresAt

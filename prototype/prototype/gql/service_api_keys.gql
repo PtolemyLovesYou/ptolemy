@@ -1,4 +1,4 @@
-query MyQuery($Id: String) {
+query WorkspaceServiceApiKeys($Id: Uuid) {
   workspace(id: $Id) {
     serviceApiKeys {
       id

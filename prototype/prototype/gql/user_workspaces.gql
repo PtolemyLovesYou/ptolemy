@@ -1,4 +1,4 @@
-query UserWorkspaces($Id: String) {
+query UserWorkspaces($Id: Uuid) {
   user(id: $Id) {
     workspaces {
       archived

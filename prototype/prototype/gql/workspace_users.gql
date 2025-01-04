@@ -1,4 +1,4 @@
-query UserWorkspaces($Id: String) {
+query UserWorkspaces($Id: Uuid) {
   workspace(id: $Id) {
     users {
       id

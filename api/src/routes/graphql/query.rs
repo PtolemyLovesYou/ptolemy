@@ -2,7 +2,7 @@ use crate::crud::auth::{user as user_crud, workspace as workspace_crud};
 use crate::models::auth::models::{User, Workspace};
 use crate::state::AppState;
 use juniper::{
-    graphql_object, EmptyMutation, EmptySubscription, FieldError, FieldResult, RootNode,
+    graphql_object, EmptyMutation, EmptySubscription, FieldResult, RootNode,
 };
 use uuid::Uuid;
 
@@ -18,18 +18,10 @@ impl Query {
 
     async fn user(
         ctx: &AppState,
-        id: Option<String>,
+        id: Option<Uuid>,
         username: Option<String>,
     ) -> FieldResult<Vec<User>> {
         let conn = &mut ctx.get_conn_http().await.unwrap();
-
-        let id = match id {
-            Some(id) => Some(
-                Uuid::parse_str(&id)
-                    .map_err(|_| FieldError::from(format!("Invalid UUID: {}", id)))?,
-            ),
-            None => None,
-        };
 
         user_crud::search_users(conn, id, username)
             .await
@@ -38,19 +30,11 @@ impl Query {
 
     async fn workspace(
         ctx: &AppState,
-        id: Option<String>,
+        id: Option<Uuid>,
         name: Option<String>,
         archived: Option<bool>,
     ) -> FieldResult<Vec<Workspace>> {
         let conn = &mut ctx.get_conn_http().await.unwrap();
-
-        let id = match id {
-            Some(id) => Some(
-                Uuid::parse_str(&id)
-                    .map_err(|_| FieldError::from(format!("Invalid UUID: {}", id)))?,
-            ),
-            None => None,
-        };
 
         workspace_crud::search_workspaces(conn, id, name, archived)
             .await

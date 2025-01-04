@@ -6,7 +6,7 @@ use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, Workspace
 use crate::models::auth::models::{ServiceApiKey, User, UserApiKey, Workspace};
 use crate::state::AppState;
 use chrono::NaiveDateTime;
-use juniper::{graphql_object, FieldError, FieldResult, GraphQLObject};
+use juniper::{graphql_object, FieldResult, GraphQLObject};
 use uuid::Uuid;
 
 #[derive(GraphQLObject)]
@@ -46,31 +46,21 @@ impl Workspace {
     async fn users(
         &self,
         ctx: &AppState,
-        user_id: Option<String>,
+        user_id: Option<Uuid>,
     ) -> FieldResult<Vec<WorkspaceUser>> {
-        #[allow(unused_mut)]
         let mut conn = ctx.get_conn_http().await.unwrap();
-
-        let user_id = match user_id {
-            Some(id) => Some(
-                Uuid::parse_str(&id)
-                    .map_err(|_| FieldError::from(format!("Invalid UUID: {}", id)))?,
-            ),
-            None => None,
-        };
 
         let workspace_users =
             workspace_user_crud::search_workspace_users(&mut conn, &self.id, &user_id)
                 .await
-                .unwrap();
+                .map_err(|e| e.juniper_field_error())?;
 
         let mut users: Vec<WorkspaceUser> = vec![];
 
-        // TODO: Better error handling
         for workspace_user in workspace_users {
             let user = user_crud::get_user(&mut conn, &workspace_user.user_id)
                 .await
-                .unwrap();
+                .map_err(|e| e.juniper_field_error())?;
 
             users.push(WorkspaceUser {
                 id: user.id.to_string(),
@@ -86,10 +76,9 @@ impl Workspace {
     async fn service_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<ServiceApiKey>> {
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        // TODO: Better error handling
         let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &self.id)
             .await
-            .unwrap();
+            .map_err(|e| e.juniper_field_error())?;
 
         Ok(api_keys)
     }
@@ -121,32 +110,32 @@ impl User {
         self.is_sysadmin
     }
 
-    async fn workspaces(&self, ctx: &AppState) -> Vec<Workspace> {
+    async fn workspaces(&self, ctx: &AppState) -> FieldResult<Vec<Workspace>> {
         let conn = &mut ctx.get_conn_http().await.unwrap();
         let workspace_users = workspace_user_crud::get_workspaces_of_user(conn, &self.id)
             .await
-            .unwrap();
+            .map_err(|e| e.juniper_field_error())?;
         let mut workspaces: Vec<Workspace> = Vec::new();
 
-        // TODO: Better error handling
         for wk in workspace_users {
             workspaces.push(
                 workspace_crud::get_workspace(conn, &wk.workspace_id)
                     .await
-                    .unwrap(),
+                    .map_err(|e| e.juniper_field_error())?,
             );
         }
 
-        workspaces
+        Ok(workspaces)
     }
 
     async fn user_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<UserApiKey>> {
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        // TODO: Error handling
-        Ok(user_api_key_crud::get_user_api_keys(&mut conn, &self.id)
+        let api_keys = user_api_key_crud::get_user_api_keys(&mut conn, &self.id)
             .await
-            .unwrap())
+            .map_err(|e| e.juniper_field_error())?;
+
+        Ok(api_keys)
     }
 }
 

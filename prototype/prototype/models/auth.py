@@ -291,7 +291,7 @@ class User(BaseModel):
         )
 
         if not resp.ok:
-            st.toast(f"Failed to get workspaces: {resp.status_code}")
+            st.toast(f"Failed to get workspaces: {resp.status_code} {resp.text}")
 
             return []
 
