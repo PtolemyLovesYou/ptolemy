@@ -39,6 +39,9 @@ nav:
     - Introduction: guides/index.md
   - API Reference:
     - Introduction: api_reference/introduction.md
+    - System Reference:
+      - GraphQL Schema: api_reference/system/gql_schema.md
+      - Database Schema: api_reference/system/database_schema.md
   - Integrations:
     - integrations.md
   - Contributing:
@@ -48,6 +51,9 @@ nav:
 
 plugins:
   - search
+  - plantuml:
+        puml_url: https://www.plantuml.com/plantuml/
+        verbose: true
 
 markdown_extensions:
   - attr_list
@@ -62,8 +68,8 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ['.', '../api', '../ptolemy', '../ptolemy-core']
 
 extra:
   consent:

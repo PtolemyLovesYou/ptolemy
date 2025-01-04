@@ -21,3 +21,7 @@ api/diesel/**/*.sql linguist-detectable
 
 # Set prototype python files as undetectable
 prototype/**/*.py -linguist-detectable
+
+# Code snippets
+*.md linguist-detectable=true
+*.md linguist-documentation=false
