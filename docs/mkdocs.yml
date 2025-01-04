@@ -39,9 +39,9 @@ nav:
     - Introduction: guides/index.md
   - API Reference:
     - Introduction: api_reference/introduction.md
-    - System Reference:
-      - GraphQL Schema: api_reference/system/gql_schema.md
-      - Database Schema: api_reference/system/database_schema.md
+    - GraphQL Schema: api_reference/gql_schema.md
+    - System Diagrams:
+      - Database Schema: api_reference/system_diagrams/database_schema.md
   - Integrations:
     - integrations.md
   - Contributing:
