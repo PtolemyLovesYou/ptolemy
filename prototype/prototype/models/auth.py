@@ -63,11 +63,28 @@ class ServiceApiKey(BaseModel):
 
     def delete(self) -> None:
         """Delete API key."""
-        requests.delete(
-            urljoin(API_URL, f"/workspace/{self.workspace_id}/api_key/{self.id}"),
-            json={"user_id": User.current_user().id},
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query(workspace, "delete_service_api_key"),
+                "variables": {
+                    "workspaceId": self.workspace_id,
+                    "apiKeyId": self.id,
+                    "userId": User.current_user().id,
+                },
+            },
             timeout=5,
         )
+
+        if not resp.ok:
+            st.toast(f"Failed to delete API key: {resp.text}")
+
+        data = resp.json()['data']['deleteServiceApiKey']
+
+        if data['success']:
+            st.toast(f"Successfully deleted API key {self.id}")
+        else:
+            st.toast(f"Failed to delete API key {self.id}: {data['error']}")
 
     @classmethod
     def create(
@@ -78,27 +95,26 @@ class ServiceApiKey(BaseModel):
         duration: Optional[int] = None,
     ) -> Optional[str]:
         """Create API key."""
-        data = {
-            "user_id": User.current_user().id,
-            "workspace_id": wk.id,
-            "name": name,
-            "permission": permission,
-            "duration": duration,
-        }
-
         resp = requests.post(
-            urljoin(API_URL, f"/workspace/{wk.id}/api_key"),
-            json=data,
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query(workspace, "create_service_api_key"),
+                "variables": {
+                    "workspaceId": wk.id,
+                    "name": name,
+                    "durationDays": duration,
+                    "permission": permission,
+                    "userId": User.current_user().id,
+                },
+            },
             timeout=5,
         )
 
         if not resp.ok:
-            st.error(f"Failed to create API key: {resp.text}")
+            st.toast(f"Failed to create API key: {resp.text}")
             return None
 
-        api_key = resp.json()
-
-        return api_key["api_key"]
+        return resp.json()["data"]["createServiceApiKey"]['apiKey']['apiKey']
 
 
 class UserApiKey(BaseModel):

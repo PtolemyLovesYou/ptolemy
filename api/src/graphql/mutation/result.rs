@@ -1,8 +1,15 @@
-use crate::models::auth::models::{User, Workspace, WorkspaceUser};
+use crate::models::auth::models::{User, Workspace, WorkspaceUser, ServiceApiKey};
 use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject};
+use uuid::Uuid;
 
-#[derive(GraphQLObject)]
+#[derive(Debug, GraphQLObject)]
+pub struct CreateApiKeyResponse {
+    pub api_key: String,
+    pub id: Uuid,
+}
+
+#[derive(Debug, GraphQLObject)]
 pub struct ValidationError {
     pub field: String,
     pub message: String,
@@ -85,6 +92,38 @@ impl MutationResult<Workspace> {
 
     pub fn workspace(&self, _ctx: &AppState) -> Option<&Workspace> {
         self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
+}
+
+#[graphql_object]
+#[graphql(name = "ServiceApiKeyResult")]
+impl MutationResult<ServiceApiKey> {
+    pub fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+
+    pub fn service_api_key(&self, _ctx: &AppState) -> Option<&ServiceApiKey> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
+}
+
+#[graphql_object]
+#[graphql(name = "CreateApiKeyResult")]
+impl MutationResult<CreateApiKeyResponse> {
+    pub fn api_key(&self, _ctx: &AppState) -> Option<&CreateApiKeyResponse> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
     }
 
     pub fn error(&self) -> Option<&[ValidationError]> {

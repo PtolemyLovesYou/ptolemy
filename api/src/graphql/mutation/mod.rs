@@ -1,8 +1,11 @@
 use crate::crud::auth::{
-    user as user_crud, workspace as workspace_crud, workspace_user as workspace_user_crud,
+    user as user_crud,
+    workspace as workspace_crud,
+    workspace_user as workspace_user_crud,
+    service_api_key as service_api_key_crud,
 };
 use crate::{
-    models::auth::enums::WorkspaceRoleEnum,
+    models::auth::enums::{WorkspaceRoleEnum, ApiKeyPermissionEnum},
     models::auth::models::{
         User, UserCreate, Workspace, WorkspaceCreate, WorkspaceUser, WorkspaceUserCreate,
     },
@@ -11,7 +14,7 @@ use crate::{
 use juniper::graphql_object;
 use uuid::Uuid;
 
-use self::result::{DeletionResult, MutationResult, ValidationError};
+use self::result::{DeletionResult, MutationResult, ValidationError, CreateApiKeyResponse};
 use crate::{deletion_error, mutation_error};
 
 pub mod mutation;
@@ -384,6 +387,105 @@ impl Mutation {
             Err(e) => mutation_error!(
                 "workspace_user",
                 format!("Failed to change user role: {:?}", e)
+            ),
+        }
+    }
+
+    async fn create_service_api_key(
+        &self,
+        ctx: &AppState,
+        user_id: Uuid,
+        workspace_id: Uuid,
+        name: String,
+        permission: ApiKeyPermissionEnum,
+        duration_days: Option<i32>,
+    ) -> MutationResult<CreateApiKeyResponse> {
+        let mut conn = match ctx.get_conn_http().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                return mutation_error!(
+                    "database",
+                    format!("Failed to get database connection: {}", e)
+                )
+            }
+        };
+
+        // Check user permissions
+        match workspace_user_crud::get_workspace_user_permission(&mut conn, &workspace_id, &user_id).await {
+            Ok(role) => match role {
+                WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
+                _ => return mutation_error!("permission", "Insufficient permissions"),
+            },
+            Err(e) => {
+                return mutation_error!(
+                    "permission",
+                    format!("Failed to get workspace user permission: {:?}", e)
+                )
+            }
+        };
+
+        let duration = match duration_days {
+            None => None,
+            Some(days) => Some(days as i64).map(chrono::Duration::days),
+        };
+
+        match service_api_key_crud::create_service_api_key(
+            &mut conn,
+            workspace_id,
+            name,
+            permission,
+            duration,
+            &ctx.password_handler,
+        )
+        .await
+        {
+            Ok((api_key_id, api_key)) => MutationResult(Ok(CreateApiKeyResponse {
+                id: api_key_id,
+                api_key,
+            })),
+            Err(e) => mutation_error!(
+                "service_api_key",
+                format!("Failed to create service API key: {:?}", e)
+            ),
+        }
+    }
+
+    async fn delete_service_api_key(
+        &self,
+        ctx: &AppState,
+        user_id: Uuid,
+        workspace_id: Uuid,
+        api_key_id: Uuid,
+    ) -> DeletionResult {
+        let mut conn = match ctx.get_conn_http().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                return deletion_error!(
+                    "database",
+                    format!("Failed to get database connection: {}", e)
+                )
+            }
+        };
+
+        // Check user permissions
+        match workspace_user_crud::get_workspace_user_permission(&mut conn, &workspace_id, &user_id).await {
+            Ok(role) => match role {
+                WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
+                _ => return deletion_error!("permission", "Insufficient permissions"),
+            },
+            Err(e) => {
+                return deletion_error!(
+                    "permission",
+                    format!("Failed to get workspace user permission: {:?}", e)
+                )
+            }
+        };
+
+        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id).await {
+            Ok(_) => DeletionResult(Ok(())),
+            Err(e) => deletion_error!(
+                "service_api_key",
+                format!("Failed to delete service API key: {:?}", e)
             ),
         }
     }

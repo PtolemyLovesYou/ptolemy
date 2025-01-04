@@ -50,6 +50,17 @@ scalar LocalDateTime
 
 scalar Uuid
 
+type CreateApiKeyResponse {
+  apiKey: String!
+  id: Uuid!
+}
+
+type CreateApiKeyResult {
+  apiKey: CreateApiKeyResponse
+  success: Boolean!
+  error: [ValidationError!]
+}
+
 type DeletionResult {
   success: Boolean!
   error: [ValidationError!]
@@ -63,6 +74,8 @@ type Mutation {
   addUserToWorkspace(userId: Uuid!, workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
   deleteUserFromWorkspace(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!): DeletionResult!
   changeWorkspaceUserRole(userId: Uuid!, workspaceId: Uuid!, targetUserId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
+  createServiceApiKey(userId: Uuid!, workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
+  deleteServiceApiKey(userId: Uuid!, workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
 }
 
 type Query {
@@ -100,6 +113,7 @@ type UserApiKey {
 }
 
 type UserResult {
+  success: Boolean!
   user: User
   error: [ValidationError!]
 }
@@ -121,6 +135,7 @@ type Workspace {
 }
 
 type WorkspaceResult {
+  success: Boolean!
   workspace: Workspace
   error: [ValidationError!]
 }
@@ -133,6 +148,7 @@ type WorkspaceUser {
 }
 
 type WorkspaceUserResult {
+  success: Boolean!
   workspaceUser: WorkspaceUser
   error: [ValidationError!]
 }
