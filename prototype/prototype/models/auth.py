@@ -256,6 +256,26 @@ class User(BaseModel):
 
         return UserRole.USER
 
+    def workspace_role(self, workspace_id: str) -> WorkspaceRole:
+        """Get workspace role of user."""
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("user_workspace_role"),
+                "variables": {
+                    "userId": self.id,
+                    "workspaceId": workspace_id,
+                }
+            },
+            timeout=5,
+        )
+
+        if not resp.ok:
+            st.error(f"Failed to get role for workspace {workspace_id} user {self.id}")
+        else:
+            role = resp.json()['data']['workspace'][0]['users'][0]['role']
+            return WorkspaceRole(role)
+
     @property
     def workspaces(self) -> List["Workspace"]:
         """Workspaces belonging to user."""

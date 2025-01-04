@@ -161,12 +161,20 @@ pub async fn get_workspace_user(
     }
 }
 
-pub async fn get_workspace_users(
+pub async fn search_workspace_users(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
+    user_id: &Option<Uuid>,
 ) -> Result<Vec<WorkspaceUser>, CRUDError> {
-    match workspace_user::table
-        .filter(dsl::workspace_id.eq(workspace_id))
+    let mut query = dsl::workspace_user.into_boxed();
+
+    query = query.filter(dsl::workspace_id.eq(workspace_id));
+
+    if let Some(user_id) = user_id {
+        query = query.filter(dsl::user_id.eq(user_id));
+    }
+
+    match query
         .get_results(conn)
         .await
     {

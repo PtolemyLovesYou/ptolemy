@@ -5,7 +5,8 @@ use crate::crud::auth::{
 };
 use crate::models::auth::models::{Workspace, User};
 use crate::state::AppState;
-use juniper::{graphql_object, GraphQLObject};
+use juniper::{graphql_object, GraphQLObject, FieldError, FieldResult};
+use uuid::Uuid;
 
 #[derive(GraphQLObject)]
 pub struct WorkspaceUser {
@@ -41,11 +42,19 @@ impl Workspace {
         self.updated_at.to_string()
     }
 
-    async fn users(&self, ctx: &AppState) -> Vec<WorkspaceUser> {
+    async fn users(&self, ctx: &AppState, user_id: Option<String>) -> FieldResult<Vec<WorkspaceUser>> {
         #[allow(unused_mut)]
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        let workspace_users = workspace_user_crud::get_workspace_users(&mut conn, &self.id)
+        let user_id = match user_id {
+            Some(id) => Some(
+                Uuid::parse_str(&id)
+                    .map_err(|_| FieldError::from(format!("Invalid UUID: {}", id)))?,
+            ),
+            None => None,
+        };
+
+        let workspace_users = workspace_user_crud::search_workspace_users(&mut conn, &self.id, &user_id)
             .await
             .unwrap();
 
@@ -65,7 +74,7 @@ impl Workspace {
             })
         }
 
-        users
+        Ok(users)
     }
 }
 
