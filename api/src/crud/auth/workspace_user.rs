@@ -174,10 +174,7 @@ pub async fn search_workspace_users(
         query = query.filter(dsl::user_id.eq(user_id));
     }
 
-    match query
-        .get_results(conn)
-        .await
-    {
+    match query.get_results(conn).await {
         Ok(users) => Ok(users),
         Err(e) => {
             error!("Unable to get workspace_users: {}", e);

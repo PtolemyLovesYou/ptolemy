@@ -103,7 +103,11 @@ pub async fn get_user(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
 ) -> Result<crate::models::auth::models::User, CRUDError> {
-    match dsl::users.filter(dsl::id.eq(user_id)).get_result(conn).await {
+    match dsl::users
+        .filter(dsl::id.eq(user_id))
+        .get_result(conn)
+        .await
+    {
         Ok(user) => Ok(user),
         Err(e) => {
             error!("Failed to get user: {}", e);
