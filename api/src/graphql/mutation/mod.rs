@@ -165,4 +165,31 @@ impl Mutation {
         
         MutationResult(Ok(workspace))
     }
+
+    async fn delete_workspace(&self, ctx: &AppState, user_id: Uuid, workspace_id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.get_conn_http().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                return deletion_error!(
+                    "database",
+                    format!("Failed to get database connection: {}", e)
+                )
+            }
+        };
+
+        match user_crud::get_user(&mut conn, &user_id)
+            .await {
+                Ok(user) => match user.is_admin {
+                    true => (),
+                    false => return deletion_error!("user", "You must be an admin to delete a workspace"),
+                },
+                Err(e) => return deletion_error!("user", format!("Failed to get user: {:?}", e)),
+            };
+
+        match workspace_crud::delete_workspace(&mut conn, &workspace_id)
+            .await {
+                Ok(_) => DeletionResult(Ok(())),
+                Err(e) => deletion_error!("workspace", format!("Failed to delete workspace: {:?}", e)),
+            }
+    }
 }

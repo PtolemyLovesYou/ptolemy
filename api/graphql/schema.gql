@@ -28,6 +28,11 @@ input UserCreate {
   isAdmin: Boolean!
 }
 
+input WorkspaceCreate {
+  name: String!
+  description: String
+}
+
 """
   Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
 
@@ -47,6 +52,8 @@ type DeletionResult {
 type Mutation {
   createUser(userId: Uuid!, userData: UserCreate!): UserResult!
   deleteUser(userId: Uuid!, id: Uuid!): DeletionResult!
+  createWorkspace(userId: Uuid!, adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
+  deleteWorkspace(userId: Uuid!, workspaceId: Uuid!): DeletionResult!
 }
 
 type Query {
@@ -102,6 +109,11 @@ type Workspace {
   updatedAt: LocalDateTime!
   users(userId: Uuid): [WorkspaceUser!]!
   serviceApiKeys: [ServiceApiKey!]!
+}
+
+type WorkspaceResult {
+  workspace: Workspace
+  error: [ValidationError!]
 }
 
 type WorkspaceUser {
