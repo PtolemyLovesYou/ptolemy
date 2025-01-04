@@ -3,8 +3,9 @@ use crate::crud::auth::{
     workspace_user as workspace_user_crud,
     workspace as workspace_crud,
     service_api_key as service_api_key_crud,
+    user_api_key as user_api_key_crud,
 };
-use crate::models::auth::models::{Workspace, User, ServiceApiKey};
+use crate::models::auth::models::{Workspace, User, ServiceApiKey, UserApiKey};
 use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject, FieldError, FieldResult};
 use uuid::Uuid;
@@ -134,6 +135,13 @@ impl User {
 
         workspaces
     }
+
+    async fn user_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<UserApiKey>> {
+        let mut conn = ctx.get_conn_http().await.unwrap();
+
+        // TODO: Error handling
+        Ok(user_api_key_crud::get_user_api_keys(&mut conn, &self.id).await.unwrap())
+    }
 }
 
 #[graphql_object]
@@ -162,6 +170,32 @@ impl ServiceApiKey {
         match self.expires_at {
             Some(e) => Some(e.to_string()),
             None => None
+        }
+    }
+}
+
+#[graphql_object]
+impl UserApiKey {
+    async fn id(&self) -> String {
+        self.id.to_string()
+    }
+
+    async fn user_id(&self) -> String {
+        self.user_id.to_string()
+    }
+
+    async fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    async fn key_preview(&self) -> String {
+        self.key_preview.clone()
+    }
+
+    async fn expires_at(&self) -> Option<String> {
+        match self.expires_at {
+            Some(e) => Some(e.to_string()),
+            None => None,
         }
     }
 }

@@ -309,8 +309,12 @@ class User(BaseModel):
     @property
     def api_keys(self) -> List[UserApiKey]:
         """User API Keys."""
-        resp = requests.get(
-            urljoin(API_URL, f"/user/{self.id}/api_key"),
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("user_api_keys"),
+                "variables": {"Id": self.id}
+                },
             timeout=5,
         )
 
@@ -319,7 +323,17 @@ class User(BaseModel):
 
             return []
 
-        return [UserApiKey(**ak) for ak in resp.json()]
+        api_keys = resp.json()['data']['user'][0]['userApiKeys']
+
+        return [
+            UserApiKey(
+                id=ak['id'],
+                user_id=ak['userId'],
+                name=ak['name'],
+                key_preview=ak['keyPreview'],
+                expires_at=ak['expiresAt']
+                ) for ak in api_keys
+            ]
 
 
 class Workspace(BaseModel):
