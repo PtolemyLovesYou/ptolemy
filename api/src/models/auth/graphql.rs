@@ -2,6 +2,7 @@ use crate::crud::auth::{
     service_api_key as service_api_key_crud, user as user_crud, user_api_key as user_api_key_crud,
     workspace as workspace_crud, workspace_user as workspace_user_crud,
 };
+use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::models::{ServiceApiKey, User, UserApiKey, Workspace};
 use crate::state::AppState;
 use chrono::NaiveDateTime;
@@ -13,7 +14,7 @@ pub struct WorkspaceUser {
     id: String,
     username: String,
     display_name: Option<String>,
-    role: String,
+    role: WorkspaceRoleEnum,
 }
 
 #[graphql_object]
@@ -75,7 +76,7 @@ impl Workspace {
                 id: user.id.to_string(),
                 username: user.username,
                 display_name: user.display_name,
-                role: format!("{:?}", workspace_user.role),
+                role: workspace_user.role.clone(),
             })
         }
 
@@ -108,8 +109,8 @@ impl User {
         self.display_name.clone()
     }
 
-    async fn status(&self) -> String {
-        format!("{:?}", self.status)
+    async fn status(&self) -> UserStatusEnum {
+        self.status.clone()
     }
 
     async fn is_admin(&self) -> bool {
@@ -167,8 +168,8 @@ impl ServiceApiKey {
         self.key_preview.clone()
     }
 
-    async fn permissions(&self) -> String {
-        format!("{:?}", self.permissions)
+    async fn permissions(&self) -> ApiKeyPermissionEnum {
+        self.permissions.clone()
     }
 
     async fn expires_at(&self) -> Option<NaiveDateTime> {

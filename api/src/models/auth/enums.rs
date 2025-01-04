@@ -5,10 +5,13 @@ use diesel::{
     AsExpression, FromSqlRow,
     {pg::Pg, pg::PgValue},
 };
+use juniper::GraphQLEnum;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize)]
+#[derive(
+    Clone, Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize, GraphQLEnum,
+)]
 #[diesel(sql_type = WorkspaceRole)]
 pub enum WorkspaceRoleEnum {
     User,
@@ -38,7 +41,9 @@ impl FromSql<WorkspaceRole, Pg> for WorkspaceRoleEnum {
     }
 }
 
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize)]
+#[derive(
+    Clone, Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize, GraphQLEnum,
+)]
 #[diesel(sql_type = ApiKeyPermission)]
 pub enum ApiKeyPermissionEnum {
     ReadOnly,
@@ -68,7 +73,9 @@ impl FromSql<ApiKeyPermission, Pg> for ApiKeyPermissionEnum {
     }
 }
 
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize)]
+#[derive(
+    Clone, Debug, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Deserialize, GraphQLEnum,
+)]
 #[diesel(sql_type = UserStatus)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub enum UserStatusEnum {

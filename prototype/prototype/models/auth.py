@@ -20,25 +20,25 @@ GQL_ROUTE = urljoin(API_URL, "/graphql")
 class UserRole(StrEnum):
     """User role."""
 
-    USER = "user"
-    ADMIN = "admin"
-    SYSADMIN = "sysadmin"
+    USER = "USER"
+    ADMIN = "ADMIN"
+    SYSADMIN = "SYSADMIN"
 
 
 class ApiKeyPermission(StrEnum):
     """API Key Permission Enum"""
 
-    READ_ONLY = "ReadOnly"
-    WRITE_ONLY = "WriteOnly"
-    READ_WRITE = "ReadWrite"
+    READ_ONLY = "READ_ONLY"
+    WRITE_ONLY = "WRITE_ONLY"
+    READ_WRITE = "READ_WRITE"
 
 
 class WorkspaceRole(StrEnum):
     """Workspace role."""
 
-    USER = "User"
-    MANAGER = "Manager"
-    ADMIN = "Admin"
+    USER = "USER"
+    MANAGER = "MANAGER"
+    ADMIN = "ADMIN"
 
 
 class ServiceApiKey(BaseModel):
