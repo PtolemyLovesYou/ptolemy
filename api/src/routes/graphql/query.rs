@@ -1,5 +1,8 @@
-use crate::crud::auth::workspace as workspace_crud;
-use crate::models::auth::models::Workspace;
+use crate::crud::auth::{
+    workspace as workspace_crud,
+    user as user_crud
+};
+use crate::models::auth::models::{Workspace, User};
 use crate::state::AppState;
 use juniper::{
     graphql_object, EmptyMutation, EmptySubscription, FieldError, FieldResult, RootNode,
@@ -14,6 +17,26 @@ pub struct Query;
 impl Query {
     async fn ping(_ctx: &AppState) -> String {
         "Pong!".to_string()
+    }
+
+    async fn user(
+        ctx: &AppState,
+        id: Option<String>,
+        username: Option<String>,
+    ) -> FieldResult<Vec<User>> {
+        let conn = &mut ctx.get_conn_http().await.unwrap();
+
+        let id = match id {
+            Some(id) => Some(
+                Uuid::parse_str(&id)
+                    .map_err(|_| FieldError::from(format!("Invalid UUID: {}", id)))?,
+            ),
+            None => None,
+        };
+
+        user_crud::search_users(conn, id, username)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 
     async fn workspace(
