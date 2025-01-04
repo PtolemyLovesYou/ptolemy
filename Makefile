@@ -8,6 +8,9 @@ diesel:
 	docker compose exec api \
 		/bin/bash -c "source /app/configure.sh && /bin/bash"
 
+.PHONY: generate-gql-schema
+generate-gql-schema:
+	cd api && cargo run --bin generate-gql-schema
 
 .PHONY:
 setup:

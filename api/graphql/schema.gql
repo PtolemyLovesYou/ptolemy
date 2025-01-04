@@ -1,0 +1,83 @@
+schema {
+  query: Query
+}
+
+enum ApiKeyPermissionEnum {
+  READ_ONLY
+  WRITE_ONLY
+  READ_WRITE
+}
+
+enum UserStatusEnum {
+  ACTIVE
+  SUSPENDED
+}
+
+enum WorkspaceRoleEnum {
+  USER
+  MANAGER
+  ADMIN
+}
+
+"""
+  Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
+
+  See also [`chrono::NaiveDateTime`][1] for details.
+
+  [1]: https://docs.rs/chrono/latest/chrono/naive/struct.NaiveDateTime.html
+"""
+scalar LocalDateTime
+
+scalar Uuid
+
+type Query {
+  ping: String!
+  user(id: Uuid, username: String): [User!]!
+  workspace(id: Uuid, name: String, archived: Boolean): [Workspace!]!
+}
+
+type ServiceApiKey {
+  id: Uuid!
+  workspaceId: String!
+  name: String!
+  keyPreview: String!
+  permissions: ApiKeyPermissionEnum!
+  expiresAt: LocalDateTime
+}
+
+type User {
+  id: Uuid!
+  username: String!
+  displayName: String
+  status: UserStatusEnum!
+  isAdmin: Boolean!
+  isSysadmin: Boolean!
+  workspaces: [Workspace!]!
+  userApiKeys: [UserApiKey!]!
+}
+
+type UserApiKey {
+  id: String!
+  userId: String!
+  name: String!
+  keyPreview: String!
+  expiresAt: LocalDateTime
+}
+
+type Workspace {
+  id: Uuid!
+  name: String!
+  description: String
+  archived: Boolean!
+  createdAt: LocalDateTime!
+  updatedAt: LocalDateTime!
+  users(userId: Uuid): [WorkspaceUser!]!
+  serviceApiKeys: [ServiceApiKey!]!
+}
+
+type WorkspaceUser {
+  id: String!
+  username: String!
+  displayName: String
+  role: WorkspaceRoleEnum!
+}

@@ -7,6 +7,10 @@ edition = "2021"
 name = "api"
 path = "src/main.rs"
 
+[[bin]]
+name = "generate-gql-schema"
+path = "src/bin/generate_gql_schema.rs"
+
 [dependencies]
 axum = { workspace = true }
 bb8 = { workspace = true }
