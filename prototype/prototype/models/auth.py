@@ -9,11 +9,11 @@ import requests
 from pydantic import BaseModel, field_validator
 import streamlit as st
 from ..env_settings import API_URL
-from .. import gql
+from ..gql import user, workspace
 
-def get_gql_query(name: str) -> str:
+def get_gql_query(pkg, name: str) -> str:
     """Get GQL query."""
-    return resources.read_text(gql, f"{name}.gql")
+    return resources.read_text(pkg, f"{name}.gql")
 
 GQL_ROUTE = urljoin(API_URL, "/graphql")
 
@@ -72,7 +72,7 @@ class ServiceApiKey(BaseModel):
     @classmethod
     def create(
         cls,
-        workspace: "Workspace",
+        wk: "Workspace",
         name: str,
         permission: ApiKeyPermission,
         duration: Optional[int] = None,
@@ -80,14 +80,14 @@ class ServiceApiKey(BaseModel):
         """Create API key."""
         data = {
             "user_id": User.current_user().id,
-            "workspace_id": workspace.id,
+            "workspace_id": wk.id,
             "name": name,
             "permission": permission,
             "duration": duration,
         }
 
         resp = requests.post(
-            urljoin(API_URL, f"/workspace/{workspace.id}/api_key"),
+            urljoin(API_URL, f"/workspace/{wk.id}/api_key"),
             json=data,
             timeout=5,
         )
@@ -179,7 +179,7 @@ class User(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("delete_user"),
+                "query": get_gql_query(user, "delete"),
                 "variables": {
                     "Id": self.id,
                     "userId": User.current_user().id
@@ -206,7 +206,7 @@ class User(BaseModel):
         """Get all users."""
         user_list = requests.post(
             GQL_ROUTE,
-            json={"query": get_gql_query("all_users")},
+            json={"query": get_gql_query(user, "all")},
             timeout=10,
         ).json()
 
@@ -239,7 +239,7 @@ class User(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("create_user"),
+                "query": get_gql_query(user, "create"),
                 "variables": {
                     "userId": user_id,
                     "Username": username,
@@ -276,7 +276,7 @@ class User(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("user_workspace_role"),
+                "query": get_gql_query(workspace, "user_role"),
                 "variables": {
                     "userId": self.id,
                     "workspaceId": workspace_id,
@@ -298,7 +298,7 @@ class User(BaseModel):
             GQL_ROUTE,
             timeout=5,
             json={
-                "query": get_gql_query("user_workspaces"),
+                "query": get_gql_query(user, "workspaces"),
                 "variables": {
                     "Id": self.id,
                 }
@@ -327,7 +327,7 @@ class User(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("user_api_keys"),
+                "query": get_gql_query(user, "user_api_keys"),
                 "variables": {"Id": self.id}
                 },
             timeout=5,
@@ -364,7 +364,7 @@ class Workspace(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("delete_workspace"),
+                "query": get_gql_query(workspace, "delete"),
                 "variables": {
                     "workspaceId": self.id,
                     "userId": User.current_user().id
@@ -397,7 +397,7 @@ class Workspace(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("create_workspace"),
+                "query": get_gql_query(workspace, "create"),
                 "variables": {
                     "userId": User.current_user().id,
                     "name": name,
@@ -429,7 +429,7 @@ class Workspace(BaseModel):
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("workspace_users"),
+                "query": get_gql_query(workspace, "users"),
                 "variables": {"Id": self.id},
             },
             timeout=5,
@@ -457,7 +457,7 @@ class Workspace(BaseModel):
             GQL_ROUTE,
             timeout=5,
             json={
-                "query": get_gql_query("service_api_keys"),
+                "query": get_gql_query(workspace, "service_api_keys"),
                 "variables": {
                     "Id": self.id
                 }
@@ -482,15 +482,15 @@ class Workspace(BaseModel):
                 ) for k in api_keys or []
             ]
 
-    def add_user(self, user: User, role: WorkspaceRole) -> bool:
+    def add_user(self, usr: User, role: WorkspaceRole) -> bool:
         """Add user to workspace."""
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("add_user_to_workspace"),
+                "query": get_gql_query(workspace, "add_user"),
                 "variables": {
                     "userId": User.current_user().id,
-                    "targetUserId": user.id,
+                    "targetUserId": usr.id,
                     "workspaceId": self.id,
                     "role": role
                 }},
@@ -499,28 +499,28 @@ class Workspace(BaseModel):
 
         if not resp.ok:
             st.error(
-                f"Failed to add user {user.id} to workspace {self.id}: {resp.text}"
+                f"Failed to add user {usr.id} to workspace {self.id}: {resp.text}"
             )
             return False
 
         data = resp.json()['data']['addUserToWorkspace']
 
         if data['success']:
-            st.toast(f"Successfully added user {user.id} to workspace {self.id}")
+            st.toast(f"Successfully added user {usr.id} to workspace {self.id}")
             return True
 
-        st.toast(f"Failed to add user {user.id} to workspace {self.id}: {data['error']}")
+        st.toast(f"Failed to add user {usr.id} to workspace {self.id}: {data['error']}")
         return False
 
-    def remove_user(self, user: User) -> bool:
+    def remove_user(self, usr: User) -> bool:
         """Remove user from workspace."""
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("delete_user_from_workspace"),
+                "query": get_gql_query(workspace, "delete_user"),
                 "variables": {
                     "userId": User.current_user().id,
-                    "targetUserId": user.id,
+                    "targetUserId": usr.id,
                     "workspaceId": self.id
                 },
             },
@@ -529,28 +529,28 @@ class Workspace(BaseModel):
 
         if not resp.ok:
             st.error(
-                f"Failed to remove user {user.id} from workspace {self.id}: {resp.text}"
+                f"Failed to remove user {usr.id} from workspace {self.id}: {resp.text}"
             )
             return False
 
         data = resp.json()['data']['deleteUserFromWorkspace']
 
         if data['success']:
-            st.toast(f"Successfully removed user {user.id} from workspace {self.id}")
+            st.toast(f"Successfully removed user {usr.id} from workspace {self.id}")
             return True
 
-        st.toast(f"Failed to remove user {user.id} from workspace {self.id}: {data['error']}")
+        st.toast(f"Failed to remove user {usr.id} from workspace {self.id}: {data['error']}")
         return False
 
-    def change_user_role(self, user: User, role: WorkspaceRole) -> bool:
+    def change_user_role(self, usr: User, role: WorkspaceRole) -> bool:
         """Change user role in workspace."""
         resp = requests.post(
             GQL_ROUTE,
             json={
-                "query": get_gql_query("change_workspace_user_role"),
+                "query": get_gql_query(workspace, "change_user_role"),
                 "variables": {
                     "userId": User.current_user().id,
-                    "targetUserId": user.id,
+                    "targetUserId": usr.id,
                     "workspaceId": self.id,
                     "role": role
                 },
@@ -560,15 +560,15 @@ class Workspace(BaseModel):
 
         if not resp.ok:
             st.error(
-                f"Failed to change user {user.id} role in workspace {self.id}: {resp.text}"
+                f"Failed to change user {usr.id} role in workspace {self.id}: {resp.text}"
             )
             return False
 
         data = resp.json()['data']['changeWorkspaceUserRole']
 
         if data['success']:
-            st.toast(f"Successfully changed user {user.id} role in workspace {self.id}")
+            st.toast(f"Successfully changed user {usr.id} role in workspace {self.id}")
             return True
 
-        st.toast(f"Failed to change user {user.id} role in workspace {self.id}: {data['error']}")
+        st.toast(f"Failed to change user {usr.id} role in workspace {self.id}: {data['error']}")
         return False
