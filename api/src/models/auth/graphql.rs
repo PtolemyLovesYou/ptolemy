@@ -2,8 +2,9 @@ use crate::crud::auth::{
     user as user_crud,
     workspace_user as workspace_user_crud,
     workspace as workspace_crud,
+    service_api_key as service_api_key_crud,
 };
-use crate::models::auth::models::{Workspace, User};
+use crate::models::auth::models::{Workspace, User, ServiceApiKey};
 use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject, FieldError, FieldResult};
 use uuid::Uuid;
@@ -76,31 +77,42 @@ impl Workspace {
 
         Ok(users)
     }
+
+    async fn service_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<ServiceApiKey>> {
+        let mut conn = ctx.get_conn_http().await.unwrap();
+
+        // TODO: Better error handling
+        let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &self.id)
+            .await
+            .unwrap();
+
+        Ok(api_keys)
+    }
 }
 
 #[graphql_object]
 impl User {
-    fn id(&self) -> String {
+    async fn id(&self) -> String {
         self.id.to_string()
     }
 
-    fn username(&self) -> String {
+    async fn username(&self) -> String {
         self.username.clone()
     }
 
-    fn display_name(&self) -> Option<String> {
+    async fn display_name(&self) -> Option<String> {
         self.display_name.clone()
     }
 
-    fn status(&self) -> String {
+    async fn status(&self) -> String {
         format!("{:?}", self.status)
     }
 
-    fn is_admin(&self) -> bool {
+    async fn is_admin(&self) -> bool {
         self.is_admin
     }
 
-    fn is_sysadmin(&self) -> bool {
+    async fn is_sysadmin(&self) -> bool {
         self.is_sysadmin
     }
 
@@ -121,5 +133,35 @@ impl User {
         }
 
         workspaces
+    }
+}
+
+#[graphql_object]
+impl ServiceApiKey {
+    async fn id(&self) -> String {
+        self.id.to_string()
+    }
+
+    async fn workspace_id(&self) -> String {
+        self.workspace_id.to_string()
+    }
+
+    async fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    async fn key_preview(&self) -> String {
+        self.key_preview.clone()
+    }
+
+    async fn permissions(&self) -> String {
+        format!("{:?}", self.permissions)
+    }
+
+    async fn expires_at(&self) -> Option<String> {
+        match self.expires_at {
+            Some(e) => Some(e.to_string()),
+            None => None
+        }
     }
 }

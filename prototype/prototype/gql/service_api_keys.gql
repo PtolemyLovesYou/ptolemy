@@ -1,0 +1,12 @@
+query MyQuery($Id: String) {
+  workspace(id: $Id) {
+    serviceApiKeys {
+      id
+      expiresAt
+      keyPreview
+      name
+      permissions
+      workspaceId
+    }
+  }
+}

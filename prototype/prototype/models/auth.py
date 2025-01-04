@@ -399,9 +399,15 @@ class Workspace(BaseModel):
     @property
     def api_keys(self) -> List[ServiceApiKey]:
         """API keys in workspace."""
-        resp = requests.get(
-            urljoin(API_URL, f"/workspace/{self.id}/api_key"),
+        resp = requests.post(
+            GQL_ROUTE,
             timeout=5,
+            json={
+                "query": get_gql_query("service_api_keys"),
+                "variables": {
+                    "Id": self.id
+                }
+            }
         )
 
         if not resp.ok:
@@ -409,7 +415,18 @@ class Workspace(BaseModel):
 
             return []
 
-        return [ServiceApiKey(**u) for u in resp.json()]
+        api_keys = resp.json()['data']['workspace'][0]['serviceApiKeys']
+
+        return [
+            ServiceApiKey(
+                id=k['id'],
+                expires_at=k['expiresAt'],
+                key_preview=k['keyPreview'],
+                permissions=k['permissions'],
+                workspace_id=k['workspaceId'],
+                name=k['name'],
+                ) for k in api_keys or []
+            ]
 
     def add_user(self, user: User, role: WorkspaceRole) -> bool:
         """Add user to workspace."""
