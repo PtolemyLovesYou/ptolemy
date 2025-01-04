@@ -1,52 +1,17 @@
-use crate::crud::auth::user as user_crud;
 use crate::crud::auth::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::{User, WorkspaceUser};
+use crate::models::auth::models::WorkspaceUser;
 use crate::state::AppState;
 use axum::{
     extract::Path,
     http::StatusCode,
-    routing::{delete, get, post, put},
+    routing::{delete, post, put},
     Json, Router,
 };
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::error;
 use uuid::Uuid;
-
-async fn get_workspace_users(
-    state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-) -> Result<Json<Vec<User>>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    let wk_users = workspace_user_crud::get_workspace_users(&mut conn, &workspace_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    let mut users: Vec<User> = Vec::new();
-
-    for obj in wk_users {
-        match user_crud::get_user(&mut conn, &obj.user_id).await {
-            Ok(user) => users.push(user),
-            Err(e) => return Err(e.http_status_code()),
-        }
-    }
-
-    Ok(Json(users))
-}
-
-async fn get_workspace_user(
-    state: Arc<AppState>,
-    Path((workspace_id, user_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<WorkspaceUser>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    match workspace_user_crud::get_workspace_user(&mut conn, &workspace_id, &user_id).await {
-        Ok(result) => Ok(Json(result)),
-        Err(e) => Err(e.http_status_code()),
-    }
-}
 
 #[derive(Debug, Deserialize)]
 struct CreateWorkspaceUserRequest {
@@ -190,22 +155,6 @@ async fn change_workspace_user_role(
 
 pub async fn workspace_user_router(state: &Arc<AppState>) -> Router {
     Router::new()
-        // Get workspace users [GET]
-        .route(
-            "/",
-            get({
-                let shared_state = Arc::clone(state);
-                move |workspace_id| get_workspace_users(shared_state, workspace_id)
-            }),
-        )
-        // Get role of user in workspace [GET]
-        .route(
-            "/:user_id",
-            get({
-                let shared_state = Arc::clone(state);
-                move |path_vars| get_workspace_user(shared_state, path_vars)
-            }),
-        )
         // Add user to workspace [POST]
         .route(
             "/:user_id",

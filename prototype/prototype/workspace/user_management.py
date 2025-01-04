@@ -54,7 +54,7 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
             [
                 {
                     "username": u.username,
-                    "role": u.workspace_role(workspace.id),
+                    "role": u.role,
                     "delete": False,
                 }
                 for u in users

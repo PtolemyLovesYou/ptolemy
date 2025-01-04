@@ -7,7 +7,7 @@ use crate::state::AppState;
 use axum::{
     extract::Path,
     http::StatusCode,
-    routing::{delete, get, post},
+    routing::{delete, post},
     Json, Router,
 };
 use serde::Deserialize;
@@ -70,18 +70,6 @@ async fn create_workspace(
     Ok((StatusCode::CREATED, Json(wk)))
 }
 
-async fn get_workspace(
-    state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-) -> Result<Json<Workspace>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    match workspace_crud::get_workspace(&mut conn, &workspace_id).await {
-        Ok(result) => Ok(Json(result)),
-        Err(e) => Err(e.http_status_code()),
-    }
-}
-
 async fn ensure_workspace_admin(
     conn: &mut crate::state::DbConnection<'_>,
     user_id: &Uuid,
@@ -134,14 +122,6 @@ pub async fn workspace_base_router(state: &Arc<AppState>) -> Router {
             delete({
                 let shared_state = Arc::clone(state);
                 move |workspace_id, req| delete_workspace(shared_state, workspace_id, req)
-            }),
-        )
-        // Get workspace [GET]
-        .route(
-            "/:workspace_id",
-            get({
-                let shared_state = Arc::clone(state);
-                move |workspace_id| get_workspace(shared_state, workspace_id)
             }),
         )
 }

@@ -1,0 +1,7 @@
+query GetUserWorkspaceRole($workspaceId: String, $userId: String) {
+  workspace(id: $workspaceId) {
+    users(userId: $userId) {
+      role
+    }
+  }
+}

@@ -1117,6 +1117,7 @@ checksum = "943306315b1a7a03d27af9dfb0c288d9f4da8830c17df4bceb7d50a47da0982c"
 dependencies = [
  "async-trait",
  "auto_enums",
+ "chrono",
  "fnv",
  "futures",
  "indexmap 2.7.0",
@@ -1124,6 +1125,7 @@ dependencies = [
  "serde",
  "smartstring",
  "static_assertions",
+ "uuid",
 ]
 
 [[package]]

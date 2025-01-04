@@ -1,13 +1,12 @@
 use crate::crud::auth::service_api_key as service_api_key_crud;
 use crate::crud::auth::workspace_user as workspace_user_crud;
 use crate::models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum};
-use crate::models::auth::models::ServiceApiKey;
 use crate::state::AppState;
 use crate::state::DbConnection;
 use axum::{
     extract::Path,
     http::StatusCode,
-    routing::{delete, get, post},
+    routing::{delete, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -71,32 +70,6 @@ async fn create_service_api_key(
     }))
 }
 
-async fn get_service_api_keys(
-    state: Arc<AppState>,
-    Path(workspace_id): Path<Uuid>,
-) -> Result<Json<Vec<ServiceApiKey>>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &workspace_id)
-        .await
-        .map_err(|e| e.http_status_code())?;
-
-    Ok(Json(api_keys))
-}
-
-async fn get_service_api_key(
-    state: Arc<AppState>,
-    Path((workspace_id, api_key_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<ServiceApiKey>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    let api_key = service_api_key_crud::get_service_api_key(&mut conn, &workspace_id, &api_key_id)
-        .await
-        .map_err(|e| e.http_status_code())?;
-
-    Ok(Json(api_key))
-}
-
 #[derive(Debug, Deserialize)]
 struct DeleteServiceApiKeyRequest {
     user_id: Uuid,
@@ -126,22 +99,6 @@ pub async fn service_api_key_router(state: &Arc<AppState>) -> Router {
             post({
                 let shared_state = Arc::clone(state);
                 move |workspace_id, req| create_service_api_key(shared_state, workspace_id, req)
-            }),
-        )
-        // Get service API key [GET]
-        .route(
-            "/:api_key_id",
-            get({
-                let shared_state = Arc::clone(state);
-                move |path_vars| get_service_api_key(shared_state, path_vars)
-            }),
-        )
-        // Get service API keys [GET]
-        .route(
-            "/",
-            get({
-                let shared_state = Arc::clone(state);
-                move |workspace_id| get_service_api_keys(shared_state, workspace_id)
             }),
         )
         // Delete service API key [DELETE]

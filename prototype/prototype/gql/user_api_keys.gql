@@ -1,0 +1,11 @@
+query UserApiKeys($Id: String) {
+  user(id: $Id) {
+    userApiKeys {
+      expiresAt
+      id
+      keyPreview
+      name
+      userId
+    }
+  }
+}

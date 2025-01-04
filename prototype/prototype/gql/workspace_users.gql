@@ -1,0 +1,9 @@
+query UserWorkspaces($Id: String) {
+  workspace(id: $Id) {
+    users {
+      id
+      role
+      username
+    }
+  }
+}

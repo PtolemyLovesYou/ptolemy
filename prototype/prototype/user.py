@@ -77,8 +77,8 @@ def usr_management_view():
                 with cols[2]:
                     st.selectbox(
                         label=f"user_role_{user.id}",
-                        options=["admin", "sysadmin", "user"],
-                        index=["admin", "sysadmin", "user"].index(user.role),
+                        options=list(UserRole),
+                        index=list(UserRole).index(user.role),
                         disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_role_{user.id}",
                         label_visibility="collapsed",
@@ -86,8 +86,8 @@ def usr_management_view():
                 with cols[3]:
                     st.selectbox(
                         label=f"user_status_{user.id}",
-                        options=["Active", "Suspended"],
-                        index=["Active", "Suspended"].index(user.status),
+                        options=["ACTIVE", "SUSPENDED"],
+                        index=["ACTIVE", "SUSPENDED"].index(user.status),
                         disabled=user.role == UserRole.SYSADMIN,
                         key=f"user_status_{user.id}",
                         label_visibility="collapsed",
