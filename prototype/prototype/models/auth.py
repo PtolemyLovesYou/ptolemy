@@ -1,48 +1,39 @@
 """Models."""
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
-from enum import StrEnum
 from importlib import resources
 from urllib.parse import urljoin
 import requests
 from pydantic import BaseModel, field_validator
 import streamlit as st
+from .enums import WorkspaceRole, ApiKeyPermission, UserRole
 from ..env_settings import API_URL
 from ..gql import user, workspace
 
-def get_gql_query(pkg, name: str) -> str:
-    """Get GQL query."""
-    return resources.read_text(pkg, f"{name}.gql")
-
 GQL_ROUTE = urljoin(API_URL, "/graphql")
 
-class UserRole(StrEnum):
-    """User role."""
 
-    USER = "USER"
-    ADMIN = "ADMIN"
-    SYSADMIN = "SYSADMIN"
-
-
-class ApiKeyPermission(StrEnum):
-    """API Key Permission Enum"""
-
-    READ_ONLY = "READ_ONLY"
-    WRITE_ONLY = "WRITE_ONLY"
-    READ_WRITE = "READ_WRITE"
-
-
-class WorkspaceRole(StrEnum):
-    """Workspace role."""
-
-    USER = "USER"
-    MANAGER = "MANAGER"
-    ADMIN = "ADMIN"
+def execute_gql_query(query: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+    """Execute GraphQL query with standardized error handling."""
+    try:
+        resp = requests.post(
+            GQL_ROUTE,
+            json={"query": query, "variables": variables},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        return resp.json()["data"]
+    except requests.RequestException as e:
+        st.error(f"GraphQL request failed: {str(e)}")
+        return {"error": str(e)}
+    except KeyError as e:
+        st.error(f"Unexpected response format: {str(e)}")
+        return {"error": "Invalid response format"}
 
 
 class ServiceApiKey(BaseModel):
-    """Service API key."""
+    """Service API key with standardized GraphQL operations."""
 
     workspace_id: str
     id: str
@@ -58,33 +49,32 @@ class ServiceApiKey(BaseModel):
         """Validate expiration date."""
         if v:
             return datetime.fromisoformat(v)
-
         return None
 
-    def delete(self) -> None:
-        """Delete API key."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "delete_service_api_key"),
-                "variables": {
-                    "workspaceId": self.workspace_id,
-                    "apiKeyId": self.id,
-                    "userId": User.current_user().id,
-                },
-            },
-            timeout=5,
-        )
+    def delete(self) -> bool:
+        """Delete API key with standardized response handling."""
+        query = resources.read_text(workspace, "delete_service_api_key.gql")
+        variables = {
+            "workspaceId": self.workspace_id,
+            "apiKeyId": self.id,
+            "userId": User.current_user().id,
+        }
 
-        if not resp.ok:
-            st.toast(f"Failed to delete API key: {resp.text}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
+            return False
 
-        data = resp.json()['data']['deleteServiceApiKey']
+        result = data.get("deleteServiceApiKey", {})
+        success = result.get("success", False)
 
-        if data['success']:
+        if success:
             st.toast(f"Successfully deleted API key {self.id}")
         else:
-            st.toast(f"Failed to delete API key {self.id}: {data['error']}")
+            st.toast(
+                f"Failed to delete API key {self.id}: {result.get('error', 'Unknown error')}"
+            )
+
+        return success
 
     @classmethod
     def create(
@@ -94,27 +84,52 @@ class ServiceApiKey(BaseModel):
         permission: ApiKeyPermission,
         duration: Optional[int] = None,
     ) -> Optional[str]:
-        """Create API key."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "create_service_api_key"),
-                "variables": {
-                    "workspaceId": wk.id,
-                    "name": name,
-                    "durationDays": duration,
-                    "permission": permission,
-                    "userId": User.current_user().id,
-                },
-            },
-            timeout=5,
-        )
+        """Create API key with standardized response handling."""
+        query = resources.read_text(workspace, "create_service_api_key.gql")
+        variables = {
+            "workspaceId": wk.id,
+            "name": name,
+            "durationDays": duration,
+            "permission": permission,
+            "userId": User.current_user().id,
+        }
 
-        if not resp.ok:
-            st.toast(f"Failed to create API key: {resp.text}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return None
 
-        return resp.json()["data"]["createServiceApiKey"]['apiKey']['apiKey']
+        try:
+            return data["createServiceApiKey"]["apiKey"]["apiKey"]
+        except (KeyError, TypeError):
+            st.error("Invalid response format from API key creation")
+            return None
+
+    @classmethod
+    def get_workspace_keys(cls, workspace_id: str) -> List["ServiceApiKey"]:
+        """Get all API keys for a workspace."""
+        query = resources.read_text(workspace, "service_api_keys.gql")
+        variables = {"Id": workspace_id}
+
+        data = execute_gql_query(query, variables)
+        if "error" in data:
+            return []
+
+        try:
+            api_keys = data["workspace"][0]["serviceApiKeys"] or []
+            return [
+                cls(
+                    id=k["id"],
+                    expires_at=k["expiresAt"],
+                    key_preview=k["keyPreview"],
+                    permissions=k["permissions"],
+                    workspace_id=k["workspaceId"],
+                    name=k["name"],
+                )
+                for k in api_keys
+            ]
+        except (KeyError, IndexError):
+            st.error("Invalid response format while fetching workspace API keys")
+            return []
 
 
 class UserApiKey(BaseModel):
@@ -127,31 +142,37 @@ class UserApiKey(BaseModel):
     expires_at: Optional[str] = None
     api_key: Optional[str] = None
 
+    @field_validator("expires_at")
+    @classmethod
+    def validate_expires_at(cls, v: Optional[str]) -> datetime:
+        """Validate expiration date."""
+        if v:
+            return datetime.fromisoformat(v)
+        return None
+
     def delete(self) -> bool:
         """Delete API key."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(user, "delete_user_api_key"),
-                "variables": {
-                    "userId": self.user_id,
-                    "apiKeyId": self.id,
-                },
-            },
-            timeout=5,
-        )
+        query = resources.read_text(user, "delete_user_api_key.gql")
+        variables = {
+            "userId": self.user_id,
+            "apiKeyId": self.id,
+        }
 
-        if not resp.ok:
-            st.toast(f"Failed to delete API key: {resp.text}")
-
-        data = resp.json()['data']['deleteUserApiKey']
-
-        if data['success']:
-            st.toast(f"Successfully deleted API key {self.id}")
-            return True
-        else:
-            st.toast(f"Failed to delete API key {self.id}: {data['error']}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return False
+
+        result = data.get("deleteUserApiKey", {})
+        success = result.get("success", False)
+
+        if success:
+            st.toast(f"Successfully deleted API key {self.id}")
+        else:
+            st.toast(
+                f"Failed to delete API key {self.id}: {result.get('error', 'Unknown error')}"
+            )
+
+        return success
 
     @classmethod
     def create(
@@ -160,35 +181,37 @@ class UserApiKey(BaseModel):
         duration: Optional[int] = None,
     ) -> Optional[str]:
         """Create API key."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(user, "create_user_api_key"),
-                "variables": {
-                    "userId": User.current_user().id,
-                    "name": name,
-                    "durationDays": duration,
-                },
-            },
-            timeout=5,
-        )
+        query = resources.read_text(user, "create_user_api_key.gql")
+        variables = {
+            "userId": User.current_user().id,
+            "name": name,
+            "durationDays": duration,
+        }
 
-        if not resp.ok:
-            st.toast(f"Failed to create API key: {resp.text}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return None
 
-        data = resp.json()['data']['createUserApiKey']
-        if not data['success']:
-            st.toast(f"Failed to create API key: {data['error']}")
+        try:
+            result = data["createUserApiKey"]
+            if not result.get("success"):
+                st.toast(
+                    f"Failed to create API key: {result.get('error', 'Unknown error')}"
+                )
+                return None
+            return result["apiKey"]["apiKey"]
+        except (KeyError, TypeError):
+            st.toast("Failed to create API key: Invalid response format")
             return None
 
-        return data['apiKey']['apiKey']
 
 class WorkspaceUser(BaseModel):
     """Workspace user."""
+
     id: str
     username: str
     role: WorkspaceRole
+
 
 class User(BaseModel):
     """User model."""
@@ -205,55 +228,53 @@ class User(BaseModel):
         """Current user."""
         if st.session_state.user_info is None:
             raise ValueError("User is not logged in")
-
         return st.session_state.user_info
 
     def delete(self) -> bool:
         """Delete user."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(user, "delete"),
-                "variables": {
-                    "Id": self.id,
-                    "userId": User.current_user().id
-                }
-            },
-            timeout=5,
-        )
+        query = resources.read_text(user, "delete.gql")
+        variables = {"Id": self.id, "userId": User.current_user().id}
 
-        if not resp.ok:
-            st.toast(f"Failed to delete user {self.id}: {resp.text}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return False
 
-        data = resp.json()['data']['deleteUser']
+        result = data.get("deleteUser", {})
+        success = result.get("success", False)
 
-        if data['success']:
+        if success:
             st.toast(f"Successfully deleted user {self.id}")
-            return True
+        else:
+            st.toast(
+                f"Failed to delete user {self.id}: {result.get('error', 'Unknown error')}"
+            )
 
-        st.toast(f"Failed to delete user {self.id}: {data['error']}")
-        return False
+        return success
 
     @classmethod
     def all(cls) -> List["User"]:
         """Get all users."""
-        user_list = requests.post(
-            GQL_ROUTE,
-            json={"query": get_gql_query(user, "all")},
-            timeout=10,
-        ).json()
+        query = resources.read_text(user, "all.gql")
+        data = execute_gql_query(query, {})
 
-        return [
-            User(
-                id=d["id"],
-                username=d["username"],
-                is_admin=d["isAdmin"],
-                is_sysadmin=d["isSysadmin"],
-                status=d["status"],
-                display_name=d["displayName"],
-                ) for d in user_list["data"]["user"]
+        if "error" in data:
+            return []
+
+        try:
+            return [
+                User(
+                    id=d["id"],
+                    username=d["username"],
+                    is_admin=d["isAdmin"],
+                    is_sysadmin=d["isSysadmin"],
+                    status=d["status"],
+                    display_name=d["displayName"],
+                )
+                for d in data["user"]
             ]
+        except (KeyError, TypeError):
+            st.error("Invalid response format while fetching users")
+            return []
 
     @classmethod
     def create(
@@ -268,121 +289,101 @@ class User(BaseModel):
             st.error("You cannot create a system admin user.")
             return False
 
-        user_id = User.current_user().id
+        query = resources.read_text(user, "create.gql")
+        variables = {
+            "userId": User.current_user().id,
+            "Username": username,
+            "Password": password,
+            "isAdmin": role == UserRole.ADMIN,
+            "displayName": display_name,
+        }
 
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(user, "create"),
-                "variables": {
-                    "userId": user_id,
-                    "Username": username,
-                    "Password": password,
-                    "isAdmin": role == UserRole.ADMIN,
-                    "displayName": display_name,
-                },
-            },
-            timeout=5,
-        )
-
-        if resp.ok:
-            return True
-
-        if resp.status_code == 403:
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             st.error("You lack permissions to create users.")
-        else:
-            st.error(f"Error creating user: {resp.text}")
+            return False
 
-        return False
+        return True
 
     @property
     def role(self) -> UserRole:
         """User role."""
-        if self.is_admin:
-            return UserRole.ADMIN
         if self.is_sysadmin:
             return UserRole.SYSADMIN
-
+        if self.is_admin:
+            return UserRole.ADMIN
         return UserRole.USER
 
-    def workspace_role(self, workspace_id: str) -> WorkspaceRole:
+    def workspace_role(self, workspace_id: str) -> Optional[WorkspaceRole]:
         """Get workspace role of user."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "user_role"),
-                "variables": {
-                    "userId": self.id,
-                    "workspaceId": workspace_id,
-                }
-            },
-            timeout=5,
-        )
+        query = resources.read_text(workspace, "user_role.gql")
+        variables = {
+            "userId": self.id,
+            "workspaceId": workspace_id,
+        }
 
-        if not resp.ok:
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             st.error(f"Failed to get role for workspace {workspace_id} user {self.id}")
-        else:
-            role = resp.json()['data']['workspace'][0]['users'][0]['role']
+            return None
+
+        try:
+            role = data["workspace"][0]["users"][0]["role"]
             return WorkspaceRole(role)
+        except (KeyError, IndexError):
+            st.error(f"Failed to get role for workspace {workspace_id} user {self.id}")
+            return None
 
     @property
     def workspaces(self) -> List["Workspace"]:
         """Workspaces belonging to user."""
-        resp = requests.post(
-            GQL_ROUTE,
-            timeout=5,
-            json={
-                "query": get_gql_query(user, "workspaces"),
-                "variables": {
-                    "Id": self.id,
-                }
-            }
-        )
+        query = resources.read_text(user, "workspaces.gql")
+        variables = {"Id": self.id}
 
-        if not resp.ok:
-            st.toast(f"Failed to get workspaces: {resp.status_code} {resp.text}")
-
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return []
 
-        workspace_info = resp.json()['data']['user'][0]['workspaces']
-
-        return [
-            Workspace(
-                id=wk['id'],
-                description=wk['description'] or None,
-                name=wk['name'],
-                archived=wk['archived']
-                ) for wk in workspace_info or []
+        try:
+            workspace_info = data["user"][0]["workspaces"] or []
+            return [
+                Workspace(
+                    id=wk["id"],
+                    description=wk["description"] or None,
+                    name=wk["name"],
+                    archived=wk["archived"],
+                )
+                for wk in workspace_info
             ]
+        except (KeyError, IndexError):
+            st.toast("Failed to get workspaces: Invalid response format")
+            return []
 
     @property
-    def api_keys(self) -> List[UserApiKey]:
+    def api_keys(self) -> List["UserApiKey"]:
         """User API Keys."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(user, "user_api_keys"),
-                "variables": {"Id": self.id}
-                },
-            timeout=5,
-        )
+        query = resources.read_text(user, "user_api_keys.gql")
+        variables = {"Id": self.id}
 
-        if not resp.ok:
-            st.toast(f"Failed to get API keys: {resp.status_code}")
-
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return []
 
-        api_keys = resp.json()['data']['user'][0]['userApiKeys']
-
-        return [
-            UserApiKey(
-                id=ak['id'],
-                user_id=ak['userId'],
-                name=ak['name'],
-                key_preview=ak['keyPreview'],
-                expires_at=ak['expiresAt']
-                ) for ak in api_keys
+        try:
+            api_keys = data["user"][0]["userApiKeys"] or []
+            return [
+                UserApiKey(
+                    id=ak["id"],
+                    user_id=ak["userId"],
+                    name=ak["name"],
+                    key_preview=ak["keyPreview"],
+                    expires_at=ak["expiresAt"],
+                )
+                for ak in api_keys
             ]
+        except (KeyError, IndexError):
+            st.toast("Failed to get API keys: Invalid response format")
+            return []
 
 
 class Workspace(BaseModel):
@@ -395,30 +396,24 @@ class Workspace(BaseModel):
 
     def delete(self) -> bool:
         """Delete workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "delete"),
-                "variables": {
-                    "workspaceId": self.id,
-                    "userId": User.current_user().id
-                    }
-                },
-            timeout=5,
-        )
+        query = resources.read_text(workspace, "delete.gql")
+        variables = {"workspaceId": self.id, "userId": User.current_user().id}
 
-        if not resp.ok:
-            st.toast(f"Failed to delete workspace {self.id}: {resp.status_code} {resp.text}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return False
 
-        data = resp.json()['data']['deleteWorkspace']
+        result = data.get("deleteWorkspace", {})
+        success = result.get("success", False)
 
-        if data['success']:
+        if success:
             st.toast(f"Successfully deleted workspace {self.id}")
-            return True
+        else:
+            st.toast(
+                f"Failed to delete workspace {self.id}: {result.get('error', 'Unknown error')}"
+            )
 
-        st.toast(f"Failed to delete workspace {self.id}: {data['error']}")
-        return False
+        return success
 
     @classmethod
     def create(
@@ -428,181 +423,154 @@ class Workspace(BaseModel):
         description: Optional[str] = None,
     ) -> Optional["Workspace"]:
         """Create new workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "create"),
-                "variables": {
-                    "userId": User.current_user().id,
-                    "name": name,
-                    "description": description,
-                    "adminUserId": admin_id or User.current_user().id
-                    }
-                },
-            timeout=5,
-        )
+        query = resources.read_text(workspace, "create.gql")
+        variables = {
+            "userId": User.current_user().id,
+            "name": name,
+            "description": description,
+            "adminUserId": admin_id or User.current_user().id,
+        }
 
-        if not resp.ok:
-            st.error(f"Failed to create workspace: {resp.text}")
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return None
 
         try:
-            data = resp.json()['data']['createWorkspace']['workspace']
+            workspace_data = data["createWorkspace"]["workspace"]
             return Workspace(
-                id=data['id'],
-                name=data['name'],
-                description=data.get('description'),
-                archived=data['archived']
+                id=workspace_data["id"],
+                name=workspace_data["name"],
+                description=workspace_data.get("description"),
+                archived=workspace_data["archived"],
             )
-        except KeyError:
-            st.error(resp.text)
+        except (KeyError, TypeError):
+            st.error("Invalid response format from workspace creation")
+            return None
 
     @property
-    def users(self) -> List[WorkspaceUser]:
+    def users(self) -> List["WorkspaceUser"]:
         """Users in workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "users"),
-                "variables": {"Id": self.id},
-            },
-            timeout=5,
-        )
+        query = resources.read_text(workspace, "users.gql")
+        variables = {"Id": self.id}
 
-        if not resp.ok:
-            st.toast(f"Failed to get users in workspace: {resp.status_code}")
-
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return []
 
-        wk_users = resp.json()['data']['workspace'][0]['users']
-
-        return [
-            WorkspaceUser(
-                id=u["id"],
-                role=u["role"],
-                username=u["username"],
-                ) for u in wk_users
+        try:
+            wk_users = data["workspace"][0]["users"]
+            return [
+                WorkspaceUser(
+                    id=u["id"],
+                    role=u["role"],
+                    username=u["username"],
+                )
+                for u in wk_users
             ]
+        except (KeyError, IndexError):
+            st.toast("Failed to get users in workspace: Invalid response format")
+            return []
 
     @property
-    def api_keys(self) -> List[ServiceApiKey]:
+    def api_keys(self) -> List["ServiceApiKey"]:
         """API keys in workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            timeout=5,
-            json={
-                "query": get_gql_query(workspace, "service_api_keys"),
-                "variables": {
-                    "Id": self.id
-                }
-            }
-        )
+        query = resources.read_text(workspace, "service_api_keys.gql")
+        variables = {"Id": self.id}
 
-        if not resp.ok:
-            st.toast(f"Failed to get API keys in workspace: {resp.status_code}")
-
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return []
 
-        api_keys = resp.json()['data']['workspace'][0]['serviceApiKeys']
-
-        return [
-            ServiceApiKey(
-                id=k['id'],
-                expires_at=k['expiresAt'],
-                key_preview=k['keyPreview'],
-                permissions=k['permissions'],
-                workspace_id=k['workspaceId'],
-                name=k['name'],
-                ) for k in api_keys or []
+        try:
+            api_keys = data["workspace"][0]["serviceApiKeys"] or []
+            return [
+                ServiceApiKey(
+                    id=k["id"],
+                    expires_at=k["expiresAt"],
+                    key_preview=k["keyPreview"],
+                    permissions=k["permissions"],
+                    workspace_id=k["workspaceId"],
+                    name=k["name"],
+                )
+                for k in api_keys
             ]
+        except (KeyError, IndexError):
+            st.toast("Failed to get API keys in workspace: Invalid response format")
+            return []
 
-    def add_user(self, usr: User, role: WorkspaceRole) -> bool:
+    def add_user(self, usr: "User", role: WorkspaceRole) -> bool:
         """Add user to workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "add_user"),
-                "variables": {
-                    "userId": User.current_user().id,
-                    "targetUserId": usr.id,
-                    "workspaceId": self.id,
-                    "role": role
-                }},
-            timeout=5,
-        )
+        query = resources.read_text(workspace, "add_user.gql")
+        variables = {
+            "userId": User.current_user().id,
+            "targetUserId": usr.id,
+            "workspaceId": self.id,
+            "role": role,
+        }
 
-        if not resp.ok:
-            st.error(
-                f"Failed to add user {usr.id} to workspace {self.id}: {resp.text}"
-            )
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return False
 
-        data = resp.json()['data']['addUserToWorkspace']
+        result = data.get("addUserToWorkspace", {})
+        success = result.get("success", False)
 
-        if data['success']:
+        if success:
             st.toast(f"Successfully added user {usr.id} to workspace {self.id}")
-            return True
+        else:
+            st.toast(
+                f"Failed to add user {usr.id} to workspace {self.id}: {result.get('error', 'Unknown error')}"
+            )
 
-        st.toast(f"Failed to add user {usr.id} to workspace {self.id}: {data['error']}")
-        return False
+        return success
 
-    def remove_user(self, usr: User) -> bool:
+    def remove_user(self, usr: "User") -> bool:
         """Remove user from workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "delete_user"),
-                "variables": {
-                    "userId": User.current_user().id,
-                    "targetUserId": usr.id,
-                    "workspaceId": self.id
-                },
-            },
-            timeout=5,
-        )
+        query = resources.read_text(workspace, "delete_user.gql")
+        variables = {
+            "userId": User.current_user().id,
+            "targetUserId": usr.id,
+            "workspaceId": self.id,
+        }
 
-        if not resp.ok:
-            st.error(
-                f"Failed to remove user {usr.id} from workspace {self.id}: {resp.text}"
-            )
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return False
 
-        data = resp.json()['data']['deleteUserFromWorkspace']
+        result = data.get("deleteUserFromWorkspace", {})
+        success = result.get("success", False)
 
-        if data['success']:
+        if success:
             st.toast(f"Successfully removed user {usr.id} from workspace {self.id}")
-            return True
-
-        st.toast(f"Failed to remove user {usr.id} from workspace {self.id}: {data['error']}")
-        return False
-
-    def change_user_role(self, usr: User, role: WorkspaceRole) -> bool:
-        """Change user role in workspace."""
-        resp = requests.post(
-            GQL_ROUTE,
-            json={
-                "query": get_gql_query(workspace, "change_user_role"),
-                "variables": {
-                    "userId": User.current_user().id,
-                    "targetUserId": usr.id,
-                    "workspaceId": self.id,
-                    "role": role
-                },
-            },
-            timeout=5,
-        )
-
-        if not resp.ok:
-            st.error(
-                f"Failed to change user {usr.id} role in workspace {self.id}: {resp.text}"
+        else:
+            st.toast(
+                f"Failed to remove user {usr.id} from workspace {self.id}: {result.get('error', 'Unknown error')}"
             )
+
+        return success
+
+    def change_user_role(self, usr: "User", role: WorkspaceRole) -> bool:
+        """Change user role in workspace."""
+        query = resources.read_text(workspace, "change_user_role.gql")
+        variables = {
+            "userId": User.current_user().id,
+            "targetUserId": usr.id,
+            "workspaceId": self.id,
+            "role": role,
+        }
+
+        data = execute_gql_query(query, variables)
+        if "error" in data:
             return False
 
-        data = resp.json()['data']['changeWorkspaceUserRole']
+        result = data.get("changeWorkspaceUserRole", {})
+        success = result.get("success", False)
 
-        if data['success']:
+        if success:
             st.toast(f"Successfully changed user {usr.id} role in workspace {self.id}")
-            return True
+        else:
+            st.toast(
+                f"Failed to change user {usr.id} role in workspace {self.id}: {result.get('error', 'Unknown error')}"
+            )
 
-        st.toast(f"Failed to change user {usr.id} role in workspace {self.id}: {data['error']}")
-        return False
+        return success

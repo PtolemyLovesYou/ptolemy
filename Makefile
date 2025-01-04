@@ -1,7 +1,6 @@
 .PHONY: format
 format:
-	black ptolemy \
-		--exclude '\s*\.venv\s*'
+	black ptolemy prototype
 
 .PHONY: diesel
 diesel:

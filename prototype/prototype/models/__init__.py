@@ -1,4 +1,5 @@
 """Models."""
+
 from .auth import (
     User,
     Workspace,
@@ -6,5 +7,5 @@ from .auth import (
     UserRole,
     ApiKeyPermission,
     UserApiKey,
-    ServiceApiKey
+    ServiceApiKey,
 )

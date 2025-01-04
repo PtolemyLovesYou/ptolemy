@@ -5,13 +5,11 @@ from .models.duckdb import DuckDB
 
 st.session_state.ide_data = None
 
+
 def get_results():
     """Get results."""
-    st.dataframe(
-        st.session_state.ide_data,
-        use_container_width=True,
-        height=385
-        )
+    st.dataframe(st.session_state.ide_data, use_container_width=True, height=385)
+
 
 @st.fragment
 def get_ide_view():
@@ -19,7 +17,7 @@ def get_ide_view():
     duck = DuckDB.init()
     cs = duck.conn.cursor()
     with st.form("ide", enter_to_submit=True, border=False):
-        code = st.text_area("Code", label_visibility='collapsed', height=150)
+        code = st.text_area("Code", label_visibility="collapsed", height=150)
 
         submit = st.form_submit_button(label="Run")
 
@@ -27,7 +25,7 @@ def get_ide_view():
         try:
             result = cs.sql(code)
             error = None
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             result = None
             error = e
         if error is not None:

@@ -41,8 +41,8 @@ def profile_view():
                         "name": i.name,
                         "key_preview": f"{i.key_preview}...",
                         "expires_at": i.expires_at,
-                        "delete": False
-                        }
+                        "delete": False,
+                    }
                     for i in api_keys
                 ],
                 column_config={
@@ -51,7 +51,7 @@ def profile_view():
                     "expires_at": st.column_config.DatetimeColumn(disabled=True),
                     "delete": st.column_config.CheckboxColumn(),
                 },
-                use_container_width=True
+                use_container_width=True,
             )
 
             update_user_api_key_button = st.form_submit_button("Save")
