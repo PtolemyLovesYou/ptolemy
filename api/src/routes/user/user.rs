@@ -74,26 +74,6 @@ async fn create_user(
     }
 }
 
-/// Retrieves a list of all users from the database.
-///
-/// # Arguments
-///
-/// * `state` - An `Arc` wrapped `AppState` reference containing application state.
-///
-/// # Returns
-///
-/// Returns a `Result` containing a JSON response with a vector of `User` objects on success,
-/// or a `StatusCode::INTERNAL_SERVER_ERROR` on failure.
-
-async fn get_all_users(state: Arc<AppState>) -> Result<Json<Vec<User>>, StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    match user_crud::get_all_users(&mut conn).await {
-        Ok(result) => Ok(Json(result)),
-        Err(e) => Err(e.http_status_code()),
-    }
-}
-
 async fn get_user(
     state: Arc<AppState>,
     Path(user_id): Path<Uuid>,
@@ -244,13 +224,6 @@ pub async fn user_base_router(state: &Arc<AppState>) -> Router {
             delete({
                 let shared_state = Arc::clone(state);
                 move |user_id, req| delete_user(shared_state, user_id, req)
-            }),
-        )
-        .route(
-            "/all",
-            get({
-                let shared_state = Arc::clone(state);
-                move || get_all_users(shared_state)
             }),
         )
         .route(
