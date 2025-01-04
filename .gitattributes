@@ -2,9 +2,11 @@
 *.gql linguist-detectable
 *.sql linguist-detectable
 *.sql.j2 linguist-detectable
-# *.yaml linguist-detectable
-# *.yml linguist-detectable
+*.yaml linguist-detectable
+*.yml linguist-detectable
 *.toml linguist-detectable
 
 .venv/ -linguist-detectable
 target/ -linguist-detectable
+
+*.gql linguist-language=GraphQL
