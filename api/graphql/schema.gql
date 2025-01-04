@@ -45,7 +45,6 @@ type DeletionResult {
 }
 
 type Mutation {
-  ping: String!
   createUser(userId: Uuid!, userData: UserCreate!): UserResult!
   deleteUser(userId: Uuid!, id: Uuid!): DeletionResult!
 }
