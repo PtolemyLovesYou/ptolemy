@@ -1,6 +1,7 @@
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
+use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -18,7 +19,7 @@ pub struct Workspace {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 pub struct WorkspaceCreate {
     name: String,
@@ -39,7 +40,7 @@ pub struct User {
     pub is_admin: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
 pub struct UserCreate {
     pub username: String,
     pub password: String,
@@ -83,7 +84,7 @@ pub struct UserApiKey {
     pub expires_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
 #[diesel(table_name = crate::generated::auth_schema::user_api_key)]
 pub struct UserApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]
@@ -121,7 +122,7 @@ pub struct ServiceApiKey {
     pub expires_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
 #[diesel(table_name = crate::generated::auth_schema::service_api_key)]
 pub struct ServiceApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]

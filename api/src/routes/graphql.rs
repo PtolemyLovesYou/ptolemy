@@ -1,4 +1,4 @@
-use crate::graphql::{Query, Schema, Mutation};
+use crate::graphql::{Mutation, Query, Schema};
 use crate::state::AppState;
 use axum::{
     extract::State,
@@ -25,11 +25,7 @@ async fn graphql_handler(
 }
 
 pub async fn graphql_router(state: &Arc<AppState>) -> Router {
-    let schema = Arc::new(Schema::new(
-        Query,
-        Mutation,
-        EmptySubscription::new(),
-    ));
+    let schema = Arc::new(Schema::new(Query, Mutation, EmptySubscription::new()));
     let context = Arc::clone(state);
 
     let state = JuniperAppState { schema, context };

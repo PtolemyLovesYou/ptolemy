@@ -219,18 +219,22 @@ class User(BaseModel):
         display_name: Optional[str] = None,
     ) -> bool:
         """Create user."""
+        if role == UserRole.SYSADMIN:
+            st.error("You cannot create a system admin user.")
+            return False
+
         user_id = User.current_user().id
 
         resp = requests.post(
-            urljoin(API_URL, "/user"),
+            GQL_ROUTE,
             json={
-                "user_id": user_id,
-                "user": {
-                    "username": username,
-                    "password": password,
-                    "is_admin": role == UserRole.ADMIN,
-                    "is_sysadmin": role == UserRole.SYSADMIN,
-                    "display_name": display_name,
+                "query": get_gql_query("create_user"),
+                "variables": {
+                    "userId": user_id,
+                    "Username": username,
+                    "Password": password,
+                    "isAdmin": role == UserRole.ADMIN,
+                    "displayName": display_name,
                 },
             },
             timeout=5,

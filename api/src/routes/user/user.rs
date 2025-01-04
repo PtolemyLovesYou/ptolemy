@@ -65,7 +65,7 @@ async fn create_user(
 
     match user_crud::create_user(&mut conn, &req.user, &state.password_handler).await {
         Ok(result) => {
-            let response = CreateUserResponse { id: result };
+            let response = CreateUserResponse { id: result.id };
             Ok((StatusCode::CREATED, Json(response)))
         }
         Err(e) => Err(e.http_status_code()),
