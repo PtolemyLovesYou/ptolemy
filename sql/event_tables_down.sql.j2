@@ -1,8 +1,0 @@
-{%- set tiers = ["system", "subsystem", "component", "subcomponent"] -%}
-
-{% for tier in tiers | reverse %}
-drop table {{ tier }}_metadata;
-drop table {{ tier }}_{{ io }};
-drop table {{ tier }}_runtime;
-drop table {{ tier }}_event;
-{% endfor %}
