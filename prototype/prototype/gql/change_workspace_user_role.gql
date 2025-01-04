@@ -1,0 +1,14 @@
+mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
+  changeWorkspaceUserRole(
+    newRole: $role
+    targetUserId: $targetUserId
+    userId: $userId
+    workspaceId: $workspaceId
+  ) {
+    error {
+      field
+      message
+    }
+    success
+  }
+}

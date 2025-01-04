@@ -485,8 +485,15 @@ class Workspace(BaseModel):
     def add_user(self, user: User, role: WorkspaceRole) -> bool:
         """Add user to workspace."""
         resp = requests.post(
-            urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
-            json={"user_id": User.current_user().id, "role": role},
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("add_user_to_workspace"),
+                "variables": {
+                    "userId": User.current_user().id,
+                    "targetUserId": user.id,
+                    "workspaceId": self.id,
+                    "role": role
+                }},
             timeout=5,
         )
 
@@ -496,36 +503,72 @@ class Workspace(BaseModel):
             )
             return False
 
-        return True
+        data = resp.json()['data']['addUserToWorkspace']
+
+        if data['success']:
+            st.toast(f"Successfully added user {user.id} to workspace {self.id}")
+            return True
+
+        st.toast(f"Failed to add user {user.id} to workspace {self.id}: {data['error']}")
+        return False
 
     def remove_user(self, user: User) -> bool:
         """Remove user from workspace."""
-        resp = requests.delete(
-            urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("delete_user_from_workspace"),
+                "variables": {
+                    "userId": User.current_user().id,
+                    "targetUserId": user.id,
+                    "workspaceId": self.id
+                },
+            },
             timeout=5,
-            json={"user_id": User.current_user().id},
         )
 
         if not resp.ok:
-            st.toast(
+            st.error(
                 f"Failed to remove user {user.id} from workspace {self.id}: {resp.text}"
             )
             return False
 
-        return True
+        data = resp.json()['data']['deleteUserFromWorkspace']
+
+        if data['success']:
+            st.toast(f"Successfully removed user {user.id} from workspace {self.id}")
+            return True
+
+        st.toast(f"Failed to remove user {user.id} from workspace {self.id}: {data['error']}")
+        return False
 
     def change_user_role(self, user: User, role: WorkspaceRole) -> bool:
         """Change user role in workspace."""
-        resp = requests.put(
-            urljoin(API_URL, f"/workspace/{self.id}/users/{user.id}"),
-            json={"user_id": User.current_user().id, "role": role},
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("change_workspace_user_role"),
+                "variables": {
+                    "userId": User.current_user().id,
+                    "targetUserId": user.id,
+                    "workspaceId": self.id,
+                    "role": role
+                },
+            },
             timeout=5,
         )
 
         if not resp.ok:
-            st.toast(
-                f"Failed to update user {user.id} role in workspace {self.id}: {resp.text}"
+            st.error(
+                f"Failed to change user {user.id} role in workspace {self.id}: {resp.text}"
             )
             return False
 
-        return True
+        data = resp.json()['data']['changeWorkspaceUserRole']
+
+        if data['success']:
+            st.toast(f"Successfully changed user {user.id} role in workspace {self.id}")
+            return True
+
+        st.toast(f"Failed to change user {user.id} role in workspace {self.id}: {data['error']}")
+        return False

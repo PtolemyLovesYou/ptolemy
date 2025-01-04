@@ -1,0 +1,12 @@
+mutation AddUserToWorkspace($userId: Uuid!, $targetUserId: Uuid!, $workspaceId: Uuid!, $role: WorkspaceRoleEnum!) {
+  addUserToWorkspace(
+    userId: $userId
+    workspaceUser: {userId: $targetUserId, workspaceId: $workspaceId, role: $role}
+  ) {
+    success
+    error {
+      field
+      message
+    }
+  }
+}
