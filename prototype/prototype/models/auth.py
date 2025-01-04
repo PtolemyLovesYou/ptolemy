@@ -380,15 +380,17 @@ class Workspace(BaseModel):
         description: Optional[str] = None,
     ) -> Optional["Workspace"]:
         """Create new workspace."""
-        body = {
-            "user_id": User.current_user().id,
-            "workspace_admin_user_id": admin_id or User.current_user().id,
-            "workspace": {"name": name, "description": description},
-        }
-
         resp = requests.post(
-            urljoin(API_URL, "/workspace"),
-            json=body,
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("create_workspace"),
+                "variables": {
+                    "userId": User.current_user().id,
+                    "name": name,
+                    "description": description,
+                    "adminUserId": admin_id or User.current_user().id
+                    }
+                },
             timeout=5,
         )
 
@@ -396,7 +398,16 @@ class Workspace(BaseModel):
             st.error(f"Failed to create workspace: {resp.text}")
             return None
 
-        return Workspace(**resp.json())
+        try:
+            data = resp.json()['data']['createWorkspace']['workspace']
+            return Workspace(
+                id=data['id'],
+                name=data['name'],
+                description=data.get('description'),
+                archived=data['archived']
+            )
+        except KeyError:
+            st.error(resp.text)
 
     @property
     def users(self) -> List[WorkspaceUser]:
