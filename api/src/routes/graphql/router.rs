@@ -34,11 +34,14 @@ pub async fn graphql_router(state: &Arc<AppState>) -> Router {
 
     let state = JuniperAppState { schema, context };
 
-    Router::new()
-        .route(
-            "/",
-            on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
-        )
-        .route("/graphiql", get(graphiql("/graphql", None)))
-        .with_state(state)
+    let mut router = Router::new().route(
+        "/",
+        on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
+    );
+
+    if state.context.enable_graphiql {
+        router = router.route("/graphiql", get(graphiql("/graphql", None)))
+    }
+
+    router.with_state(state)
 }

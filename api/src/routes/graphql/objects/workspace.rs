@@ -1,8 +1,5 @@
+use crate::crud::auth::{user as user_crud, workspace_user as workspace_user_crud};
 use crate::models::auth::models::Workspace;
-use crate::crud::auth::{
-    workspace_user as workspace_user_crud,
-    user as user_crud,
-};
 use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject};
 
@@ -44,12 +41,9 @@ impl Workspace {
         #[allow(unused_mut)]
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        let workspace_users = workspace_user_crud::get_workspace_users(
-            &mut conn,
-            &self.id,
-        )
-        .await
-        .unwrap();
+        let workspace_users = workspace_user_crud::get_workspace_users(&mut conn, &self.id)
+            .await
+            .unwrap();
 
         let mut users: Vec<WorkspaceUser> = vec![];
 

@@ -24,6 +24,8 @@ pub struct AppState {
     pub pg_pool: Pool<AsyncPgConnection>,
     pub password_handler: PasswordHandler,
     pub enable_prometheus: bool,
+    pub enable_graphiql: bool,
+    pub ptolemy_env: String,
 }
 
 impl AppState {
@@ -34,11 +36,17 @@ impl AppState {
         let postgres_user = get_env_var("POSTGRES_USER")?;
         let postgres_password = get_env_var("POSTGRES_PASSWORD")?;
         let postgres_db = get_env_var("POSTGRES_DB")?;
+        let ptolemy_env = get_env_var("PTOLEMY_ENV")?;
 
         // Default to false if the env var is not set
         let enable_prometheus = std::env::var("ENABLE_PROMETHEUS")
             .map(|v| v.to_lowercase() == "true")
             .unwrap_or(false);
+
+        // Default to false if env var is not set and PTOLEMY_ENV is set to 'PROD'
+        let enable_graphiql = std::env::var("PTOLEMY_ENABLE_GRAPHIQL")
+            .map(|v| v.to_lowercase() == "true")
+            .unwrap_or(!(ptolemy_env == "PROD"));
 
         let db_url = format!(
             "postgres://{}:{}@{}:{}/{}",
@@ -54,6 +62,8 @@ impl AppState {
             pg_pool,
             enable_prometheus,
             password_handler,
+            enable_graphiql,
+            ptolemy_env,
         };
 
         Ok(state)

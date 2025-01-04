@@ -11,6 +11,8 @@ services:
       POSTGRES_PORT: 5432
       # disable if the debug logs get too annoying
       RUST_LOG: info,api=debug,ptolemy-core=debug
+      # set to "PROD" for production
+      PTOLEMY_ENV: DEV
     ports:
       - "8000:8000"
       - "50051:50051"

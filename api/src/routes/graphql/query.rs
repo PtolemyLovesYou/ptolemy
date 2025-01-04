@@ -1,8 +1,5 @@
-use crate::crud::auth::{
-    workspace as workspace_crud,
-    user as user_crud
-};
-use crate::models::auth::models::{Workspace, User};
+use crate::crud::auth::{user as user_crud, workspace as workspace_crud};
+use crate::models::auth::models::{User, Workspace};
 use crate::state::AppState;
 use juniper::{
     graphql_object, EmptyMutation, EmptySubscription, FieldError, FieldResult, RootNode,
