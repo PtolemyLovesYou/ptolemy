@@ -176,19 +176,30 @@ class User(BaseModel):
 
     def delete(self) -> bool:
         """Delete user."""
-        resp = requests.delete(
-            urljoin(API_URL, f"/user/{self.id}"),
+        resp = requests.post(
+            GQL_ROUTE,
             json={
-                "user_id": User.current_user().id,
+                "query": get_gql_query("delete_user"),
+                "variables": {
+                    "Id": self.id,
+                    "userId": User.current_user().id
+                }
             },
             timeout=5,
         )
 
         if not resp.ok:
-            st.toast(f"Failed to delete user {self.id}")
+            st.toast(f"Failed to delete user {self.id}: {resp.text}")
             return False
 
-        return True
+        data = resp.json()['data']['deleteUser']
+
+        if data['success']:
+            st.toast(f"Successfully deleted user {self.id}")
+            return True
+
+        st.toast(f"Failed to delete user {self.id}: {data['error']}")
+        return False
 
     @classmethod
     def all(cls) -> List["User"]:

@@ -13,6 +13,19 @@ struct ValidationError {
     message: String,
 }
 
+struct DeletionResult(Result<(), Vec<ValidationError>>);
+
+#[graphql_object]
+#[graphql(name = "DeletionResult")]
+impl DeletionResult {
+    fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+    fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
+}
+
 struct MutationResult<T>(Result<T, Vec<ValidationError>>);
 
 #[graphql_object]
@@ -30,6 +43,15 @@ impl MutationResult<User> {
 macro_rules! mutation_error {
     ($field:expr, $message:expr) => {
         MutationResult(Err(vec![ValidationError {
+            field: $field.to_string(),
+            message: $message.to_string(),
+        }]))
+    };
+}
+
+macro_rules! deletion_error {
+    ($field:expr, $message:expr) => {
+        DeletionResult(Err(vec![ValidationError {
             field: $field.to_string(),
             message: $message.to_string(),
         }]))
@@ -89,6 +111,49 @@ impl Mutation {
         match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
             Ok(result) => MutationResult(Ok(result)),
             Err(e) => mutation_error!("user", format!("Failed to create user: {:?}", e)),
+        }
+    }
+
+    async fn delete_user(&self, ctx: &AppState, user_id: Uuid, id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.get_conn_http().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                return deletion_error!(
+                    "database",
+                    format!("Failed to get database connection: {}", e)
+                )
+            }
+        };
+
+        // get user permissions
+        let acting_user = match user_crud::get_user(&mut conn, &user_id).await {
+            Ok(u) => u,
+            Err(e) => return deletion_error!("user", format!("Failed to get user: {:?}", e)),
+        };
+
+        let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
+            Ok(u) => u,
+            Err(e) => return deletion_error!("user", format!("Failed to get user: {:?}", e)),
+        };
+
+        // if acting user is admin and they're trying to delete another admin, forbidden
+        if acting_user.is_admin && user_to_delete.is_admin {
+            return deletion_error!("user", "You cannot delete another admin.");
+        }
+
+        // cannot delete themselves
+        if acting_user.id == id {
+            return deletion_error!("user", "You cannot delete yourself.");
+        }
+
+        // sysadmin cannot be deleted via API
+        if user_to_delete.is_sysadmin {
+            return deletion_error!("user", "Sysadmin cannot be deleted via API");
+        }
+
+        match user_crud::delete_user(&mut conn, &id).await {
+            Ok(_) => DeletionResult(Ok(())),
+            Err(e) => deletion_error!("user", format!("Failed to delete user: {:?}", e)),
         }
     }
 }

@@ -23,7 +23,7 @@ def usr_management_view():
                 new_usr_password = st.text_input("Password")
                 new_usr_display_name = st.text_input("Display name")
                 new_usr_role = st.pills(
-                    "Role", options=["user", "admin", "sysadmin"], default="user"
+                    "Role", options=list(UserRole), default=UserRole.USER
                 )
 
                 submit = st.form_submit_button(label="Create")

@@ -20,6 +20,14 @@ enum WorkspaceRoleEnum {
   ADMIN
 }
 
+input UserCreate {
+  username: String!
+  password: String!
+  displayName: String
+  isSysadmin: Boolean!
+  isAdmin: Boolean!
+}
+
 """
   Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
 
@@ -31,8 +39,14 @@ scalar LocalDateTime
 
 scalar Uuid
 
+type DeletionResult {
+  error: [ValidationError!]
+}
+
 type Mutation {
   ping: String!
+  createUser(userId: Uuid!, userData: UserCreate!): UserResult!
+  deleteUser(userId: Uuid!, id: Uuid!): DeletionResult!
 }
 
 type Query {
@@ -67,6 +81,16 @@ type UserApiKey {
   name: String!
   keyPreview: String!
   expiresAt: LocalDateTime
+}
+
+type UserResult {
+  user: User
+  error: [ValidationError!]
+}
+
+type ValidationError {
+  field: String!
+  message: String!
 }
 
 type Workspace {
