@@ -56,9 +56,9 @@ def wk_management_view():
         if selected_workspace is None:
             pass
         else:
-            user_workspace_role = User.current_user().workspace_role(
-                selected_workspace.id
-            )
+            user_workspace_role = [
+                i for i in selected_workspace.users if i.id == User.current_user().id
+                ][0].role
 
             wk_mgmnt, wk_users, api_keys = st.tabs(
                 ["Workspace", "Users", "Service API Keys"]

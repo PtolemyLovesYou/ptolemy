@@ -150,6 +150,11 @@ class UserApiKey(BaseModel):
 
         return api_key["api_key"]
 
+class WorkspaceUser(BaseModel):
+    """Workspace user."""
+    id: str
+    username: str
+    role: WorkspaceRole
 
 class User(BaseModel):
     """User model."""
@@ -251,20 +256,6 @@ class User(BaseModel):
 
         return UserRole.USER
 
-    def workspace_role(self, workspace_id: str) -> WorkspaceRole:
-        """Workspace role."""
-        resp = requests.get(
-            urljoin(API_URL, f"/workspace/{workspace_id}/users/{self.id}"),
-            timeout=5,
-        )
-
-        if not resp.ok:
-            st.toast(f"Failed to get workspace role: {resp.status_code} {resp.text}")
-
-            return WorkspaceRole.USER
-
-        return WorkspaceRole(str(resp.json()["role"]))
-
     @property
     def workspaces(self) -> List["Workspace"]:
         """Workspaces belonging to user."""
@@ -359,10 +350,14 @@ class Workspace(BaseModel):
         return Workspace(**resp.json())
 
     @property
-    def users(self) -> List[User]:
+    def users(self) -> List[WorkspaceUser]:
         """Users in workspace."""
-        resp = requests.get(
-            urljoin(API_URL, f"/workspace/{self.id}/users"),
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("workspace_users"),
+                "variables": {"Id": self.id},
+            },
             timeout=5,
         )
 
@@ -371,7 +366,15 @@ class Workspace(BaseModel):
 
             return []
 
-        return [User(**u) for u in resp.json()]
+        wk_users = resp.json()['data']['workspace'][0]['users']
+
+        return [
+            WorkspaceUser(
+                id=u["id"],
+                role=u["role"],
+                username=u["username"],
+                ) for u in wk_users
+            ]
 
     @property
     def api_keys(self) -> List[ServiceApiKey]:
