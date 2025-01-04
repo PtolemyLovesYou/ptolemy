@@ -10,6 +10,7 @@ if [[ "${PTOLEMY_ENABLE_MIGRATIONS:-true}" == "true" ]]; then
         attempt=1
         
         while [ $attempt -le $max_attempts ]; do
+            # TODO: Check if database is healthy. The sleep here is temporary
             sleep 1
             echo "Migration attempt $attempt of $max_attempts..."
             diesel migration run --database-url "$DB_URL"
