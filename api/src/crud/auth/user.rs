@@ -52,6 +52,33 @@ pub async fn create_user(
     }
 }
 
+pub async fn search_users(
+    conn: &mut DbConnection<'_>,
+    id_: Option<Uuid>,
+    username_: Option<String>,
+) -> Result<Vec<User>, CRUDError> {
+    let mut query = users.into_boxed();
+
+    if let Some(id_) = id_ {
+        query = query.filter(id.eq(id_));
+    }
+
+    if let Some(username_) = username_ {
+        query = query.filter(username.eq(username_));
+    }
+
+    match query.get_results(conn).await {
+        Ok(result) => Ok(result),
+        Err(e) => {
+            error!("Failed to get users: {}", e);
+            return match e {
+                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
+                _ => Err(CRUDError::GetError),
+            };
+        }
+    }
+}
+
 pub async fn change_user_status(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,

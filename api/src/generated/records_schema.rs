@@ -134,7 +134,7 @@ diesel::table! {
         #[max_length = 128]
         name -> Varchar,
         description -> Nullable<Varchar>,
-        archived -> Nullable<Bool>,
+        archived -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
