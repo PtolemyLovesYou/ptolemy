@@ -1,6 +1,7 @@
 use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace;
 use crate::models::auth::models::{Workspace, WorkspaceCreate};
+use crate::generated::auth_schema::workspace::dsl;
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -44,8 +45,6 @@ pub async fn search_workspaces(
     name: Option<String>,
     archived: Option<bool>,
 ) -> Result<Vec<Workspace>, CRUDError> {
-    use crate::generated::auth_schema::workspace::dsl;
-
     let mut query = dsl::workspace.into_boxed();
 
     if let Some(id) = id {
@@ -86,9 +85,8 @@ pub async fn get_workspace(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
 ) -> Result<Workspace, CRUDError> {
-    use crate::generated::auth_schema::workspace::dsl::*;
-    match workspace
-        .filter(id.eq(workspace_id))
+    match dsl::workspace
+        .filter(dsl::id.eq(workspace_id))
         .get_result::<Workspace>(conn)
         .await
     {
@@ -118,8 +116,7 @@ pub async fn delete_workspace(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
 ) -> Result<(), CRUDError> {
-    use crate::generated::auth_schema::workspace::dsl::*;
-    match diesel::delete(workspace.filter(id.eq(workspace_id)))
+    match diesel::delete(dsl::workspace.filter(dsl::id.eq(workspace_id)))
         .execute(conn)
         .await
     {
