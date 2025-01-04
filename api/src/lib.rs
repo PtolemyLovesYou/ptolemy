@@ -2,6 +2,7 @@ pub mod crud;
 pub mod crypto;
 pub mod error;
 pub mod generated;
+pub mod graphql;
 pub mod middleware;
 pub mod models;
 pub mod observer;

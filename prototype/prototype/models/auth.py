@@ -176,19 +176,30 @@ class User(BaseModel):
 
     def delete(self) -> bool:
         """Delete user."""
-        resp = requests.delete(
-            urljoin(API_URL, f"/user/{self.id}"),
+        resp = requests.post(
+            GQL_ROUTE,
             json={
-                "user_id": User.current_user().id,
+                "query": get_gql_query("delete_user"),
+                "variables": {
+                    "Id": self.id,
+                    "userId": User.current_user().id
+                }
             },
             timeout=5,
         )
 
         if not resp.ok:
-            st.toast(f"Failed to delete user {self.id}")
+            st.toast(f"Failed to delete user {self.id}: {resp.text}")
             return False
 
-        return True
+        data = resp.json()['data']['deleteUser']
+
+        if data['success']:
+            st.toast(f"Successfully deleted user {self.id}")
+            return True
+
+        st.toast(f"Failed to delete user {self.id}: {data['error']}")
+        return False
 
     @classmethod
     def all(cls) -> List["User"]:
@@ -219,18 +230,22 @@ class User(BaseModel):
         display_name: Optional[str] = None,
     ) -> bool:
         """Create user."""
+        if role == UserRole.SYSADMIN:
+            st.error("You cannot create a system admin user.")
+            return False
+
         user_id = User.current_user().id
 
         resp = requests.post(
-            urljoin(API_URL, "/user"),
+            GQL_ROUTE,
             json={
-                "user_id": user_id,
-                "user": {
-                    "username": username,
-                    "password": password,
-                    "is_admin": role == UserRole.ADMIN,
-                    "is_sysadmin": role == UserRole.SYSADMIN,
-                    "display_name": display_name,
+                "query": get_gql_query("create_user"),
+                "variables": {
+                    "userId": user_id,
+                    "Username": username,
+                    "Password": password,
+                    "isAdmin": role == UserRole.ADMIN,
+                    "displayName": display_name,
                 },
             },
             timeout=5,
@@ -346,16 +361,30 @@ class Workspace(BaseModel):
 
     def delete(self) -> bool:
         """Delete workspace."""
-        resp = requests.delete(
-            urljoin(API_URL, f"/workspace/{self.id}"),
-            json={"user_id": User.current_user().id},
+        resp = requests.post(
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("delete_workspace"),
+                "variables": {
+                    "workspaceId": self.id,
+                    "userId": User.current_user().id
+                    }
+                },
             timeout=5,
         )
 
         if not resp.ok:
-            st.error(f"Failed to delete workspace {self.id}: {resp.text}")
+            st.toast(f"Failed to delete workspace {self.id}: {resp.status_code} {resp.text}")
+            return False
 
-        return resp.ok
+        data = resp.json()['data']['deleteWorkspace']
+
+        if data['success']:
+            st.toast(f"Successfully deleted workspace {self.id}")
+            return True
+
+        st.toast(f"Failed to delete workspace {self.id}: {data['error']}")
+        return False
 
     @classmethod
     def create(
@@ -365,15 +394,17 @@ class Workspace(BaseModel):
         description: Optional[str] = None,
     ) -> Optional["Workspace"]:
         """Create new workspace."""
-        body = {
-            "user_id": User.current_user().id,
-            "workspace_admin_user_id": admin_id or User.current_user().id,
-            "workspace": {"name": name, "description": description},
-        }
-
         resp = requests.post(
-            urljoin(API_URL, "/workspace"),
-            json=body,
+            GQL_ROUTE,
+            json={
+                "query": get_gql_query("create_workspace"),
+                "variables": {
+                    "userId": User.current_user().id,
+                    "name": name,
+                    "description": description,
+                    "adminUserId": admin_id or User.current_user().id
+                    }
+                },
             timeout=5,
         )
 
@@ -381,7 +412,16 @@ class Workspace(BaseModel):
             st.error(f"Failed to create workspace: {resp.text}")
             return None
 
-        return Workspace(**resp.json())
+        try:
+            data = resp.json()['data']['createWorkspace']['workspace']
+            return Workspace(
+                id=data['id'],
+                name=data['name'],
+                description=data.get('description'),
+                archived=data['archived']
+            )
+        except KeyError:
+            st.error(resp.text)
 
     @property
     def users(self) -> List[WorkspaceUser]:

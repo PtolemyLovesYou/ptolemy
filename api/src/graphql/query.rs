@@ -1,9 +1,7 @@
 use crate::crud::auth::{user as user_crud, workspace as workspace_crud};
 use crate::models::auth::models::{User, Workspace};
 use crate::state::AppState;
-use juniper::{
-    graphql_object, EmptyMutation, EmptySubscription, FieldResult, RootNode,
-};
+use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug)]
@@ -41,5 +39,3 @@ impl Query {
             .map_err(|e| e.juniper_field_error())
     }
 }
-
-pub type Schema = RootNode<'static, Query, EmptyMutation<AppState>, EmptySubscription<AppState>>;

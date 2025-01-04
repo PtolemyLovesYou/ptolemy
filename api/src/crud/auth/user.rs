@@ -24,7 +24,7 @@ pub async fn create_user(
     conn: &mut DbConnection<'_>,
     user: &UserCreate,
     password_handler: &PasswordHandler,
-) -> Result<Uuid, CRUDError> {
+) -> Result<User, CRUDError> {
     let hashed_password = password_handler.hash_password(&user.password);
 
     match diesel::insert_into(dsl::users)
@@ -35,7 +35,7 @@ pub async fn create_user(
             dsl::is_admin.eq(&user.is_admin),
             dsl::password_hash.eq(&hashed_password),
         ))
-        .returning(dsl::id)
+        .returning(User::as_returning())
         .get_result(conn)
         .await
     {

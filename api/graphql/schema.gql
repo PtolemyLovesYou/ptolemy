@@ -1,5 +1,6 @@
 schema {
   query: Query
+  mutation: Mutation
 }
 
 enum ApiKeyPermissionEnum {
@@ -19,6 +20,19 @@ enum WorkspaceRoleEnum {
   ADMIN
 }
 
+input UserCreate {
+  username: String!
+  password: String!
+  displayName: String
+  isSysadmin: Boolean!
+  isAdmin: Boolean!
+}
+
+input WorkspaceCreate {
+  name: String!
+  description: String
+}
+
 """
   Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
 
@@ -29,6 +43,18 @@ enum WorkspaceRoleEnum {
 scalar LocalDateTime
 
 scalar Uuid
+
+type DeletionResult {
+  success: Boolean!
+  error: [ValidationError!]
+}
+
+type Mutation {
+  createUser(userId: Uuid!, userData: UserCreate!): UserResult!
+  deleteUser(userId: Uuid!, id: Uuid!): DeletionResult!
+  createWorkspace(userId: Uuid!, adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
+  deleteWorkspace(userId: Uuid!, workspaceId: Uuid!): DeletionResult!
+}
 
 type Query {
   ping: String!
@@ -64,6 +90,16 @@ type UserApiKey {
   expiresAt: LocalDateTime
 }
 
+type UserResult {
+  user: User
+  error: [ValidationError!]
+}
+
+type ValidationError {
+  field: String!
+  message: String!
+}
+
 type Workspace {
   id: Uuid!
   name: String!
@@ -73,6 +109,11 @@ type Workspace {
   updatedAt: LocalDateTime!
   users(userId: Uuid): [WorkspaceUser!]!
   serviceApiKeys: [ServiceApiKey!]!
+}
+
+type WorkspaceResult {
+  workspace: Workspace
+  error: [ValidationError!]
 }
 
 type WorkspaceUser {
