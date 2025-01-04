@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [[ "$PTOLEMY_ENV" == "STAGE" || "$PTOLEMY_ENV" == "PROD" ]]; then
+if [[ "${PTOLEMY_ENABLE_MIGRATIONS:-true}" == "true" ]]; then
     DB_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
-    echo "Checking for pending migrations in $PTOLEMY_ENV environment..."
+    echo "Checking for pending migrations..."
     
     pending=$(diesel migration pending --database-url "$DB_URL")
     if [ "$pending" == "true" ]; then
@@ -10,6 +10,7 @@ if [[ "$PTOLEMY_ENV" == "STAGE" || "$PTOLEMY_ENV" == "PROD" ]]; then
         attempt=1
         
         while [ $attempt -le $max_attempts ]; do
+            sleep 1
             echo "Migration attempt $attempt of $max_attempts..."
             diesel migration run --database-url "$DB_URL"
             
