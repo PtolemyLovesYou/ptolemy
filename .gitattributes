@@ -15,3 +15,6 @@ target/ -linguist-detectable
 # Set generated code as undetectable >:)
 api/src/generated/*.rs -linguist-detectable
 ptolemy-core/src/generated/*.rs -linguist-detectable
+
+# Set prototype python files as undetectable
+prototype/**/*.py -linguist-detectable
