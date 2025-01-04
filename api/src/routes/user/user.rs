@@ -1,76 +1,14 @@
 use crate::crud::auth::user as user_crud;
-use crate::models::auth::models::UserCreate;
 use crate::state::AppState;
 use axum::{
     extract::Path,
     http::StatusCode,
-    routing::{delete, post},
+    routing::delete,
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Arc;
 use uuid::Uuid;
-
-#[derive(Debug, Deserialize)]
-struct CreateUserRequest {
-    user_id: Uuid,
-    user: UserCreate,
-}
-
-#[derive(Clone, Debug, Serialize)]
-struct CreateUserResponse {
-    id: Uuid,
-}
-
-/// Creates a new user.
-///
-/// # Security
-///
-/// This endpoint requires the user to be authenticated, and the user must have the admin or sysadmin role.
-/// The user cannot create a user with a higher role than themselves.
-///
-/// If the user is attempting to create a sysadmin, the request will be rejected.
-///
-/// # Errors
-///
-/// - `400 Bad Request` if the request is malformed
-/// - `403 Forbidden` if the user does not have the required permissions
-/// - `409 Conflict` if the user with the given username already exists
-/// - `500 Internal Server Error` if there is an unexpected error
-async fn create_user(
-    state: Arc<AppState>,
-    Json(req): Json<CreateUserRequest>,
-) -> Result<(StatusCode, Json<CreateUserResponse>), StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    // get user permissions
-    let user = user_crud::get_user(&mut conn, &req.user_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    // if user is not admin or sysadmin, return forbidden
-    if !user.is_admin && !user.is_sysadmin {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
-    // sysadmin cannot be created via REST API
-    if req.user.is_sysadmin {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
-    // if user is admin and they're trying to make another admin, return forbidden
-    if user.is_admin && req.user.is_admin {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
-    match user_crud::create_user(&mut conn, &req.user, &state.password_handler).await {
-        Ok(result) => {
-            let response = CreateUserResponse { id: result.id };
-            Ok((StatusCode::CREATED, Json(response)))
-        }
-        Err(e) => Err(e.http_status_code()),
-    }
-}
 
 #[derive(Debug, Deserialize)]
 struct DeleteUserRequest {
@@ -154,13 +92,6 @@ async fn delete_user(
 /// * `StatusCode::FORBIDDEN` - If the acting user is not an admin or sysadmin.
 pub async fn user_base_router(state: &Arc<AppState>) -> Router {
     Router::new()
-        .route(
-            "/",
-            post({
-                let shared_state = Arc::clone(state);
-                move |user| create_user(shared_state, user)
-            }),
-        )
         .route(
             "/:user_id",
             delete({
