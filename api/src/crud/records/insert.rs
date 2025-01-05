@@ -14,6 +14,10 @@ macro_rules! insert_records_fn {
             conn: &mut DbConnection<'_>,
             records: Vec<$record_struct>,
         ) -> Result<(), CRUDError> {
+            if records.is_empty() {
+                return Ok(());
+            }
+
             match diesel::insert_into(records_schema::$target::table)
                 .values(&records)
                 .execute(conn)
