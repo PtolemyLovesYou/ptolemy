@@ -42,12 +42,20 @@ def _validate_id(v: Union[UUID, str]) -> UUID:
 
 ID = Annotated[UUID, BeforeValidator(_validate_id), PlainSerializer(_serialize_id)]
 
+def validate_timestamp(t: Union[str, datetime]):
+    """Validate timestamp."""
+    if isinstance(t, str):
+        return datetime.fromisoformat(t)
+    if isinstance(t, datetime):
+        return t
+
+    raise ValueError(f"Must be str or datetime. Type: {type(t)}")
+
 Timestamp = Annotated[
     datetime,
-    BeforeValidator(datetime.fromisoformat),
+    BeforeValidator(validate_timestamp),
     PlainSerializer(lambda i: i.isoformat()),
 ]
-
 
 class IOSerializable(RootModel[T]):
     """IO Serializable."""

@@ -5,6 +5,8 @@ query UserWorkspaces($Id: Uuid) {
       description
       id
       name
+      createdAt
+      updatedAt
     }
   }
 }

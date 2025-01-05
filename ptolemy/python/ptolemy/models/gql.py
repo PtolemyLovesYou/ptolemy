@@ -9,7 +9,14 @@ from pydantic import (
     alias_generators,
     ValidationError,
 )
-from .enums import UserStatusEnum, ApiKeyPermissionEnum
+from .enums import UserStatusEnum, ApiKeyPermissionEnum, WorkspaceRoleEnum
+from .auth import (
+    User,
+    Workspace,
+    ServiceApiKey,
+    UserApiKey,
+    WorkspaceUser
+)
 from ..utils import ID, Timestamp
 
 T = TypeVar("T", bound=BaseModel)
@@ -34,8 +41,18 @@ class GQLResponseBase(BaseModel, Generic[T]):
             ) from e
 
 
-class GQLServiceApiKey(GQLResponseBase):
+class GQLWorkspaceUser(GQLResponseBase[WorkspaceUser]):
+    """GQL Workspace User."""
+    MODEL_CLS = WorkspaceUser
+
+    id: Optional[ID] = None
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    role: Optional[WorkspaceRoleEnum] = None
+
+class GQLServiceApiKey(GQLResponseBase[ServiceApiKey]):
     """GQL Service API key."""
+    MODEL_CLS = ServiceApiKey
 
     id: Optional[ID] = None
     workspace_id: Optional[ID] = None
@@ -45,8 +62,9 @@ class GQLServiceApiKey(GQLResponseBase):
     expires_at: Optional[Timestamp] = None
 
 
-class GQLUserApiKey(GQLResponseBase):
+class GQLUserApiKey(GQLResponseBase[UserApiKey]):
     """GQL User API key."""
+    MODEL_CLS = UserApiKey
 
     id: Optional[ID] = None
     user_id: Optional[ID] = None
@@ -54,8 +72,9 @@ class GQLUserApiKey(GQLResponseBase):
     expires_at: Optional[Timestamp] = None
 
 
-class GQLWorkspace(GQLResponseBase):
+class GQLWorkspace(GQLResponseBase[Workspace]):
     """GQL Workspace."""
+    MODEL_CLS = Workspace
 
     id: Optional[ID] = None
     name: Optional[str] = None
@@ -67,8 +86,9 @@ class GQLWorkspace(GQLResponseBase):
     service_api_keys: Optional[List["GQLServiceApiKey"]] = None
 
 
-class GQLUser(GQLResponseBase):
+class GQLUser(GQLResponseBase[User]):
     """GQL User."""
+    MODEL_CLS = User
 
     id: Optional[ID] = None
     name: Optional[ID] = None
@@ -79,6 +99,8 @@ class GQLUser(GQLResponseBase):
     workspaces: Optional[List[GQLWorkspace]] = None
     status: Optional[UserStatusEnum] = None
     user_api_keys: Optional[List[GQLUserApiKey]] = None
+    is_admin: Optional[bool] = None
+    is_sysadmin: Optional[bool] = None
 
 
 class GQLQuery(GQLResponseBase):
@@ -86,6 +108,20 @@ class GQLQuery(GQLResponseBase):
 
     user: Optional[List[GQLUser]] = None
     workspace: Optional[List[GQLWorkspace]] = None
+
+    def users(self) -> List[GQLUser]:
+        """Users."""
+        if self.user is None:
+            raise ValueError("user is None.")
+
+        return list(self.user)
+
+    def workspaces(self) -> List[GQLWorkspace]:
+        """Workspaces."""
+        if self.workspace is None:
+            raise ValueError("workspace is None.")
+
+        return list(self.workspace)
 
     @classmethod
     def query(cls, query: str, variables: Dict[str, Any]) -> "GQLQuery":

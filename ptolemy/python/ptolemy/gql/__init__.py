@@ -12,7 +12,7 @@ DELETE_USER_API_KEY = get_gql_query(user, "delete_user_api_key")
 CREATE_USER = get_gql_query(user, "create")
 DELETE_USER = get_gql_query(user, "delete")
 GET_USER_API_KEYS = get_gql_query(user, "user_api_keys")
-GET_USER_WORKSPACES = get_gql_query(user, "get_user_workspaces")
+GET_USER_WORKSPACES = get_gql_query(user, "workspaces")
 
 CREATE_WORKSPACE = get_gql_query(workspace, "create")
 DELETE_WORKSPACE = get_gql_query(workspace, "delete")
