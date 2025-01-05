@@ -1,0 +1,12 @@
+query WorkspaceServiceApiKeys($Id: Uuid) {
+  workspace(id: $Id) {
+    serviceApiKeys {
+      id
+      expiresAt
+      keyPreview
+      name
+      permissions
+      workspaceId
+    }
+  }
+}
