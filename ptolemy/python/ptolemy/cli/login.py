@@ -2,14 +2,13 @@
 
 from urllib.parse import urljoin
 import requests
-import typer
-from prompt_toolkit import PromptSession
+from prompt_toolkit import PromptSession, print_formatted_text as printf
 from ..models.auth import User
 
 
 def login(session: PromptSession):
     """Login."""
-    typer.echo("Welcome to Ptolemy CLI!")
+    printf("Welcome to Ptolemy CLI!")
     username = session.prompt("Please enter your username:\n> ", is_password=False)
     password = session.prompt("Please enter your password:\n> ", is_password=True)
 

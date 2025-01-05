@@ -1,8 +1,7 @@
 """CLI."""
 
 from enum import StrEnum
-import typer
-from prompt_toolkit import PromptSession
+from prompt_toolkit import PromptSession, print_formatted_text as printf
 from prompt_toolkit.completion import WordCompleter
 import questionary
 from ..models.auth import User
@@ -43,9 +42,9 @@ def run_cli():
         try:
             user = login(session)
         except ValueError as e:
-            typer.echo(f"Failed to login. Please try again. Details: {e}")
+            printf(f"Failed to login. Please try again. Details: {e}")
 
-    typer.echo(f"Welcome, {user.username}! 💚")
+    printf(f"Welcome, {user.username}! 💚")
 
     select_workspace(user)
 

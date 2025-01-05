@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.10.4",
     "questionary>=2.1.0",
     "tenacity>=9.0.0",
+    "prompt-toolkit>=3.0.48",
 ]
 
 [project.scripts]
