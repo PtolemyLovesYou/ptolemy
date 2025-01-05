@@ -6,10 +6,10 @@ pub struct WorkspaceVerificationRequest {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WorkspaceVerificationResponse {
-    #[prost(string, tag = "1")]
-    pub workspace_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "ObserverStatusCode", tag = "2")]
+    #[prost(enumeration = "ObserverStatusCode", tag = "1")]
     pub status_code: i32,
+    #[prost(string, optional, tag = "2")]
+    pub workspace_id: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "3")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
 }

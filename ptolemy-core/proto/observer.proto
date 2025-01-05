@@ -14,8 +14,8 @@ message WorkspaceVerificationRequest {
 }
 
 message WorkspaceVerificationResponse {
-    string workspace_id = 1;
-    ObserverStatusCode status_code = 2;
+    ObserverStatusCode status_code = 1;
+    optional string workspace_id = 2;
     optional string message = 3;
 }
 
