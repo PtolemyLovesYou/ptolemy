@@ -1,5 +1,6 @@
 use crate::state::AppState;
 use crate::observer::records::EventRecords;
+use crate::crud::auth::workspace as workspace_crud;
 use ptolemy_core::generated::observer::{
     observer_server::Observer,
     PublishRequest,
@@ -62,11 +63,61 @@ impl Observer for MyObserver {
         &self,
         request: Request<WorkspaceVerificationRequest>,
     ) -> Result<Response<WorkspaceVerificationResponse>, Status> {
-        let _workspace_name = request.into_inner().workspace_name;
+        let mut conn = match self.state.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to get database connection: {:?}", e);
+                let reply = WorkspaceVerificationResponse {
+                    status_code: ObserverStatusCode::InternalServerError.into(),
+                    workspace_id: None,
+                    message: Some("Failed to get database connection".to_string()),
+                };
+
+                return Ok(Response::new(reply));
+            }
+        };
+
+        let workspace_name = request.into_inner().workspace_name;
+
+        let workspace_candidates = match workspace_crud::search_workspaces(&mut conn, None, Some(workspace_name), None).await {
+            Ok(w) => w,
+            Err(e) => {
+                error!("Failed to search workspaces: {:?}", e);
+                let reply = WorkspaceVerificationResponse {
+                    status_code: ObserverStatusCode::InternalServerError.into(),
+                    workspace_id: None,
+                    message: Some("Failed to find workspace.".to_string()),
+                };
+
+                return Ok(Response::new(reply));
+            }
+        };
+
+        let workspace = match workspace_candidates.len() {
+            0 => {
+                let reply = WorkspaceVerificationResponse {
+                    status_code: ObserverStatusCode::NotFound.into(),
+                    workspace_id: None,
+                    message: Some("Workspace not found.".to_string()),
+                };
+
+                return Ok(Response::new(reply));
+            },
+            1 => workspace_candidates.get(0).unwrap(),
+            _ => {
+                let reply = WorkspaceVerificationResponse {
+                    status_code: ObserverStatusCode::InternalServerError.into(),
+                    workspace_id: None,
+                    message: Some("Multiple workspaces found.".to_string()),
+                };
+
+                return Ok(Response::new(reply));
+            }
+        };
 
         let reply = WorkspaceVerificationResponse {
             status_code: ObserverStatusCode::Ok.into(),
-            workspace_id: None,
+            workspace_id: Some(workspace.id.to_string()),
             message: None,
         };
 
