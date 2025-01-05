@@ -2,7 +2,6 @@
 
 import os
 import time
-import uuid
 from tqdm.auto import tqdm
 from ptolemy import Ptolemy
 
