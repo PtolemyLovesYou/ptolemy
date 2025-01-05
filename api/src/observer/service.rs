@@ -1,7 +1,13 @@
 use crate::state::AppState;
 use crate::observer::records::EventRecords;
 use ptolemy_core::generated::observer::{
-    observer_server::Observer, PublishRequest, PublishResponse, Record
+    observer_server::Observer,
+    PublishRequest,
+    PublishResponse,
+    Record,
+    WorkspaceVerificationRequest,
+    WorkspaceVerificationResponse,
+    ObserverStatusCode,
 };
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -47,6 +53,21 @@ impl Observer for MyObserver {
             successful: true,
             jobs: Vec::new(),
             message: Some("Success".to_string()),
+        };
+
+        Ok(Response::new(reply))
+    }
+
+    async fn verify_workspace(
+        &self,
+        request: Request<WorkspaceVerificationRequest>,
+    ) -> Result<Response<WorkspaceVerificationResponse>, Status> {
+        let _workspace_name = request.into_inner().workspace_name;
+
+        let reply = WorkspaceVerificationResponse {
+            status_code: ObserverStatusCode::Ok.into(),
+            workspace_id: None,
+            message: None,
         };
 
         Ok(Response::new(reply))
