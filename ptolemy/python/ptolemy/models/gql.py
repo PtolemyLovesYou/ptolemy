@@ -1,32 +1,37 @@
 """GraphQL Response model."""
 
-from enum import StrEnum
-from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, AliasGenerator, alias_generators
+from typing import Optional, List, Dict, Any, Type, TypeVar, Generic, ClassVar
+import requests
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    AliasGenerator,
+    alias_generators,
+    ValidationError,
+)
+from .enums import UserStatusEnum, ApiKeyPermissionEnum
 from ..utils import ID, Timestamp
 
-
-class ApiKeyPermissionEnum(StrEnum):
-    """API Key Permissions Enum."""
-
-    READ_ONLY = "READ_ONLY"
-    WRITE_ONLY = "WRITE_ONLY"
-    READ_WRITE = "READ_WRITE"
+T = TypeVar("T", bound=BaseModel)
 
 
-class UserStatusEnum(StrEnum):
-    """User Status Enum."""
-
-    ACTIVE = "ACTIVE"
-    SUSPENDED = "SUSPENDED"
-
-
-class GQLResponseBase(BaseModel):
+class GQLResponseBase(BaseModel, Generic[T]):
     """GQL Response base class."""
+
+    MODEL_CLS: ClassVar[Type[T]]
 
     model_config = ConfigDict(
         alias_generator=AliasGenerator(validation_alias=alias_generators.to_camel)
     )
+
+    def to_model(self) -> T:
+        """Convert to model."""
+        try:
+            return self.MODEL_CLS.model_validate(self.model_dump())
+        except ValidationError as e:
+            raise ValueError(
+                f"Got a validation error: {e}. Check yo GQL query hoe!!!"
+            ) from e
 
 
 class GQLServiceApiKey(GQLResponseBase):
@@ -72,11 +77,34 @@ class GQLUser(GQLResponseBase):
     created_at: Optional[Timestamp] = None
     updated_at: Optional[Timestamp] = None
     workspaces: Optional[List[GQLWorkspace]] = None
+    status: Optional[UserStatusEnum] = None
     user_api_keys: Optional[List[GQLUserApiKey]] = None
 
 
-class GQLQueryResponse(GQLResponseBase):
-    """GraphQL Query Response model."""
+class GQLQuery(GQLResponseBase):
+    """GraphQL Query model."""
 
     user: Optional[List[GQLUser]] = None
     workspace: Optional[List[GQLWorkspace]] = None
+
+    @classmethod
+    def query(cls, query: str, variables: Dict[str, Any]) -> "GQLQuery":
+        """Query GQL endpoint."""
+        resp = requests.post(
+            "http://localhost:8000/graphql",
+            json={
+                "query": query,
+                "variables": variables,
+            },
+            timeout=5,
+        )
+
+        if not resp.ok:
+            raise ValueError(f"GQL query failed: {resp.text}")
+
+        data = resp.json().get("data")
+
+        if data is None:
+            raise ValueError(f"Data not in query response: {resp.text}")
+
+        return cls(**data)
