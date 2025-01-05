@@ -48,11 +48,11 @@ class UserApiKey(BaseModel):
 
 
 class Workspace(BaseModel):
-    """GQL Workspace."""
+    """Workspace."""
 
-    id: ID = None
-    name: str = None
+    id: ID
+    name: str
     description: Optional[str] = None
-    archived: bool = None
-    created_at: Timestamp = None
-    updated_at: Timestamp = None
+    archived: bool
+    created_at: Timestamp
+    updated_at: Timestamp
