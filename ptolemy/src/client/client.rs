@@ -4,7 +4,7 @@ use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
-use crate::types::{JsonSerializable, Parameters, PyUuid};
+use crate::types::{JsonSerializable, Parameters};
 use ptolemy_core::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -49,6 +49,7 @@ macro_rules! set_io {
 #[pyclass(name = "Ptolemy")]
 pub struct PtolemyClient {
     workspace_id: Uuid,
+    workspace_name: String,
     parent_id: Option<Uuid>,
     tier: Option<Tier>,
     autoflush: bool,
@@ -59,10 +60,36 @@ pub struct PtolemyClient {
 #[pymethods]
 impl PtolemyClient {
     #[new]
-    fn new(workspace_id: PyUuid, autoflush: bool, batch_size: usize) -> PyResult<Self> {
+    fn new(workspace_name: String, autoflush: bool, batch_size: usize) -> PyResult<Self> {
         let grpc_client = Arc::new(Mutex::new(ServerHandler::new(batch_size)?));
+
+        let grpc_client_clone = Arc::clone(&grpc_client);
+        let mut client = grpc_client_clone.lock().unwrap();
+
+        let workspace_verification_resp = match client.verify_workspace(workspace_name.clone()) {
+            Ok(wk) => wk,
+            Err(e) => return Err(PyValueError::new_err(e.to_string())),
+        };
+
+        drop(client);
+
+        let workspace_id = match workspace_verification_resp.workspace_id {
+            Some(id) => id,
+            None => {
+                return Err(PyValueError::new_err(
+                    format!(
+                        "Failed to verify workspace {}: [{:?}] {}",
+                         workspace_name,
+                         workspace_verification_resp.status_code(),
+                         workspace_verification_resp.message()
+                        ),
+                ))
+            }
+        };
+
         Ok(Self {
-            workspace_id: workspace_id.to_uuid()?,
+            workspace_id: Uuid::parse_str(workspace_id.as_str()).unwrap(),
+            workspace_name,
             parent_id: None,
             tier: None,
             autoflush,
@@ -138,6 +165,7 @@ impl PtolemyClient {
     ) -> PyResult<Self> {
         let mut client = Self {
             workspace_id: self.workspace_id,
+            workspace_name: self.workspace_name.clone(),
             parent_id: None,
             tier: Some(Tier::System),
             autoflush: self.autoflush,
@@ -191,6 +219,7 @@ impl PtolemyClient {
 
         let mut client = Self {
             workspace_id: self.workspace_id,
+            workspace_name: self.workspace_name.clone(),
             parent_id: Some(self.state.event_id()?),
             tier: Some(child_tier),
             autoflush: self.autoflush,

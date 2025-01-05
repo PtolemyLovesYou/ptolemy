@@ -8,7 +8,7 @@ class Ptolemy:
     """Ptolemy Client."""
 
     def __init__(
-        self, workspace_id: str, autoflush: bool, batch_size: int
+        self, workspace_name: str, autoflush: bool, batch_size: int
     ) -> "Ptolemy": ...
     def trace(
         self,
