@@ -92,6 +92,7 @@ class GQLUser(GQLResponseBase[User]):
 
     id: Optional[ID] = None
     name: Optional[ID] = None
+    username: Optional[str] = None
     description: Optional[ID] = None
     archived: Optional[bool] = None
     created_at: Optional[Timestamp] = None

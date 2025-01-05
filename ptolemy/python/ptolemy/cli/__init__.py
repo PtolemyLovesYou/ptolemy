@@ -9,7 +9,7 @@ import questionary
 from pydantic import BaseModel
 from ..models.auth import User, Workspace
 from ..models.gql import GQLQuery
-from ..gql import GET_USER_WORKSPACES
+from ..gql import GET_USER_WORKSPACES, ALL_USERS
 from .login import login
 
 class Commands(StrEnum):
@@ -41,12 +41,27 @@ def list_workspaces(ctx):
     resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": cli_state.user.id.hex})
     workspaces = resp.users()[0].workspaces
 
-    data = [i.model_dump(exclude=["id"]) for i in workspaces]
+    data = [i.to_model().model_dump() for i in workspaces]
     printf(tabulate(data, headers="keys"))
 
-def select_workspace(user: User) -> Workspace:
+@cli.group()
+def user():
+    """User group."""
+
+@user.command(name='list')
+@click.pass_context
+def list_users(ctx):
+    """List users."""
+    cli_state: CLIState = ctx.obj['state']
+    resp = GQLQuery.query(ALL_USERS, {"Id": cli_state.user.id.hex})
+    users = [i.to_model() for i in resp.users()]
+
+    data = [i.model_dump() for i in users]
+    printf(tabulate(data, headers="keys"))
+
+def select_workspace(usr: User) -> Workspace:
     """Select workspaces."""
-    resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": user.id.hex})
+    resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": usr.id.hex})
     workspaces = {w.name: w.to_model() for w in resp.users()[0].workspaces}
 
     wk = questionary.select(
@@ -61,12 +76,12 @@ def run_cli():
     """Run Ptolemy CLI."""
     session = PromptSession()
     completer = WordCompleter(list(Commands))
-    user = None
+    current_user = None
 
-    while user is None:
+    while current_user is None:
         try:
-            user = login(session)
-            cli_state = CLIState(user=user, workspace=select_workspace(user))
+            current_user = login(session)
+            cli_state = CLIState(user=current_user, workspace=select_workspace(current_user))
             printf(f"Welcome, {cli_state.user.username}! 💚")
         except ValueError as e:
             printf(f"Failed to login. Please try again. Details: {e}")
