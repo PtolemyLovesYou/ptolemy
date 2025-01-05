@@ -1,10 +1,13 @@
 """GQL queries."""
+
 from importlib.resources import read_text
 from . import user, workspace
+
 
 def get_gql_query(pkg, name: str) -> str:
     """Get gql query."""
     return read_text(pkg, f"{name}.gql")
+
 
 ALL_USERS = get_gql_query(user, "all")
 CREATE_USER_API_KEY = get_gql_query(user, "create_user_api_key")

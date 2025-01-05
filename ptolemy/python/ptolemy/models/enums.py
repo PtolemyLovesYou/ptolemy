@@ -17,6 +17,7 @@ class UserStatusEnum(StrEnum):
     ACTIVE = "ACTIVE"
     SUSPENDED = "SUSPENDED"
 
+
 class WorkspaceRoleEnum(StrEnum):
     """Workspace Role enum."""
 

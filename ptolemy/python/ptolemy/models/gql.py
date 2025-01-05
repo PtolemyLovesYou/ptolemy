@@ -10,13 +10,7 @@ from pydantic import (
     ValidationError,
 )
 from .enums import UserStatusEnum, ApiKeyPermissionEnum, WorkspaceRoleEnum
-from .auth import (
-    User,
-    Workspace,
-    ServiceApiKey,
-    UserApiKey,
-    WorkspaceUser
-)
+from .auth import User, Workspace, ServiceApiKey, UserApiKey, WorkspaceUser
 from ..utils import ID, Timestamp
 
 T = TypeVar("T", bound=BaseModel)
@@ -43,6 +37,7 @@ class GQLResponseBase(BaseModel, Generic[T]):
 
 class GQLWorkspaceUser(GQLResponseBase[WorkspaceUser]):
     """GQL Workspace User."""
+
     MODEL_CLS = WorkspaceUser
 
     id: Optional[ID] = None
@@ -50,8 +45,10 @@ class GQLWorkspaceUser(GQLResponseBase[WorkspaceUser]):
     display_name: Optional[str] = None
     role: Optional[WorkspaceRoleEnum] = None
 
+
 class GQLServiceApiKey(GQLResponseBase[ServiceApiKey]):
     """GQL Service API key."""
+
     MODEL_CLS = ServiceApiKey
 
     id: Optional[ID] = None
@@ -64,6 +61,7 @@ class GQLServiceApiKey(GQLResponseBase[ServiceApiKey]):
 
 class GQLUserApiKey(GQLResponseBase[UserApiKey]):
     """GQL User API key."""
+
     MODEL_CLS = UserApiKey
 
     id: Optional[ID] = None
@@ -74,6 +72,7 @@ class GQLUserApiKey(GQLResponseBase[UserApiKey]):
 
 class GQLWorkspace(GQLResponseBase[Workspace]):
     """GQL Workspace."""
+
     MODEL_CLS = Workspace
 
     id: Optional[ID] = None
@@ -88,6 +87,7 @@ class GQLWorkspace(GQLResponseBase[Workspace]):
 
 class GQLUser(GQLResponseBase[User]):
     """GQL User."""
+
     MODEL_CLS = User
 
     id: Optional[ID] = None
