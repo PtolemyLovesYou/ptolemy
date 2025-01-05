@@ -2,8 +2,11 @@
 
 from urllib.parse import urljoin
 import requests
+import questionary
 from prompt_toolkit import PromptSession, print_formatted_text as printf
-from ..models.auth import User
+from ..models.auth import User, Workspace
+from ..models.gql import GQLQuery
+from ..gql import GET_USER_WORKSPACES
 
 
 def login(session: PromptSession):
@@ -30,3 +33,16 @@ def login(session: PromptSession):
         )
 
     raise ValueError("Failed to login.")
+
+def select_workspace(usr: User) -> Workspace:
+    """Select workspaces."""
+    resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": usr.id.hex})
+    workspaces = {w.name: w.to_model() for w in resp.users()[0].workspaces}
+
+    wk = questionary.select(
+        "Select a workspace:",
+        choices=workspaces,
+        use_shortcuts=True,
+    ).ask()
+
+    return workspaces[wk]
