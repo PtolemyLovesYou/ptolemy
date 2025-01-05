@@ -1,6 +1,11 @@
 use crate::config::ObserverConfig;
 use ptolemy_core::generated::observer::{
-    observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
+    observer_client::ObserverClient,
+    PublishRequest,
+    PublishResponse,
+    Record,
+    WorkspaceVerificationRequest,
+    WorkspaceVerificationResponse
 };
 use pyo3::prelude::*;
 use std::collections::VecDeque;
@@ -36,6 +41,22 @@ impl ServerHandler {
 }
 
 impl ServerHandler {
+    pub fn verify_workspace(
+        &mut self,
+        workspace_name: String,
+    ) -> Result<WorkspaceVerificationResponse, Box<dyn std::error::Error>> {
+        let request = tonic::Request::new(WorkspaceVerificationRequest {
+            workspace_name,
+        });
+
+        let response = self.rt.block_on(async {
+            let response = self.client.verify_workspace(request).await?;
+            Ok(response.into_inner())
+        });
+
+        response
+    }
+
     pub fn publish_request(
         &mut self,
         records: Vec<Record>,
