@@ -38,12 +38,13 @@ def login(session: PromptSession):
 def select_workspace(usr: User) -> Workspace:
     """Select workspaces."""
     resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": usr.id.hex})
-    workspaces = {w.name: w.to_model() for w in resp.users()[0].workspaces}
+    workspaces = {w.name: w.to_model() for w in resp.user[0].workspaces}
 
-    wk = questionary.select(
-        "Select a workspace:",
-        choices=workspaces,
-        use_shortcuts=True,
-    ).ask()
+    if workspaces:
+        wk = questionary.select(
+            "Select a workspace:",
+            choices=workspaces,
+            use_shortcuts=True,
+        ).ask()
 
-    return workspaces[wk]
+        return workspaces[wk]

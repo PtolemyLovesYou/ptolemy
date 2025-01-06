@@ -6,9 +6,8 @@ import click
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from .cli.login import login, select_workspace
-from .cli.cli import CLIState, Commands, cli
-from .cli.user import *
-from .cli.workspace import *
+from .cli import get_cli
+from .cli.cli import CLIState, Commands
 
 
 def run_cli():
@@ -20,9 +19,14 @@ def run_cli():
     while current_user is None:
         try:
             current_user = login(session)
-            cli_state = CLIState(
-                user=current_user, workspace=select_workspace(current_user)
-            )
+
+            cli_data = {"user": current_user}
+            wk = select_workspace(current_user)
+
+            if wk:
+                cli_data["workspace"] = wk
+
+            cli_state = CLIState(**cli_data)
             click.echo(f"Welcome, {cli_state.user.username}! 💚")
         except ValueError as e:
             click.echo(f"Failed to login. Please try again. Details: {e}")
@@ -37,6 +41,7 @@ def run_cli():
         # Parse and execute command
         args = shlex.split(cmd)
         try:
+            cli = get_cli(cli_state.user)
             # Pass the CLI state through the context
             ctx = click.Context(cli)
             ctx.obj = {"state": cli_state}

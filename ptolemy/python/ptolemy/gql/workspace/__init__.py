@@ -1,4 +1,5 @@
 """Workspace GQL."""
+
 from . import queries, mutations
 from ..utils import get_gql_query
 
