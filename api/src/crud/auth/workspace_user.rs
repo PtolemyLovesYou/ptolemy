@@ -1,10 +1,10 @@
 use crate::error::CRUDError;
-use crate::generated::auth_schema::workspace_user;
-use crate::generated::auth_schema::workspace_user::dsl;
 use crate::generated::auth_schema::users;
 use crate::generated::auth_schema::workspace;
+use crate::generated::auth_schema::workspace_user;
+use crate::generated::auth_schema::workspace_user::dsl;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::{WorkspaceUser, WorkspaceUserCreate, Workspace, User};
+use crate::models::auth::models::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -172,9 +172,9 @@ pub async fn search_workspace_users(
     user_id: &Option<Uuid>,
     username: &Option<String>,
 ) -> Result<Vec<(WorkspaceUser, Workspace, User)>, CRUDError> {
-    use diesel::QueryDsl;
     use diesel::ExpressionMethods;
     use diesel::JoinOnDsl;
+    use diesel::QueryDsl;
 
     let mut query = dsl::workspace_user
         .inner_join(workspace::table.on(workspace::id.eq(dsl::workspace_id)))

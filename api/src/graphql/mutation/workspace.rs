@@ -224,9 +224,7 @@ impl WorkspaceMutation {
             _ => return deletion_error!("permission", "Insufficient permissions"),
         }
 
-        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id)
-            .await
-        {
+        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
             Ok(_) => DeletionResult(Ok(())),
             Err(e) => deletion_error!(
                 "workspace_user",

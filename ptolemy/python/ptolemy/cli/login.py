@@ -34,6 +34,7 @@ def login(session: PromptSession):
 
     raise ValueError("Failed to login.")
 
+
 def select_workspace(usr: User) -> Workspace:
     """Select workspaces."""
     resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": usr.id.hex})

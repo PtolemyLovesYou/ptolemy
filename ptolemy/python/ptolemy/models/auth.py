@@ -10,8 +10,8 @@ class WorkspaceUser(BaseModel):
     """GQL Workspace User."""
 
     role: WorkspaceRoleEnum
-    workspace: 'Workspace'
-    user: 'User'
+    workspace: "Workspace"
+    user: "User"
 
 
 class User(BaseModel):

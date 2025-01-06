@@ -43,13 +43,18 @@ impl Workspace {
     ) -> FieldResult<Vec<WorkspaceUser>> {
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        let users =
-            workspace_user_crud::search_workspace_users(&mut conn, &Some(self.id), &None, &user_id, &username)
-                .await
-                .map_err(|e| e.juniper_field_error())?
-                .into_iter()
-                .map(|(wk_usr, _wk, _usr)| wk_usr)
-                .collect();
+        let users = workspace_user_crud::search_workspace_users(
+            &mut conn,
+            &Some(self.id),
+            &None,
+            &user_id,
+            &username,
+        )
+        .await
+        .map_err(|e| e.juniper_field_error())?
+        .into_iter()
+        .map(|(wk_usr, _wk, _usr)| wk_usr)
+        .collect();
 
         Ok(users)
     }
@@ -98,12 +103,18 @@ impl User {
         workspace_name: Option<String>,
     ) -> FieldResult<Vec<Workspace>> {
         let mut conn = &mut ctx.get_conn_http().await.unwrap();
-        let workspaces = workspace_user_crud::search_workspace_users(&mut conn, &workspace_id, &workspace_name, &Some(self.id), &None)
-            .await
-            .map_err(|e| e.juniper_field_error())?
-            .into_iter()
-            .map(|(_wk_usr, wk, _usr)| wk)
-            .collect();
+        let workspaces = workspace_user_crud::search_workspace_users(
+            &mut conn,
+            &workspace_id,
+            &workspace_name,
+            &Some(self.id),
+            &None,
+        )
+        .await
+        .map_err(|e| e.juniper_field_error())?
+        .into_iter()
+        .map(|(_wk_usr, wk, _usr)| wk)
+        .collect();
 
         Ok(workspaces)
     }

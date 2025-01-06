@@ -1,4 +1,5 @@
 """CLI."""
+
 # pylint: disable=wildcard-import,unused-wildcard-import
 import shlex
 import click
@@ -9,6 +10,7 @@ from .cli.cli import CLIState, Commands, cli
 from .cli.user import *
 from .cli.workspace import *
 
+
 def run_cli():
     """Run Ptolemy CLI."""
     session = PromptSession()
@@ -18,7 +20,9 @@ def run_cli():
     while current_user is None:
         try:
             current_user = login(session)
-            cli_state = CLIState(user=current_user, workspace=select_workspace(current_user))
+            cli_state = CLIState(
+                user=current_user, workspace=select_workspace(current_user)
+            )
             click.echo(f"Welcome, {cli_state.user.username}! 💚")
         except ValueError as e:
             click.echo(f"Failed to login. Please try again. Details: {e}")
@@ -35,14 +39,15 @@ def run_cli():
         try:
             # Pass the CLI state through the context
             ctx = click.Context(cli)
-            ctx.obj = {'state': cli_state}
-            cli.main(args, prog_name='Ptolemy', standalone_mode=False, obj=ctx.obj)
+            ctx.obj = {"state": cli_state}
+            cli.main(args, prog_name="Ptolemy", standalone_mode=False, obj=ctx.obj)
         except click.exceptions.UsageError:
             # Show command-specific help when usage is wrong
-            command_name = args[0] if args else ''
+            command_name = args[0] if args else ""
             if command := cli.get_command(None, command_name):
                 ctx = click.Context(command)
                 click.echo(command.get_help(ctx))
+
 
 if __name__ == "__main__":
     run_cli()

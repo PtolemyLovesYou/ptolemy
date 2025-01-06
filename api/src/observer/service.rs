@@ -1,14 +1,9 @@
-use crate::state::AppState;
-use crate::observer::records::EventRecords;
 use crate::crud::auth::workspace as workspace_crud;
+use crate::observer::records::EventRecords;
+use crate::state::AppState;
 use ptolemy_core::generated::observer::{
-    observer_server::Observer,
-    PublishRequest,
-    PublishResponse,
-    Record,
-    WorkspaceVerificationRequest,
-    WorkspaceVerificationResponse,
-    ObserverStatusCode,
+    observer_server::Observer, ObserverStatusCode, PublishRequest, PublishResponse, Record,
+    WorkspaceVerificationRequest, WorkspaceVerificationResponse,
 };
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -79,19 +74,22 @@ impl Observer for MyObserver {
 
         let workspace_name = request.into_inner().workspace_name;
 
-        let workspace_candidates = match workspace_crud::search_workspaces(&mut conn, None, Some(workspace_name), None).await {
-            Ok(w) => w,
-            Err(e) => {
-                error!("Failed to search workspaces: {:?}", e);
-                let reply = WorkspaceVerificationResponse {
-                    status_code: ObserverStatusCode::InternalServerError.into(),
-                    workspace_id: None,
-                    message: Some("Failed to find workspace.".to_string()),
-                };
+        let workspace_candidates =
+            match workspace_crud::search_workspaces(&mut conn, None, Some(workspace_name), None)
+                .await
+            {
+                Ok(w) => w,
+                Err(e) => {
+                    error!("Failed to search workspaces: {:?}", e);
+                    let reply = WorkspaceVerificationResponse {
+                        status_code: ObserverStatusCode::InternalServerError.into(),
+                        workspace_id: None,
+                        message: Some("Failed to find workspace.".to_string()),
+                    };
 
-                return Ok(Response::new(reply));
-            }
-        };
+                    return Ok(Response::new(reply));
+                }
+            };
 
         let workspace = match workspace_candidates.len() {
             0 => {
@@ -102,7 +100,7 @@ impl Observer for MyObserver {
                 };
 
                 return Ok(Response::new(reply));
-            },
+            }
             1 => workspace_candidates.get(0).unwrap(),
             _ => {
                 let reply = WorkspaceVerificationResponse {

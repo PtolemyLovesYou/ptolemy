@@ -49,9 +49,7 @@ pub struct UserCreate {
     pub is_admin: bool,
 }
 
-#[derive(
-    Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations,
-)]
+#[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations)]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::workspace_user)]

@@ -1,6 +1,8 @@
 """Format utils."""
+
 import click
 from ..models.auth import User
+
 
 def format_user_info(user: User):
     """Format user info."""

@@ -63,7 +63,9 @@ impl EventRecords {
 
                 match record_data {
                     RecordData::Event(_) => match tier {
-                        Tier::System => add_record!(SystemEventRecord, record, system_event_records),
+                        Tier::System => {
+                            add_record!(SystemEventRecord, record, system_event_records)
+                        }
                         Tier::Subsystem => {
                             add_record!(SubsystemEventRecord, record, subsystem_event_records)
                         }
@@ -82,11 +84,12 @@ impl EventRecords {
                     RecordData::Input(_) => add_record!(IORecord, record, io_records),
                     RecordData::Output(_) => add_record!(IORecord, record, io_records),
                     RecordData::Feedback(_) => add_record!(IORecord, record, io_records),
-                    RecordData::Metadata(_) => add_record!(MetadataRecord, record, metadata_records),
+                    RecordData::Metadata(_) => {
+                        add_record!(MetadataRecord, record, metadata_records)
+                    }
                 }
             })
             .collect::<Vec<bool>>();
-
 
         Self {
             system_event_records,
@@ -100,13 +103,25 @@ impl EventRecords {
     }
 
     pub async fn push(self, conn: &mut DbConnection<'_>) -> bool {
-        insert_system_event_records(conn, self.system_event_records).await.ok();
-        insert_subsystem_event_records(conn, self.subsystem_event_records).await.ok();
-        insert_component_event_records(conn, self.component_event_records).await.ok();
-        insert_subcomponent_event_records(conn, self.subcomponent_event_records).await.ok();
-        insert_runtime_records(conn, self.runtime_records).await.ok();
+        insert_system_event_records(conn, self.system_event_records)
+            .await
+            .ok();
+        insert_subsystem_event_records(conn, self.subsystem_event_records)
+            .await
+            .ok();
+        insert_component_event_records(conn, self.component_event_records)
+            .await
+            .ok();
+        insert_subcomponent_event_records(conn, self.subcomponent_event_records)
+            .await
+            .ok();
+        insert_runtime_records(conn, self.runtime_records)
+            .await
+            .ok();
         insert_io_records(conn, self.io_records).await.ok();
-        insert_metadata_records(conn, self.metadata_records).await.ok();
+        insert_metadata_records(conn, self.metadata_records)
+            .await
+            .ok();
 
         true
     }

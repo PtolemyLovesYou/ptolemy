@@ -41,17 +41,17 @@ class GQLWorkspaceUser(GQLResponseBase[WorkspaceUser]):
     MODEL_CLS = WorkspaceUser
 
     role: Optional[WorkspaceRoleEnum] = None
-    user: Optional['GQLUser'] = None
-    workspace: Optional['GQLWorkspace'] = None
+    user: Optional["GQLUser"] = None
+    workspace: Optional["GQLWorkspace"] = None
 
-    def get_user(self) -> 'GQLUser':
+    def get_user(self) -> "GQLUser":
         """Get user."""
         if self.user is None:
             raise ValueError("No User fetched")
 
         return self.user
 
-    def get_workspace(self) -> 'GQLWorkspace':
+    def get_workspace(self) -> "GQLWorkspace":
         """Get workspace."""
         if self.workspace is None:
             raise ValueError("No Workspace fetched")
