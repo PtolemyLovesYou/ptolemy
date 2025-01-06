@@ -2,7 +2,6 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from prompt_toolkit import print_formatted_text as printf
 from ..models.gql import GQLQuery
 from ..gql import GET_USER_WORKSPACES, GET_WORKSPACE_USERS_BY_NAME
 from .cli import CLIState, cli
@@ -21,7 +20,7 @@ def list_workspaces(ctx):
     workspaces = resp.users()[0].workspaces
 
     data = [i.to_model().model_dump() for i in workspaces]
-    printf(tabulate(data, headers="keys"))
+    click.echo(tabulate(data, headers="keys"))
 
 @workspace.group(name='users')
 def workspace_users():
@@ -36,10 +35,10 @@ def list_workspace_users(ctx, name: Optional[str]):
     wk_name = name if name is not None else cli_state.workspace.name
     resp = GQLQuery.query(GET_WORKSPACE_USERS_BY_NAME, {"name": wk_name})
     if not resp.workspaces():
-        printf(f"Workspace {name} not found.")
+        click.echo(f"Workspace {name} not found.")
     else:
         wk = resp.workspaces()[0]
 
         data = [i.to_model().model_dump() for i in wk.users]
         print(f'Users in workspace {wk.name}:')
-        printf(tabulate(data, headers="keys"))
+        click.echo(tabulate(data, headers="keys"))

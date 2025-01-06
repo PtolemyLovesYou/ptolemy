@@ -2,7 +2,7 @@
 # pylint: disable=wildcard-import,unused-wildcard-import
 import shlex
 import click
-from prompt_toolkit import PromptSession, print_formatted_text as printf
+from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from .cli.login import login, select_workspace
 from .cli.cli import CLIState, Commands, cli
@@ -19,9 +19,9 @@ def run_cli():
         try:
             current_user = login(session)
             cli_state = CLIState(user=current_user, workspace=select_workspace(current_user))
-            printf(f"Welcome, {cli_state.user.username}! 💚")
+            click.echo(f"Welcome, {cli_state.user.username}! 💚")
         except ValueError as e:
-            printf(f"Failed to login. Please try again. Details: {e}")
+            click.echo(f"Failed to login. Please try again. Details: {e}")
             continue
 
     while True:
