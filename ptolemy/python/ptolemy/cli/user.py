@@ -45,7 +45,7 @@ def list_users(ctx):
     click.echo(tabulate(data, headers="keys"))
 
 
-@user.group(name="workspace")
+@user.group(name="workspaces")
 def user_workspaces():
     """User workspaces."""
 
