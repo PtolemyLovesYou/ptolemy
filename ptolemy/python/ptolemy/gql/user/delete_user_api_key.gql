@@ -1,0 +1,11 @@
+mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
+  user(userId: $userId) {
+    deleteUserApiKey(apiKeyId: $apiKeyId) {
+      error {
+        field
+        message
+      }
+      success
+    }
+  }
+}

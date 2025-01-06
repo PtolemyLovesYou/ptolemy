@@ -1,0 +1,11 @@
+mutation DeleteUser($Id: Uuid!, $userId: Uuid!) {
+  user(userId: $userId) {
+    delete(id: $Id) {
+      error {
+        field
+        message
+      }
+      success
+    }
+  }
+}

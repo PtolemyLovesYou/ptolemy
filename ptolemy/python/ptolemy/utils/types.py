@@ -2,6 +2,7 @@
 
 from typing import Union, Dict, Any, Annotated, TypeVar
 from uuid import UUID
+from datetime import datetime
 from pydantic import BeforeValidator, PlainSerializer, RootModel, field_validator
 
 Parameters = Dict[str, Any]  # pylint: disable=invalid-name
@@ -40,6 +41,23 @@ def _validate_id(v: Union[UUID, str]) -> UUID:
 
 
 ID = Annotated[UUID, BeforeValidator(_validate_id), PlainSerializer(_serialize_id)]
+
+
+def validate_timestamp(t: Union[str, datetime]):
+    """Validate timestamp."""
+    if isinstance(t, str):
+        return datetime.fromisoformat(t)
+    if isinstance(t, datetime):
+        return t
+
+    raise ValueError(f"Must be str or datetime. Type: {type(t)}")
+
+
+Timestamp = Annotated[
+    datetime,
+    BeforeValidator(validate_timestamp),
+    PlainSerializer(lambda i: i.isoformat()),
+]
 
 
 class IOSerializable(RootModel[T]):

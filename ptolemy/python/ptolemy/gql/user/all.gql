@@ -1,0 +1,10 @@
+query AllUsers {
+  user {
+    id
+    username
+    displayName
+    isAdmin
+    isSysadmin
+    status
+  }
+}

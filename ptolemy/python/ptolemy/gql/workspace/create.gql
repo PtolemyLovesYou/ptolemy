@@ -1,0 +1,19 @@
+mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $adminUserId: Uuid!) {
+  workspace(userId: $userId) {
+    create(
+      workspaceData: {name: $name, description: $description}
+      adminUserId: $adminUserId
+    ) {
+      error {
+        field
+        message
+      }
+      workspace {
+        id
+        name
+        description
+        archived
+      }
+    }
+  }
+}

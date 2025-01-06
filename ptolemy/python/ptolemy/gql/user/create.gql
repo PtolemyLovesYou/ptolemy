@@ -1,0 +1,21 @@
+mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isAdmin: Boolean!, $displayName: String) {
+  user(userId: $userId) {
+    create(
+      userData: {username: $username, password: $password, isSysadmin: false, isAdmin: $isAdmin, displayName: $displayName}
+    ) {
+      error {
+        field
+        message
+      }
+      success
+      user {
+        displayName
+        id
+        isAdmin
+        isSysadmin
+        status
+        username
+      }
+    }
+  }
+}
