@@ -3,19 +3,11 @@ use crate::crud::auth::{
     workspace as workspace_crud, workspace_user as workspace_user_crud,
 };
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
-use crate::models::auth::models::{ServiceApiKey, User, UserApiKey, Workspace};
+use crate::models::auth::models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use crate::state::AppState;
 use chrono::NaiveDateTime;
-use juniper::{graphql_object, FieldResult, GraphQLObject};
+use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
-
-#[derive(GraphQLObject)]
-pub struct WorkspaceUser {
-    id: String,
-    username: String,
-    display_name: Option<String>,
-    role: WorkspaceRoleEnum,
-}
 
 #[graphql_object]
 impl Workspace {
@@ -47,28 +39,22 @@ impl Workspace {
         &self,
         ctx: &AppState,
         user_id: Option<Uuid>,
+        username: Option<String>,
     ) -> FieldResult<Vec<WorkspaceUser>> {
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        let workspace_users =
-            workspace_user_crud::search_workspace_users(&mut conn, &self.id, &user_id)
-                .await
-                .map_err(|e| e.juniper_field_error())?;
-
-        let mut users: Vec<WorkspaceUser> = vec![];
-
-        for workspace_user in workspace_users {
-            let user = user_crud::get_user(&mut conn, &workspace_user.user_id)
-                .await
-                .map_err(|e| e.juniper_field_error())?;
-
-            users.push(WorkspaceUser {
-                id: user.id.to_string(),
-                username: user.username,
-                display_name: user.display_name,
-                role: workspace_user.role.clone(),
-            })
-        }
+        let users = workspace_user_crud::search_workspace_users(
+            &mut conn,
+            &Some(self.id),
+            &None,
+            &user_id,
+            &username,
+        )
+        .await
+        .map_err(|e| e.juniper_field_error())?
+        .into_iter()
+        .map(|(wk_usr, _wk, _usr)| wk_usr)
+        .collect();
 
         Ok(users)
     }
@@ -110,20 +96,25 @@ impl User {
         self.is_sysadmin
     }
 
-    async fn workspaces(&self, ctx: &AppState) -> FieldResult<Vec<Workspace>> {
-        let conn = &mut ctx.get_conn_http().await.unwrap();
-        let workspace_users = workspace_user_crud::get_workspaces_of_user(conn, &self.id)
-            .await
-            .map_err(|e| e.juniper_field_error())?;
-        let mut workspaces: Vec<Workspace> = Vec::new();
-
-        for wk in workspace_users {
-            workspaces.push(
-                workspace_crud::get_workspace(conn, &wk.workspace_id)
-                    .await
-                    .map_err(|e| e.juniper_field_error())?,
-            );
-        }
+    async fn workspaces(
+        &self,
+        ctx: &AppState,
+        workspace_id: Option<Uuid>,
+        workspace_name: Option<String>,
+    ) -> FieldResult<Vec<Workspace>> {
+        let mut conn = &mut ctx.get_conn_http().await.unwrap();
+        let workspaces = workspace_user_crud::search_workspace_users(
+            &mut conn,
+            &workspace_id,
+            &workspace_name,
+            &Some(self.id),
+            &None,
+        )
+        .await
+        .map_err(|e| e.juniper_field_error())?
+        .into_iter()
+        .map(|(_wk_usr, wk, _usr)| wk)
+        .collect();
 
         Ok(workspaces)
     }
@@ -186,5 +177,28 @@ impl UserApiKey {
 
     async fn expires_at(&self) -> Option<NaiveDateTime> {
         self.expires_at
+    }
+}
+
+#[graphql_object]
+impl WorkspaceUser {
+    async fn role(&self) -> WorkspaceRoleEnum {
+        self.role.clone()
+    }
+
+    async fn user(&self, ctx: &AppState) -> FieldResult<User> {
+        let mut conn = ctx.get_conn().await.map_err(|e| e.juniper_field_error())?;
+
+        user_crud::get_user(&mut conn, &self.user_id)
+            .await
+            .map_err(|e| e.juniper_field_error())
+    }
+
+    async fn workspace(&self, ctx: &AppState) -> FieldResult<Workspace> {
+        let mut conn = ctx.get_conn().await.map_err(|e| e.juniper_field_error())?;
+
+        workspace_crud::get_workspace(&mut conn, &self.workspace_id)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 }

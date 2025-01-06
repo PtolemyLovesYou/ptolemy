@@ -76,14 +76,12 @@ impl PtolemyClient {
         let workspace_id = match workspace_verification_resp.workspace_id {
             Some(id) => id,
             None => {
-                return Err(PyValueError::new_err(
-                    format!(
-                        "Failed to verify workspace {}: [{:?}] {}",
-                         workspace_name,
-                         workspace_verification_resp.status_code(),
-                         workspace_verification_resp.message()
-                        ),
-                ))
+                return Err(PyValueError::new_err(format!(
+                    "Failed to verify workspace {}: [{:?}] {}",
+                    workspace_name,
+                    workspace_verification_resp.status_code(),
+                    workspace_verification_resp.message()
+                )))
             }
         };
 

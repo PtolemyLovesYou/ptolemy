@@ -9,10 +9,9 @@ from ..utils import ID, Timestamp
 class WorkspaceUser(BaseModel):
     """GQL Workspace User."""
 
-    id: ID
-    username: str
-    display_name: Optional[str] = None
     role: WorkspaceRoleEnum
+    workspace: "Workspace"
+    user: "User"
 
 
 class User(BaseModel):

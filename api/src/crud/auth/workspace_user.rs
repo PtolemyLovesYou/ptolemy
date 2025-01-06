@@ -1,8 +1,10 @@
 use crate::error::CRUDError;
+use crate::generated::auth_schema::users;
+use crate::generated::auth_schema::workspace;
 use crate::generated::auth_schema::workspace_user;
 use crate::generated::auth_schema::workspace_user::dsl;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::{WorkspaceUser, WorkspaceUserCreate};
+use crate::models::auth::models::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -165,15 +167,43 @@ pub async fn get_workspace_user(
 
 pub async fn search_workspace_users(
     conn: &mut DbConnection<'_>,
-    workspace_id: &Uuid,
+    workspace_id: &Option<Uuid>,
+    workspace_name: &Option<String>,
     user_id: &Option<Uuid>,
-) -> Result<Vec<WorkspaceUser>, CRUDError> {
-    let mut query = dsl::workspace_user.into_boxed();
+    username: &Option<String>,
+) -> Result<Vec<(WorkspaceUser, Workspace, User)>, CRUDError> {
+    use diesel::ExpressionMethods;
+    use diesel::JoinOnDsl;
+    use diesel::QueryDsl;
 
-    query = query.filter(dsl::workspace_id.eq(workspace_id));
+    let mut query = dsl::workspace_user
+        .inner_join(workspace::table.on(workspace::id.eq(dsl::workspace_id)))
+        .inner_join(users::table.on(users::id.eq(dsl::user_id)))
+        .select((
+            // WorkspaceUser columns
+            workspace_user::all_columns,
+            // Workspace columns
+            workspace::all_columns,
+            // User columns
+            users::all_columns,
+        ))
+        .into_boxed();
 
+    // Apply filters
     if let Some(user_id) = user_id {
         query = query.filter(dsl::user_id.eq(user_id));
+    }
+
+    if let Some(workspace_id) = workspace_id {
+        query = query.filter(dsl::workspace_id.eq(workspace_id));
+    }
+
+    if let Some(workspace_name) = workspace_name {
+        query = query.filter(workspace::name.eq(workspace_name));
+    }
+
+    if let Some(username) = username {
+        query = query.filter(users::username.eq(username));
     }
 
     match query.get_results(conn).await {

@@ -16,6 +16,8 @@ CREATE_USER = get_gql_query(user, "create")
 DELETE_USER = get_gql_query(user, "delete")
 GET_USER_API_KEYS = get_gql_query(user, "user_api_keys")
 GET_USER_WORKSPACES = get_gql_query(user, "workspaces")
+GET_USER_BY_NAME = get_gql_query(user, "by_username")
+GET_USER_WORKSPACES_BY_USERNAME = get_gql_query(user, "workspaces_by_username")
 
 CREATE_WORKSPACE = get_gql_query(workspace, "create")
 DELETE_WORKSPACE = get_gql_query(workspace, "delete")
