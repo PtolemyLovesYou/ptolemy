@@ -1,5 +1,5 @@
-query UserWorkspaces($Id: Uuid) {
-  user(id: $Id) {
+query UserWorkspacesByUsername($username: String!) {
+  user(username: $username) {
     workspaces {
       archived
       description
@@ -7,7 +7,7 @@ query UserWorkspaces($Id: Uuid) {
       name
       createdAt
       updatedAt
-      users(id: $Id) {
+      users(username: $username) {
         role
       }
     }

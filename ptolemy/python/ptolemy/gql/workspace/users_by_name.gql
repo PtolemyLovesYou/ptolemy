@@ -2,9 +2,11 @@ query UserWorkspacesByName($name: String) {
   workspace(name: $name) {
     name
     users {
-      id
       role
-      username
+      user {
+        id
+        username
+      }
     }
   }
 }

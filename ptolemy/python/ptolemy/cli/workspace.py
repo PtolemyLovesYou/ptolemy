@@ -44,6 +44,7 @@ def list_workspace_users(ctx, name: Optional[str]):
     else:
         wk = resp.workspaces()[0]
 
-        data = [i.to_model().model_dump() for i in wk.users]
+        data = [{"username": u.get_user().username, "role": u.role} for u in wk.users]
+
         print(f"Users in workspace {wk.name}:")
         click.echo(tabulate(data, headers="keys"))

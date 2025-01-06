@@ -7,6 +7,10 @@ diesel:
 	docker compose exec api \
 		/bin/bash -c "source /app/configure.sh && /bin/bash"
 
+.PHONY: cli
+cli:
+	uv run -m ptolemy
+
 .PHONY: generate-gql-schema
 generate-gql-schema:
 	cd api && cargo run --bin generate-gql-schema
