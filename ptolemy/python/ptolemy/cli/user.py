@@ -4,7 +4,7 @@ from typing import Optional
 import click
 from tabulate import tabulate
 from ..models.gql import GQLQuery
-from ..gql import ALL_USERS, GET_USER_BY_NAME
+from ..gql import ALL_USERS, GET_USER_BY_NAME, GET_USER_WORKSPACES_BY_USERNAME
 from .cli import CLIState, cli
 from .format import format_user_info
 
@@ -15,7 +15,7 @@ def user():
 
 
 @user.command()
-@click.argument("username", required=False)
+@click.option('--username', required=False, type=str)
 @click.pass_context
 def info(ctx: click.Context, username: Optional[str] = None):
     """Get user info."""
@@ -45,11 +45,32 @@ def list_users(ctx):
     click.echo(tabulate(data, headers="keys"))
 
 
-# @user.group(name="workspace")
-# def user_workspaces():
-#     """User workspaces."""
+@user.group(name="workspace")
+def user_workspaces():
+    """User workspaces."""
 
-# @user_workspaces.command(name='list')
-# @click.argument('username', required=False)
-# def list_workspaces_of_user(ctx, username: Optional[str]):
-#     """Get workspaces of user."""
+@user_workspaces.command(name='list')
+@click.option('--username', required=False, type=str)
+@click.pass_context
+def list_workspaces_of_user(ctx, username: Optional[str] = None):
+    """Get workspaces of user."""
+    cli_state: CLIState = ctx.obj["state"]
+    resp = GQLQuery.query(
+        GET_USER_WORKSPACES_BY_USERNAME,
+        {"username": username or cli_state.user.username}
+        )
+    data = []
+
+    for usr in resp.users():
+        for workspace in usr.workspaces:
+            data.append(
+                {
+                    "workspace": workspace.name,
+                    "role": workspace.users[0].role
+                }
+            )
+
+    if not data:
+        click.echo("No data found.")
+
+    click.echo(tabulate(data, headers="keys"))

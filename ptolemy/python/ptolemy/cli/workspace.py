@@ -32,9 +32,9 @@ def workspace_users():
 
 
 @workspace_users.command(name="list", help="List users in a workspace.")
-@click.argument("name", required=False)
+@click.option('--name', required=False, type=str)
 @click.pass_context
-def list_workspace_users(ctx, name: Optional[str]):
+def list_workspace_users(ctx, name: Optional[str] = None):
     """List workspace users."""
     cli_state: CLIState = ctx.obj["state"]
     wk_name = name if name is not None else cli_state.workspace.name
