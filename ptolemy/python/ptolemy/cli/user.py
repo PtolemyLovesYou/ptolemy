@@ -3,7 +3,7 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from ..models.gql import GQLQuery
+from ..models.gql import GQLQuery, uses_gql
 from ..gql import ALL_USERS, GET_USER_BY_NAME, GET_USER_WORKSPACES_BY_USERNAME
 from .cli import CLIState, cli
 from .format import format_user_info
@@ -17,6 +17,7 @@ def user():
 @user.command()
 @click.option("--username", required=False, type=str)
 @click.pass_context
+@uses_gql
 def info(ctx: click.Context, username: Optional[str] = None):
     """Get user info."""
     cli_state: CLIState = ctx.obj["state"]
@@ -24,22 +25,23 @@ def info(ctx: click.Context, username: Optional[str] = None):
         usr = cli_state.user
     else:
         resp = GQLQuery.query(GET_USER_BY_NAME, {"username": username})
-        if not resp.users():
+        if not resp.user:
             click.echo(f"Unable to find user: {username}")
             return None
 
-        usr = resp.users()[0].to_model()
+        usr = resp.user[0].to_model()
 
     click.echo(format_user_info(usr))
 
 
 @user.command(name="list")
 @click.pass_context
+@uses_gql
 def list_users(ctx):
     """List users."""
     cli_state: CLIState = ctx.obj["state"]
     resp = GQLQuery.query(ALL_USERS, {"Id": cli_state.user.id.hex})
-    users = [i.to_model() for i in resp.users()]
+    users = [i.to_model() for i in resp.user]
 
     data = [i.model_dump() for i in users]
     click.echo(tabulate(data, headers="keys"))
@@ -53,6 +55,7 @@ def user_workspaces():
 @user_workspaces.command(name="list")
 @click.option("--username", required=False, type=str)
 @click.pass_context
+@uses_gql
 def list_workspaces_of_user(ctx, username: Optional[str] = None):
     """Get workspaces of user."""
     cli_state: CLIState = ctx.obj["state"]
@@ -62,7 +65,7 @@ def list_workspaces_of_user(ctx, username: Optional[str] = None):
     )
     data = []
 
-    for usr in resp.users():
+    for usr in resp.user:
         for workspace in usr.workspaces:
             data.append({"workspace": workspace.name, "role": workspace.users[0].role})
 

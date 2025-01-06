@@ -1,6 +1,6 @@
 """GraphQL Response model."""
 
-from typing import Optional, List, Type, TypeVar, Generic, ClassVar, Self, Dict, Any
+from typing import List, Type, TypeVar, Generic, ClassVar, Self, Dict, Any
 import requests
 from pydantic import (
     BaseModel,
@@ -8,18 +8,14 @@ from pydantic import (
     AliasGenerator,
     alias_generators,
     ValidationError,
+    Field
 )
 
 T = TypeVar("T", bound=BaseModel)
 
-class GQLResponseBase(BaseModel, Generic[T]):
-    """GQL Response base class."""
-
-    MODEL_CLS: ClassVar[Type[T]] = None
-
-    model_config = ConfigDict(
-        alias_generator=AliasGenerator(validation_alias=alias_generators.to_camel)
-    )
+class ToModelMixin(BaseModel, Generic[T]):
+    """To model mixin."""
+    MODEL_CLS: ClassVar[Type[T]]
 
     def to_model(self) -> T:
         """Convert to model."""
@@ -33,19 +29,26 @@ class GQLResponseBase(BaseModel, Generic[T]):
                 f"Got a validation error: {e}. Check yo GQL query hoe!!!"
             ) from e
 
+class GQLResponseBase(BaseModel):
+    """GQL Response base class."""
+    model_config = ConfigDict(
+        alias_generator=AliasGenerator(validation_alias=alias_generators.to_camel),
+        validate_default=False
+    )
+
 
 class GQLValidationError(BaseModel):
     """GQL validation error."""
 
-    field: Optional[str] = None
-    message: Optional[str] = None
+    field: str = Field(default=None)
+    message: str = Field(default=None)
 
 
 class GQLMutationResult(GQLResponseBase):
     """GQL Mutation Response base class."""
 
-    success: Optional[bool]
-    error: Optional[List[GQLValidationError]] = None
+    success: bool = Field(default=None)
+    error: List[GQLValidationError] = Field(default=None)
 
 class QueryableMixin(BaseModel):
     """Queryable mixin."""

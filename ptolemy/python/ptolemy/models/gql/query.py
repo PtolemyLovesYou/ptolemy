@@ -1,110 +1,83 @@
 """GraphQL Response model."""
 
-from typing import Optional, List
-from .base import GQLResponseBase, QueryableMixin
+from typing import List
+from pydantic import Field
+from .base import GQLResponseBase, QueryableMixin, ToModelMixin
 from ..enums import UserStatusEnum, ApiKeyPermissionEnum, WorkspaceRoleEnum
 from ..auth import User, Workspace, ServiceApiKey, UserApiKey, WorkspaceUser
 from ...utils import ID, Timestamp
 
 
-class GQLWorkspaceUser(GQLResponseBase[WorkspaceUser]):
+class GQLWorkspaceUser(GQLResponseBase, ToModelMixin[WorkspaceUser]):
     """GQL Workspace User."""
 
     MODEL_CLS = WorkspaceUser
 
-    role: Optional[WorkspaceRoleEnum] = None
-    user: Optional["GQLUser"] = None
-    workspace: Optional["GQLWorkspace"] = None
-
-    def get_user(self) -> "GQLUser":
-        """Get user."""
-        if self.user is None:
-            raise ValueError("No User fetched")
-
-        return self.user
-
-    def get_workspace(self) -> "GQLWorkspace":
-        """Get workspace."""
-        if self.workspace is None:
-            raise ValueError("No Workspace fetched")
-
-        return self.workspace
+    role: WorkspaceRoleEnum = Field(default=None)
+    user: "GQLUser" = Field(default=None)
+    workspace: "GQLWorkspace" = Field(default=None)
 
 
-class GQLServiceApiKey(GQLResponseBase[ServiceApiKey]):
+class GQLServiceApiKey(GQLResponseBase, ToModelMixin[ServiceApiKey]):
     """GQL Service API key."""
 
     MODEL_CLS = ServiceApiKey
 
-    id: Optional[ID] = None
-    workspace_id: Optional[ID] = None
-    name: Optional[str] = None
-    key_preview: Optional[str] = None
-    permissions: Optional[ApiKeyPermissionEnum] = None
-    expires_at: Optional[Timestamp] = None
+    id: ID = Field(default=None)
+    workspace_id: ID = Field(default=None)
+    name: str = Field(default=None)
+    key_preview: str = Field(default=None)
+    permissions: ApiKeyPermissionEnum = Field(default=None)
+    expires_at: Timestamp = Field(default=None)
 
 
-class GQLUserApiKey(GQLResponseBase[UserApiKey]):
+class GQLUserApiKey(GQLResponseBase, ToModelMixin[UserApiKey]):
     """GQL User API key."""
 
     MODEL_CLS = UserApiKey
 
-    id: Optional[ID] = None
-    user_id: Optional[ID] = None
-    key_preview: Optional[str] = None
-    expires_at: Optional[Timestamp] = None
+    id: ID = Field(default=None)
+    user_id: ID = Field(default=None)
+    key_preview: str = Field(default=None)
+    expires_at: Timestamp = Field(default=None)
 
 
-class GQLWorkspace(GQLResponseBase[Workspace]):
+class GQLWorkspace(GQLResponseBase, ToModelMixin[Workspace]):
     """GQL Workspace."""
 
     MODEL_CLS = Workspace
 
-    id: Optional[ID] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    archived: Optional[bool] = None
-    created_at: Optional[Timestamp] = None
-    updated_at: Optional[Timestamp] = None
-    users: Optional[List["GQLWorkspaceUser"]] = None
-    service_api_keys: Optional[List["GQLServiceApiKey"]] = None
+    id: ID = Field(default=None)
+    name: str = Field(default=None)
+    description: str = Field(default=None)
+    archived: bool = Field(default=None)
+    created_at: Timestamp = Field(default=None)
+    updated_at: Timestamp = Field(default=None)
+    users: List["GQLWorkspaceUser"] = Field(default=None)
+    service_api_keys: List["GQLServiceApiKey"] = Field(default=None)
 
 
-class GQLUser(GQLResponseBase[User]):
+class GQLUser(GQLResponseBase, ToModelMixin[User]):
     """GQL User."""
 
     MODEL_CLS = User
 
-    id: Optional[ID] = None
-    name: Optional[ID] = None
-    username: Optional[str] = None
-    description: Optional[ID] = None
-    archived: Optional[bool] = None
-    created_at: Optional[Timestamp] = None
-    updated_at: Optional[Timestamp] = None
-    workspaces: Optional[List[GQLWorkspace]] = None
-    status: Optional[UserStatusEnum] = None
-    user_api_keys: Optional[List[GQLUserApiKey]] = None
-    is_admin: Optional[bool] = None
-    is_sysadmin: Optional[bool] = None
+    id: ID = Field(default=None)
+    name: ID = Field(default=None)
+    username: str = Field(default=None)
+    description: ID = Field(default=None)
+    archived: bool = Field(default=None)
+    created_at: Timestamp = Field(default=None)
+    updated_at: Timestamp = Field(default=None)
+    workspaces: List[GQLWorkspace] = Field(default=None)
+    status: UserStatusEnum = Field(default=None)
+    user_api_keys: List[GQLUserApiKey] = Field(default=None)
+    is_admin: bool = Field(default=None)
+    is_sysadmin: bool = Field(default=None)
 
 
 class GQLQuery(GQLResponseBase, QueryableMixin):
     """GraphQL Query model."""
 
-    user: Optional[List[GQLUser]] = None
-    workspace: Optional[List[GQLWorkspace]] = None
-
-    def users(self) -> List[GQLUser]:
-        """Users."""
-        if self.user is None:
-            raise ValueError("user is None.")
-
-        return list(self.user)
-
-    def workspaces(self) -> List[GQLWorkspace]:
-        """Workspaces."""
-        if self.workspace is None:
-            raise ValueError("workspace is None.")
-
-        return list(self.workspace)
+    user: List[GQLUser] = Field(default=None)
+    workspace: List[GQLWorkspace] = Field(default=None)
