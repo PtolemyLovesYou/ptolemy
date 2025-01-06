@@ -1,15 +1,12 @@
 """Test log."""
 
-import os
 import time
 from tqdm.auto import tqdm
 from ptolemy import Ptolemy
 
-os.environ["OBSERVER_HOST"] = "localhost"
-os.environ["OBSERVER_PORT"] = "50051"
-
-print('got here')
 client = Ptolemy(
+    base_url="http://localhost:8000",
+    observer_url="http://localhost:50051",
     workspace_name="default",
     autoflush=False,
     batch_size=1024
