@@ -5,10 +5,10 @@ import click
 from tabulate import tabulate
 from ..models.gql import GQLQuery, uses_gql
 from ..gql import GET_USER_WORKSPACES, GET_WORKSPACE_USERS_BY_NAME
-from .cli import CLIState, cli
+from .cli import CLIState
 
 
-@cli.group()
+@click.group()
 def workspace():
     """Workspace commands."""
 

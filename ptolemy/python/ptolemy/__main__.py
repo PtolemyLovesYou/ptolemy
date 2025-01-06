@@ -6,9 +6,8 @@ import click
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from .cli.login import login, select_workspace
-from .cli.cli import CLIState, Commands, cli
-from .cli.user import *
-from .cli.workspace import *
+from .cli import get_cli
+from .cli.cli import CLIState, Commands
 
 
 def run_cli():
@@ -37,6 +36,7 @@ def run_cli():
         # Parse and execute command
         args = shlex.split(cmd)
         try:
+            cli = get_cli(cli_state.user)
             # Pass the CLI state through the context
             ctx = click.Context(cli)
             ctx.obj = {"state": cli_state}

@@ -1,8 +1,7 @@
 """CLI."""
 
 from enum import StrEnum
-import click
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from ..models.auth import User, Workspace
 
 
@@ -14,14 +13,7 @@ class Commands(StrEnum):
 
 class CLIState(BaseModel):
     """Holds the CLI state."""
+    model_config = ConfigDict(validate_default=False)
 
     user: User
-    workspace: Workspace
-
-
-@click.group()
-@click.pass_context
-def cli(ctx):
-    """CLI root command group."""
-    # Ensure ctx.obj exists
-    ctx.ensure_object(dict)
+    workspace: Workspace = Field(default=None)

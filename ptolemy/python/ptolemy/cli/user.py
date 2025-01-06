@@ -5,11 +5,10 @@ import click
 from tabulate import tabulate
 from ..models.gql import GQLQuery, uses_gql
 from ..gql import ALL_USERS, GET_USER_BY_NAME, GET_USER_WORKSPACES_BY_USERNAME
-from .cli import CLIState, cli
+from .cli import CLIState
 from .format import format_user_info
 
-
-@cli.group(invoke_without_command=True)
+@click.group()
 def user():
     """User group."""
 
@@ -46,6 +45,12 @@ def list_users(ctx):
     data = [i.model_dump() for i in users]
     click.echo(tabulate(data, headers="keys"))
 
+@user.command(name="create")
+@click.pass_context
+@uses_gql
+def create_user(ctx):
+    """Create user."""
+    pass
 
 @user.group(name="workspaces")
 def user_workspaces():

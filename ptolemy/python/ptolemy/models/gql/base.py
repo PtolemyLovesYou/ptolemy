@@ -23,7 +23,7 @@ class ToModelMixin(BaseModel, Generic[T]):
             raise NotImplementedError("to_model() isn't implemented for this class.")
 
         try:
-            return self.MODEL_CLS.model_validate(self.model_dump())
+            return self.MODEL_CLS.model_validate(self.model_dump(exclude_unset=True))
         except ValidationError as e:
             raise ValueError(
                 f"Got a validation error: {e}. Check yo GQL query hoe!!!"
