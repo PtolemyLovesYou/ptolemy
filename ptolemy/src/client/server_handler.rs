@@ -1,4 +1,3 @@
-use crate::config::ObserverConfig;
 use ptolemy_core::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
     WorkspaceVerificationRequest, WorkspaceVerificationResponse,
@@ -16,16 +15,13 @@ pub struct ServerHandler {
 }
 
 impl ServerHandler {
-    pub fn new(batch_size: usize) -> PyResult<Self> {
-        let config = ObserverConfig::new();
+    pub fn new(observer_url: String, batch_size: usize) -> PyResult<Self> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
         let queue: VecDeque<Record> = VecDeque::new();
 
-        let client = rt
-            .block_on(ObserverClient::connect(config.to_string()))
-            .unwrap();
+        let client = rt.block_on(ObserverClient::connect(observer_url)).unwrap();
 
         Ok(Self {
             client,

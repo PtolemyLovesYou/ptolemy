@@ -48,6 +48,8 @@ macro_rules! set_io {
 #[derive(Debug, Clone)]
 #[pyclass(name = "Ptolemy")]
 pub struct PtolemyClient {
+    observer_url: String,
+    base_url: String,
     workspace_id: Uuid,
     workspace_name: String,
     parent_id: Option<Uuid>,
@@ -60,8 +62,17 @@ pub struct PtolemyClient {
 #[pymethods]
 impl PtolemyClient {
     #[new]
-    fn new(workspace_name: String, autoflush: bool, batch_size: usize) -> PyResult<Self> {
-        let grpc_client = Arc::new(Mutex::new(ServerHandler::new(batch_size)?));
+    fn new(
+        base_url: String,
+        observer_url: String,
+        workspace_name: String,
+        autoflush: bool,
+        batch_size: usize,
+    ) -> PyResult<Self> {
+        let grpc_client = Arc::new(Mutex::new(ServerHandler::new(
+            observer_url.clone(),
+            batch_size,
+        )?));
 
         let grpc_client_clone = Arc::clone(&grpc_client);
         let mut client = grpc_client_clone.lock().unwrap();
@@ -86,6 +97,8 @@ impl PtolemyClient {
         };
 
         Ok(Self {
+            observer_url,
+            base_url,
             workspace_id: Uuid::parse_str(workspace_id.as_str()).unwrap(),
             workspace_name,
             parent_id: None,
@@ -162,6 +175,8 @@ impl PtolemyClient {
         environment: Option<String>,
     ) -> PyResult<Self> {
         let mut client = Self {
+            observer_url: self.observer_url.clone(),
+            base_url: self.base_url.clone(),
             workspace_id: self.workspace_id,
             workspace_name: self.workspace_name.clone(),
             parent_id: None,
@@ -216,6 +231,8 @@ impl PtolemyClient {
         };
 
         let mut client = Self {
+            observer_url: self.observer_url.clone(),
+            base_url: self.base_url.clone(),
             workspace_id: self.workspace_id,
             workspace_name: self.workspace_name.clone(),
             parent_id: Some(self.state.event_id()?),
