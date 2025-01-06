@@ -9,6 +9,7 @@
 
 .venv/ -linguist-detectable
 target/ -linguist-detectable
+prototype/ -linguist-detectable
 
 # *.sql.j2 linguist-language=sql
 
@@ -18,6 +19,3 @@ ptolemy-core/src/generated/*.rs -linguist-detectable
 
 # Set migrations as detectable
 api/diesel/**/*.sql linguist-detectable
-
-# Set prototype python files as undetectable
-prototype/**/*.py -linguist-detectable
