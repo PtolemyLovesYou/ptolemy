@@ -9,7 +9,7 @@ def get_gql_query(pkg, name: str) -> str:
     return read_text(pkg, f"{name}.gql")
 
 
-ALL_USERS = get_gql_query(user, "all")
+ALL_USERS = get_gql_query(user.queries, "all")
 CREATE_USER_API_KEY = get_gql_query(user, "create_user_api_key")
 DELETE_USER_API_KEY = get_gql_query(user, "delete_user_api_key")
 CREATE_USER = get_gql_query(user, "create")
