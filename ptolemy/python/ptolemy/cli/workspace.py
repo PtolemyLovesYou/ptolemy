@@ -32,7 +32,7 @@ def workspace_users():
 
 
 @workspace_users.command(name="list", help="List users in a workspace.")
-@click.option('--name', required=False, type=str)
+@click.option("--name", required=False, type=str)
 @click.pass_context
 def list_workspace_users(ctx, name: Optional[str] = None):
     """List workspace users."""

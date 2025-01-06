@@ -15,7 +15,7 @@ def user():
 
 
 @user.command()
-@click.option('--username', required=False, type=str)
+@click.option("--username", required=False, type=str)
 @click.pass_context
 def info(ctx: click.Context, username: Optional[str] = None):
     """Get user info."""
@@ -49,26 +49,22 @@ def list_users(ctx):
 def user_workspaces():
     """User workspaces."""
 
-@user_workspaces.command(name='list')
-@click.option('--username', required=False, type=str)
+
+@user_workspaces.command(name="list")
+@click.option("--username", required=False, type=str)
 @click.pass_context
 def list_workspaces_of_user(ctx, username: Optional[str] = None):
     """Get workspaces of user."""
     cli_state: CLIState = ctx.obj["state"]
     resp = GQLQuery.query(
         GET_USER_WORKSPACES_BY_USERNAME,
-        {"username": username or cli_state.user.username}
-        )
+        {"username": username or cli_state.user.username},
+    )
     data = []
 
     for usr in resp.users():
         for workspace in usr.workspaces:
-            data.append(
-                {
-                    "workspace": workspace.name,
-                    "role": workspace.users[0].role
-                }
-            )
+            data.append({"workspace": workspace.name, "role": workspace.users[0].role})
 
     if not data:
         click.echo("No data found.")

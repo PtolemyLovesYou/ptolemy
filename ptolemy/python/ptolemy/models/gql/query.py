@@ -1,38 +1,10 @@
 """GraphQL Response model."""
 
-from typing import Optional, List, Dict, Any, Type, TypeVar, Generic, ClassVar
-import requests
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    AliasGenerator,
-    alias_generators,
-    ValidationError,
-)
-from .enums import UserStatusEnum, ApiKeyPermissionEnum, WorkspaceRoleEnum
-from .auth import User, Workspace, ServiceApiKey, UserApiKey, WorkspaceUser
-from ..utils import ID, Timestamp
-
-T = TypeVar("T", bound=BaseModel)
-
-
-class GQLResponseBase(BaseModel, Generic[T]):
-    """GQL Response base class."""
-
-    MODEL_CLS: ClassVar[Type[T]]
-
-    model_config = ConfigDict(
-        alias_generator=AliasGenerator(validation_alias=alias_generators.to_camel)
-    )
-
-    def to_model(self) -> T:
-        """Convert to model."""
-        try:
-            return self.MODEL_CLS.model_validate(self.model_dump())
-        except ValidationError as e:
-            raise ValueError(
-                f"Got a validation error: {e}. Check yo GQL query hoe!!!"
-            ) from e
+from typing import Optional, List
+from .base import GQLResponseBase, QueryableMixin
+from ..enums import UserStatusEnum, ApiKeyPermissionEnum, WorkspaceRoleEnum
+from ..auth import User, Workspace, ServiceApiKey, UserApiKey, WorkspaceUser
+from ...utils import ID, Timestamp
 
 
 class GQLWorkspaceUser(GQLResponseBase[WorkspaceUser]):
@@ -117,7 +89,7 @@ class GQLUser(GQLResponseBase[User]):
     is_sysadmin: Optional[bool] = None
 
 
-class GQLQuery(GQLResponseBase):
+class GQLQuery(GQLResponseBase, QueryableMixin):
     """GraphQL Query model."""
 
     user: Optional[List[GQLUser]] = None
@@ -136,25 +108,3 @@ class GQLQuery(GQLResponseBase):
             raise ValueError("workspace is None.")
 
         return list(self.workspace)
-
-    @classmethod
-    def query(cls, query: str, variables: Dict[str, Any]) -> "GQLQuery":
-        """Query GQL endpoint."""
-        resp = requests.post(
-            "http://localhost:8000/graphql",
-            json={
-                "query": query,
-                "variables": variables,
-            },
-            timeout=5,
-        )
-
-        if not resp.ok:
-            raise ValueError(f"GQL query failed: {resp.text}")
-
-        data = resp.json().get("data")
-
-        if data is None:
-            raise ValueError(f"Data not in query response: {resp.text}")
-
-        return cls(**data)
