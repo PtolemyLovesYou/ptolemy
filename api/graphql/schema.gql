@@ -93,7 +93,7 @@ type User {
   status: UserStatusEnum!
   isAdmin: Boolean!
   isSysadmin: Boolean!
-  workspaces: [Workspace!]!
+  workspaces(workspaceId: Uuid, workspaceName: String): [Workspace!]!
   userApiKeys: [UserApiKey!]!
 }
 

@@ -43,12 +43,15 @@ impl Workspace {
     ) -> FieldResult<Vec<WorkspaceUser>> {
         let mut conn = ctx.get_conn_http().await.unwrap();
 
-        let workspace_users =
+        let users =
             workspace_user_crud::search_workspace_users(&mut conn, &Some(self.id), &None, &user_id, &username)
                 .await
-                .map_err(|e| e.juniper_field_error())?;
+                .map_err(|e| e.juniper_field_error())?
+                .into_iter()
+                .map(|(wk_usr, _wk, _usr)| wk_usr)
+                .collect();
 
-        Ok(workspace_users)
+        Ok(users)
     }
 
     async fn service_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<ServiceApiKey>> {
@@ -88,20 +91,19 @@ impl User {
         self.is_sysadmin
     }
 
-    async fn workspaces(&self, ctx: &AppState) -> FieldResult<Vec<Workspace>> {
-        let conn = &mut ctx.get_conn_http().await.unwrap();
-        let workspace_users = workspace_user_crud::get_workspaces_of_user(conn, &self.id)
+    async fn workspaces(
+        &self,
+        ctx: &AppState,
+        workspace_id: Option<Uuid>,
+        workspace_name: Option<String>,
+    ) -> FieldResult<Vec<Workspace>> {
+        let mut conn = &mut ctx.get_conn_http().await.unwrap();
+        let workspaces = workspace_user_crud::search_workspace_users(&mut conn, &workspace_id, &workspace_name, &Some(self.id), &None)
             .await
-            .map_err(|e| e.juniper_field_error())?;
-        let mut workspaces: Vec<Workspace> = Vec::new();
-
-        for wk in workspace_users {
-            workspaces.push(
-                workspace_crud::get_workspace(conn, &wk.workspace_id)
-                    .await
-                    .map_err(|e| e.juniper_field_error())?,
-            );
-        }
+            .map_err(|e| e.juniper_field_error())?
+            .into_iter()
+            .map(|(_wk_usr, wk, _usr)| wk)
+            .collect();
 
         Ok(workspaces)
     }
