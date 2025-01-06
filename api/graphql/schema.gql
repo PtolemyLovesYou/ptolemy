@@ -130,7 +130,7 @@ type Workspace {
   archived: Boolean!
   createdAt: LocalDateTime!
   updatedAt: LocalDateTime!
-  users(userId: Uuid): [WorkspaceUser!]!
+  users(userId: Uuid, username: String): [WorkspaceUser!]!
   serviceApiKeys: [ServiceApiKey!]!
 }
 
@@ -151,10 +151,9 @@ type WorkspaceResult {
 }
 
 type WorkspaceUser {
-  id: String!
-  username: String!
-  displayName: String
   role: WorkspaceRoleEnum!
+  user: User!
+  workspace: Workspace!
 }
 
 type WorkspaceUserResult {

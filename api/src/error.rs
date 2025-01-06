@@ -18,6 +18,7 @@ pub enum CRUDError {
     DeleteError,
     ConnectionError,
     UpdateError,
+    BadQuery,
 }
 
 impl CRUDError {
@@ -25,6 +26,7 @@ impl CRUDError {
         match self {
             CRUDError::DatabaseError => StatusCode::CONFLICT,
             CRUDError::NotFoundError => StatusCode::NOT_FOUND,
+            CRUDError::BadQuery => StatusCode::BAD_REQUEST,
             CRUDError::InsertError => StatusCode::INTERNAL_SERVER_ERROR,
             CRUDError::GetError => StatusCode::INTERNAL_SERVER_ERROR,
             CRUDError::DeleteError => StatusCode::INTERNAL_SERVER_ERROR,

@@ -1,7 +1,7 @@
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
-use juniper::{GraphQLInputObject, GraphQLObject};
+use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -50,7 +50,7 @@ pub struct UserCreate {
 }
 
 #[derive(
-    Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations, GraphQLObject,
+    Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations,
 )]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
