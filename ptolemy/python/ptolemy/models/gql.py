@@ -81,7 +81,7 @@ class GQLWorkspace(GQLResponseBase[Workspace]):
     archived: Optional[bool] = None
     created_at: Optional[Timestamp] = None
     updated_at: Optional[Timestamp] = None
-    users: Optional[List["GQLUser"]] = None
+    users: Optional[List["GQLWorkspaceUser"]] = None
     service_api_keys: Optional[List["GQLServiceApiKey"]] = None
 
 
