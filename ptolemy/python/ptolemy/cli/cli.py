@@ -13,6 +13,7 @@ class Commands(StrEnum):
 
 class CLIState(BaseModel):
     """Holds the CLI state."""
+
     model_config = ConfigDict(validate_default=False)
 
     user: User

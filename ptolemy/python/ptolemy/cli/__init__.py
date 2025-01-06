@@ -1,11 +1,14 @@
 """CLI."""
+
 import click
 from ..models.auth import User
 from .workspace import workspace
 from .user import user
 
+
 def get_cli(usr: User):
     """Get CLI function."""
+
     @click.group()
     @click.pass_context
     def cli(ctx):

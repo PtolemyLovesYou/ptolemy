@@ -4,9 +4,16 @@ from typing import Optional
 import click
 from tabulate import tabulate
 from ..models.gql import GQLQuery, GQLMutation, uses_gql
-from ..gql import ALL_USERS, GET_USER_BY_NAME, GET_USER_WORKSPACES_BY_USERNAME, CREATE_USER
+from ..gql import (
+    ALL_USERS,
+    GET_USER_BY_NAME,
+    GET_USER_WORKSPACES_BY_USERNAME,
+    CREATE_USER,
+    DELETE_USER,
+)
 from .cli import CLIState
 from .format import format_user_info
+
 
 @click.group()
 def user():
@@ -45,26 +52,33 @@ def list_users(ctx):
     data = [i.model_dump() for i in users]
     click.echo(tabulate(data, headers="keys"))
 
+
 @user.command(name="create")
-@click.option('--username', type=str, required=True)
-@click.option('--password', type=str, required=True)
-@click.option('--display-name', type=str)
-@click.option('--admin', is_flag=True, default=False)
+@click.option("--username", type=str, required=True)
+@click.option("--password", type=str, required=True)
+@click.option("--display-name", type=str)
+@click.option("--admin", is_flag=True, default=False)
 @click.pass_context
 @uses_gql
-def create_user(ctx, username: str, password: str, display_name: Optional[str] = None, admin: bool = False):
+def create_user(
+    ctx,
+    username: str,
+    password: str,
+    display_name: Optional[str] = None,
+    admin: bool = False,
+):
     """Create user."""
     cli_state: CLIState = ctx.obj["state"]
     resp = GQLMutation.query(
         CREATE_USER,
         {
-            'userId': cli_state.user.id.hex,
-            'username': username,
-            'password': password,
-            'displayName': display_name,
-            'isAdmin': admin
-        }
-        )
+            "userId": cli_state.user.id.hex,
+            "username": username,
+            "password": password,
+            "displayName": display_name,
+            "isAdmin": admin,
+        },
+    )
 
     data = resp.user.create
 
@@ -72,6 +86,27 @@ def create_user(ctx, username: str, password: str, display_name: Optional[str] =
         click.echo(f"Successfully created user {username}")
     else:
         click.echo(f"Error creating user: {data.error}")
+
+
+@user.command(name="delete")
+@click.argument("user_id")
+@click.pass_context
+@uses_gql
+def delete_user(ctx, user_id: str):
+    """Delete user."""
+    cli_state: CLIState = ctx.obj["state"]
+
+    resp = GQLMutation.query(
+        DELETE_USER, variables={"userId": cli_state.user.id.hex, "Id": user_id}
+    )
+
+    data = resp.user.delete
+
+    if data.success:
+        click.echo(f"Successfully deleted user {user_id}")
+    else:
+        click.echo(f"Error deleting user: {data.error}")
+
 
 @user.group(name="workspaces")
 def user_workspaces():

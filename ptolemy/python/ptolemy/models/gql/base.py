@@ -8,10 +8,11 @@ from pydantic import (
     AliasGenerator,
     alias_generators,
     ValidationError,
-    model_validator
+    model_validator,
 )
 
 T = TypeVar("T", bound=BaseModel)
+
 
 def remove_nulls_from_dict(d: Dict[str, Any]) -> Dict[str, Any]:
     """Remove nulls from dict."""
@@ -25,8 +26,10 @@ def remove_nulls_from_dict(d: Dict[str, Any]) -> Dict[str, Any]:
 
     return data
 
+
 class ToModelMixin(BaseModel, Generic[T]):
     """To model mixin."""
+
     MODEL_CLS: ClassVar[Type[T]]
 
     def to_model(self) -> T:
@@ -41,14 +44,16 @@ class ToModelMixin(BaseModel, Generic[T]):
                 f"Got a validation error: {e}. Check yo GQL query hoe!!!"
             ) from e
 
+
 class GQLResponseBase(BaseModel):
     """GQL Response base class."""
+
     model_config = ConfigDict(
         alias_generator=AliasGenerator(validation_alias=alias_generators.to_camel),
-        validate_default=False
+        validate_default=False,
     )
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def validate_model(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Remove any None values."""
@@ -68,8 +73,10 @@ class GQLMutationResult(GQLResponseBase):
     success: bool = None
     error: List[GQLValidationError] = None
 
+
 class QueryableMixin(BaseModel):
     """Queryable mixin."""
+
     @classmethod
     def query(cls, query: str, variables: Dict[str, Any]) -> Self:
         """Query GQL endpoint."""

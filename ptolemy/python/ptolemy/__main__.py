@@ -20,11 +20,11 @@ def run_cli():
         try:
             current_user = login(session)
 
-            cli_data = {'user': current_user}
+            cli_data = {"user": current_user}
             wk = select_workspace(current_user)
 
             if wk:
-                cli_data['workspace'] = wk
+                cli_data["workspace"] = wk
 
             cli_state = CLIState(**cli_data)
             click.echo(f"Welcome, {cli_state.user.username}! 💚")
