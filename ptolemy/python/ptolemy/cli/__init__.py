@@ -14,8 +14,8 @@ def get_cli(usr: User):
         ctx.ensure_object(dict)
 
     if not usr.is_sysadmin:
-        cli.add_command(workspace)
+        cli.add_command(workspace, name="workspace")
 
-    cli.add_command(user)
+    cli.add_command(user, name="user")
 
     return cli

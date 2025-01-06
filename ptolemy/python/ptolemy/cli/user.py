@@ -3,8 +3,8 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from ..models.gql import GQLQuery, uses_gql
-from ..gql import ALL_USERS, GET_USER_BY_NAME, GET_USER_WORKSPACES_BY_USERNAME
+from ..models.gql import GQLQuery, GQLMutation, uses_gql
+from ..gql import ALL_USERS, GET_USER_BY_NAME, GET_USER_WORKSPACES_BY_USERNAME, CREATE_USER
 from .cli import CLIState
 from .format import format_user_info
 
@@ -28,7 +28,7 @@ def info(ctx: click.Context, username: Optional[str] = None):
             click.echo(f"Unable to find user: {username}")
             return None
 
-        usr = resp.user[0].to_model()
+        usr = list(resp.user)[0].to_model()
 
     click.echo(format_user_info(usr))
 
@@ -40,17 +40,38 @@ def list_users(ctx):
     """List users."""
     cli_state: CLIState = ctx.obj["state"]
     resp = GQLQuery.query(ALL_USERS, {"Id": cli_state.user.id.hex})
-    users = [i.to_model() for i in resp.user]
+    users = [i.to_model() for i in list(resp.user)]
 
     data = [i.model_dump() for i in users]
     click.echo(tabulate(data, headers="keys"))
 
 @user.command(name="create")
+@click.option('--username', type=str, required=True)
+@click.option('--password', type=str, required=True)
+@click.option('--display-name', type=str)
+@click.option('--admin', is_flag=True, default=False)
 @click.pass_context
 @uses_gql
-def create_user(ctx):
+def create_user(ctx, username: str, password: str, display_name: Optional[str] = None, admin: bool = False):
     """Create user."""
-    pass
+    cli_state: CLIState = ctx.obj["state"]
+    resp = GQLMutation.query(
+        CREATE_USER,
+        {
+            'userId': cli_state.user.id.hex,
+            'username': username,
+            'password': password,
+            'displayName': display_name,
+            'isAdmin': admin
+        }
+        )
+
+    data = resp.user.create
+
+    if data.success:
+        click.echo(f"Successfully created user {username}")
+    else:
+        click.echo(f"Error creating user: {data.error}")
 
 @user.group(name="workspaces")
 def user_workspaces():
@@ -70,7 +91,7 @@ def list_workspaces_of_user(ctx, username: Optional[str] = None):
     )
     data = []
 
-    for usr in resp.user:
+    for usr in list(resp.user):
         for workspace in usr.workspaces:
             data.append({"workspace": workspace.name, "role": workspace.users[0].role})
 

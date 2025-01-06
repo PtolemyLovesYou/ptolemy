@@ -19,9 +19,14 @@ def run_cli():
     while current_user is None:
         try:
             current_user = login(session)
-            cli_state = CLIState(
-                user=current_user, workspace=select_workspace(current_user)
-            )
+
+            cli_data = {'user': current_user}
+            wk = select_workspace(current_user)
+
+            if wk:
+                cli_data['workspace'] = wk
+
+            cli_state = CLIState(**cli_data)
             click.echo(f"Welcome, {cli_state.user.username}! 💚")
         except ValueError as e:
             click.echo(f"Failed to login. Please try again. Details: {e}")

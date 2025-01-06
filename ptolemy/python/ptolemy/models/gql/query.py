@@ -1,7 +1,6 @@
 """GraphQL Response model."""
 
 from typing import List
-from pydantic import Field
 from .base import GQLResponseBase, QueryableMixin, ToModelMixin
 from ..enums import UserStatusEnum, ApiKeyPermissionEnum, WorkspaceRoleEnum
 from ..auth import User, Workspace, ServiceApiKey, UserApiKey, WorkspaceUser
@@ -13,9 +12,9 @@ class GQLWorkspaceUser(GQLResponseBase, ToModelMixin[WorkspaceUser]):
 
     MODEL_CLS = WorkspaceUser
 
-    role: WorkspaceRoleEnum = Field(default=None)
-    user: "GQLUser" = Field(default=None)
-    workspace: "GQLWorkspace" = Field(default=None)
+    role: WorkspaceRoleEnum = None
+    user: "GQLUser" = None
+    workspace: "GQLWorkspace" = None
 
 
 class GQLServiceApiKey(GQLResponseBase, ToModelMixin[ServiceApiKey]):
@@ -23,12 +22,12 @@ class GQLServiceApiKey(GQLResponseBase, ToModelMixin[ServiceApiKey]):
 
     MODEL_CLS = ServiceApiKey
 
-    id: ID = Field(default=None)
-    workspace_id: ID = Field(default=None)
-    name: str = Field(default=None)
-    key_preview: str = Field(default=None)
-    permissions: ApiKeyPermissionEnum = Field(default=None)
-    expires_at: Timestamp = Field(default=None)
+    id: ID = None
+    workspace_id: ID = None
+    name: str = None
+    key_preview: str = None
+    permissions: ApiKeyPermissionEnum = None
+    expires_at: Timestamp = None
 
 
 class GQLUserApiKey(GQLResponseBase, ToModelMixin[UserApiKey]):
@@ -36,10 +35,10 @@ class GQLUserApiKey(GQLResponseBase, ToModelMixin[UserApiKey]):
 
     MODEL_CLS = UserApiKey
 
-    id: ID = Field(default=None)
-    user_id: ID = Field(default=None)
-    key_preview: str = Field(default=None)
-    expires_at: Timestamp = Field(default=None)
+    id: ID = None
+    user_id: ID = None
+    key_preview: str = None
+    expires_at: Timestamp = None
 
 
 class GQLWorkspace(GQLResponseBase, ToModelMixin[Workspace]):
@@ -47,14 +46,14 @@ class GQLWorkspace(GQLResponseBase, ToModelMixin[Workspace]):
 
     MODEL_CLS = Workspace
 
-    id: ID = Field(default=None)
-    name: str = Field(default=None)
-    description: str = Field(default=None)
-    archived: bool = Field(default=None)
-    created_at: Timestamp = Field(default=None)
-    updated_at: Timestamp = Field(default=None)
-    users: List["GQLWorkspaceUser"] = Field(default=None)
-    service_api_keys: List["GQLServiceApiKey"] = Field(default=None)
+    id: ID = None
+    name: str = None
+    description: str = None
+    archived: bool = None
+    created_at: Timestamp = None
+    updated_at: Timestamp = None
+    users: List["GQLWorkspaceUser"] = None
+    service_api_keys: List["GQLServiceApiKey"] = None
 
 
 class GQLUser(GQLResponseBase, ToModelMixin[User]):
@@ -62,22 +61,22 @@ class GQLUser(GQLResponseBase, ToModelMixin[User]):
 
     MODEL_CLS = User
 
-    id: ID = Field(default=None)
-    name: ID = Field(default=None)
-    username: str = Field(default=None)
-    description: ID = Field(default=None)
-    archived: bool = Field(default=None)
-    created_at: Timestamp = Field(default=None)
-    updated_at: Timestamp = Field(default=None)
-    workspaces: List[GQLWorkspace] = Field(default=None)
-    status: UserStatusEnum = Field(default=None)
-    user_api_keys: List[GQLUserApiKey] = Field(default=None)
-    is_admin: bool = Field(default=None)
-    is_sysadmin: bool = Field(default=None)
+    id: ID = None
+    name: ID = None
+    username: str = None
+    description: ID = None
+    archived: bool = None
+    created_at: Timestamp = None
+    updated_at: Timestamp = None
+    workspaces: List[GQLWorkspace] = None
+    status: UserStatusEnum = None
+    user_api_keys: List[GQLUserApiKey] = None
+    is_admin: bool = None
+    is_sysadmin: bool = None
 
 
 class GQLQuery(GQLResponseBase, QueryableMixin):
     """GraphQL Query model."""
 
-    user: List[GQLUser] = Field(default=None)
-    workspace: List[GQLWorkspace] = Field(default=None)
+    user: List[GQLUser] = None
+    workspace: List[GQLWorkspace] = None

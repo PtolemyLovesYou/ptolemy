@@ -8,10 +8,22 @@ from pydantic import (
     AliasGenerator,
     alias_generators,
     ValidationError,
-    Field
+    model_validator
 )
 
 T = TypeVar("T", bound=BaseModel)
+
+def remove_nulls_from_dict(d: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove nulls from dict."""
+    data = {}
+    for k, v in d.items():
+        if v is not None:
+            if isinstance(v, dict):
+                data[k] = remove_nulls_from_dict(v)
+            else:
+                data[k] = v
+
+    return data
 
 class ToModelMixin(BaseModel, Generic[T]):
     """To model mixin."""
@@ -36,19 +48,25 @@ class GQLResponseBase(BaseModel):
         validate_default=False
     )
 
+    @model_validator(mode='before')
+    @classmethod
+    def validate_model(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Remove any None values."""
+        return remove_nulls_from_dict(values)
 
-class GQLValidationError(BaseModel):
+
+class GQLValidationError(GQLResponseBase):
     """GQL validation error."""
 
-    field: str = Field(default=None)
-    message: str = Field(default=None)
+    field: str = None
+    message: str = None
 
 
 class GQLMutationResult(GQLResponseBase):
     """GQL Mutation Response base class."""
 
-    success: bool = Field(default=None)
-    error: List[GQLValidationError] = Field(default=None)
+    success: bool = None
+    error: List[GQLValidationError] = None
 
 class QueryableMixin(BaseModel):
     """Queryable mixin."""

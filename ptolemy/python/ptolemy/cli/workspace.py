@@ -21,7 +21,7 @@ def list_workspaces(ctx):
     cli_state: CLIState = ctx.obj["state"]
     # Now you can use cli_state.user and cli_state.workspace
     resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": cli_state.user.id.hex})
-    workspaces = resp.user[0].workspaces
+    workspaces = list(resp.user)[0].workspaces
 
     data = [i.to_model().model_dump() for i in workspaces]
     click.echo(tabulate(data, headers="keys"))
@@ -44,7 +44,7 @@ def list_workspace_users(ctx, name: Optional[str] = None):
     if not resp.workspace:
         click.echo(f"Workspace {name} not found.")
     else:
-        wk = resp.workspace[0]
+        wk = list(resp.workspace)[0]
 
         data = [{"username": u.user.username, "role": u.role} for u in wk.users]
 
