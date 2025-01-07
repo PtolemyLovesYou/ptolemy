@@ -30,3 +30,8 @@ strip = true
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
+
+[dependency-groups]
+dev = [
+    "maturin-import-hook>=0.2.0",
+]

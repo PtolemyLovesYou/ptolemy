@@ -6,29 +6,36 @@ use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromPyObject)]
-pub struct PyUuidObj {
+#[derive(FromPyObject)]
+pub struct PyUuid {
     hex: String,
 }
 
-impl PyUuidObj {
-    pub fn to_uuid(&self) -> PyResult<Uuid> {
-        get_uuid(&self.hex)
+impl TryFrom<PyUuid> for Uuid {
+    type Error = PyErr;
+
+    fn try_from(uuid: PyUuid) -> Result<Uuid, Self::Error> {
+        Uuid::parse_str(&uuid.hex).map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
-#[derive(Clone, Debug, FromPyObject)]
-pub enum PyUuid {
-    String(String),
-    PyUuid(PyUuidObj),
+impl TryFrom<Uuid> for PyUuid {
+    type Error = PyErr;
+
+    fn try_from(uuid: Uuid) -> Result<PyUuid, Self::Error> {
+        Ok(PyUuid { hex: uuid.to_string() })
+    }
 }
 
-impl PyUuid {
-    pub fn to_uuid(&self) -> PyResult<Uuid> {
-        match self {
-            PyUuid::String(uuid) => Ok(get_uuid(uuid)?),
-            PyUuid::PyUuid(uuid) => uuid.to_uuid(),
-        }
+impl<'py> IntoPyObject<'py> for PyUuid {
+    type Target = PyAny;
+    type Output = Bound<'py, Self::Target>;
+    type Error = std::convert::Infallible;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        let import = py.import("uuid").unwrap();
+        let uuid_type = import.getattr("UUID").unwrap();
+        Ok(uuid_type.call1((self.hex,)).unwrap())
     }
 }
 
