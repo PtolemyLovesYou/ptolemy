@@ -15,14 +15,15 @@ cli:
 generate-gql-schema:
 	cd api && cargo run --bin generate-gql-schema
 
-.PHONY: setup-client-dev
-setup-client-dev:
-	uv sync --locked --dev --all-packages \
-		&& uv run -m ptolemy.setup_dev
-
 .PHONY: build-client
 build-client:
 	cd ptolemy && maturin develop --uv
+
+.PHONY: setup-client-dev
+setup-client-dev:
+	uv sync --locked --dev --all-packages \
+		&& make build-client \
+		&& uv run -m ptolemy.setup_dev
 
 .PHONY: docs
 docs:
