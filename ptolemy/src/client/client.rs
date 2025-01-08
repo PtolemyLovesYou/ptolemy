@@ -1,7 +1,7 @@
 use crate::client::server_handler::ServerHandler;
 use crate::client::state::PtolemyClientState;
 use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
-use crate::pybindings::event::{
+use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::models::json_serializable::{JsonSerializable, Parameters};

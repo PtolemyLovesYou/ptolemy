@@ -3,7 +3,6 @@ use pyo3::prelude::*;
 pub mod enums;
 pub mod models;
 pub mod types;
-pub mod event;
 
 use crate::{
     client::client::PtolemyClient,

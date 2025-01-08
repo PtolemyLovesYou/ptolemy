@@ -7,7 +7,6 @@ use crate::models::id::Id;
 
 pub trait Proto {
     fn proto(&self) -> RecordData;
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum;
 }
 
 #[derive(Clone, Debug)]
@@ -52,10 +51,6 @@ impl Proto for ProtoEvent {
             environment,
         })
     }
-
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum {
-        ProtoRecordEnum::Event(ProtoRecord::new(tier, parent_id, id, self))
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -91,10 +86,6 @@ impl Proto for ProtoRuntime {
             error_content: self.error_content.clone(),
         })
     }
-
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum {
-        ProtoRecordEnum::Runtime(ProtoRecord::new(tier, parent_id.into(), id.into(), self))
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -118,10 +109,6 @@ impl Proto for ProtoInput {
             field_name: self.field_name.clone(),
             field_value: Some(self.field_value.clone().into()),
         })
-    }
-
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum {
-        ProtoRecordEnum::Input(ProtoRecord::new(tier, parent_id.into(), id.into(), self))
     }
 }
 
@@ -147,10 +134,6 @@ impl Proto for ProtoOutput {
             field_value: Some(self.field_value.clone().into()),
         })
     }
-
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum {
-        ProtoRecordEnum::Output(ProtoRecord::new(tier, parent_id.into(), id.into(), self))
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -175,10 +158,6 @@ impl Proto for ProtoFeedback {
             field_value: Some(self.field_value.clone().into()),
         })
     }
-
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum {
-        ProtoRecordEnum::Feedback(ProtoRecord::new(tier, parent_id.into(), id.into(), self))
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -202,55 +181,6 @@ impl Proto for ProtoMetadata {
             field_name: self.field_name.clone(),
             field_value: self.field_value.clone(),
         })
-    }
-
-    fn into_enum(self, tier: Tier, parent_id: Id, id: Id) -> ProtoRecordEnum {
-        ProtoRecordEnum::Metadata(ProtoRecord::new(tier, parent_id.into(), id.into(), self))
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum ProtoRecordEnum {
-    Event(ProtoRecord<ProtoEvent>),
-    Runtime(ProtoRecord<ProtoRuntime>),
-    Input(ProtoRecord<ProtoInput>),
-    Output(ProtoRecord<ProtoOutput>),
-    Feedback(ProtoRecord<ProtoFeedback>),
-    Metadata(ProtoRecord<ProtoMetadata>),
-}
-
-impl ProtoRecordEnum {
-    pub fn id(&self) -> Id {
-        match self {
-            ProtoRecordEnum::Event(e) => e.id,
-            ProtoRecordEnum::Runtime(r) => r.id,
-            ProtoRecordEnum::Input(i) => i.id,
-            ProtoRecordEnum::Output(o) => o.id,
-            ProtoRecordEnum::Feedback(f) => f.id,
-            ProtoRecordEnum::Metadata(m) => m.id,
-        }
-    }
-
-    pub fn tier(&self) -> Tier {
-        match self {
-            ProtoRecordEnum::Event(e) => e.tier,
-            ProtoRecordEnum::Runtime(r) => r.tier,
-            ProtoRecordEnum::Input(i) => i.tier,
-            ProtoRecordEnum::Output(o) => o.tier,
-            ProtoRecordEnum::Feedback(f) => f.tier,
-            ProtoRecordEnum::Metadata(m) => m.tier,
-        }
-    }
-
-    pub fn parent_id(&self) -> Id {
-        match self {
-            ProtoRecordEnum::Event(e) => e.parent_id,
-            ProtoRecordEnum::Runtime(r) => r.parent_id,
-            ProtoRecordEnum::Input(i) => i.parent_id,
-            ProtoRecordEnum::Output(o) => o.parent_id,
-            ProtoRecordEnum::Feedback(f) => f.parent_id,
-            ProtoRecordEnum::Metadata(m) => m.parent_id,
-        }
     }
 }
 

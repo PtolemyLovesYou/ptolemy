@@ -1,4 +1,4 @@
-use crate::pybindings::event::{
+use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::generated::observer::Record;
