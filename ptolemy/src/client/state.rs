@@ -1,7 +1,7 @@
 use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
-use ptolemy_core::generated::observer::Record;
+use crate::generated::observer::Record;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};

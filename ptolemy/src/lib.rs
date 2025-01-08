@@ -8,6 +8,7 @@ pub mod event;
 pub mod types;
 pub mod models;
 pub mod utils;
+pub mod generated;
 
 #[derive(Clone, Debug)]
 pub struct MyStruct {

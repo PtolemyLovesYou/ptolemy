@@ -1,4 +1,4 @@
-// use ptolemy_core::generated::observer;
+// use crate::generated::observer;
 use prost_types::value::Kind;
 use prost_types::{ListValue, Struct, Value};
 use pyo3::exceptions::PyValueError;

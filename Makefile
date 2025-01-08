@@ -17,7 +17,7 @@ generate-gql-schema:
 
 .PHONY: build-client
 build-client:
-	cd ptolemy && maturin develop --uv
+	cd ptolemy && maturin develop --uv --features "client,extension-module"
 
 .PHONY: setup-client-dev
 setup-client-dev:

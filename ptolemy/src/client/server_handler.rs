@@ -1,4 +1,4 @@
-use ptolemy_core::generated::observer::{
+use crate::generated::observer::{
     observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
     WorkspaceVerificationRequest, WorkspaceVerificationResponse,
 };

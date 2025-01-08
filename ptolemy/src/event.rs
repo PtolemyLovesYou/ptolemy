@@ -1,5 +1,5 @@
 use crate::types::{json_serializable_to_value, parameters_to_value, JsonSerializable, Parameters};
-use ptolemy_core::generated::observer::{
+use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     Record, RuntimeRecord, Tier,
 };

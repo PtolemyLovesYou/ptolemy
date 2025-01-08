@@ -5,7 +5,7 @@ use crate::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::types::{JsonSerializable, Parameters};
-use ptolemy_core::generated::observer::Tier;
+use crate::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
