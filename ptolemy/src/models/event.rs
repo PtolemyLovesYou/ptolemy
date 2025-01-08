@@ -3,9 +3,10 @@ use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     Record, RuntimeRecord, Tier,
 };
+use crate::error::ParseError;
 use crate::models::id::Id;
 
-pub trait Proto {
+pub trait Proto: TryFrom<RecordData, Error = ParseError> {
     fn proto(&self) -> RecordData;
 }
 
@@ -30,6 +31,27 @@ impl ProtoEvent {
             version,
             environment,
         }
+    }
+}
+
+impl TryFrom<RecordData> for ProtoEvent {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: RecordData) -> Result<Self, Self::Error> {
+        let val = match value {
+            RecordData::Event(e) => e,
+            _ => return Err(crate::error::ParseError::InvalidType),
+        };
+
+        Ok(ProtoEvent {
+            name: val.name,
+            parameters: match val.parameters {
+                Some(p) => Some(p.try_into()?),
+                None => None,
+            },
+            version: val.version,
+            environment: val.environment,
+        })
     }
 }
 
@@ -77,6 +99,24 @@ impl ProtoRuntime {
     }
 }
 
+impl TryFrom<RecordData> for ProtoRuntime {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: RecordData) -> Result<Self, Self::Error> {
+        let val = match value {
+            RecordData::Runtime(e) => e,
+            _ => return Err(crate::error::ParseError::InvalidType),
+        };
+
+        Ok(ProtoRuntime {
+            start_time: val.start_time,
+            end_time: val.end_time,
+            error_type: val.error_type,
+            error_content: val.error_content,
+        })
+    }
+}
+
 impl Proto for ProtoRuntime {
     fn proto(&self) -> RecordData {
         RecordData::Runtime(RuntimeRecord {
@@ -100,6 +140,22 @@ impl ProtoInput {
             field_name,
             field_value,
         }
+    }
+}
+
+impl TryFrom<RecordData> for ProtoInput {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: RecordData) -> Result<Self, Self::Error> {
+        let val = match value {
+            RecordData::Input(e) => e,
+            _ => return Err(crate::error::ParseError::InvalidType),
+        };
+
+        Ok(ProtoInput {
+            field_name: val.field_name,
+            field_value: val.field_value.unwrap().try_into()?,
+        })
     }
 }
 
@@ -127,6 +183,22 @@ impl ProtoOutput {
     }
 }
 
+impl TryFrom<RecordData> for ProtoOutput {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: RecordData) -> Result<Self, Self::Error> {
+        let val = match value {
+            RecordData::Output(e) => e,
+            _ => return Err(crate::error::ParseError::InvalidType),
+        };
+
+        Ok(ProtoOutput {
+            field_name: val.field_name,
+            field_value: val.field_value.unwrap().try_into()?,
+        })
+    }
+}
+
 impl Proto for ProtoOutput {
     fn proto(&self) -> RecordData {
         RecordData::Output(OutputRecord {
@@ -151,6 +223,22 @@ impl ProtoFeedback {
     }
 }
 
+impl TryFrom<RecordData> for ProtoFeedback {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: RecordData) -> Result<Self, Self::Error> {
+        let val = match value {
+            RecordData::Feedback(e) => e,
+            _ => return Err(crate::error::ParseError::InvalidType),
+        };
+
+        Ok(ProtoFeedback {
+            field_name: val.field_name,
+            field_value: val.field_value.unwrap().try_into()?,
+        })
+    }
+}
+
 impl Proto for ProtoFeedback {
     fn proto(&self) -> RecordData {
         RecordData::Feedback(FeedbackRecord {
@@ -172,6 +260,22 @@ impl ProtoMetadata {
             field_name,
             field_value,
         }
+    }
+}
+
+impl TryFrom<RecordData> for ProtoMetadata {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: RecordData) -> Result<Self, Self::Error> {
+        let val = match value {
+            RecordData::Metadata(e) => e,
+            _ => return Err(crate::error::ParseError::InvalidType),
+        };
+
+        Ok(ProtoMetadata {
+            field_name: val.field_name,
+            field_value: val.field_value,
+        })
     }
 }
 
@@ -210,5 +314,25 @@ impl<T: Proto> ProtoRecord<T> {
             id: self.id.to_string(),
             record_data: Some(self.record_data.proto()),
         }
+    }
+}
+
+impl<T: Proto> TryFrom<Record> for ProtoRecord<T> {
+    type Error = crate::error::ParseError;
+
+    fn try_from(value: Record) -> Result<Self, Self::Error> {
+        let tier = value.tier();
+        let parent_id: Id = value.parent_id.try_into()?;
+        let id: Id = value.id.try_into()?;
+        let record_data: T = TryInto::<T>::try_into(value.record_data.ok_or(crate::error::ParseError::InvalidType)?)?;
+
+        Ok(
+            ProtoRecord::<T> {
+                tier,
+                parent_id,
+                id,
+                record_data,
+            }
+        )
     }
 }
