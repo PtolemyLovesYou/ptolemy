@@ -9,6 +9,14 @@ pub mod types;
 pub mod models;
 pub mod utils;
 
+#[derive(Clone, Debug)]
+pub struct MyStruct {
+    foo: String,
+    bar: String,
+}
+
+pymodel!(MyStruct, MyStructWrapper, [foo, bar]);
+
 /// A Python module implemented in Rust. The name of this function must match
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.

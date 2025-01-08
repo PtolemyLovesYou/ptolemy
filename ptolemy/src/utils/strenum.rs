@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::types::PyType;
 use pyo3::sync::GILOnceCell;
+use heck::{ToSnakeCase, ToShoutySnakeCase, ToLowerCamelCase, ToPascalCase};
 
 pub trait PyEnumCompatible<'py>: 
     IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr> + 
@@ -24,6 +25,25 @@ pub fn str_enum_python_class(py: Python<'_>) -> PyResult<Py<PyType>> {
     )
 }
 
+#[derive(Debug)]
+pub enum CasingStyle {
+    ShoutySnakeCase,
+    SnakeCase,
+    LowerCamelCase,
+    PascalCase
+}
+
+impl CasingStyle {
+    pub fn format(&self, variant: &str) -> String {
+        match self {
+            CasingStyle::ShoutySnakeCase => variant.to_shouty_snake_case(),
+            CasingStyle::SnakeCase => variant.to_snake_case(),
+            CasingStyle::LowerCamelCase => variant.to_lower_camel_case(),
+            CasingStyle::PascalCase => variant.to_pascal_case(),
+        }
+    }
+}
+
 
 #[macro_export]
 macro_rules! string_enum {
@@ -32,24 +52,21 @@ macro_rules! string_enum {
     };
 
     ($mod_name:ident, $enum_name:ident, $casing:ident, [$($variant:ident),+ $(,)?]) => {
+        #[derive(Debug, Clone, PartialEq)]
+            pub enum $enum_name {
+                $(
+                    $variant
+                ),+
+            }
+
         pub mod $mod_name {
             use pyo3::prelude::*;
             use pyo3::types::PyType;
             use pyo3::exceptions::PyValueError;
             use pyo3::sync::GILOnceCell;
             use std::collections::HashMap;
-            use heck::{ToSnakeCase, ToShoutySnakeCase, ToLowerCamelCase, ToPascalCase};
-            use crate::utils::strenum::str_enum_python_class;
-
-            fn format_variant(variant: &str) -> String {
-                match stringify!($casing) {
-                    "ShoutySnakeCase" => variant.to_shouty_snake_case(),
-                    "SnakeCase" => variant.to_snake_case(),
-                    "CamelCase" => variant.to_lower_camel_case(),
-                    "PascalCase" => variant.to_pascal_case(),
-                    _ => variant.to_snake_case(),
-                }
-            }
+            use crate::utils::strenum::{str_enum_python_class, CasingStyle};
+            use super::$enum_name;
 
             const ENUM_CLS_NAME: &'static str = stringify!($enum_name);
 
@@ -58,7 +75,7 @@ macro_rules! string_enum {
             pub fn get_enum_py_cls(py: Python<'_>) -> PyResult<&Bound<'_, PyType>> {
                 let mut variants = HashMap::new();
                 $(
-                    variants.insert(stringify!($variant).to_shouty_snake_case(), format_variant(stringify!($variant)));
+                    variants.insert(CasingStyle::ShoutySnakeCase.format(stringify!($variant)), CasingStyle::$casing.format(stringify!($variant)));
                 )+
 
                 let py_cls = ENUM_PY_CLS.get_or_init(py, || {
@@ -72,20 +89,13 @@ macro_rules! string_enum {
                 Ok(py_cls.bind(py))
                 }
 
-            #[derive(Debug, Clone, PartialEq)]
-            pub enum $enum_name {
-                $(
-                    $variant
-                ),+
-            }
-
             impl<'py> crate::utils::strenum::PyEnumCompatible<'py> for $enum_name {}
 
             impl Into<String> for $enum_name {
                 fn into(self) -> String {
                     match self {
                         $(
-                            Self::$variant => format_variant(stringify!($variant)),
+                            Self::$variant => CasingStyle::$casing.format(stringify!($variant)),
                         )+
                     }
                 }
@@ -97,7 +107,7 @@ macro_rules! string_enum {
                 fn try_from(value: String) -> Result<Self, Self::Error> {
                     match value.as_str() {
                         $(
-                            v if v == format_variant(stringify!($variant)) => Ok(Self::$variant),
+                            v if v == CasingStyle::$casing.format(stringify!($variant)) => Ok(Self::$variant),
                         )+
                         _ => Err(PyValueError::new_err(format!("Invalid enum value: {}", value)))
                     }
@@ -155,8 +165,6 @@ mod tests {
     fn test_strenum_creation_default() {
         init();
 
-        use my_enum::MyEnum;
-
         Python::with_gil(|py| {
             let val1 = get_enum_py_string(py, MyEnum::Val1).unwrap();
             let val2 = get_enum_py_string(py, MyEnum::Val2).unwrap();
@@ -171,8 +179,6 @@ mod tests {
     #[test]
     fn test_strenum_creation_casing() {
         init();
-
-        use my_enum_cased::MyEnumCased;
 
         Python::with_gil(|py| {
             let val1 = get_enum_py_string(py, MyEnumCased::ValCasedOne).unwrap();
@@ -195,13 +201,13 @@ mod tests {
             let val2 = PyString::new(py, "VAL2");
             let val3 = PyString::new(py, "VAL3");
             
-            assert_eq!(val1.extract::<my_enum::MyEnum>().unwrap(), my_enum::MyEnum::Val1);
-            assert_eq!(val2.extract::<my_enum::MyEnum>().unwrap(), my_enum::MyEnum::Val2);
-            assert_eq!(val3.extract::<my_enum::MyEnum>().unwrap(), my_enum::MyEnum::Val3);
+            assert_eq!(val1.extract::<MyEnum>().unwrap(), MyEnum::Val1);
+            assert_eq!(val2.extract::<MyEnum>().unwrap(), MyEnum::Val2);
+            assert_eq!(val3.extract::<MyEnum>().unwrap(), MyEnum::Val3);
 
             // test invalid values
             let bad_str = PyString::new(py, "BadValue");
-            assert!(bad_str.extract::<my_enum::MyEnum>().is_err());
+            assert!(bad_str.extract::<MyEnum>().is_err());
         })
     }
 
@@ -210,7 +216,7 @@ mod tests {
         init();
 
         Python::with_gil(|py| {
-            let val1_to = my_enum::MyEnum::Val1.into_pyobject(py).expect("Failed to convert to PyAny");
+            let val1_to = MyEnum::Val1.into_pyobject(py).expect("Failed to convert to PyAny");
             let val1_from = my_enum::get_enum_py_cls(py).unwrap().getattr("VAL1").expect("Failed to get attribute");
 
             assert!(val1_to.is_instance(&val1_from.get_type()).expect("Couldn't compare :("));
