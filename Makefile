@@ -15,9 +15,13 @@ cli:
 generate-gql-schema:
 	cd api && cargo run --bin generate-gql-schema
 
+.PHONY: test-client
+test-client:
+	cd ptolemy && cargo test --no-default-features --features python
+
 .PHONY: build-client
 build-client:
-	cd ptolemy && maturin develop --uv --features "client,extension-module"
+	cd ptolemy && maturin develop --uv
 
 .PHONY: setup-client-dev
 setup-client-dev:

@@ -29,8 +29,9 @@ heck = { workspace = true }
 
 [features]
 extension-module = ["pyo3/extension-module", "pyo3-ffi/extension-module"]
-client = ["pyo3", "pyo3-ffi"]
-default = ["extension-module", "client"]
+python = ["pyo3", "pyo3-ffi"]
+client = ["python", "extension-module"]
+default = ["client"]
 
 [build-dependencies]
 tonic-build = "0.12.3"
