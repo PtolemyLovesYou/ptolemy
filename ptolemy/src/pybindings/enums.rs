@@ -1,7 +1,9 @@
 use pyo3::prelude::*;
 use pyo3::types::PyType;
 use pyo3::sync::GILOnceCell;
+use pyo3::exceptions::PyValueError;
 use heck::{ToSnakeCase, ToShoutySnakeCase, ToLowerCamelCase, ToPascalCase};
+use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 
 pub trait PyEnumCompatible<'py>: 
     IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr> + 
@@ -44,33 +46,27 @@ impl CasingStyle {
     }
 }
 
-
-#[macro_export]
-macro_rules! string_enum {
+macro_rules! pywrap_enum {
     ($mod_name:ident, $enum_name:ident, [$($variant:ident),+ $(,)?]) => {
-        string_enum!($mod_name, $enum_name, ShoutySnakeCase, [$($variant),+]);
+        pywrap_enum!($mod_name, $enum_name, ShoutySnakeCase, [$($variant),+]);
     };
 
     ($mod_name:ident, $enum_name:ident, $casing:ident, [$($variant:ident),+ $(,)?]) => {
-        #[derive(Debug, Clone, PartialEq)]
-            pub enum $enum_name {
-                $(
-                    $variant
-                ),+
-            }
-
         pub mod $mod_name {
             use pyo3::prelude::*;
             use pyo3::types::PyType;
-            use pyo3::exceptions::PyValueError;
             use pyo3::sync::GILOnceCell;
             use std::collections::HashMap;
-            use crate::utils::strenum::{str_enum_python_class, CasingStyle};
-            use super::$enum_name;
+            use crate::pybindings::enums::{str_enum_python_class, CasingStyle};
 
-            const ENUM_CLS_NAME: &'static str = stringify!($enum_name);
+            pub const ENUM_CLS_NAME: &'static str = stringify!($enum_name);
 
-            static ENUM_PY_CLS: GILOnceCell<Py<PyType>> = GILOnceCell::new();
+            pub static ENUM_PY_CLS: GILOnceCell<Py<PyType>> = GILOnceCell::new();
+
+            pub fn add_enum_to_module<'a>(py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {
+                m.add(ENUM_CLS_NAME, get_enum_py_cls(py)?)?;
+                Ok(())
+            }
 
             pub fn get_enum_py_cls(py: Python<'_>) -> PyResult<&Bound<'_, PyType>> {
                 let mut variants = HashMap::new();
@@ -88,57 +84,56 @@ macro_rules! string_enum {
 
                 Ok(py_cls.bind(py))
                 }
-
-            impl<'py> crate::utils::strenum::PyEnumCompatible<'py> for $enum_name {}
-
-            impl Into<String> for $enum_name {
-                fn into(self) -> String {
-                    match self {
-                        $(
-                            Self::$variant => CasingStyle::$casing.format(stringify!($variant)),
-                        )+
-                    }
-                }
             }
 
-            impl TryFrom<String> for $enum_name {
-                type Error = PyErr;
+        impl<'py> crate::pybindings::enums::PyEnumCompatible<'py> for $enum_name {}
 
-                fn try_from(value: String) -> Result<Self, Self::Error> {
-                    match value.as_str() {
-                        $(
-                            v if v == CasingStyle::$casing.format(stringify!($variant)) => Ok(Self::$variant),
-                        )+
-                        _ => Err(PyValueError::new_err(format!("Invalid enum value: {}", value)))
-                    }
+        impl Into<String> for $enum_name {
+            fn into(self) -> String {
+                match self {
+                    $(
+                        Self::$variant => CasingStyle::$casing.format(stringify!($variant)),
+                    )+
                 }
-            }
-
-            impl <'py> FromPyObject<'py> for $enum_name {
-                fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-                    $enum_name::try_from(ob.extract::<String>()?)
-                }
-            }
-
-            impl<'py> IntoPyObject<'py> for $enum_name {
-                type Target = PyAny;
-                type Output = Bound<'py, Self::Target>;
-                type Error = PyErr;
-            
-                fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-                    let s: String = self.into();
-                    let val = get_enum_py_cls(py)?.call1((s,))?;
-                    Ok(val)
-                }
-            }
-
-            pub fn add_enum_to_module<'a>(py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {
-                m.add(ENUM_CLS_NAME, get_enum_py_cls(py)?)?;
-                Ok(())
             }
         }
+
+        impl TryFrom<String> for $enum_name {
+            type Error = PyErr;
+
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                match value.as_str() {
+                    $(
+                        v if v == CasingStyle::$casing.format(stringify!($variant)) => Ok(Self::$variant),
+                    )+
+                    _ => Err(PyValueError::new_err(format!("Invalid enum value: {}", value)))
+                }
+            }
+        }
+
+        impl <'py> FromPyObject<'py> for $enum_name {
+            fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+                $enum_name::try_from(ob.extract::<String>()?)
+            }
+        }
+
+        impl<'py> IntoPyObject<'py> for $enum_name {
+            type Target = PyAny;
+            type Output = Bound<'py, Self::Target>;
+            type Error = PyErr;
+        
+            fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+                let s: String = self.into();
+                let val = $mod_name::get_enum_py_cls(py)?.call1((s,))?;
+                Ok(val)
+            }
     }
 }
+}
+
+pywrap_enum!(api_key_permission, ApiKeyPermission, [ReadOnly, WriteOnly, ReadWrite]);
+pywrap_enum!(workspace_role, WorkspaceRole, [User, Manager, Admin]);
+pywrap_enum!(user_status, UserStatus, [Active, Suspended]);
 
 #[cfg(test)]
 mod tests {
@@ -148,8 +143,22 @@ mod tests {
 
     static INIT: Once = Once::new();
 
-    string_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
-    string_enum!(my_enum_cased, MyEnumCased, SnakeCase, [ValCasedOne, ValCasedTwo, ValCasedThree]);
+    #[derive(Clone, Debug, PartialEq)]
+    pub enum MyEnum {
+        Val1,
+        Val2,
+        Val3,
+    }
+
+    #[derive(Clone, Debug, PartialEq)]
+    pub enum MyEnumCased {
+        ValCasedOne,
+        ValCasedTwo,
+        ValCasedThree,
+    }
+
+    pywrap_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
+    pywrap_enum!(my_enum_cased, MyEnumCased, SnakeCase, [ValCasedOne, ValCasedTwo, ValCasedThree]);
 
     fn init() {
         INIT.call_once(|| {

@@ -1,10 +1,10 @@
 use crate::client::server_handler::ServerHandler;
 use crate::client::state::PtolemyClientState;
 use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
-use crate::event::{
+use crate::pybindings::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
-use crate::types::{JsonSerializable, Parameters};
+use crate::models::json_serializable::{JsonSerializable, Parameters};
 use crate::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -32,8 +32,8 @@ macro_rules! set_io {
             .map(|(field_name, field_val)| {
                 ProtoRecord::new(
                     tier.clone(),
-                    $self.state.event_id().unwrap(),
-                    Uuid::new_v4(),
+                    $self.state.event_id().unwrap().into(),
+                    Uuid::new_v4().into(),
                     $proto_struct::new(field_name, field_val),
                 )
             })
@@ -141,8 +141,8 @@ impl PtolemyClient {
 
         self.state.set_runtime(ProtoRecord::new(
             self.tier.unwrap(),
-            self.state.event_id()?,
-            Uuid::new_v4(),
+            self.state.event_id()?.into(),
+            Uuid::new_v4().into(),
             ProtoRuntime::new(
                 self.state.start_time.unwrap(),
                 self.state.end_time.unwrap(),
@@ -188,8 +188,8 @@ impl PtolemyClient {
 
         client.state.set_event(ProtoRecord::new(
             Tier::System,
-            self.workspace_id,
-            Uuid::new_v4(),
+            self.workspace_id.into(),
+            Uuid::new_v4().into(),
             ProtoEvent::new(name, parameters, version, environment),
         ));
 
@@ -278,9 +278,9 @@ impl PtolemyClient {
         };
 
         let event = ProtoRecord::new(
-            tier,
-            parent_id,
-            Uuid::new_v4(),
+            tier.into(),
+            parent_id.into(),
+            Uuid::new_v4().into(),
             ProtoEvent::new(name, parameters, version, environment),
         );
 
@@ -305,8 +305,8 @@ impl PtolemyClient {
 
         let runtime = ProtoRecord::new(
             tier,
-            self.state.event_id()?,
-            Uuid::new_v4(),
+            self.state.event_id()?.into(),
+            Uuid::new_v4().into(),
             ProtoRuntime::new(start_time, end_time, error_type, error_content),
         );
 

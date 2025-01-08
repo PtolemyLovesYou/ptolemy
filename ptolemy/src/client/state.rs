@@ -1,4 +1,4 @@
-use crate::event::{
+use crate::pybindings::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::generated::observer::Record;
@@ -95,7 +95,7 @@ impl PtolemyClientState {
 
     pub fn event_id(&self) -> PyResult<Uuid> {
         match &self.event {
-            Some(event) => Ok(event.id),
+            Some(event) => Ok(event.id.into()),
             None => Err(PyValueError::new_err("No event set!")),
         }
     }
