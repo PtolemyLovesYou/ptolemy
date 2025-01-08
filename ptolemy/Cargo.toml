@@ -12,6 +12,7 @@ crate-type = ["cdylib", "rlib"]
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
 pyo3 = { version = "0.23.3", features = ["chrono", "abi3-py311"] }
+pyo3-ffi = "0.23.3"
 tonic = { workspace = true }
 prost = { workspace = true }
 tokio = { workspace = true }
@@ -28,7 +29,7 @@ chrono = { workspace = true }
 heck = "0.5.0"
 
 [features]
-extension-module = ["pyo3/extension-module"]
+extension-module = ["pyo3/extension-module", "pyo3-ffi/extension-module"]
 default = ["extension-module"]
 
 [build-dependencies]

@@ -1,7 +1,21 @@
+use pyo3::prelude::*;
+
+pub trait PyEnumCompatible<'py>: 
+    IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr> + 
+    FromPyObject<'py> +
+    Clone +
+    PartialEq +
+    Into<String> +
+    TryFrom<String, Error = PyErr>
+where
+    Self: Sized
+{}
+
+
 #[macro_export]
 macro_rules! string_enum {
     ($mod_name:ident, $enum_name:ident, [$($variant:ident),+ $(,)?]) => {
-        string_enum!($mod_name, $enum_name, SnakeCase, [$($variant),+]);
+        string_enum!($mod_name, $enum_name, ShoutySnakeCase, [$($variant),+]);
     };
 
     ($mod_name:ident, $enum_name:ident, $casing:ident, [$($variant:ident),+ $(,)?]) => {
@@ -52,6 +66,8 @@ macro_rules! string_enum {
                 ),+
             }
 
+            impl<'py> crate::utils::strenum::PyEnumCompatible<'py> for $enum_name {}
+
             impl Into<String> for $enum_name {
                 fn into(self) -> String {
                     match self {
@@ -98,5 +114,93 @@ macro_rules! string_enum {
                 Ok(())
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Once;
+    use pyo3::prelude::*;
+    use pyo3::types::PyString;
+    use super::PyEnumCompatible;
+
+    static INIT: Once = Once::new();
+
+    string_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
+    string_enum!(my_enum_cased, MyEnumCased, SnakeCase, [ValCasedOne, ValCasedTwo, ValCasedThree]);
+
+    fn init() {
+        INIT.call_once(|| {
+            pyo3::prepare_freethreaded_python();
+        })
+    }
+
+    fn get_enum_py_string<'a, T: PyEnumCompatible<'a>>(py: Python<'a>, en: T) -> PyResult<String> {
+        Ok(en.into_pyobject(py)?.getattr("value")?.extract()?)
+    }
+
+    #[test]
+    fn test_strenum_creation_default() {
+        init();
+
+        use my_enum::MyEnum;
+
+        Python::with_gil(|py| {
+            let val1 = get_enum_py_string(py, MyEnum::Val1).unwrap();
+            let val2 = get_enum_py_string(py, MyEnum::Val2).unwrap();
+            let val3 = get_enum_py_string(py, MyEnum::Val3).unwrap();
+
+            assert_eq!(val1, "VAL1");
+            assert_eq!(val2, "VAL2");
+            assert_eq!(val3, "VAL3");
+        })
+    }
+
+    #[test]
+    fn test_strenum_creation_casing() {
+        init();
+
+        use my_enum_cased::MyEnumCased;
+
+        Python::with_gil(|py| {
+            let val1 = get_enum_py_string(py, MyEnumCased::ValCasedOne).unwrap();
+            let val2 = get_enum_py_string(py, MyEnumCased::ValCasedTwo).unwrap();
+            let val3 = get_enum_py_string(py, MyEnumCased::ValCasedThree).unwrap();
+
+            assert_eq!(val1, "val_cased_one");
+            assert_eq!(val2, "val_cased_two");
+            assert_eq!(val3, "val_cased_three");
+        })
+    }
+
+    #[test]
+    fn test_from_string() {
+        init();
+
+        Python::with_gil(|py| {
+            // test valid values
+            let val1 = PyString::new(py, "VAL1");
+            let val2 = PyString::new(py, "VAL2");
+            let val3 = PyString::new(py, "VAL3");
+            
+            assert_eq!(val1.extract::<my_enum::MyEnum>().unwrap(), my_enum::MyEnum::Val1);
+            assert_eq!(val2.extract::<my_enum::MyEnum>().unwrap(), my_enum::MyEnum::Val2);
+            assert_eq!(val3.extract::<my_enum::MyEnum>().unwrap(), my_enum::MyEnum::Val3);
+
+            // test invalid values
+            let bad_str = PyString::new(py, "BadValue");
+            assert!(bad_str.extract::<my_enum::MyEnum>().is_err());
+        })
+    }
+
+    #[test]
+    fn test_add_enum_to_module() {
+        init();
+
+        Python::with_gil(|py| {
+            let m = PyModule::new(py, "my_module").unwrap();
+            my_enum::add_enum_to_module(py, &m).unwrap();
+            my_enum_cased::add_enum_to_module(py, &m).unwrap();
+        })
     }
 }
