@@ -1,4 +1,6 @@
 use pyo3::prelude::*;
+use pyo3::types::PyType;
+use pyo3::sync::GILOnceCell;
 
 pub trait PyEnumCompatible<'py>: 
     IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr> + 
@@ -10,6 +12,17 @@ pub trait PyEnumCompatible<'py>:
 where
     Self: Sized
 {}
+
+pub static STR_ENUM_CLS: GILOnceCell<Py<PyType>> = GILOnceCell::new();
+
+pub fn str_enum_python_class(py: Python<'_>) -> PyResult<Py<PyType>> {
+    Ok(
+        STR_ENUM_CLS
+            .import(py, "enum", "StrEnum")?
+            .clone()
+            .unbind()
+    )
+}
 
 
 #[macro_export]
@@ -26,6 +39,7 @@ macro_rules! string_enum {
             use pyo3::sync::GILOnceCell;
             use std::collections::HashMap;
             use heck::{ToSnakeCase, ToShoutySnakeCase, ToLowerCamelCase, ToPascalCase};
+            use crate::utils::strenum::str_enum_python_class;
 
             fn format_variant(variant: &str) -> String {
                 match stringify!($casing) {
@@ -41,16 +55,15 @@ macro_rules! string_enum {
 
             static ENUM_PY_CLS: GILOnceCell<Py<PyType>> = GILOnceCell::new();
 
-            fn get_enum_py_cls(py: Python<'_>) -> PyResult<&Bound<'_, PyType>> {
+            pub fn get_enum_py_cls(py: Python<'_>) -> PyResult<&Bound<'_, PyType>> {
                 let mut variants = HashMap::new();
                 $(
                     variants.insert(stringify!($variant).to_shouty_snake_case(), format_variant(stringify!($variant)));
                 )+
 
                 let py_cls = ENUM_PY_CLS.get_or_init(py, || {
-                    py
-                        .import("enum").unwrap()
-                        .getattr("StrEnum").unwrap()
+                    str_enum_python_class(py).unwrap()
+                        .bind(py)
                         .call1((ENUM_CLS_NAME, variants,)).unwrap()
                         .downcast_into::<PyType>().unwrap()
                         .unbind()
@@ -120,9 +133,8 @@ macro_rules! string_enum {
 #[cfg(test)]
 mod tests {
     use std::sync::Once;
-    use pyo3::prelude::*;
+    use super::*;
     use pyo3::types::PyString;
-    use super::PyEnumCompatible;
 
     static INIT: Once = Once::new();
 
@@ -201,6 +213,21 @@ mod tests {
             let m = PyModule::new(py, "my_module").unwrap();
             my_enum::add_enum_to_module(py, &m).unwrap();
             my_enum_cased::add_enum_to_module(py, &m).unwrap();
+        })
+    }
+
+    #[test]
+    fn test_py_cls() {
+        init();
+
+        Python::with_gil(|py| {
+            let pycls = my_enum::get_enum_py_cls(py).expect("Failed to get enum class");
+
+            // test to make sure StrEnum class is iterable
+            pycls.extract::<Vec<String>>().expect("Failed to extract Vec<String>");
+
+            // test to make sure that pycls is a subclass of StrEnum
+            assert!(pycls.is_subclass(&str_enum_python_class(py).unwrap().bind(py)).expect("Failed to check subclass"));
         })
     }
 }
