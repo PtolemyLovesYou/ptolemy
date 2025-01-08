@@ -1594,7 +1594,6 @@ dependencies = [
  "env_logger",
  "heck",
  "log",
- "once_cell",
  "prost",
  "prost-types",
  "ptolemy-core",

@@ -34,4 +34,5 @@ build-backend = "maturin"
 [dependency-groups]
 dev = [
     "maturin-import-hook>=0.2.0",
+    "pytest>=8.3.4",
 ]
