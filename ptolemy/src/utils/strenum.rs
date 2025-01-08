@@ -226,8 +226,10 @@ mod tests {
             // test to make sure StrEnum class is iterable
             pycls.extract::<Vec<String>>().expect("Failed to extract Vec<String>");
 
+            let str_enum_cls = py.import("enum").unwrap().getattr("StrEnum").unwrap();
+
             // test to make sure that pycls is a subclass of StrEnum
-            assert!(pycls.is_subclass(&str_enum_python_class(py).unwrap().bind(py)).expect("Failed to check subclass"));
+            assert!(pycls.is_subclass(&str_enum_cls).expect("Failed to check subclass"));
         })
     }
 }
