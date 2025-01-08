@@ -17,11 +17,11 @@ generate-gql-schema:
 
 .PHONY: test-client
 test-client:
-	cd ptolemy && cargo test --no-default-features --features python
+	cd ptolemy && cargo test --features python
 
 .PHONY: build-client
 build-client:
-	cd ptolemy && maturin develop --uv
+	cd ptolemy && maturin develop --uv --features client
 
 .PHONY: setup-client-dev
 setup-client-dev:

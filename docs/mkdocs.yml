@@ -73,7 +73,7 @@ markdown_extensions:
   - pymdownx.superfences:
       preserve_tabs: true
   - pymdownx.snippets:
-      base_path: ['.', '../api', '../ptolemy', '../ptolemy-core']
+      base_path: ['.', '../api', '../ptolemy']
 
 extra:
   consent:

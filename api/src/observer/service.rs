@@ -1,7 +1,7 @@
 use crate::crud::auth::workspace as workspace_crud;
 use crate::observer::records::EventRecords;
 use crate::state::AppState;
-use ptolemy_core::generated::observer::{
+use ptolemy::generated::observer::{
     observer_server::Observer, ObserverStatusCode, PublishRequest, PublishResponse, Record,
     WorkspaceVerificationRequest, WorkspaceVerificationResponse,
 };

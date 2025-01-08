@@ -13,7 +13,6 @@ prototype/ -linguist-detectable
 
 # Set generated code as undetectable >:)
 api/src/generated/*.rs -linguist-detectable
-ptolemy-core/src/generated/*.rs -linguist-detectable
 
 # Set migrations as detectable
 api/diesel/**/*.sql linguist-detectable

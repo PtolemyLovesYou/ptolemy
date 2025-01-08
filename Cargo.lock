@@ -112,7 +112,7 @@ dependencies = [
  "juniper_axum",
  "prost",
  "prost-types",
- "ptolemy-core",
+ "ptolemy",
  "ring",
  "serde",
  "serde_json",
@@ -1611,24 +1611,6 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "tokio",
- "tonic",
- "tonic-build",
- "tonic-types",
- "uuid",
-]
-
-[[package]]
-name = "ptolemy-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "env_logger",
- "heck",
- "log",
- "prost",
- "prost-types",
- "serde",
- "serde_json",
  "tonic",
  "tonic-build",
  "tonic-types",

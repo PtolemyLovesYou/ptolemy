@@ -8,7 +8,7 @@ use crate::models::records::models::{
     SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
 };
 use crate::state::DbConnection;
-use ptolemy_core::generated::observer::{record::RecordData, Record, Tier};
+use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;
 
 macro_rules! add_record {
