@@ -1599,7 +1599,6 @@ dependencies = [
  "prost-types",
  "ptolemy-core",
  "pyo3",
- "pyo3-ffi",
  "serde",
  "serde_json",
  "serde_repr",

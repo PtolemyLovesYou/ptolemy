@@ -2,7 +2,7 @@
 members = [
     "ptolemy",
     "api",
-    "ptolemy-core",
+    "ptolemy-core"
     ]
 
 default-members = [
