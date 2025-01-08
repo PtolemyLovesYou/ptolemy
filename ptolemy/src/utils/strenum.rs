@@ -206,6 +206,18 @@ mod tests {
     }
 
     #[test]
+    fn test_into_pyany() {
+        init();
+
+        Python::with_gil(|py| {
+            let val1_to = my_enum::MyEnum::Val1.into_pyobject(py).expect("Failed to convert to PyAny");
+            let val1_from = my_enum::get_enum_py_cls(py).unwrap().getattr("VAL1").expect("Failed to get attribute");
+
+            assert!(val1_to.is_instance(&val1_from.get_type()).expect("Couldn't compare :("));
+        })
+    }
+
+    #[test]
     fn test_add_enum_to_module() {
         init();
 
@@ -224,7 +236,12 @@ mod tests {
             let pycls = my_enum::get_enum_py_cls(py).expect("Failed to get enum class");
 
             // test to make sure StrEnum class is iterable
-            pycls.extract::<Vec<String>>().expect("Failed to extract Vec<String>");
+            let variants_list: PyResult<Vec<String>> = pycls.try_iter()
+                .expect("Couldn't turn into Iterator!")
+                .map(|item| item.unwrap().extract::<String>())
+                .collect();
+
+            assert!(variants_list.is_ok());
 
             let str_enum_cls = py.import("enum").unwrap().getattr("StrEnum").unwrap();
 
