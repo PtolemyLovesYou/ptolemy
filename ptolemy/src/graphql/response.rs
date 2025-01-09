@@ -1,6 +1,6 @@
-use crate::prelude::{GraphQLError, GraphQLResponse};
 use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
+use crate::prelude::{GraphQLError, GraphQLResponse};
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -235,3 +235,13 @@ graphql_response!(
     Mutation,
     [(user, UserMutation), (workspace, WorkspaceMutation)]
 );
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Query {
+    pub ping: Option<String>,
+    pub user: Option<Vec<User>>,
+    pub workspace: Option<Vec<Workspace>>,
+}
+
+graphql_response!(Query, [(ping, String), (user, Vec<User>), (workspace, Vec<Workspace>)]);

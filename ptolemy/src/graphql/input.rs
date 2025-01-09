@@ -1,6 +1,6 @@
+use crate::graphql_input;
 use crate::models::enums::WorkspaceRole;
 use crate::prelude::GraphQLInput;
-use crate::graphql_input;
 use serde::Serialize;
 use uuid::Uuid;
 
