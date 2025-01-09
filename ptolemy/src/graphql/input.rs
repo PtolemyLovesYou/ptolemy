@@ -1,4 +1,6 @@
 use crate::models::enums::WorkspaceRole;
+use crate::graphql::utils::GraphQLInput;
+use crate::graphql_input;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -13,12 +15,16 @@ pub struct UserCreate {
     pub is_admin: bool,
 }
 
+graphql_input!(UserCreate);
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceCreate {
     name: String,
     description: Option<String>,
 }
+
+graphql_input!(WorkspaceCreate);
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,3 +33,5 @@ pub struct WorkspaceUserCreate {
     workspace_id: Uuid,
     role: WorkspaceRole,
 }
+
+graphql_input!(WorkspaceUserCreate);

@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug)]
 pub enum GraphQLError {
@@ -17,6 +17,19 @@ impl std::fmt::Display for GraphQLError {
 
 pub trait GraphQLResponse<'de>: Clone + Deserialize<'de> {
     type Error: std::error::Error + Into<GraphQLError>;
+}
+
+pub trait GraphQLInput: Clone + Serialize {
+    type Error: std::error::Error + Into<GraphQLError>;
+}
+
+#[macro_export]
+macro_rules! graphql_input {
+    ($name:ident) => {
+        impl GraphQLInput for $name {
+            type Error = crate::graphql::utils::GraphQLError;
+        }
+    }
 }
 
 #[macro_export]
