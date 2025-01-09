@@ -1,16 +1,11 @@
-use crate::client::client::PtolemyClient;
-use pyo3::prelude::*;
+pub mod generated;
+pub mod models;
+pub mod error;
 
+#[cfg(feature = "python")]
 pub mod client;
-pub mod config;
-pub mod event;
-pub mod types;
+#[cfg(feature = "python")]
+pub mod pybindings;
 
-/// A Python module implemented in Rust. The name of this function must match
-/// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
-/// import the module.
-#[pymodule]
-fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<PtolemyClient>()?;
-    Ok(())
-}
+#[cfg(feature = "python")]
+pub use pybindings::_core;

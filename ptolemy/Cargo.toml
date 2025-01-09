@@ -4,14 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "_core"
+name = "ptolemy"
 # "cdylib" is necessary to produce a shared library for Python to import from.
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
-pyo3 = { version = "0.22.4", features = ["extension-module", "abi3-py39"] }
+pyo3 = { version = "0.23.3", features = ["chrono", "abi3-py311", "multiple-pymethods"], optional = true }
+pyo3-ffi = { version = "0.23.3", optional = true }
 tonic = { workspace = true }
 prost = { workspace = true }
 tokio = { workspace = true }
@@ -23,7 +24,13 @@ serde = { workspace = true }
 serde_repr = { workspace = true }
 uuid = { workspace = true }
 serde_json = { workspace = true }
-ptolemy-core = { path = "../ptolemy-core" }
+chrono = { workspace = true }
+heck = { workspace = true }
+
+[features]
+extension-module = ["pyo3/extension-module", "pyo3-ffi/extension-module"]
+python = ["pyo3", "pyo3-ffi"]
+client = ["python", "extension-module"]
 
 [build-dependencies]
 tonic-build = "0.12.3"

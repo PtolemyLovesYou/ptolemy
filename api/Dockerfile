@@ -19,13 +19,11 @@ RUN cargo install diesel_cli --no-default-features --features postgres
 COPY Cargo.toml Cargo.lock ./
 
 # Copy member Cargo.toml files
-COPY ./ptolemy-core/Cargo.toml ./ptolemy-core/Cargo.toml
 COPY ./api/Cargo.toml ./api/Cargo.toml
 COPY ./ptolemy/Cargo.toml ./ptolemy/Cargo.toml
 
 # Create dummy executable files
-RUN mkdir ./ptolemy-core/src ./api/src ./ptolemy/src \
-    && echo "#![allow(dead_code)]\nfn main() {}" > ./ptolemy-core/src/lib.rs \
+RUN mkdir  ./api/src ./ptolemy/src \
     && echo "#![allow(dead_code)]\nfn main() {}" > ./api/src/main.rs \
     && echo "#![allow(dead_code)]\nfn _core() {}" > ./ptolemy/src/lib.rs
 
@@ -36,7 +34,6 @@ RUN cargo build --bin api --release && \
 # Now copy the real source code
 COPY ./api ./api
 COPY ./ptolemy ./ptolemy
-COPY ./ptolemy-core ./ptolemy-core
 
 # Build the actual binary
 RUN cargo build --bin api --release

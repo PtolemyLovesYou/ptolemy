@@ -3,7 +3,7 @@ use crate::middleware::trace_layer_grpc;
 use crate::observer::service::MyObserver;
 use crate::routes::get_router;
 use crate::state::AppState;
-use ptolemy_core::generated::observer::observer_server::ObserverServer;
+use ptolemy::generated::observer::observer_server::ObserverServer;
 use std::sync::Arc;
 use tonic::transport::Server;
 use tower::ServiceBuilder;

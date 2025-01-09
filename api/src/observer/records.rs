@@ -4,16 +4,18 @@ use crate::crud::records::insert::{
     insert_system_event_records,
 };
 use crate::models::records::models::{
-    parse_record, ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord,
+    ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord,
     SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
 };
 use crate::state::DbConnection;
-use ptolemy_core::generated::observer::{record::RecordData, Record, Tier};
+use ptolemy::generated::observer::{record::RecordData, Record, Tier};
+use ptolemy::error::ParseError;
 use tracing::error;
 
 macro_rules! add_record {
     ($record_type: ident, $rec:ident, $target:ident) => {{
-        match parse_record::<$record_type>(&$rec) {
+        let parsed_record: Result<$record_type, ParseError> = TryFrom::try_from($rec.clone());
+        match parsed_record {
             Ok(r) => $target.push(r),
             Err(e) => {
                 error!("Failed to parse record: {:#?}, error: {:?}", $rec, e);

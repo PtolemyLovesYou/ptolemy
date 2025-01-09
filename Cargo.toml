@@ -1,13 +1,12 @@
 [workspace]
 members = [
     "ptolemy",
-    "api",
-    "ptolemy-core",
+    "api"
     ]
 
 default-members = [
     "api",
-    "ptolemy-core",
+    "ptolemy",
 ]
 resolver = "2"
 
@@ -34,3 +33,4 @@ juniper_axum = "0.1.1"
 time = "0.3.37"
 tracing = "0.1.41"
 tracing-subscriber = {version = "0.3.19", features = ["fmt", "env-filter"] }
+heck = "0.5.0"

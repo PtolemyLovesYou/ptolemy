@@ -2,7 +2,27 @@
 
 # pylint: disable=unused-argument,missing-function-docstring
 from __future__ import annotations
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, TypeVar, Final
+from enum import Enum
+
+T = TypeVar('T', bound=Enum)
+
+class ApiKeyPermission(Enum):
+    """API Key Permissions Enum."""
+    READ_ONLY: Final[str] = "READ_ONLY"
+    WRITE_ONLY: Final[str] = "WRITE_ONLY"
+    READ_WRITE: Final[str] = "READ_WRITE"
+
+class UserStatus(Enum):
+    """User Status Enum."""
+    ACTIVE: Final[str] = "ACTIVE"
+    SUSPENDED: Final[str] = "SUSPENDED"
+
+class WorkspaceRole(Enum):
+    """Workspace Role Enum."""
+    USER: Final[str] = "USER"
+    MANAGER: Final[str] = "MANAGER"
+    ADMIN: Final[str] = "ADMIN"
 
 class Ptolemy:
     """Ptolemy Client."""

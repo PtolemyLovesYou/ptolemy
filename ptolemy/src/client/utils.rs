@@ -12,7 +12,7 @@ pub fn format_traceback(
     traceback: Traceback<'_>,
 ) -> PyResult<String> {
     Python::with_gil(|py| {
-        let traceback_module = py.import_bound("traceback")?;
+        let traceback_module = py.import("traceback")?;
         let format_result = traceback_module
             .getattr("format_exception")?
             .call1((exc_type, exc_value, traceback));

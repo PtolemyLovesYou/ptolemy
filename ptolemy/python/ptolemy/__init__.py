@@ -1,3 +1,3 @@
 """Ptolemy imports."""
-
-from ._core import Ptolemy  # pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module
+from ._core import Ptolemy, ApiKeyPermission, UserStatus, WorkspaceRole

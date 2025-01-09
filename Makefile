@@ -15,14 +15,19 @@ cli:
 generate-gql-schema:
 	cd api && cargo run --bin generate-gql-schema
 
-.PHONY:
-setup:
-	docker compose exec api \
-		/bin/bash -c "source /app/configure.sh && diesel migration run"
+.PHONY: test-client
+test-client:
+	cd ptolemy && cargo test --features python
 
 .PHONY: build-client
 build-client:
-	cd ptolemy && maturin develop --uv
+	cd ptolemy && maturin develop --uv --features client
+
+.PHONY: setup-client-dev
+setup-client-dev:
+	uv sync --locked --dev --all-packages \
+		&& make build-client \
+		&& uv run -m ptolemy.setup_dev
 
 .PHONY: docs
 docs:
