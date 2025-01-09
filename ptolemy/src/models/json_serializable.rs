@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
-use prost_types::{Struct, Value, value::Kind, ListValue};
 use crate::error::ParseError;
+use prost_types::{value::Kind, ListValue, Struct, Value};
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug)]
 pub enum JsonSerializable {
@@ -65,8 +65,12 @@ fn json_serializable_to_serde_value(json: &Option<JsonSerializable>) -> Option<s
     match json {
         None => None,
         Some(JsonSerializable::String(s)) => Some(serde_json::Value::String(s.clone())),
-        Some(JsonSerializable::Int(i)) => Some(serde_json::Value::Number(serde_json::Number::from(*i))),
-        Some(JsonSerializable::Float(f)) => Some(serde_json::Value::Number(serde_json::Number::from_f64(*f).unwrap())),
+        Some(JsonSerializable::Int(i)) => {
+            Some(serde_json::Value::Number(serde_json::Number::from(*i)))
+        }
+        Some(JsonSerializable::Float(f)) => Some(serde_json::Value::Number(
+            serde_json::Number::from_f64(*f).unwrap(),
+        )),
         Some(JsonSerializable::Bool(b)) => Some(serde_json::Value::Bool(*b)),
         Some(JsonSerializable::Dict(d)) => {
             let mut fields = serde_json::Map::new();
@@ -133,7 +137,7 @@ fn value_to_json_serializable(value: Option<Value>) -> Option<JsonSerializable> 
                 } else {
                     Some(JsonSerializable::Float(n))
                 }
-            },
+            }
             Some(Kind::BoolValue(b)) => Some(JsonSerializable::Bool(b)),
             Some(Kind::ListValue(l)) => {
                 let mut vec = Vec::new();
@@ -141,14 +145,14 @@ fn value_to_json_serializable(value: Option<Value>) -> Option<JsonSerializable> 
                     vec.push(value_to_json_serializable(Some(v)));
                 }
                 Some(JsonSerializable::List(vec))
-            },
+            }
             Some(Kind::StructValue(s)) => {
                 let mut map = BTreeMap::new();
                 for (k, v) in s.fields {
                     map.insert(k, value_to_json_serializable(Some(v)));
                 }
                 Some(JsonSerializable::Dict(map))
-            },
+            }
             Some(Kind::NullValue(_)) => None,
             None => None,
         },

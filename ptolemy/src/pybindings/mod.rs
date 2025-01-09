@@ -7,7 +7,7 @@ pub mod types;
 use crate::{
     client::client::PtolemyClient,
     pybindings::{
-        enums::{api_key_permission, workspace_role, user_status,},
+        enums::{api_key_permission, user_status, workspace_role},
         models::add_models_to_module,
     },
 };

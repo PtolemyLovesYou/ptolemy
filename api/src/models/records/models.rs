@@ -2,16 +2,21 @@ use crate::models::auth::models::Workspace;
 use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
-use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use ptolemy::error::ParseError;
+use ptolemy::generated::observer::{record::RecordData, Record, Tier};
+use ptolemy::models::event::{
+    ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
+};
 use ptolemy::models::id::Id;
 use ptolemy::models::json_serializable::JsonSerializable;
-use ptolemy::models::event::{ProtoRecord, ProtoEvent, ProtoRuntime, ProtoInput, ProtoOutput, ProtoFeedback, ProtoMetadata};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
 
-fn get_foreign_keys(parent_id: Id, tier: &Tier) -> Result<(Option<Uuid>, Option<Uuid>, Option<Uuid>, Option<Uuid>), ParseError> {
+fn get_foreign_keys(
+    parent_id: Id,
+    tier: &Tier,
+) -> Result<(Option<Uuid>, Option<Uuid>, Option<Uuid>, Option<Uuid>), ParseError> {
     match tier {
         Tier::System => Ok((Some(parent_id.into()), None, None, None)),
         Tier::Subsystem => Ok((None, Some(parent_id.into()), None, None)),
@@ -153,30 +158,50 @@ impl TryFrom<Record> for IORecord {
     type Error = ParseError;
 
     fn try_from(value: Record) -> Result<Self, Self::Error> {
-        let (parent_id, id, tier, field_name, field_value, io_type) = match &value.record_data.clone().unwrap() {
-            RecordData::Input(_) => {
-                let proto: ProtoRecord<ProtoInput> = value.try_into()?;
-                (proto.parent_id, proto.id, proto.tier, proto.record_data.field_name, proto.record_data.field_value, IoTypeEnum::Input)
-            },
-            RecordData::Output(_) => {
-                let proto: ProtoRecord<ProtoOutput> = value.try_into()?;
-                (proto.parent_id, proto.id, proto.tier, proto.record_data.field_name, proto.record_data.field_value, IoTypeEnum::Output)
-            },
-            RecordData::Feedback(_) => {
-                let proto: ProtoRecord<ProtoFeedback> = value.try_into()?;
-                (proto.parent_id, proto.id, proto.tier, proto.record_data.field_name, proto.record_data.field_value, IoTypeEnum::Feedback)
-            },
-            _ => {
-                error!(
-                    "Incorrect record type. This shouldn't happen."
-                );
-                return Err(ParseError::UndefinedLogType);
-            }
-        };
+        let (parent_id, id, tier, field_name, field_value, io_type) =
+            match &value.record_data.clone().unwrap() {
+                RecordData::Input(_) => {
+                    let proto: ProtoRecord<ProtoInput> = value.try_into()?;
+                    (
+                        proto.parent_id,
+                        proto.id,
+                        proto.tier,
+                        proto.record_data.field_name,
+                        proto.record_data.field_value,
+                        IoTypeEnum::Input,
+                    )
+                }
+                RecordData::Output(_) => {
+                    let proto: ProtoRecord<ProtoOutput> = value.try_into()?;
+                    (
+                        proto.parent_id,
+                        proto.id,
+                        proto.tier,
+                        proto.record_data.field_name,
+                        proto.record_data.field_value,
+                        IoTypeEnum::Output,
+                    )
+                }
+                RecordData::Feedback(_) => {
+                    let proto: ProtoRecord<ProtoFeedback> = value.try_into()?;
+                    (
+                        proto.parent_id,
+                        proto.id,
+                        proto.tier,
+                        proto.record_data.field_name,
+                        proto.record_data.field_value,
+                        IoTypeEnum::Feedback,
+                    )
+                }
+                _ => {
+                    error!("Incorrect record type. This shouldn't happen.");
+                    return Err(ParseError::UndefinedLogType);
+                }
+            };
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(parent_id, &tier)?;
-        
+
         let field_value_type = match &field_value {
             JsonSerializable::String(_) => FieldValueTypeEnum::String,
             JsonSerializable::Int(_) => FieldValueTypeEnum::Int,
@@ -186,7 +211,13 @@ impl TryFrom<Record> for IORecord {
             JsonSerializable::List(_) => FieldValueTypeEnum::Json,
         };
 
-        let (field_value_str, field_value_int, field_value_float, field_value_bool, field_value_json) = match &field_value {
+        let (
+            field_value_str,
+            field_value_int,
+            field_value_float,
+            field_value_bool,
+            field_value_json,
+        ) = match &field_value {
             JsonSerializable::String(s) => (Some(s.clone()), None, None, None, None),
             JsonSerializable::Int(i) => (None, Some(*i as i64), None, None, None),
             JsonSerializable::Float(f) => (None, None, Some(*f), None, None),

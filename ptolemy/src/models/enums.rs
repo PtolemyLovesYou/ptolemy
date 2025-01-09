@@ -2,18 +2,18 @@
 pub enum ApiKeyPermission {
     ReadOnly,
     WriteOnly,
-    ReadWrite
+    ReadWrite,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UserStatus {
     Active,
-    Suspended
+    Suspended,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum WorkspaceRole {
     User,
     Manager,
-    Admin
+    Admin,
 }

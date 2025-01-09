@@ -1,11 +1,11 @@
 use crate::client::server_handler::ServerHandler;
 use crate::client::state::PtolemyClientState;
 use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
+use crate::generated::observer::Tier;
 use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::models::json_serializable::{JsonSerializable, Parameters};
-use crate::generated::observer::Tier;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

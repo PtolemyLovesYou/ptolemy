@@ -5,9 +5,9 @@ use diesel::{
     AsExpression, FromSqlRow,
     {pg::Pg, pg::PgValue},
 };
+use ptolemy::{error::ParseError, generated::observer};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use ptolemy::{error::ParseError, generated::observer};
 
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
 #[diesel(sql_type = IoType)]

@@ -1,6 +1,6 @@
+pub mod error;
 pub mod generated;
 pub mod models;
-pub mod error;
 
 #[cfg(feature = "python")]
 pub mod client;

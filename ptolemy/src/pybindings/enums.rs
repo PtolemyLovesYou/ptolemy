@@ -1,30 +1,26 @@
-use pyo3::prelude::*;
-use pyo3::types::PyType;
-use pyo3::sync::GILOnceCell;
-use pyo3::exceptions::PyValueError;
-use heck::{ToSnakeCase, ToShoutySnakeCase, ToLowerCamelCase, ToPascalCase};
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
+use heck::{ToLowerCamelCase, ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::sync::GILOnceCell;
+use pyo3::types::PyType;
 
-pub trait PyEnumCompatible<'py>: 
-    IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr> + 
-    FromPyObject<'py> +
-    Clone +
-    PartialEq +
-    Into<String> +
-    TryFrom<String, Error = PyErr>
+pub trait PyEnumCompatible<'py>:
+    IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr>
+    + FromPyObject<'py>
+    + Clone
+    + PartialEq
+    + Into<String>
+    + TryFrom<String, Error = PyErr>
 where
-    Self: Sized
-{}
+    Self: Sized,
+{
+}
 
 pub static STR_ENUM_CLS: GILOnceCell<Py<PyType>> = GILOnceCell::new();
 
 pub fn str_enum_python_class(py: Python<'_>) -> PyResult<Py<PyType>> {
-    Ok(
-        STR_ENUM_CLS
-            .import(py, "enum", "StrEnum")?
-            .clone()
-            .unbind()
-    )
+    Ok(STR_ENUM_CLS.import(py, "enum", "StrEnum")?.clone().unbind())
 }
 
 #[derive(Debug)]
@@ -32,7 +28,7 @@ pub enum CasingStyle {
     ShoutySnakeCase,
     SnakeCase,
     LowerCamelCase,
-    PascalCase
+    PascalCase,
 }
 
 impl CasingStyle {
@@ -121,7 +117,7 @@ macro_rules! pywrap_enum {
             type Target = PyAny;
             type Output = Bound<'py, Self::Target>;
             type Error = PyErr;
-        
+
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
                 let s: String = self.into();
                 let val = $mod_name::get_enum_py_cls(py)?.call1((s,))?;
@@ -131,15 +127,19 @@ macro_rules! pywrap_enum {
 }
 }
 
-pywrap_enum!(api_key_permission, ApiKeyPermission, [ReadOnly, WriteOnly, ReadWrite]);
+pywrap_enum!(
+    api_key_permission,
+    ApiKeyPermission,
+    [ReadOnly, WriteOnly, ReadWrite]
+);
 pywrap_enum!(workspace_role, WorkspaceRole, [User, Manager, Admin]);
 pywrap_enum!(user_status, UserStatus, [Active, Suspended]);
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Once;
     use super::*;
     use pyo3::types::PyString;
+    use std::sync::Once;
 
     static INIT: Once = Once::new();
 
@@ -158,7 +158,12 @@ mod tests {
     }
 
     pywrap_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
-    pywrap_enum!(my_enum_cased, MyEnumCased, SnakeCase, [ValCasedOne, ValCasedTwo, ValCasedThree]);
+    pywrap_enum!(
+        my_enum_cased,
+        MyEnumCased,
+        SnakeCase,
+        [ValCasedOne, ValCasedTwo, ValCasedThree]
+    );
 
     fn init() {
         INIT.call_once(|| {
@@ -209,7 +214,7 @@ mod tests {
             let val1 = PyString::new(py, "VAL1");
             let val2 = PyString::new(py, "VAL2");
             let val3 = PyString::new(py, "VAL3");
-            
+
             assert_eq!(val1.extract::<MyEnum>().unwrap(), MyEnum::Val1);
             assert_eq!(val2.extract::<MyEnum>().unwrap(), MyEnum::Val2);
             assert_eq!(val3.extract::<MyEnum>().unwrap(), MyEnum::Val3);
@@ -225,10 +230,17 @@ mod tests {
         init();
 
         Python::with_gil(|py| {
-            let val1_to = MyEnum::Val1.into_pyobject(py).expect("Failed to convert to PyAny");
-            let val1_from = my_enum::get_enum_py_cls(py).unwrap().getattr("VAL1").expect("Failed to get attribute");
+            let val1_to = MyEnum::Val1
+                .into_pyobject(py)
+                .expect("Failed to convert to PyAny");
+            let val1_from = my_enum::get_enum_py_cls(py)
+                .unwrap()
+                .getattr("VAL1")
+                .expect("Failed to get attribute");
 
-            assert!(val1_to.is_instance(&val1_from.get_type()).expect("Couldn't compare :("));
+            assert!(val1_to
+                .is_instance(&val1_from.get_type())
+                .expect("Couldn't compare :("));
         })
     }
 
@@ -251,7 +263,8 @@ mod tests {
             let pycls = my_enum::get_enum_py_cls(py).expect("Failed to get enum class");
 
             // test to make sure StrEnum class is iterable
-            let variants_list: PyResult<Vec<String>> = pycls.try_iter()
+            let variants_list: PyResult<Vec<String>> = pycls
+                .try_iter()
                 .expect("Couldn't turn into Iterator!")
                 .map(|item| item.unwrap().extract::<String>())
                 .collect();
@@ -261,7 +274,9 @@ mod tests {
             let str_enum_cls = py.import("enum").unwrap().getattr("StrEnum").unwrap();
 
             // test to make sure that pycls is a subclass of StrEnum
-            assert!(pycls.is_subclass(&str_enum_cls).expect("Failed to check subclass"));
+            assert!(pycls
+                .is_subclass(&str_enum_cls)
+                .expect("Failed to check subclass"));
         })
     }
 }

@@ -1,6 +1,6 @@
-use chrono::NaiveDateTime;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use crate::models::id::Id;
+use chrono::NaiveDateTime;
 
 #[derive(Debug, Clone)]
 pub struct Workspace {

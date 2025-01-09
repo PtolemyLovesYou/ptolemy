@@ -1,12 +1,12 @@
 use chrono::{DateTime, NaiveDateTime};
 
-use crate::models::json_serializable::{JsonSerializable, Parameters};
+use crate::error::ParseError;
 use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     Record, RuntimeRecord, Tier,
 };
-use crate::error::ParseError;
 use crate::models::id::Id;
+use crate::models::json_serializable::{JsonSerializable, Parameters};
 
 pub trait Proto: TryFrom<RecordData, Error = ParseError> {
     fn proto(&self) -> RecordData;
@@ -106,11 +106,21 @@ impl ProtoRuntime {
     }
 
     pub fn start_time(&self) -> NaiveDateTime {
-        DateTime::from_timestamp(self.start_time.trunc() as i64, (self.start_time.fract() * 1e9) as u32).unwrap().naive_utc()
+        DateTime::from_timestamp(
+            self.start_time.trunc() as i64,
+            (self.start_time.fract() * 1e9) as u32,
+        )
+        .unwrap()
+        .naive_utc()
     }
 
     pub fn end_time(&self) -> NaiveDateTime {
-        DateTime::from_timestamp(self.end_time.trunc() as i64, (self.end_time.fract() * 1e9) as u32).unwrap().naive_utc()
+        DateTime::from_timestamp(
+            self.end_time.trunc() as i64,
+            (self.end_time.fract() * 1e9) as u32,
+        )
+        .unwrap()
+        .naive_utc()
     }
 }
 
@@ -369,15 +379,17 @@ impl<T: Proto> TryFrom<Record> for ProtoRecord<T> {
         let tier = value.tier();
         let parent_id: Id = value.parent_id.try_into()?;
         let id: Id = value.id.try_into()?;
-        let record_data: T = TryInto::<T>::try_into(value.record_data.ok_or(crate::error::ParseError::InvalidType)?)?;
+        let record_data: T = TryInto::<T>::try_into(
+            value
+                .record_data
+                .ok_or(crate::error::ParseError::InvalidType)?,
+        )?;
 
-        Ok(
-            ProtoRecord::<T> {
-                tier,
-                parent_id,
-                id,
-                record_data,
-            }
-        )
+        Ok(ProtoRecord::<T> {
+            tier,
+            parent_id,
+            id,
+            record_data,
+        })
     }
 }

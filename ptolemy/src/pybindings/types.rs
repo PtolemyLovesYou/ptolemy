@@ -1,12 +1,12 @@
 // use crate::generated::observer;
+use crate::models::id::Id;
+use crate::models::json_serializable::{JsonSerializable, Parameters};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyString, PyInt, PyFloat, PyBool, PyDict, PyList};
+use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
-use crate::models::id::Id;
-use crate::models::json_serializable::{JsonSerializable, Parameters};
 
 impl<'py> FromPyObject<'py> for Id {
     fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Id> {
@@ -52,7 +52,10 @@ impl<'py> FromPyObject<'py> for JsonSerializable {
             }
             Ok(JsonSerializable::List(inner))
         } else {
-            Err(PyValueError::new_err(format!("Unsupported type: {}", obj.get_type().name()?.extract::<String>()?)))
+            Err(PyValueError::new_err(format!(
+                "Unsupported type: {}",
+                obj.get_type().name()?.extract::<String>()?
+            )))
         }
     }
 }

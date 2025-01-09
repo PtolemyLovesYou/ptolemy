@@ -1,12 +1,6 @@
+use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
-use crate::models::auth::{
-    Workspace,
-    User,
-    UserApiKey,
-    ServiceApiKey,
-    WorkspaceUser,
-};
 
 macro_rules! pymodel {
     ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
@@ -54,11 +48,31 @@ macro_rules! pymodel {
     }
 }
 
-pymodel!(Workspace, PyWorkspace, [id, name, description, archived, created_at, updated_at]);
-pymodel!(User, PyUser, [id, username, display_name, status, is_admin, is_sysadmin]);
-pymodel!(UserApiKey, PyUserApiKey, [id, user_id, name, key_preview, permissions, expires_at]);
-pymodel!(ServiceApiKey, PyServiceApiKey, [id, workspace_id, name, key_preview, expires_at]);
-pymodel!(WorkspaceUser, PyWorkspaceUser, [workspace_id, user_id, role]);
+pymodel!(
+    Workspace,
+    PyWorkspace,
+    [id, name, description, archived, created_at, updated_at]
+);
+pymodel!(
+    User,
+    PyUser,
+    [id, username, display_name, status, is_admin, is_sysadmin]
+);
+pymodel!(
+    UserApiKey,
+    PyUserApiKey,
+    [id, user_id, name, key_preview, permissions, expires_at]
+);
+pymodel!(
+    ServiceApiKey,
+    PyServiceApiKey,
+    [id, workspace_id, name, key_preview, expires_at]
+);
+pymodel!(
+    WorkspaceUser,
+    PyWorkspaceUser,
+    [workspace_id, user_id, role]
+);
 
 pub fn add_models_to_module<'a>(_py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {
     m.add_class::<PyWorkspace>()?;

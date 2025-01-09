@@ -21,7 +21,9 @@ impl TryFrom<String> for Id {
     type Error = ParseError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Ok(Id(Uuid::parse_str(&value).map_err(|_| ParseError::InvalidUuid)?))
+        Ok(Id(
+            Uuid::parse_str(&value).map_err(|_| ParseError::InvalidUuid)?
+        ))
     }
 }
 

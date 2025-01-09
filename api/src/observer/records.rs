@@ -4,12 +4,12 @@ use crate::crud::records::insert::{
     insert_system_event_records,
 };
 use crate::models::records::models::{
-    ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord,
-    SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+    ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
+    SubsystemEventRecord, SystemEventRecord,
 };
 use crate::state::DbConnection;
-use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use ptolemy::error::ParseError;
+use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;
 
 macro_rules! add_record {
