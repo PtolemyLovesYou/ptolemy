@@ -43,7 +43,7 @@ impl GraphQLClient {
         Ok(resp)
     }
 
-    pub fn query_sync<T: for<'de> Deserialize<'de>>(
+    fn query_sync<T: for<'de> Deserialize<'de>>(
         &self,
         query: String,
         variables: HashMap<String, impl Serialize>,
