@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ParseError {
     UndefinedLogType,
     UndefinedTier,
@@ -9,4 +11,5 @@ pub enum ParseError {
     BadJSON,
     BadTimestamp,
     UnexpectedNull,
+    BadEnum(String),
 }

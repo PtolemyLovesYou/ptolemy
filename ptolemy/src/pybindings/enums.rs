@@ -1,17 +1,16 @@
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
-use heck::{ToLowerCamelCase, ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
+use crate::prelude::enum_utils::*;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::sync::GILOnceCell;
 use pyo3::types::PyType;
 
-pub trait PyEnumCompatible<'py>:
+pub trait PyEnumCompatible<'py, 'a>:
     IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr>
     + FromPyObject<'py>
     + Clone
     + PartialEq
-    + Into<String>
-    + TryFrom<String, Error = PyErr>
+    + SerializableEnum<'a>
 where
     Self: Sized,
 {
@@ -21,25 +20,6 @@ pub static STR_ENUM_CLS: GILOnceCell<Py<PyType>> = GILOnceCell::new();
 
 pub fn str_enum_python_class(py: Python<'_>) -> PyResult<Py<PyType>> {
     Ok(STR_ENUM_CLS.import(py, "enum", "StrEnum")?.clone().unbind())
-}
-
-#[derive(Debug)]
-pub enum CasingStyle {
-    ShoutySnakeCase,
-    SnakeCase,
-    LowerCamelCase,
-    PascalCase,
-}
-
-impl CasingStyle {
-    pub fn format(&self, variant: &str) -> String {
-        match self {
-            CasingStyle::ShoutySnakeCase => variant.to_shouty_snake_case(),
-            CasingStyle::SnakeCase => variant.to_snake_case(),
-            CasingStyle::LowerCamelCase => variant.to_lower_camel_case(),
-            CasingStyle::PascalCase => variant.to_pascal_case(),
-        }
-    }
 }
 
 macro_rules! pywrap_enum {
@@ -53,7 +33,9 @@ macro_rules! pywrap_enum {
             use pyo3::types::PyType;
             use pyo3::sync::GILOnceCell;
             use std::collections::HashMap;
-            use crate::pybindings::enums::{str_enum_python_class, CasingStyle};
+            use crate::pybindings::enums::str_enum_python_class;
+            use crate::prelude::enum_utils::CasingStyle;
+            use super::$enum_name;
 
             pub const ENUM_CLS_NAME: &'static str = stringify!($enum_name);
 
@@ -65,9 +47,9 @@ macro_rules! pywrap_enum {
             }
 
             pub fn get_enum_py_cls(py: Python<'_>) -> PyResult<&Bound<'_, PyType>> {
-                let mut variants = HashMap::new();
+                let mut variants: HashMap<String, String> = HashMap::new();
                 $(
-                    variants.insert(CasingStyle::ShoutySnakeCase.format(stringify!($variant)), CasingStyle::$casing.format(stringify!($variant)));
+                    variants.insert(CasingStyle::ShoutySnakeCase.format(stringify!($variant)), $enum_name::$variant.into());
                 )+
 
                 let py_cls = ENUM_PY_CLS.get_or_init(py, || {
@@ -82,34 +64,12 @@ macro_rules! pywrap_enum {
                 }
             }
 
-        impl<'py> crate::pybindings::enums::PyEnumCompatible<'py> for $enum_name {}
-
-        impl Into<String> for $enum_name {
-            fn into(self) -> String {
-                match self {
-                    $(
-                        Self::$variant => CasingStyle::$casing.format(stringify!($variant)),
-                    )+
-                }
-            }
-        }
-
-        impl TryFrom<String> for $enum_name {
-            type Error = PyErr;
-
-            fn try_from(value: String) -> Result<Self, Self::Error> {
-                match value.as_str() {
-                    $(
-                        v if v == CasingStyle::$casing.format(stringify!($variant)) => Ok(Self::$variant),
-                    )+
-                    _ => Err(PyValueError::new_err(format!("Invalid enum value: {}", value)))
-                }
-            }
-        }
+        impl<'py, 'a> crate::pybindings::enums::PyEnumCompatible<'py, 'a> for $enum_name {}
 
         impl <'py> FromPyObject<'py> for $enum_name {
             fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-                $enum_name::try_from(ob.extract::<String>()?)
+                let extracted_str = ob.extract::<String>()?;
+                $enum_name::try_from(extracted_str).map_err(|e| PyValueError::new_err(format!("{:?}", e)))
             }
         }
 
@@ -150,12 +110,16 @@ mod tests {
         Val3,
     }
 
+    serialize_enum!(MyEnum, ShoutySnakeCase, [Val1, Val2, Val3]);
+
     #[derive(Clone, Debug, PartialEq)]
     pub enum MyEnumCased {
         ValCasedOne,
         ValCasedTwo,
         ValCasedThree,
     }
+
+    serialize_enum!(MyEnumCased, SnakeCase, [ValCasedOne, ValCasedTwo, ValCasedThree]);
 
     pywrap_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
     pywrap_enum!(
@@ -171,7 +135,7 @@ mod tests {
         })
     }
 
-    fn get_enum_py_string<'a, T: PyEnumCompatible<'a>>(py: Python<'a>, en: T) -> PyResult<String> {
+    fn get_enum_py_string<'py, 'a: 'py, T: PyEnumCompatible<'py, 'a>>(py: Python<'a>, en: T) -> PyResult<String> {
         Ok(en.into_pyobject(py)?.getattr("value")?.extract()?)
     }
 

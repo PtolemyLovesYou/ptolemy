@@ -1,5 +1,7 @@
 pub mod error;
 pub mod models;
+pub mod graphql;
+pub mod prelude;
 
 #[rustfmt::skip]
 pub mod generated;
