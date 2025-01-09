@@ -1,0 +1,163 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+enum ApiKeyPermissionEnum {
+  READ_ONLY
+  WRITE_ONLY
+  READ_WRITE
+}
+
+enum UserStatusEnum {
+  ACTIVE
+  SUSPENDED
+}
+
+enum WorkspaceRoleEnum {
+  USER
+  MANAGER
+  ADMIN
+}
+
+input UserCreate {
+  username: String!
+  password: String!
+  displayName: String
+  isSysadmin: Boolean!
+  isAdmin: Boolean!
+}
+
+input WorkspaceCreate {
+  name: String!
+  description: String
+}
+
+input WorkspaceUserCreate {
+  userId: Uuid!
+  workspaceId: Uuid!
+  role: WorkspaceRoleEnum!
+}
+
+"""
+  Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
+
+  See also [`chrono::NaiveDateTime`][1] for details.
+
+  [1]: https://docs.rs/chrono/latest/chrono/naive/struct.NaiveDateTime.html
+"""
+scalar LocalDateTime
+
+scalar Uuid
+
+type CreateApiKeyResponse {
+  apiKey: String!
+  id: Uuid!
+}
+
+type CreateApiKeyResult {
+  apiKey: CreateApiKeyResponse
+  success: Boolean!
+  error: [ValidationError!]
+}
+
+type DeletionResult {
+  success: Boolean!
+  error: [ValidationError!]
+}
+
+type Mutation {
+  user(userId: Uuid!): UserMutation!
+  workspace(userId: Uuid!): WorkspaceMutation!
+}
+
+type Query {
+  ping: String!
+  user(id: Uuid, username: String): [User!]!
+  workspace(id: Uuid, name: String, archived: Boolean): [Workspace!]!
+}
+
+type ServiceApiKey {
+  id: Uuid!
+  workspaceId: String!
+  name: String!
+  keyPreview: String!
+  permissions: ApiKeyPermissionEnum!
+  expiresAt: LocalDateTime
+}
+
+type User {
+  id: Uuid!
+  username: String!
+  displayName: String
+  status: UserStatusEnum!
+  isAdmin: Boolean!
+  isSysadmin: Boolean!
+  workspaces(workspaceId: Uuid, workspaceName: String): [Workspace!]!
+  userApiKeys: [UserApiKey!]!
+}
+
+type UserApiKey {
+  id: String!
+  userId: String!
+  name: String!
+  keyPreview: String!
+  expiresAt: LocalDateTime
+}
+
+type UserMutation {
+  create(userData: UserCreate!): UserResult!
+  delete(id: Uuid!): DeletionResult!
+  createUserApiKey(name: String!, durationDays: Int): CreateApiKeyResult!
+  deleteUserApiKey(apiKeyId: Uuid!): DeletionResult!
+}
+
+type UserResult {
+  success: Boolean!
+  user: User
+  error: [ValidationError!]
+}
+
+type ValidationError {
+  field: String!
+  message: String!
+}
+
+type Workspace {
+  id: Uuid!
+  name: String!
+  description: String
+  archived: Boolean!
+  createdAt: LocalDateTime!
+  updatedAt: LocalDateTime!
+  users(userId: Uuid, username: String): [WorkspaceUser!]!
+  serviceApiKeys: [ServiceApiKey!]!
+}
+
+type WorkspaceMutation {
+  create(adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
+  delete(workspaceId: Uuid!): DeletionResult!
+  addUser(workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
+  removeUser(workspaceId: Uuid!, userId: Uuid!): DeletionResult!
+  changeWorkspaceUserRole(workspaceId: Uuid!, userId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
+  createServiceApiKey(workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
+  deleteServiceApiKey(workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
+}
+
+type WorkspaceResult {
+  success: Boolean!
+  workspace: Workspace
+  error: [ValidationError!]
+}
+
+type WorkspaceUser {
+  role: WorkspaceRoleEnum!
+  user: User!
+  workspace: Workspace!
+}
+
+type WorkspaceUserResult {
+  success: Boolean!
+  workspaceUser: WorkspaceUser
+  error: [ValidationError!]
+}
