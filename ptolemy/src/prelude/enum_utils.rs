@@ -70,7 +70,7 @@ macro_rules! serialize_enum {
             }
         }
 
-        impl<'a> SerializableEnum<'a> for $enum_name {}
+        impl<'de> SerializableEnum<'de> for $enum_name {}
     }
 }
 

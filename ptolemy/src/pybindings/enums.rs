@@ -5,12 +5,12 @@ use pyo3::prelude::*;
 use pyo3::sync::GILOnceCell;
 use pyo3::types::PyType;
 
-pub trait PyEnumCompatible<'py, 'a>:
+pub trait PyEnumCompatible<'py, 'de>:
     IntoPyObject<'py, Target = PyAny, Output = Bound<'py, PyAny>, Error = PyErr>
     + FromPyObject<'py>
     + Clone
     + PartialEq
-    + SerializableEnum<'a>
+    + SerializableEnum<'de>
 where
     Self: Sized,
 {
@@ -64,7 +64,7 @@ macro_rules! pywrap_enum {
                 }
             }
 
-        impl<'py, 'a> crate::pybindings::enums::PyEnumCompatible<'py, 'a> for $enum_name {}
+        impl<'py, 'de> crate::pybindings::enums::PyEnumCompatible<'py, 'de> for $enum_name {}
 
         impl <'py> FromPyObject<'py> for $enum_name {
             fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
