@@ -3,6 +3,7 @@ use crate::{
     prelude::GraphQLError,
 };
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -10,15 +11,17 @@ use tokio::runtime::Runtime;
 
 pub struct GraphQLClient {
     url: String,
-    rt: Runtime,
+    rt: Arc<Runtime>,
     client: reqwest::Client,
 }
 
 impl GraphQLClient {
-    pub fn new(url: String) -> Self {
+    pub fn new(url: String, rt: Option<Arc<Runtime>>) -> Self {
+        let rt = rt.unwrap_or_else(|| Arc::new(Runtime::new().unwrap()));
+
         Self {
             url,
-            rt: Runtime::new().unwrap(),
+            rt,
             client: reqwest::Client::new(),
         }
     }
@@ -45,9 +48,9 @@ impl GraphQLClient {
         query: String,
         variables: HashMap<String, impl Serialize>,
     ) -> Result<Query, GraphQLError> {
-        let resp = self
-            .rt
-            .block_on(self.query_graphql::<Query>(query, variables));
+        let rt_clone = self.rt.clone();
+
+        let resp = rt_clone.block_on(self.query_graphql::<Query>(query, variables));
 
         Ok(resp.map_err(|e| GraphQLError::ServerError(format!("GraphQL server error: {}", e)))?)
     }
@@ -57,9 +60,9 @@ impl GraphQLClient {
         mutation: String,
         variables: HashMap<String, impl Serialize>,
     ) -> Result<Mutation, GraphQLError> {
-        let resp = self
-            .rt
-            .block_on(self.query_graphql::<Mutation>(mutation, variables));
+        let rt_clone = self.rt.clone();
+
+        let resp = rt_clone.block_on(self.query_graphql::<Mutation>(mutation, variables));
 
         Ok(resp.map_err(|e| GraphQLError::ServerError(format!("GraphQL server error: {}", e)))?)
     }
