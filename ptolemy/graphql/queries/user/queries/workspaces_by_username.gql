@@ -1,0 +1,15 @@
+query UserWorkspacesByUsername($username: String!) {
+  user(username: $username) {
+    workspaces {
+      archived
+      description
+      id
+      name
+      createdAt
+      updatedAt
+      users(username: $username) {
+        role
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+query UserWorkspaces($Id: Uuid) {
+  user(id: $Id) {
+    workspaces {
+      archived
+      description
+      id
+      name
+      createdAt
+      updatedAt
+    }
+  }
+}
