@@ -90,7 +90,17 @@ pub struct Workspace {
     pub service_api_keys: Option<Vec<ServiceApiKey>>,
 }
 
-graphql_response!(Workspace, [(id, Uuid), (name, String), (archived, bool), (created_at, NaiveDateTime), (updated_at, NaiveDateTime), (service_api_keys, Vec<ServiceApiKey>)]);
+graphql_response!(
+    Workspace,
+    [
+        (id, Uuid),
+        (name, String),
+        (archived, bool),
+        (created_at, NaiveDateTime),
+        (updated_at, NaiveDateTime),
+        (service_api_keys, Vec<ServiceApiKey>)
+        ]
+);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
