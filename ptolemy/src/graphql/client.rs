@@ -43,16 +43,24 @@ impl GraphQLClient {
         Ok(resp)
     }
 
+    pub fn query_sync<T: for<'de> Deserialize<'de>>(
+        &self,
+        query: String,
+        variables: HashMap<String, impl Serialize>,
+    ) -> Result<T, GraphQLError> {
+        let rt_clone = self.rt.clone();
+
+        let resp = rt_clone.block_on(self.query_graphql(query, variables));
+
+        Ok(resp.map_err(|e| GraphQLError::ServerError(format!("GraphQL server error: {}", e)))?)
+    }
+
     pub fn query(
         &self,
         query: String,
         variables: HashMap<String, impl Serialize>,
     ) -> Result<Query, GraphQLError> {
-        let rt_clone = self.rt.clone();
-
-        let resp = rt_clone.block_on(self.query_graphql::<Query>(query, variables));
-
-        Ok(resp.map_err(|e| GraphQLError::ServerError(format!("GraphQL server error: {}", e)))?)
+        self.query_sync::<Query>(query, variables)
     }
 
     pub async fn mutation(
@@ -60,10 +68,6 @@ impl GraphQLClient {
         mutation: String,
         variables: HashMap<String, impl Serialize>,
     ) -> Result<Mutation, GraphQLError> {
-        let rt_clone = self.rt.clone();
-
-        let resp = rt_clone.block_on(self.query_graphql::<Mutation>(mutation, variables));
-
-        Ok(resp.map_err(|e| GraphQLError::ServerError(format!("GraphQL server error: {}", e)))?)
+        self.query_sync::<Mutation>(mutation, variables)
     }
 }
