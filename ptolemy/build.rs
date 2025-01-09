@@ -5,7 +5,7 @@ fn visit_dir(dir: &Path, queries: &mut String, base_path: &Path) {
     for entry in fs::read_dir(dir).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
-        
+
         if path.is_dir() {
             visit_dir(&path, queries, base_path);
         } else if path.extension().unwrap_or_default() == "gql" {
@@ -18,7 +18,7 @@ fn visit_dir(dir: &Path, queries: &mut String, base_path: &Path) {
                 .replace('/', "_")
                 .replace(".gql", "")
                 .to_uppercase();
-            
+
             let content = fs::read_to_string(&path).unwrap();
             queries.push_str(&format!(
                 "/// {}\npub const {}: &'static str = r###\"\n{}\n\"###;\n\n",

@@ -8,7 +8,11 @@ pub enum ApiKeyPermission {
     ReadWrite,
 }
 
-serialize_enum!(ApiKeyPermission, ShoutySnakeCase, [ReadOnly, WriteOnly, ReadWrite]);
+serialize_enum!(
+    ApiKeyPermission,
+    ShoutySnakeCase,
+    [ReadOnly, WriteOnly, ReadWrite]
+);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UserStatus {

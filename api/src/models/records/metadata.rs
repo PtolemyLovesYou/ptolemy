@@ -1,12 +1,13 @@
-use crate::models::records::event::{SystemEventRecord, SubsystemEventRecord, ComponentEventRecord, SubcomponentEventRecord};
+use crate::models::records::event::{
+    ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+};
 use crate::models::records::utils::get_foreign_keys;
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::Record;
-use ptolemy::models::event::{ProtoRecord, ProtoMetadata};
+use ptolemy::models::event::{ProtoMetadata, ProtoRecord};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
 
 #[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
 #[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]

@@ -17,7 +17,7 @@ pub struct UserCreate {
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceCreate {
     name: String,
-    description: Option<String>
+    description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -25,5 +25,5 @@ pub struct WorkspaceCreate {
 pub struct WorkspaceUserCreate {
     user_id: Uuid,
     workspace_id: Uuid,
-    role: WorkspaceRole
+    role: WorkspaceRole,
 }

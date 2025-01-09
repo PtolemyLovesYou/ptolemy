@@ -119,7 +119,11 @@ mod tests {
         ValCasedThree,
     }
 
-    serialize_enum!(MyEnumCased, SnakeCase, [ValCasedOne, ValCasedTwo, ValCasedThree]);
+    serialize_enum!(
+        MyEnumCased,
+        SnakeCase,
+        [ValCasedOne, ValCasedTwo, ValCasedThree]
+    );
 
     pywrap_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
     pywrap_enum!(
@@ -135,7 +139,10 @@ mod tests {
         })
     }
 
-    fn get_enum_py_string<'py, 'a: 'py, T: PyEnumCompatible<'py, 'a>>(py: Python<'a>, en: T) -> PyResult<String> {
+    fn get_enum_py_string<'py, 'a: 'py, T: PyEnumCompatible<'py, 'a>>(
+        py: Python<'a>,
+        en: T,
+    ) -> PyResult<String> {
         Ok(en.into_pyobject(py)?.getattr("value")?.extract()?)
     }
 

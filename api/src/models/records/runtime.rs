@@ -1,6 +1,8 @@
 use crate::models::records::enums::TierEnum;
+use crate::models::records::event::{
+    ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+};
 use crate::models::records::utils::get_foreign_keys;
-use crate::models::records::event::{SystemEventRecord, SubsystemEventRecord, ComponentEventRecord, SubcomponentEventRecord};
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy::error::ParseError;

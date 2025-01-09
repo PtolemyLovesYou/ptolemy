@@ -1,6 +1,6 @@
-use heck::{ToLowerCamelCase, ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
-pub use serde::{Deserialize, Serialize, Serializer, Deserializer};
 pub use crate::serialize_enum;
+use heck::{ToLowerCamelCase, ToPascalCase, ToShoutySnakeCase, ToSnakeCase};
+pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug)]
 pub enum CasingStyle {
@@ -10,7 +10,10 @@ pub enum CasingStyle {
     PascalCase,
 }
 
-pub trait SerializableEnum<'de>: Into<String> + TryFrom<String> + Serialize + Deserialize<'de> {}
+pub trait SerializableEnum<'de>:
+    Into<String> + TryFrom<String> + Serialize + Deserialize<'de>
+{
+}
 
 impl CasingStyle {
     pub fn format(&self, variant: &str) -> String {
