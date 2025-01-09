@@ -1,7 +1,7 @@
 use crate::crypto::{generate_api_key, PasswordHandler};
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{user_api_key, users};
-use crate::models::auth::models::{User, UserApiKey, UserApiKeyCreate};
+use crate::models::auth::{User, UserApiKey, UserApiKeyCreate};
 use crate::state::DbConnection;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;

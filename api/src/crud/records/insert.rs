@@ -1,6 +1,6 @@
 use crate::error::CRUDError;
 use crate::generated::records_schema;
-use crate::models::records::models::{
+use crate::models::records::{
     ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
     SubsystemEventRecord, SystemEventRecord,
 };

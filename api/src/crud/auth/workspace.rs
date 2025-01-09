@@ -1,7 +1,7 @@
 use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace;
 use crate::generated::auth_schema::workspace::dsl;
-use crate::models::auth::models::{Workspace, WorkspaceCreate};
+use crate::models::auth::{Workspace, WorkspaceCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

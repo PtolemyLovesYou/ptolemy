@@ -4,7 +4,7 @@ use crate::generated::auth_schema::workspace;
 use crate::generated::auth_schema::workspace_user;
 use crate::generated::auth_schema::workspace_user::dsl;
 use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::models::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
+use crate::models::auth::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
