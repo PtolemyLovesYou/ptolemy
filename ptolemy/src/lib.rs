@@ -1,6 +1,8 @@
 pub mod error;
-pub mod generated;
 pub mod models;
+
+#[rustfmt::skip]
+pub mod generated;
 
 #[cfg(feature = "python")]
 pub mod client;
