@@ -1,5 +1,4 @@
 pub mod generated;
-pub mod parser;
 pub mod models;
 pub mod error;
 
