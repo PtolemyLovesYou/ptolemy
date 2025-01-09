@@ -1,4 +1,4 @@
-use crate::models::auth::models::Workspace;
+use crate::models::auth::Workspace;
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::Record;

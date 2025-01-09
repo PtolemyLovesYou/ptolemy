@@ -3,7 +3,7 @@ use crate::crud::auth::{
     workspace as workspace_crud, workspace_user as workspace_user_crud,
 };
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
-use crate::models::auth::models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
+use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use crate::state::AppState;
 use chrono::NaiveDateTime;
 use juniper::{graphql_object, FieldResult};

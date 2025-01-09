@@ -1,6 +1,6 @@
 use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
 use crate::{
-    models::auth::models::{User, UserCreate},
+    models::auth::{User, UserCreate},
     state::AppState,
 };
 

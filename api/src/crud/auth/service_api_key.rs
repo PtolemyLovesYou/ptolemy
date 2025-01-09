@@ -2,7 +2,7 @@ use crate::crypto::{generate_api_key, PasswordHandler};
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
-use crate::models::auth::models::{ServiceApiKey, ServiceApiKeyCreate, Workspace};
+use crate::models::auth::{ServiceApiKey, ServiceApiKeyCreate, Workspace};
 use crate::state::DbConnection;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;

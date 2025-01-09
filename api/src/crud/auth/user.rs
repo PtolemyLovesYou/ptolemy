@@ -2,7 +2,7 @@ use crate::crypto::PasswordHandler;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::users::dsl;
 use crate::models::auth::enums::UserStatusEnum;
-use crate::models::auth::models::{User, UserCreate};
+use crate::models::auth::{User, UserCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -102,7 +102,7 @@ pub async fn change_user_status(
 pub async fn get_user(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
-) -> Result<crate::models::auth::models::User, CRUDError> {
+) -> Result<crate::models::auth::User, CRUDError> {
     match dsl::users
         .filter(dsl::id.eq(user_id))
         .get_result(conn)
@@ -122,7 +122,7 @@ pub async fn get_user(
 
 pub async fn get_all_users(
     conn: &mut DbConnection<'_>,
-) -> Result<Vec<crate::models::auth::models::User>, CRUDError> {
+) -> Result<Vec<crate::models::auth::User>, CRUDError> {
     match dsl::users.get_results(conn).await {
         Ok(us) => Ok(us),
         Err(e) => {

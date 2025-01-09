@@ -4,7 +4,7 @@ use crate::crud::auth::{
 };
 use crate::{
     models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
-    models::auth::models::{Workspace, WorkspaceCreate, WorkspaceUser, WorkspaceUserCreate},
+    models::auth::{Workspace, WorkspaceCreate, WorkspaceUser, WorkspaceUserCreate},
     state::AppState,
 };
 
