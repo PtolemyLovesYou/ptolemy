@@ -1,9 +1,32 @@
-# Build stage
-FROM rust:1.82-slim-bookworm as builder-base
+# Base stage with cargo-chef
+FROM rust:1.82-slim-bookworm as chef-base
+WORKDIR /app
+
+# Download and install cargo-chef
+ADD https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.68/cargo-chef-x86_64-unknown-linux-musl.tar.gz /tmp/cargo-chef.tar.gz
+RUN tar -xzf /tmp/cargo-chef.tar.gz -C /usr/local/cargo/bin && \
+    chmod +x /usr/local/cargo/bin/cargo-chef && \
+    rm /tmp/cargo-chef.tar.gz
+
+# Chef planner stage
+FROM chef-base as planner
+# Copy workspace files for recipe creation
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+# Chef builder stage
+FROM chef-base as cacher
+# Copy the recipe from planner
+COPY --from=planner /app/recipe.json recipe.json
+# Compute dependencies
+RUN cargo chef cook --release --recipe-path recipe.json
+
+# Builder stage
+FROM rust:1.82-slim-bookworm as builder
 
 WORKDIR /app
 
-# Install necessary build dependencies including PostgreSQL client libraries
+# Install necessary build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         protobuf-compiler \
@@ -13,36 +36,32 @@ RUN apt-get update && \
         && rm -rf /var/lib/apt/lists/*
 
 ENV BUILD_PROTOBUFS=0
-
 ENV PTOLEMY_ENV=PROD
 
 # Create mount points for cargo registry caching
 RUN mkdir -p /usr/local/cargo/registry /usr/local/cargo/git
 
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    cargo install sccache
-
-FROM builder-base as builder
+# Download and install sccache binary
+ADD https://github.com/mozilla/sccache/releases/download/v0.9.1/sccache-v0.9.1-x86_64-unknown-linux-musl.tar.gz /tmp/sccache.tar.gz
+RUN tar -xzf /tmp/sccache.tar.gz -C /tmp && \
+    mv /tmp/sccache-v0.9.1-x86_64-unknown-linux-musl/sccache /usr/local/cargo/bin/sccache && \
+    chmod +x /usr/local/cargo/bin/sccache && \
+    rm -rf /tmp/sccache.tar.gz /tmp/sccache-v0.9.1-x86_64-unknown-linux-musl
 
 ENV RUSTC_WRAPPER=/usr/local/cargo/bin/sccache
 ENV SCCACHE_DIR=/sccache
 
-# Install diesel CLI with caching
+# Copy dependencies from chef cacher
+COPY --from=cacher /app/target target
+COPY --from=cacher /usr/local/cargo /usr/local/cargo
+
+# Install diesel CLI
 RUN --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
-   --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/registry \
     cargo install diesel_cli --no-default-features --features postgres
 
-# Copy workspace Cargo files
-COPY Cargo.toml Cargo.lock ./
-
-# Copy member Cargo.toml files
-COPY ./api/Cargo.toml ./api/Cargo.toml
-COPY ./ptolemy/Cargo.toml ./ptolemy/Cargo.toml
-
 # Copy the real source code
-COPY ./api ./api
-COPY ./ptolemy ./ptolemy
+COPY . .
 
 # Build the actual binary with conditional release flag
 RUN --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
@@ -64,7 +83,6 @@ RUN apt-get update && \
 WORKDIR /usr/local/bin
 
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
-# Modify the COPY command to handle both release and debug builds
 COPY --from=builder /app/target/*/api /usr/local/bin/api
 
 RUN useradd -m -u 1001 appuser
