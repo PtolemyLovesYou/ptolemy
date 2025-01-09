@@ -3,7 +3,7 @@ use crate::crud::records::insert::{
     insert_runtime_records, insert_subcomponent_event_records, insert_subsystem_event_records,
     insert_system_event_records,
 };
-use crate::models::records::models::{
+use crate::models::records::{
     ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
     SubsystemEventRecord, SystemEventRecord,
 };
