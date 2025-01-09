@@ -1,4 +1,4 @@
-use crate::graphql::utils::{GraphQLError, GraphQLResponse};
+use crate::prelude::{GraphQLError, GraphQLResponse};
 use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use chrono::NaiveDateTime;

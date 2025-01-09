@@ -27,7 +27,7 @@ pub trait GraphQLInput: Clone + Serialize {
 macro_rules! graphql_input {
     ($name:ident) => {
         impl GraphQLInput for $name {
-            type Error = crate::graphql::utils::GraphQLError;
+            type Error = crate::prelude::GraphQLError;
         }
     }
 }
@@ -41,10 +41,10 @@ macro_rules! graphql_response {
 
         impl $name {
             $(
-                pub fn $req_field(&self) -> Result<$req_type, crate::graphql::utils::GraphQLError> {
+                pub fn $req_field(&self) -> Result<$req_type, crate::prelude::GraphQLError> {
                     match &self.$req_field {
                         Some(r) => Ok(r.clone().into()),
-                        None => Err(crate::graphql::utils::GraphQLError::BadResponse(format!("Missing field: {}", stringify!($req_field)))),
+                        None => Err(crate::prelude::GraphQLError::BadResponse(format!("Missing field: {}", stringify!($req_field)))),
                     }
                 }
             )*
