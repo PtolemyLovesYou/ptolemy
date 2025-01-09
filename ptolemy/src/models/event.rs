@@ -10,6 +10,11 @@ pub trait Proto: TryFrom<RecordData, Error = ParseError> {
     fn proto(&self) -> RecordData;
 }
 
+pub trait IO {
+    fn field_name(&self) -> String;
+    fn field_value(&self) -> JsonSerializable;
+}
+
 #[derive(Clone, Debug)]
 pub struct ProtoEvent {
     pub name: String,
@@ -143,6 +148,16 @@ impl ProtoInput {
     }
 }
 
+impl IO for ProtoInput {
+    fn field_name(&self) -> String {
+        self.field_name.clone()
+    }
+
+    fn field_value(&self) -> JsonSerializable {
+        self.field_value.clone()
+    }
+}
+
 impl TryFrom<RecordData> for ProtoInput {
     type Error = crate::error::ParseError;
 
@@ -183,6 +198,16 @@ impl ProtoOutput {
     }
 }
 
+impl IO for ProtoOutput {
+    fn field_name(&self) -> String {
+        self.field_name.clone()
+    }
+
+    fn field_value(&self) -> JsonSerializable {
+        self.field_value.clone()
+    }
+}
+
 impl TryFrom<RecordData> for ProtoOutput {
     type Error = crate::error::ParseError;
 
@@ -212,6 +237,16 @@ impl Proto for ProtoOutput {
 pub struct ProtoFeedback {
     pub field_name: String,
     pub field_value: JsonSerializable,
+}
+
+impl IO for ProtoFeedback {
+    fn field_name(&self) -> String {
+        self.field_name.clone()
+    }
+
+    fn field_value(&self) -> JsonSerializable {
+        self.field_value.clone()
+    }
 }
 
 impl ProtoFeedback {

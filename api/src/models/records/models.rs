@@ -3,44 +3,36 @@ use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
-use ptolemy::parser::{parse_io, parse_parameters, parse_uuid, FieldValue, ParseError};
+use ptolemy::error::ParseError;
+use ptolemy::models::id::Id;
+use ptolemy::models::json_serializable::JsonSerializable;
+use ptolemy::models::event::{ProtoRecord, ProtoEvent, ProtoRuntime, ProtoInput, ProtoOutput, ProtoFeedback, ProtoMetadata};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
 
-fn parse_tier(tier: Tier) -> Result<TierEnum, ParseError> {
-    let parsed_tier = match tier {
-        Tier::System => TierEnum::System,
-        Tier::Subsystem => TierEnum::Subsystem,
-        Tier::Component => TierEnum::Component,
-        Tier::Subcomponent => TierEnum::Subcomponent,
-        _ => {
-            error!("Unknown tier");
-            return Err(ParseError::UndefinedTier);
+impl TryFrom<Tier> for TierEnum {
+    type Error = ParseError;
+
+    fn try_from(value: Tier) -> Result<Self, Self::Error> {
+        match value {
+            Tier::System => Ok(TierEnum::System),
+            Tier::Subsystem => Ok(TierEnum::Subsystem),
+            Tier::Component => Ok(TierEnum::Component),
+            Tier::Subcomponent => Ok(TierEnum::Subcomponent),
+            _ => Err(ParseError::UndefinedTier),
         }
-    };
-
-    Ok(parsed_tier)
+    }
 }
 
-fn get_foreign_keys(
-    tier: &TierEnum,
-    parent_id: Uuid,
-) -> Result<(Option<Uuid>, Option<Uuid>, Option<Uuid>, Option<Uuid>), ParseError> {
-    let vals = match tier {
-        TierEnum::System => (Some(parent_id), None, None, None),
-        TierEnum::Subsystem => (None, Some(parent_id), None, None),
-        TierEnum::Component => (None, None, Some(parent_id), None),
-        TierEnum::Subcomponent => (None, None, None, Some(parent_id)),
-    };
-
-    Ok(vals)
-}
-
-pub trait EventTable {
-    fn from_record(record: &Record) -> Result<Self, ParseError>
-    where
-        Self: Sized;
+fn get_foreign_keys(parent_id: Id, tier: &Tier) -> Result<(Option<Uuid>, Option<Uuid>, Option<Uuid>, Option<Uuid>), ParseError> {
+    match tier {
+        Tier::System => Ok((Some(parent_id.into()), None, None, None)),
+        Tier::Subsystem => Ok((None, Some(parent_id.into()), None, None)),
+        Tier::Component => Ok((None, None, Some(parent_id.into()), None)),
+        Tier::Subcomponent => Ok((None, None, None, Some(parent_id.into()))),
+        Tier::UndeclaredTier => Err(ParseError::UndefinedTier),
+    }
 }
 
 fn parse_timestamp(timestamp: &f32) -> Result<NaiveDateTime, ParseError> {
@@ -65,34 +57,22 @@ macro_rules! event_table {
             pub environment: Option<String>,
         }
 
-        impl EventTable for $name {
-            fn from_record(record: &Record) -> Result<Self, ParseError> {
-                let id = parse_uuid(&record.id).unwrap();
-                let $parent_fk = parse_uuid(&record.parent_id).unwrap();
+        impl TryFrom<Record> for $name {
+            type Error = ParseError;
 
-                let record_data = match &record.record_data {
-                    Some(RecordData::Event(record_data)) => record_data,
-                    _ => {
-                        error!(
-                            "Incorrect record type: {:?}. This shouldn't happen.",
-                            record.record_data
-                        );
-                        return Err(ParseError::UndefinedLogType);
-                    }
-                };
-
-                let name = record_data.name.clone();
-                let parameters = parse_parameters(&record_data.parameters)?;
-                let version = record_data.version.clone();
-                let environment = record_data.environment.clone();
+            fn try_from(record: Record) -> Result<Self, ParseError> {
+                let rec: ProtoRecord<ProtoEvent> = record.try_into()?;
 
                 let rec = $name {
-                    id,
-                    $parent_fk,
-                    name,
-                    parameters,
-                    version,
-                    environment,
+                    id: rec.id.into(),
+                    $parent_fk: rec.parent_id.into(),
+                    name: rec.record_data.name.clone(),
+                    parameters: match rec.record_data.parameters {
+                        Some(p) => Some(Into::into(p)),
+                        None => None,
+                    },
+                    version: rec.record_data.version.clone(),
+                    environment: rec.record_data.environment.clone(),
                 };
 
                 Ok(rec)
@@ -142,41 +122,26 @@ pub struct RuntimeRecord {
     pub error_content: Option<String>,
 }
 
-impl EventTable for RuntimeRecord {
-    fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let tier = parse_tier(record.tier())?;
+impl TryFrom<Record> for RuntimeRecord {
+    type Error = ParseError;
+
+    fn try_from(value: Record) -> Result<Self, Self::Error> {
+        let val: ProtoRecord<ProtoRuntime> = value.try_into()?;
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
-            get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
-
-        let record_data = match &record.record_data {
-            Some(RecordData::Runtime(record_data)) => record_data,
-            _ => {
-                error!(
-                    "Incorrect record type: {:?}. This shouldn't happen.",
-                    record.record_data
-                );
-                return Err(ParseError::UndefinedLogType);
-            }
-        };
-
-        let id = parse_uuid(&record.id).unwrap();
-        let start_time = parse_timestamp(&record_data.start_time).unwrap();
-        let end_time = parse_timestamp(&record_data.end_time).unwrap();
-        let error_type = record_data.error_type.clone();
-        let error_content = record_data.error_content.clone();
+            get_foreign_keys(val.parent_id, &val.tier)?;
 
         let rec = RuntimeRecord {
-            id,
-            tier,
+            id: val.id.into(),
+            tier: val.tier.try_into()?,
             system_event_id,
             subsystem_event_id,
             component_event_id,
             subcomponent_event_id,
-            start_time,
-            end_time,
-            error_type,
-            error_content,
+            start_time: parse_timestamp(&val.record_data.start_time)?,
+            end_time: parse_timestamp(&val.record_data.end_time)?,
+            error_type: val.record_data.error_type.clone(),
+            error_content: val.record_data.error_content.clone(),
         };
 
         Ok(rec)
@@ -206,60 +171,55 @@ pub struct IORecord {
     pub field_value_type: FieldValueTypeEnum,
 }
 
-impl IORecord {
-    pub fn field_value(&self) -> FieldValue {
-        match self.field_value_type {
-            FieldValueTypeEnum::String => FieldValue::String(self.field_value_str.clone().unwrap()),
-            FieldValueTypeEnum::Int => FieldValue::Int(self.field_value_int.unwrap()),
-            FieldValueTypeEnum::Float => FieldValue::Float(self.field_value_float.unwrap()),
-            FieldValueTypeEnum::Bool => FieldValue::Bool(self.field_value_bool.unwrap()),
-            FieldValueTypeEnum::Json => FieldValue::Json(self.field_value_json.clone().unwrap()),
-        }
-    }
-}
+impl TryFrom<Record> for IORecord {
+    type Error = ParseError;
 
-impl EventTable for IORecord {
-    fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let id = parse_uuid(&record.id)?;
-
-        let tier = parse_tier(record.tier())?;
-
-        let (io_type, field_name, field_value) = match record.record_data.clone().unwrap() {
-            RecordData::Input(i) => (IoTypeEnum::Input, i.field_name, i.field_value),
-            RecordData::Output(o) => (IoTypeEnum::Output, o.field_name, o.field_value),
-            RecordData::Feedback(f) => (IoTypeEnum::Feedback, f.field_name, f.field_value),
+    fn try_from(value: Record) -> Result<Self, Self::Error> {
+        let (parent_id, id, tier, field_name, field_value, io_type) = match &value.record_data.clone().unwrap() {
+            RecordData::Input(_) => {
+                let proto: ProtoRecord<ProtoInput> = value.try_into()?;
+                (proto.parent_id, proto.id, proto.tier, proto.record_data.field_name, proto.record_data.field_value, IoTypeEnum::Input)
+            },
+            RecordData::Output(_) => {
+                let proto: ProtoRecord<ProtoOutput> = value.try_into()?;
+                (proto.parent_id, proto.id, proto.tier, proto.record_data.field_name, proto.record_data.field_value, IoTypeEnum::Output)
+            },
+            RecordData::Feedback(_) => {
+                let proto: ProtoRecord<ProtoFeedback> = value.try_into()?;
+                (proto.parent_id, proto.id, proto.tier, proto.record_data.field_name, proto.record_data.field_value, IoTypeEnum::Feedback)
+            },
             _ => {
                 error!(
-                    "Incorrect record type: {:?}. This shouldn't happen.",
-                    record.record_data
+                    "Incorrect record type. This shouldn't happen."
                 );
                 return Err(ParseError::UndefinedLogType);
             }
         };
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
-            get_foreign_keys(&tier, parse_uuid(&record.parent_id)?)?;
+            get_foreign_keys(parent_id, &tier)?;
+        
+        let field_value_type = match &field_value {
+            JsonSerializable::String(_) => FieldValueTypeEnum::String,
+            JsonSerializable::Int(_) => FieldValueTypeEnum::Int,
+            JsonSerializable::Float(_) => FieldValueTypeEnum::Float,
+            JsonSerializable::Bool(_) => FieldValueTypeEnum::Bool,
+            JsonSerializable::Dict(_) => FieldValueTypeEnum::Json,
+            JsonSerializable::List(_) => FieldValueTypeEnum::Json,
+        };
 
-        let field_value_raw = parse_io(&field_value)?;
-
-        let (
-            field_value_type,
-            field_value_str,
-            field_value_int,
-            field_value_float,
-            field_value_bool,
-            field_value_json,
-        ) = match field_value_raw {
-            FieldValue::String(s) => (FieldValueTypeEnum::String, Some(s), None, None, None, None),
-            FieldValue::Int(i) => (FieldValueTypeEnum::Int, None, Some(i), None, None, None),
-            FieldValue::Float(f) => (FieldValueTypeEnum::Float, None, None, Some(f), None, None),
-            FieldValue::Bool(b) => (FieldValueTypeEnum::Bool, None, None, None, Some(b), None),
-            FieldValue::Json(j) => (FieldValueTypeEnum::Json, None, None, None, None, Some(j)),
+        let (field_value_str, field_value_int, field_value_float, field_value_bool, field_value_json) = match &field_value {
+            JsonSerializable::String(s) => (Some(s.clone()), None, None, None, None),
+            JsonSerializable::Int(i) => (None, Some(*i as i64), None, None, None),
+            JsonSerializable::Float(f) => (None, None, Some(*f), None, None),
+            JsonSerializable::Bool(b) => (None, None, None, Some(*b), None),
+            JsonSerializable::Dict(_) => (None, None, None, None, Some(field_value.into())),
+            JsonSerializable::List(_) => (None, None, None, None, Some(field_value.into())),
         };
 
         let rec = IORecord {
-            id,
-            tier,
+            id: id.into(),
+            tier: tier.try_into()?,
             io_type,
             system_event_id,
             subsystem_event_id,
@@ -294,30 +254,21 @@ pub struct MetadataRecord {
     pub field_value: String,
 }
 
-impl EventTable for MetadataRecord {
-    fn from_record(record: &Record) -> Result<Self, ParseError> {
-        let id = parse_uuid(&record.id)?;
+impl TryFrom<Record> for MetadataRecord {
+    type Error = ParseError;
+
+    fn try_from(record: Record) -> Result<Self, Self::Error> {
+        let rec: ProtoRecord<ProtoMetadata> = record.try_into()?;
 
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
-            get_foreign_keys(&TierEnum::System, parse_uuid(&record.parent_id)?)?;
+            get_foreign_keys(rec.parent_id, &rec.tier)?;
 
-        let record_data = match record.record_data.clone().unwrap() {
-            RecordData::Metadata(m) => m,
-            _ => {
-                error!(
-                    "Incorrect record type: {:?}. This shouldn't happen.",
-                    record.record_data
-                );
-                return Err(ParseError::UndefinedLogType);
-            }
-        };
+        let field_name = rec.record_data.field_name.clone();
 
-        let field_name = record_data.field_name.clone();
-
-        let field_value = record_data.field_value.clone();
+        let field_value = rec.record_data.field_value.clone();
 
         let rec = MetadataRecord {
-            id,
+            id: rec.id.into(),
             system_event_id,
             subsystem_event_id,
             component_event_id,
@@ -327,27 +278,5 @@ impl EventTable for MetadataRecord {
         };
 
         Ok(rec)
-    }
-}
-
-pub fn parse_record<T: EventTable>(record: &Record) -> Result<T, ParseError> {
-    let tier = record.tier();
-
-    match &tier {
-        Tier::UndeclaredTier => {
-            error!("Got a record with an undeclared tier: {:#?}", record);
-            return Err(ParseError::UndefinedTier);
-        }
-        t => t,
-    };
-
-    let parsed: Result<T, ParseError> = T::from_record(record);
-
-    match parsed {
-        Ok(p) => Ok(p),
-        Err(e) => {
-            error!("Unable to parse record {:?}: {:?}", record.tier(), e);
-            Err(e)
-        }
     }
 }
