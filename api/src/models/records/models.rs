@@ -1,6 +1,6 @@
 use crate::models::auth::models::Workspace;
 use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
-use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
+use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use ptolemy::error::ParseError;
@@ -11,20 +11,6 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
 
-impl TryFrom<Tier> for TierEnum {
-    type Error = ParseError;
-
-    fn try_from(value: Tier) -> Result<Self, Self::Error> {
-        match value {
-            Tier::System => Ok(TierEnum::System),
-            Tier::Subsystem => Ok(TierEnum::Subsystem),
-            Tier::Component => Ok(TierEnum::Component),
-            Tier::Subcomponent => Ok(TierEnum::Subcomponent),
-            _ => Err(ParseError::UndefinedTier),
-        }
-    }
-}
-
 fn get_foreign_keys(parent_id: Id, tier: &Tier) -> Result<(Option<Uuid>, Option<Uuid>, Option<Uuid>, Option<Uuid>), ParseError> {
     match tier {
         Tier::System => Ok((Some(parent_id.into()), None, None, None)),
@@ -33,14 +19,6 @@ fn get_foreign_keys(parent_id: Id, tier: &Tier) -> Result<(Option<Uuid>, Option<
         Tier::Subcomponent => Ok((None, None, None, Some(parent_id.into()))),
         Tier::UndeclaredTier => Err(ParseError::UndefinedTier),
     }
-}
-
-fn parse_timestamp(timestamp: &f32) -> Result<NaiveDateTime, ParseError> {
-    let seconds = timestamp.trunc() as i64;
-    let nanoseconds = (timestamp.fract() * 1e9) as u32;
-
-    let dt = DateTime::from_timestamp(seconds, nanoseconds);
-    Ok(dt.unwrap().naive_utc())
 }
 
 macro_rules! event_table {
@@ -138,8 +116,8 @@ impl TryFrom<Record> for RuntimeRecord {
             subsystem_event_id,
             component_event_id,
             subcomponent_event_id,
-            start_time: parse_timestamp(&val.record_data.start_time)?,
-            end_time: parse_timestamp(&val.record_data.end_time)?,
+            start_time: val.record_data.start_time(),
+            end_time: val.record_data.end_time(),
             error_type: val.record_data.error_type.clone(),
             error_content: val.record_data.error_content.clone(),
         };

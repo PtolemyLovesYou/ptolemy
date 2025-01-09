@@ -7,6 +7,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 use std::io::Write;
+use ptolemy::{error::ParseError, generated::observer};
 
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Eq)]
 #[diesel(sql_type = IoType)]
@@ -76,6 +77,20 @@ pub enum TierEnum {
     Subsystem,
     Component,
     Subcomponent,
+}
+
+impl TryFrom<observer::Tier> for TierEnum {
+    type Error = ParseError;
+
+    fn try_from(value: observer::Tier) -> Result<Self, Self::Error> {
+        match value {
+            observer::Tier::System => Ok(TierEnum::System),
+            observer::Tier::Subsystem => Ok(TierEnum::Subsystem),
+            observer::Tier::Component => Ok(TierEnum::Component),
+            observer::Tier::Subcomponent => Ok(TierEnum::Subcomponent),
+            _ => Err(ParseError::UndefinedTier),
+        }
+    }
 }
 
 impl Serialize for TierEnum {

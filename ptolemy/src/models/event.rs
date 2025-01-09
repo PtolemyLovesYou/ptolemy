@@ -1,3 +1,5 @@
+use chrono::{DateTime, NaiveDateTime};
+
 use crate::models::json_serializable::{JsonSerializable, Parameters};
 use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
@@ -101,6 +103,14 @@ impl ProtoRuntime {
             error_type,
             error_content,
         }
+    }
+
+    pub fn start_time(&self) -> NaiveDateTime {
+        DateTime::from_timestamp(self.start_time.trunc() as i64, (self.start_time.fract() * 1e9) as u32).unwrap().naive_utc()
+    }
+
+    pub fn end_time(&self) -> NaiveDateTime {
+        DateTime::from_timestamp(self.end_time.trunc() as i64, (self.end_time.fract() * 1e9) as u32).unwrap().naive_utc()
     }
 }
 
