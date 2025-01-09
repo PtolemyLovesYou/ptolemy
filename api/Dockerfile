@@ -27,7 +27,6 @@ FROM builder-base as builder
 
 ENV RUSTC_WRAPPER=/usr/local/cargo/bin/sccache
 ENV SCCACHE_DIR=/sccache
-ENV CARGO_BUILD_JOBS=8
 
 # Install diesel CLI with caching
 RUN --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
