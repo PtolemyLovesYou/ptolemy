@@ -30,7 +30,7 @@ macro_rules! pymodel {
                     attrs.append(
                         (
                             stringify!($getter),
-                            self.0.$getter.clone()
+                            self.$getter()?
                         )
                     )?;
                 )+
