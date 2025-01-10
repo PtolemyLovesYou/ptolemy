@@ -1,8 +1,10 @@
 """Header file for ptolemy core."""
 
-# pylint: disable=unused-argument,missing-function-docstring
+# pylint: disable=unused-argument,missing-function-docstring,too-few-public-methods
 from __future__ import annotations
 from typing import Optional, Any, Dict, TypeVar, Final
+from uuid import UUID
+from datetime import datetime
 from enum import Enum
 
 T = TypeVar('T', bound=Enum)
@@ -70,3 +72,44 @@ class Ptolemy:
     def push_event(self) -> bool: ...
     def push_io(self) -> bool: ...
     def flush(self) -> bool: ...
+
+class Workspace:
+    """Workspace object."""
+    id: UUID
+    name: str
+    description: Optional[str]
+    archived: bool
+    created_at: datetime
+    updated_at: datetime
+
+class User:
+    """User object."""
+    id: UUID
+    username: str
+    display_name: Optional[str]
+    status: UserStatus
+    is_admin: bool
+    is_sysadmin: bool
+
+class UserApiKey:
+    """User API key."""
+    id: UUID
+    user_id: UUID
+    name: str
+    key_preview: str
+    expires_at: Optional[datetime]
+
+class ServiceApiKey:
+    """Service API key."""
+    id: UUID
+    workspace_id: UUID
+    name: str
+    key_preview: str
+    permissions: ApiKeyPermission
+    expires_at: Optional[datetime]
+
+class WorkspaceUser:
+    """Workspace user."""
+    workspace_id: UUID
+    user_id: UUID
+    role: WorkspaceRole
