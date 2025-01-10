@@ -1,9 +1,9 @@
 use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
+use crate::models::id::Id;
 use crate::prelude::{GraphQLError, GraphQLResponse, IntoModel};
 use chrono::NaiveDateTime;
 use serde::Deserialize;
-use uuid::Uuid;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,10 +27,10 @@ graphql_response!(GQLDeletionResult, [(success, bool)]);
 #[serde(rename_all = "camelCase")]
 pub struct GQLCreateApiKeyResponse {
     pub api_key: Option<String>,
-    pub id: Option<Uuid>,
+    pub id: Option<Id>,
 }
 
-graphql_response!(GQLCreateApiKeyResponse, [(api_key, String), (id, Uuid)]);
+graphql_response!(GQLCreateApiKeyResponse, [(api_key, String), (id, Id)]);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -58,7 +58,7 @@ graphql_response!(GQLUserResult, [(success, bool), (user, GQLUser)]);
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLUser {
-    pub id: Option<Uuid>,
+    pub id: Option<Id>,
     pub username: Option<String>,
     pub display_name: Option<String>,
     pub status: Option<UserStatus>,
@@ -70,7 +70,7 @@ pub struct GQLUser {
 graphql_response!(
     GQLUser,
     [
-        (id, Uuid),
+        (id, Id),
         (username, String),
         (status, UserStatus),
         (is_admin, bool),
@@ -95,7 +95,7 @@ impl IntoModel<'_> for GQLUser {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLWorkspace {
-    pub id: Option<Uuid>,
+    pub id: Option<Id>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub archived: Option<bool>,
@@ -107,7 +107,7 @@ pub struct GQLWorkspace {
 graphql_response!(
     GQLWorkspace,
     [
-        (id, Uuid),
+        (id, Id),
         (name, String),
         (archived, bool),
         (created_at, NaiveDateTime),
@@ -187,8 +187,8 @@ graphql_response!(
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLServiceApiKey {
-    pub id: Option<Uuid>,
-    pub workspace_id: Option<Uuid>,
+    pub id: Option<Id>,
+    pub workspace_id: Option<Id>,
     pub name: Option<String>,
     pub key_preview: Option<String>,
     pub permissions: Option<ApiKeyPermission>,
@@ -198,8 +198,8 @@ pub struct GQLServiceApiKey {
 graphql_response!(
     GQLServiceApiKey,
     [
-        (id, Uuid),
-        (workspace_id, Uuid),
+        (id, Id),
+        (workspace_id, Id),
         (name, String),
         (key_preview, String),
         (permissions, ApiKeyPermission)
@@ -223,8 +223,8 @@ impl IntoModel<'_> for GQLServiceApiKey {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLUserApiKey {
-    pub id: Option<Uuid>,
-    pub user_id: Option<Uuid>,
+    pub id: Option<Id>,
+    pub user_id: Option<Id>,
     pub name: Option<String>,
     pub key_preview: Option<String>,
     pub expires_at: Option<NaiveDateTime>,
@@ -233,8 +233,8 @@ pub struct GQLUserApiKey {
 graphql_response!(
     GQLUserApiKey,
     [
-        (id, Uuid),
-        (user_id, Uuid),
+        (id, Id),
+        (user_id, Id),
         (name, String),
         (key_preview, String)
     ]

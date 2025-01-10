@@ -1,8 +1,9 @@
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
 use crate::error::ParseError;
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, PartialOrd, Serialize, Deserialize)]
 pub struct Id(Uuid);
 
 impl From<Uuid> for Id {
