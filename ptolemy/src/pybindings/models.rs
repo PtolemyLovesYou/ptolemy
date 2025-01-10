@@ -1,7 +1,12 @@
+use std::ffi::CStr;
+
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
-use pyo3::prelude::*;
-use pyo3::types::{PyAny, PyList, PyDict};
 use pyo3::ffi::c_str;
+use pyo3::prelude::*;
+use pyo3::types::{PyAny, PyDict, PyList};
+
+static MODEL_FORMATTER: &CStr =
+    c_str!(r#"'{}({})'.format(name, ', '.join(k + '=' + repr(v) for k, v in model_attrs))"#);
 
 macro_rules! pymodel {
     ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
@@ -34,7 +39,11 @@ macro_rules! pymodel {
                 data.set_item("model_attrs", attrs)?;
                 data.set_item("name", stringify!($name))?;
 
-                let repr = py.eval(c_str!(r#"'{}({})'.format(name, ', '.join(k + '=' + repr(v) for k, v in model_attrs))"#), None, Some(&data))?;
+                let repr = py.eval(
+                    MODEL_FORMATTER,
+                    None,
+                    Some(&data)
+                )?;
 
                 Ok(repr)
             }

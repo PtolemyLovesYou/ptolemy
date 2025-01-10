@@ -1,7 +1,7 @@
 use crate::{
     error::GraphQLError,
     generated::gql::*,
-    graphql::response::{GraphQLResult, MutationResponse, QueryResponse, GQLResponse},
+    graphql::response::{GQLResponse, GraphQLResult, MutationResponse, QueryResponse},
     models::{
         auth::{ServiceApiKey, User, UserApiKey, Workspace},
         enums::{ApiKeyPermission, WorkspaceRole},
@@ -73,7 +73,8 @@ impl GraphQLClient {
     }
 
     pub fn mutation(&self, mutation: &str, variables: Value) -> Result<Mutation, GraphQLError> {
-        self.query_sync::<MutationResponse>(mutation, variables)?.data()
+        self.query_sync::<MutationResponse>(mutation, variables)?
+            .data()
     }
 }
 
