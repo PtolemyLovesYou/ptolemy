@@ -2,6 +2,8 @@
 FROM rust:1.82-slim-bookworm as chef-base
 WORKDIR /app
 
+ARG CARGO_CHEF_VERSION=0.1.68
+
 # Install necessary build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -10,7 +12,7 @@ RUN apt-get update && \
         && rm -rf /var/lib/apt/lists/*
 
 # Download and install cargo-chef
-ADD https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.68/cargo-chef-x86_64-unknown-linux-musl.tar.gz /tmp/cargo-chef.tar.gz
+ADD https://github.com/LukeMathWalker/cargo-chef/releases/download/v${CARGO_CHEF_VERSION}/cargo-chef-x86_64-unknown-linux-musl.tar.gz /tmp/cargo-chef.tar.gz
 RUN tar -xzf /tmp/cargo-chef.tar.gz -C /usr/local/cargo/bin && \
     chmod +x /usr/local/cargo/bin/cargo-chef && \
     rm /tmp/cargo-chef.tar.gz
@@ -31,6 +33,8 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # Builder stage
 FROM rust:1.82-slim-bookworm as builder
 
+ARG SCCACHE_VERSION=0.9.1
+
 WORKDIR /app
 
 # Install necessary build dependencies
@@ -49,11 +53,11 @@ ENV BUILD_PROTOBUFS=0 \
 RUN mkdir -p /usr/local/cargo/registry /usr/local/cargo/git
 
 # Download and install sccache binary
-ADD https://github.com/mozilla/sccache/releases/download/v0.9.1/sccache-v0.9.1-x86_64-unknown-linux-musl.tar.gz /tmp/sccache.tar.gz
+ADD https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz /tmp/sccache.tar.gz
 RUN tar -xzf /tmp/sccache.tar.gz -C /tmp && \
-    mv /tmp/sccache-v0.9.1-x86_64-unknown-linux-musl/sccache /usr/local/cargo/bin/sccache && \
+    mv /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache /usr/local/cargo/bin/sccache && \
     chmod +x /usr/local/cargo/bin/sccache && \
-    rm -rf /tmp/sccache.tar.gz /tmp/sccache-v0.9.1-x86_64-unknown-linux-musl
+    rm -rf /tmp/sccache.tar.gz /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl
 
 ENV RUSTC_WRAPPER=/usr/local/cargo/bin/sccache \
     SCCACHE_DIR=/sccache
