@@ -1,6 +1,7 @@
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use pyo3::prelude::*;
-use pyo3::types::PyAny;
+use pyo3::types::{PyAny, PyList, PyDict};
+use pyo3::ffi::c_str;
 
 macro_rules! pymodel {
     ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
@@ -16,6 +17,27 @@ macro_rules! pymodel {
                     Ok(self.0.$getter.clone())
                 }
             )+
+
+            pub fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+                let attrs: Bound<'_, PyList> = PyList::empty(py);
+
+                $(
+                    attrs.append(
+                        (
+                            stringify!($getter),
+                            self.0.$getter.clone()
+                        )
+                    )?;
+                )+
+
+                let data: Bound<'_, PyDict> = PyDict::new(py);
+                data.set_item("model_attrs", attrs)?;
+                data.set_item("name", stringify!($name))?;
+
+                let repr = py.eval(c_str!(r#"'{}({})'.format(name, ', '.join(k + '=' + repr(v) for k, v in model_attrs))"#), None, Some(&data))?;
+
+                Ok(repr)
+            }
         }
 
         impl From<$struct> for $name {

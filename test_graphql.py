@@ -3,9 +3,9 @@ from ptolemy._core import GraphQLClient
 
 client = GraphQLClient("http://localhost:8000/graphql")
 
-user = client.get_user_by_name("asdf")
+user = client.get_user_by_name("admin")
 
-print(user.id, user.username, user.is_admin, user.is_sysadmin)
+print(user)
 
 for i in client.get_user_workspaces(str(user.id)):
     print(i)
