@@ -1,7 +1,8 @@
 use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use crate::models::id::Id;
-use crate::prelude::{GraphQLError, GraphQLResponse, IntoModel};
+use crate::prelude::{GraphQLResponse, IntoModel};
+use crate::error::GraphQLError;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 

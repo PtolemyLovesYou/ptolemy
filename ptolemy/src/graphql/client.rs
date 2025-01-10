@@ -5,7 +5,9 @@ use crate::{
         enums::{ApiKeyPermission, WorkspaceRole},
         id::Id,
     },
-    prelude::{GraphQLError, IntoModel},
+    error::GraphQLError,
+    graphql::response::GraphQLResult,
+    prelude::graphql::IntoModel,
 };
 use std::sync::Arc;
 
@@ -13,7 +15,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tokio::runtime::Runtime;
 
-use super::response::{Mutation, Query, GraphQLResult};
+use super::response::{Mutation, Query};
 
 pub struct GraphQLClient {
     url: String,
