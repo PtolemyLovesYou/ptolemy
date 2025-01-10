@@ -111,7 +111,7 @@ pub struct GQLUser {
     pub status: Option<UserStatus>,
     pub is_admin: Option<bool>,
     pub is_sysadmin: Option<bool>,
-    pub user_api_keys: Option<Vec<GQLUserApiKey>>,
+    pub user_api_keys: Option<GQLUserApiKeys>,
 }
 
 graphql_response!(
@@ -121,7 +121,8 @@ graphql_response!(
         (username, String),
         (status, UserStatus),
         (is_admin, bool),
-        (is_sysadmin, bool)
+        (is_sysadmin, bool),
+        (user_api_keys, GQLUserApiKeys)
     ]
 );
 
@@ -139,6 +140,24 @@ impl IntoModel<'_> for GQLUser {
     }
 }
 
+pub type GQLUsers = GQLModelVec<GQLUser>;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GQLModelVec<T>(pub Vec<T>);
+
+impl<'a, T: IntoModel<'a>> GQLModelVec<T> {
+    pub fn one(&self) -> Result<&T, GraphQLError> {
+        match self.0.first() {
+            Some(t) => Ok(t),
+            None => Err(GraphQLError::NotFound),
+        }
+    }
+
+    pub fn inner(&self) -> &Vec<T> {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLWorkspace {
@@ -148,7 +167,8 @@ pub struct GQLWorkspace {
     pub archived: Option<bool>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
-    pub service_api_keys: Option<Vec<GQLServiceApiKey>>,
+    pub service_api_keys: Option<GQLServiceApiKeys>,
+    pub users: Option<GQLWorkspaceUsers>,
 }
 
 graphql_response!(
@@ -159,7 +179,8 @@ graphql_response!(
         (archived, bool),
         (created_at, NaiveDateTime),
         (updated_at, NaiveDateTime),
-        (service_api_keys, Vec<GQLServiceApiKey>)
+        (service_api_keys, GQLServiceApiKeys),
+        (users, GQLWorkspaceUsers)
         ]
 );
 
@@ -176,6 +197,8 @@ impl IntoModel<'_> for GQLWorkspace {
         })
     }
 }
+
+pub type GQLWorkspaces = GQLModelVec<GQLWorkspace>;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -219,6 +242,8 @@ impl IntoModel<'_> for GQLWorkspaceUser {
         })
     }
 }
+
+pub type GQLWorkspaceUsers = GQLModelVec<GQLWorkspaceUser>;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -271,6 +296,8 @@ impl IntoModel<'_> for GQLServiceApiKey {
     }
 }
 
+pub type GQLServiceApiKeys = GQLModelVec<GQLServiceApiKey>;
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLUserApiKey {
@@ -304,6 +331,8 @@ impl IntoModel<'_> for GQLUserApiKey {
         })
     }
 }
+
+pub type GQLUserApiKeys = GQLModelVec<GQLUserApiKey>;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -365,8 +394,8 @@ graphql_response!(
 #[serde(rename_all = "camelCase")]
 pub struct Query {
     pub ping: Option<String>,
-    pub user: Option<Vec<GQLUser>>,
-    pub workspace: Option<Vec<GQLWorkspace>>,
+    pub user: Option<GQLUsers>,
+    pub workspace: Option<GQLWorkspaces>,
 }
 
-graphql_response!(Query, [(ping, String), (user, Vec<GQLUser>), (workspace, Vec<GQLWorkspace>)]);
+graphql_response!(Query, [(ping, String), (user, GQLUsers), (workspace, GQLWorkspaces)]);

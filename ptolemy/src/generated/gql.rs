@@ -139,6 +139,10 @@ query UserWorkspacesByName($name: String) {
       user {
         id
         username
+        displayName
+        status
+        isAdmin
+        isSysadmin
       }
     }
   }

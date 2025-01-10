@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub enum GraphQLError {
     BadResponse(String),
     ClientError(String),
+    NotFound,
 }
 
 impl std::error::Error for GraphQLError {}
@@ -13,6 +14,7 @@ impl std::fmt::Display for GraphQLError {
         match self {
             GraphQLError::BadResponse(s) => write!(f, "Bad response for GraphQL query: {}", s),
             GraphQLError::ClientError(s) => write!(f, "Server error for GraphQL query: {}", s),
+            GraphQLError::NotFound => write!(f, "GraphQL query returned no results"),
         }
     }
 }

@@ -1,8 +1,7 @@
 use crate::{
     generated::gql::*,
-    graphql::response::{Mutation, Query},
     models::{
-        auth::Workspace,
+        auth::{ServiceApiKey, User, Workspace},
         enums::{ApiKeyPermission, WorkspaceRole},
         id::Id,
     },
@@ -14,7 +13,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tokio::runtime::Runtime;
 
-use super::response::GraphQLResult;
+use super::response::{Mutation, Query, GraphQLResult};
 
 pub struct GraphQLClient {
     url: String,
@@ -229,5 +228,64 @@ impl GraphQLClient {
             .propagate_errors()?;
 
         Ok(())
+    }
+
+    pub fn get_workspace_service_api_keys(&self, id: Id) -> Result<Vec<ServiceApiKey>, GraphQLError> {
+        let data = json!({"workspaceId": id});
+
+        Ok(self.query(WORKSPACE_QUERIES_SERVICE_API_KEYS, data)?
+            .workspace()?
+            .one()?
+            .service_api_keys()?
+            .inner()
+            .into_iter()
+            .map(|api_key| api_key.to_model().unwrap())
+            .collect::<Vec<ServiceApiKey>>()
+        )
+    }
+
+    pub fn get_user_workspace_role(&self, workspace_id: Id, user_id: Id) -> Result<WorkspaceRole, GraphQLError> {
+        let data = json!({"workspaceId": workspace_id, "userId": user_id});
+
+        Ok(self.query(WORKSPACE_QUERIES_USER_ROLE, data)?
+            .workspace()?
+            .one()?
+            .users()?
+            .one()?
+            .role()?)
+    }
+
+    pub fn get_workspace_users_by_name(&self, workspace_name: String) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
+        let data = json!({"name": workspace_name});
+
+        let workspace_users = self.query(WORKSPACE_QUERIES_USERS_BY_NAME, data)?
+            .workspace()?
+            .one()?
+            .users()?;
+
+        let mut users: Vec<(WorkspaceRole, User)> = Vec::new();
+
+        for user in workspace_users.inner() {
+            users.push((user.role()?, user.user()?.to_model()?));
+        }
+
+        Ok(users)
+    }
+
+    pub fn get_workspace_users(&self, workspace_id: Id) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
+        let data = json!({"workspaceId": workspace_id});
+
+        let workspace_users = self.query(WORKSPACE_QUERIES_USERS, data)?
+            .workspace()?
+            .one()?
+            .users()?;
+
+        let mut users: Vec<(WorkspaceRole, User)> = Vec::new();
+
+        for user in workspace_users.inner() {
+            users.push((user.role()?, user.user()?.to_model()?));
+        }
+
+        Ok(users)
     }
 }
