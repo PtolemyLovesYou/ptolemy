@@ -123,6 +123,7 @@ class WorkspaceUser:
     role: WorkspaceRole
 
 class GraphQLClient:
+    """GraphQL client."""
     def __init__(self, url: str): ...
     def create_workspace(
         self,
