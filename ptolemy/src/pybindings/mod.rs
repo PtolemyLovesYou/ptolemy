@@ -1,9 +1,9 @@
 use pyo3::prelude::*;
 
+pub mod client;
 pub mod enums;
 pub mod models;
 pub mod types;
-pub mod client;
 
 use crate::{
     pybindings::client::client::PtolemyClient,

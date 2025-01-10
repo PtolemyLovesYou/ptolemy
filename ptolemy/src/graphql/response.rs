@@ -15,13 +15,56 @@ pub struct GQLValidationError {
 graphql_response!(GQLValidationError, [(field, String), (message, String)]);
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct GQLValidationErrors(pub Vec<GQLValidationError>);
+
+impl GQLValidationErrors {
+    pub fn prettyprint(&self) -> Result<String, GraphQLError> {
+        let mut errors: Vec<String> = Vec::new();
+
+        for error in &self.0 {
+            errors.push(format!("    {}: {}", error.field()?, error.message()?));
+        }
+
+        Ok(errors.join("\n"))
+    }
+}
+
+pub trait GraphQLResult {
+    fn propagate_errors(self) -> Result<Self, GraphQLError>
+    where
+        Self: Sized;
+}
+
+macro_rules! graphql_result {
+    ($name:ident) => {
+        impl GraphQLResult for $name {
+            fn propagate_errors(self) -> Result<Self, GraphQLError> {
+                if !self.success()? {
+                    return match &self.error {
+                        Some(e) => Err(GraphQLError::ClientError(format!(
+                            "Validation errors: {}",
+                            e.prettyprint()?
+                        ))),
+                        None => Err(GraphQLError::ClientError("Unknown error".to_string())),
+                    };
+                }
+
+                Ok(self)
+            }
+        }
+    };
+}
+
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLDeletionResult {
     pub success: Option<bool>,
-    pub error: Option<Vec<GQLValidationError>>,
+    pub error: Option<GQLValidationErrors>,
 }
 
 graphql_response!(GQLDeletionResult, [(success, bool)]);
+
+graphql_result!(GQLDeletionResult);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,7 +80,7 @@ graphql_response!(GQLCreateApiKeyResponse, [(api_key, String), (id, Id)]);
 pub struct GQLCreateApiKeyResult {
     pub api_key: Option<GQLCreateApiKeyResponse>,
     pub success: Option<bool>,
-    pub error: Option<Vec<GQLValidationError>>,
+    pub error: Option<GQLValidationErrors>,
 }
 
 graphql_response!(
@@ -45,15 +88,19 @@ graphql_response!(
     [(api_key, GQLCreateApiKeyResponse), (success, bool)]
 );
 
+graphql_result!(GQLCreateApiKeyResult);
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLUserResult {
     pub success: Option<bool>,
     pub user: Option<GQLUser>,
-    pub error: Option<Vec<GQLValidationError>>,
+    pub error: Option<GQLValidationErrors>,
 }
 
 graphql_response!(GQLUserResult, [(success, bool), (user, GQLUser)]);
+
+graphql_result!(GQLUserResult);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -135,13 +182,15 @@ impl IntoModel<'_> for GQLWorkspace {
 pub struct GQLWorkspaceResult {
     pub success: Option<bool>,
     pub workspace: Option<GQLWorkspace>,
-    pub error: Option<Vec<GQLValidationError>>,
+    pub error: Option<GQLValidationErrors>,
 }
 
 graphql_response!(
     GQLWorkspaceResult,
     [(success, bool), (workspace, GQLWorkspace)]
 );
+
+graphql_result!(GQLWorkspaceResult);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -176,13 +225,15 @@ impl IntoModel<'_> for GQLWorkspaceUser {
 pub struct GQLWorkspaceUserResult {
     pub success: Option<bool>,
     pub workspace_user: Option<GQLWorkspaceUser>,
-    pub error: Option<Vec<GQLValidationError>>,
+    pub error: Option<GQLValidationErrors>,
 }
 
 graphql_response!(
     GQLWorkspaceUserResult,
     [(success, bool), (workspace_user, GQLWorkspaceUser)]
 );
+
+graphql_result!(GQLWorkspaceUserResult);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]

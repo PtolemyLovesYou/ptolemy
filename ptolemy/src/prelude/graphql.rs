@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug)]
 pub enum GraphQLError {
     BadResponse(String),
-    ServerError(String),
+    ClientError(String),
 }
 
 impl std::error::Error for GraphQLError {}
@@ -12,7 +12,7 @@ impl std::fmt::Display for GraphQLError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             GraphQLError::BadResponse(s) => write!(f, "Bad response for GraphQL query: {}", s),
-            GraphQLError::ServerError(s) => write!(f, "Server error for GraphQL query: {}", s),
+            GraphQLError::ClientError(s) => write!(f, "Server error for GraphQL query: {}", s),
         }
     }
 }

@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 use crate::error::ParseError;
 

@@ -34,6 +34,8 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
         name
         description
         archived
+        createdAt
+        updatedAt
       }
     }
   }
