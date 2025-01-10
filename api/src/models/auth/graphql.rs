@@ -136,8 +136,8 @@ impl ServiceApiKey {
         self.id
     }
 
-    async fn workspace_id(&self) -> String {
-        self.workspace_id.to_string()
+    async fn workspace_id(&self) -> Uuid {
+        self.workspace_id
     }
 
     async fn name(&self) -> String {
@@ -159,12 +159,12 @@ impl ServiceApiKey {
 
 #[graphql_object]
 impl UserApiKey {
-    async fn id(&self) -> String {
-        self.id.to_string()
+    async fn id(&self) -> Uuid {
+        self.id
     }
 
-    async fn user_id(&self) -> String {
-        self.user_id.to_string()
+    async fn user_id(&self) -> Uuid {
+        self.user_id
     }
 
     async fn name(&self) -> String {

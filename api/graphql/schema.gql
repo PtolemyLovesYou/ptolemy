@@ -79,7 +79,7 @@ type Query {
 
 type ServiceApiKey {
   id: Uuid!
-  workspaceId: String!
+  workspaceId: Uuid!
   name: String!
   keyPreview: String!
   permissions: ApiKeyPermissionEnum!
@@ -98,8 +98,8 @@ type User {
 }
 
 type UserApiKey {
-  id: String!
-  userId: String!
+  id: Uuid!
+  userId: Uuid!
   name: String!
   keyPreview: String!
   expiresAt: LocalDateTime
