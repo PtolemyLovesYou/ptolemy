@@ -190,7 +190,8 @@ impl GraphQLClient {
         user_id: Id,
         workspace_id: Id,
         name: String,
-        permissions: Vec<ApiKeyPermission>,
+        permissions: ApiKeyPermission,
+        duration: Option<isize>,
     ) -> Result<String, GraphQLError> {
         let data = json!(
             {
@@ -198,6 +199,7 @@ impl GraphQLClient {
                 "workspaceId": workspace_id,
                 "name": name,
                 "permissions": permissions,
+                "durationDays": duration,
             }
         );
 
