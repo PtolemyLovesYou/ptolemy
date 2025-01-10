@@ -21,6 +21,12 @@ pub trait GraphQLResponse<'de>: Clone + Deserialize<'de> {
     type Error: std::error::Error + Into<GraphQLError>;
 }
 
+pub trait IntoModel<'de>: GraphQLResponse<'de> {
+    type ReturnType;
+
+    fn to_model(&self) -> Result<Self::ReturnType, Self::Error>;
+}
+
 pub trait GraphQLInput: Clone + Serialize {
     type Error: std::error::Error + Into<GraphQLError>;
 }

@@ -1,6 +1,6 @@
 use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
-use crate::prelude::{GraphQLError, GraphQLResponse};
+use crate::prelude::{GraphQLError, GraphQLResponse, IntoModel};
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -78,6 +78,20 @@ graphql_response!(
     ]
 );
 
+impl IntoModel<'_> for GQLUser {
+    type ReturnType = crate::models::auth::User;
+    fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
+        Ok(Self::ReturnType {
+            id: self.id()?.into(),
+            username: self.username()?,
+            display_name: self.display_name.clone(),
+            status: self.status()?,
+            is_admin: self.is_admin()?,
+            is_sysadmin: self.is_sysadmin()?,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLWorkspace {
@@ -102,6 +116,20 @@ graphql_response!(
         ]
 );
 
+impl IntoModel<'_> for GQLWorkspace {
+    type ReturnType = crate::models::auth::Workspace;
+    fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
+        Ok(Self::ReturnType {
+            id: self.id()?.into(),
+            name: self.name()?,
+            description: self.description.clone(),
+            archived: self.archived()?,
+            created_at: self.created_at()?,
+            updated_at: self.updated_at()?,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLWorkspaceResult {
@@ -110,7 +138,10 @@ pub struct GQLWorkspaceResult {
     pub error: Option<Vec<GQLValidationError>>,
 }
 
-graphql_response!(GQLWorkspaceResult, [(success, bool), (workspace, GQLWorkspace)]);
+graphql_response!(
+    GQLWorkspaceResult,
+    [(success, bool), (workspace, GQLWorkspace)]
+);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -122,8 +153,23 @@ pub struct GQLWorkspaceUser {
 
 graphql_response!(
     GQLWorkspaceUser,
-    [(role, WorkspaceRole), (user, GQLUser), (workspace, GQLWorkspace)]
+    [
+        (role, WorkspaceRole),
+        (user, GQLUser),
+        (workspace, GQLWorkspace)
+    ]
 );
+
+impl IntoModel<'_> for GQLWorkspaceUser {
+    type ReturnType = crate::models::auth::WorkspaceUser;
+    fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
+        Ok(Self::ReturnType {
+            workspace_id: self.workspace()?.id()?.into(),
+            user_id: self.user()?.id()?.into(),
+            role: self.role()?,
+        })
+    }
+}
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -160,6 +206,20 @@ graphql_response!(
     ]
 );
 
+impl IntoModel<'_> for GQLServiceApiKey {
+    type ReturnType = crate::models::auth::ServiceApiKey;
+    fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
+        Ok(Self::ReturnType {
+            id: self.id()?.into(),
+            workspace_id: self.workspace_id()?.into(),
+            name: self.name()?,
+            key_preview: self.key_preview()?,
+            permissions: self.permissions()?,
+            expires_at: self.expires_at,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLUserApiKey {
@@ -179,6 +239,20 @@ graphql_response!(
         (key_preview, String)
     ]
 );
+
+impl IntoModel<'_> for GQLUserApiKey {
+    type ReturnType = crate::models::auth::UserApiKey;
+
+    fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
+        Ok(Self::ReturnType {
+            id: self.id()?.into(),
+            user_id: self.user_id()?.into(),
+            name: self.name()?,
+            key_preview: self.key_preview()?,
+            expires_at: self.expires_at,
+        })
+    }
+}
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -61,7 +61,7 @@ pymodel!(
 pymodel!(
     UserApiKey,
     PyUserApiKey,
-    [id, user_id, name, key_preview, permissions, expires_at]
+    [id, user_id, name, key_preview, expires_at]
 );
 pymodel!(
     ServiceApiKey,

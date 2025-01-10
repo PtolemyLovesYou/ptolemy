@@ -28,7 +28,6 @@ pub struct UserApiKey {
     pub user_id: Id,
     pub name: String,
     pub key_preview: String,
-    pub permissions: ApiKeyPermission,
     pub expires_at: Option<NaiveDateTime>,
 }
 
