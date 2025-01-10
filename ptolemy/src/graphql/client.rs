@@ -1,7 +1,7 @@
 use crate::{
     error::GraphQLError,
     generated::gql::*,
-    graphql::response::GraphQLResult,
+    graphql::response::{GraphQLResult, MutationResponse, QueryResponse, GQLResponse},
     models::{
         auth::{ServiceApiKey, User, UserApiKey, Workspace},
         enums::{ApiKeyPermission, WorkspaceRole},
@@ -11,7 +11,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use tokio::runtime::Runtime;
 
@@ -34,24 +34,29 @@ impl GraphQLClient {
         }
     }
 
-    async fn query_graphql<T: for<'de> Deserialize<'de>>(
-        &self,
+    async fn query_graphql<'a, 'de, T: GQLResponse<'de> + DeserializeOwned>(
+        &'a self,
         query: &str,
         variables: Value,
-    ) -> Result<T, reqwest::Error> {
+    ) -> Result<T, GraphQLError> {
         let resp = self
             .client
             .post(&self.url)
             .json(&json!({"query": query, "variables": variables}))
             .send()
-            .await?
+            .await
+            .map_err(|e| GraphQLError::ClientError(e.to_string()))?
             .json::<T>()
-            .await?;
+            .await
+            .map_err(|e| GraphQLError::ClientError(e.to_string()))?;
 
-        Ok(resp)
+        match resp.is_ok() {
+            true => Ok(resp),
+            false => Err(GraphQLError::ClientError(resp.errors().unwrap())),
+        }
     }
 
-    fn query_sync<T: for<'de> Deserialize<'de>>(
+    fn query_sync<'a, 'de, T: GQLResponse<'de> + DeserializeOwned>(
         &self,
         query: &str,
         variables: Value,
@@ -64,11 +69,11 @@ impl GraphQLClient {
     }
 
     pub fn query(&self, query: &str, variables: Value) -> Result<Query, GraphQLError> {
-        self.query_sync::<Query>(query, variables)
+        self.query_sync::<QueryResponse>(query, variables)?.data()
     }
 
     pub fn mutation(&self, mutation: &str, variables: Value) -> Result<Mutation, GraphQLError> {
-        self.query_sync::<Mutation>(mutation, variables)
+        self.query_sync::<MutationResponse>(mutation, variables)?.data()
     }
 }
 

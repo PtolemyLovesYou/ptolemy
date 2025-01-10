@@ -5,6 +5,7 @@ use crate::models::id::Id;
 use crate::prelude::{GraphQLResponse, IntoModel};
 use chrono::NaiveDateTime;
 use serde::Deserialize;
+use serde_json::Value;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -405,3 +406,66 @@ graphql_response!(
     Query,
     [(ping, String), (user, GQLUsers), (workspace, GQLWorkspaces)]
 );
+
+pub trait GQLResponse<'de>: GraphQLResponse<'de> {
+    type Error: std::error::Error + Into<GraphQLError>;
+    type ReturnType: GraphQLResponse<'de>;
+
+    fn data(&self) -> Result<Self::ReturnType, <Self as GQLResponse<'de>>::Error>;
+
+    fn errors(&self) -> Result<String, <Self as GQLResponse<'de>>::Error>;
+
+    fn is_ok(&self) -> bool;
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MutationResponse {
+    pub data: Option<Mutation>,
+    pub errors: Option<Value>,
+}
+
+impl<'de> GQLResponse<'de> for MutationResponse {
+    type Error = GraphQLError;
+    type ReturnType = Mutation;
+
+    fn data(&self) -> Result<Mutation, GraphQLError> {
+        Ok(self.data.clone().unwrap())
+    }
+
+    fn errors(&self) -> Result<String, GraphQLError> {
+        Ok(self.errors.clone().unwrap().to_string())
+    }
+
+    fn is_ok(&self) -> bool {
+        self.data.is_some()
+    }
+}
+
+graphql_response!(MutationResponse, [(data, Mutation), (errors, Value)]);
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryResponse {
+    pub data: Option<Query>,
+    pub errors: Option<Value>,
+}
+
+impl<'de> GQLResponse<'de> for QueryResponse {
+    type Error = GraphQLError;
+    type ReturnType = Query;
+
+    fn data(&self) -> Result<Query, GraphQLError> {
+        Ok(self.data.clone().unwrap())
+    }
+
+    fn errors(&self) -> Result<String, GraphQLError> {
+        Ok(self.errors.clone().unwrap().to_string())
+    }
+
+    fn is_ok(&self) -> bool {
+        self.data.is_some()
+    }
+}
+
+graphql_response!(QueryResponse, [(data, Query), (errors, Value)]);
