@@ -2,6 +2,13 @@
 FROM rust:1.82-slim-bookworm as chef-base
 WORKDIR /app
 
+# Install necessary build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libssl-dev \
+        pkg-config \
+        && rm -rf /var/lib/apt/lists/*
+
 # Download and install cargo-chef
 ADD https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.68/cargo-chef-x86_64-unknown-linux-musl.tar.gz /tmp/cargo-chef.tar.gz
 RUN tar -xzf /tmp/cargo-chef.tar.gz -C /usr/local/cargo/bin && \
