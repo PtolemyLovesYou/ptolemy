@@ -42,8 +42,8 @@ RUN apt-get update && \
         pkg-config \
         && rm -rf /var/lib/apt/lists/*
 
-ENV BUILD_PROTOBUFS=0
-ENV PTOLEMY_ENV=PROD
+ENV BUILD_PROTOBUFS=0 \
+    PTOLEMY_ENV=PROD
 
 # Create mount points for cargo registry caching
 RUN mkdir -p /usr/local/cargo/registry /usr/local/cargo/git
@@ -55,8 +55,8 @@ RUN tar -xzf /tmp/sccache.tar.gz -C /tmp && \
     chmod +x /usr/local/cargo/bin/sccache && \
     rm -rf /tmp/sccache.tar.gz /tmp/sccache-v0.9.1-x86_64-unknown-linux-musl
 
-ENV RUSTC_WRAPPER=/usr/local/cargo/bin/sccache
-ENV SCCACHE_DIR=/sccache
+ENV RUSTC_WRAPPER=/usr/local/cargo/bin/sccache \
+    SCCACHE_DIR=/sccache
 
 # Copy dependencies from chef cacher
 COPY --from=cacher /app/target target
@@ -103,11 +103,11 @@ RUN chmod 755 /entrypoint.sh && \
 
 USER appuser
 
-ENV API_PORT=8000
-ENV OBSERVER_PORT=50051
-ENV PTOLEMY_ENV=PROD
-ENV PTOLEMY_USER=admin
-ENV PTOLEMY_PASS=admin
+ENV API_PORT=8000 \
+    OBSERVER_PORT=50051 \
+    PTOLEMY_ENV=PROD \
+    PTOLEMY_USER=admin \
+    PTOLEMY_PASS=admin
 
 WORKDIR /app
 
