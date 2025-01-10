@@ -112,6 +112,7 @@ pub struct GQLUser {
     pub is_admin: Option<bool>,
     pub is_sysadmin: Option<bool>,
     pub user_api_keys: Option<GQLUserApiKeys>,
+    pub workspaces: Option<GQLWorkspaces>,
 }
 
 graphql_response!(
@@ -122,7 +123,8 @@ graphql_response!(
         (status, UserStatus),
         (is_admin, bool),
         (is_sysadmin, bool),
-        (user_api_keys, GQLUserApiKeys)
+        (user_api_keys, GQLUserApiKeys),
+        (workspaces, GQLWorkspaces)
     ]
 );
 

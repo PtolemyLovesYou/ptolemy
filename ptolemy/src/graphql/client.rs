@@ -1,7 +1,7 @@
 use crate::{
     generated::gql::*,
     models::{
-        auth::{ServiceApiKey, User, Workspace},
+        auth::{ServiceApiKey, User, UserApiKey, Workspace},
         enums::{ApiKeyPermission, WorkspaceRole},
         id::Id,
     },
@@ -287,5 +287,148 @@ impl GraphQLClient {
         }
 
         Ok(users)
+    }
+}
+
+// User functions
+impl GraphQLClient {
+    pub fn create_user(
+        &self,
+        user_id: Id,
+        username: String,
+        password: String,
+        is_admin: bool,
+        is_sysadmin: bool,
+        display_name: Option<String>,
+    ) -> Result<User, GraphQLError> {
+        let data = json!(
+            {
+                "userId": user_id,
+                "username": username,
+                "password": password,
+                "isAdmin": is_admin,
+                "isSysadmin": is_sysadmin,
+                "displayName": display_name,
+            }
+        );
+
+        Ok(self.mutation(USER_MUTATIONS_CREATE, data)?
+            .user()?
+            .create()?
+            .propagate_errors()?
+            .user()?
+            .to_model()?)
+    }
+
+    pub fn delete_user(&self, user_id: Id, target_user_id: Id) -> Result<(), GraphQLError> {
+        let data = json!({"userId": user_id, "Id": target_user_id});
+
+        self.mutation(USER_MUTATIONS_DELETE, data)?
+            .user()?
+            .delete()?
+            .propagate_errors()?;
+
+        Ok(())
+    }
+
+    pub fn create_user_api_key(&self, name: String, user_id: String, duration_days: Option<isize>) -> Result<String, GraphQLError> {
+        let data = json!({"name": name, "userId": user_id, "durationDays": duration_days});
+
+        Ok(self.mutation(USER_MUTATIONS_CREATE_USER_API_KEY, data)?
+            .user()?
+            .create_user_api_key()?
+            .propagate_errors()?
+            .api_key()?
+            .api_key()?
+        )
+    }
+
+    pub fn delete_user_api_key(&self, api_key_id: Id, user_id: Id) -> Result<(), GraphQLError> {
+        let data = json!({"apiKeyId": api_key_id, "userId": user_id});
+
+        self.mutation(USER_MUTATIONS_DELETE_USER_API_KEY, data)?
+            .user()?
+            .delete_user_api_key()?
+            .propagate_errors()?;
+
+        Ok(())
+    }
+
+    pub fn all_users(&self) -> Result<Vec<User>, GraphQLError> {
+        let data = json!({});
+
+        let result = self.query(USER_QUERIES_ALL, data)?
+            .user()?;
+
+        let mut users: Vec<User> = Vec::new();
+
+        for user in result.inner() {
+            users.push(user.to_model()?);
+        }
+
+        Ok(users)
+    }
+
+    pub fn get_user_by_name(&self, username: String) -> Result<User, GraphQLError> {
+        let data = json!({"username": username});
+
+        Ok(self.query(USER_QUERIES_BY_USERNAME, data)?
+            .user()?
+            .one()?
+            .to_model()?)
+    }
+
+    pub fn get_user_workspaces(&self, user_id: Id) -> Result<Vec<Workspace>, GraphQLError> {
+        let data = json!({"Id": user_id});
+
+        let workspaces = self.query(USER_QUERIES_WORKSPACES, data)?
+            .user()?
+            .one()?
+            .workspaces()?;
+
+        let mut user_workspaces: Vec<Workspace> = Vec::new();
+
+        for workspace in workspaces.inner() {
+            user_workspaces.push(workspace.to_model()?);
+        }
+
+        Ok(user_workspaces)
+    }
+
+    pub fn get_user_workspaces_by_username(&self, username: String) -> Result<Vec<(WorkspaceRole, Workspace)>, GraphQLError> {
+        let data = json!({"username": username});
+
+        let workspaces = self.query(USER_QUERIES_WORKSPACES_BY_USERNAME, data)?
+            .user()?
+            .one()?
+            .workspaces()?;
+
+        let mut user_workspaces: Vec<(WorkspaceRole, Workspace)> = Vec::new();
+
+        for workspace in workspaces.inner() {
+            user_workspaces.push((
+                workspace.users()?.one()?.role()?,
+                workspace.to_model()?,
+            ));
+        }
+
+        Ok(user_workspaces)
+    }
+
+    pub fn get_user_api_keys(&self, user_id: Id) -> Result<Vec<UserApiKey>, GraphQLError> {
+        let data = json!({"userId": user_id});
+
+        let api_keys = self.query(USER_QUERIES_USER_API_KEYS, data)?
+            .user()?
+            .one()?
+            .user_api_keys()?;
+
+        let mut user_api_keys: Vec<UserApiKey> = Vec::new();
+
+        for api_key in api_keys.inner() {
+            user_api_keys.push(api_key.to_model()?);
+        }
+
+        Ok(user_api_keys)
     }
 }

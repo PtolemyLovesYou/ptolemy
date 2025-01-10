@@ -170,9 +170,15 @@ pub const WORKSPACE_QUERIES_USERS: &'static str = r###"
 query UserWorkspaces($Id: Uuid) {
   workspace(id: $Id) {
     users {
-      id
       role
-      username
+      user {
+        id
+        username
+        displayName
+        status
+        isAdmin
+        isSysadmin
+      }
     }
   }
 }
