@@ -2,16 +2,16 @@ use pyo3::prelude::*;
 
 pub mod client;
 pub mod enums;
+pub mod graphql;
 pub mod models;
 pub mod types;
-pub mod graphql;
 
 use crate::{
     pybindings::client::client::PtolemyClient,
     pybindings::{
         enums::{api_key_permission, user_status, workspace_role},
-        models::add_models_to_module,
         graphql::PyGraphQLClient,
+        models::add_models_to_module,
     },
 };
 /// A Python module implemented in Rust. The name of this function must match

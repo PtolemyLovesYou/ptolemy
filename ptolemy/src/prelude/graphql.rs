@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::error::GraphQLError;
+use serde::{Deserialize, Serialize};
 
 pub trait GraphQLResponse<'de>: Clone + Deserialize<'de> {
     type Error: std::error::Error + Into<GraphQLError>;

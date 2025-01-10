@@ -1,8 +1,8 @@
+use crate::error::GraphQLError;
 use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use crate::models::id::Id;
 use crate::prelude::{GraphQLResponse, IntoModel};
-use crate::error::GraphQLError;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
@@ -184,7 +184,7 @@ graphql_response!(
         (updated_at, NaiveDateTime),
         (service_api_keys, GQLServiceApiKeys),
         (users, GQLWorkspaceUsers)
-        ]
+    ]
 );
 
 impl IntoModel<'_> for GQLWorkspace {
@@ -401,4 +401,7 @@ pub struct Query {
     pub workspace: Option<GQLWorkspaces>,
 }
 
-graphql_response!(Query, [(ping, String), (user, GQLUsers), (workspace, GQLWorkspaces)]);
+graphql_response!(
+    Query,
+    [(ping, String), (user, GQLUsers), (workspace, GQLWorkspaces)]
+);

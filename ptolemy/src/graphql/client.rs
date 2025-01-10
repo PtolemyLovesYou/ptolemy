@@ -1,12 +1,12 @@
 use crate::{
+    error::GraphQLError,
     generated::gql::*,
+    graphql::response::GraphQLResult,
     models::{
         auth::{ServiceApiKey, User, UserApiKey, Workspace},
         enums::{ApiKeyPermission, WorkspaceRole},
         id::Id,
     },
-    error::GraphQLError,
-    graphql::response::GraphQLResult,
     prelude::graphql::IntoModel,
 };
 use std::sync::Arc;
@@ -234,24 +234,32 @@ impl GraphQLClient {
         Ok(())
     }
 
-    pub fn get_workspace_service_api_keys(&self, id: Id) -> Result<Vec<ServiceApiKey>, GraphQLError> {
+    pub fn get_workspace_service_api_keys(
+        &self,
+        id: Id,
+    ) -> Result<Vec<ServiceApiKey>, GraphQLError> {
         let data = json!({"workspaceId": id});
 
-        Ok(self.query(WORKSPACE_QUERIES_SERVICE_API_KEYS, data)?
+        Ok(self
+            .query(WORKSPACE_QUERIES_SERVICE_API_KEYS, data)?
             .workspace()?
             .one()?
             .service_api_keys()?
             .inner()
             .into_iter()
             .map(|api_key| api_key.to_model().unwrap())
-            .collect::<Vec<ServiceApiKey>>()
-        )
+            .collect::<Vec<ServiceApiKey>>())
     }
 
-    pub fn get_user_workspace_role(&self, workspace_id: Id, user_id: Id) -> Result<WorkspaceRole, GraphQLError> {
+    pub fn get_user_workspace_role(
+        &self,
+        workspace_id: Id,
+        user_id: Id,
+    ) -> Result<WorkspaceRole, GraphQLError> {
         let data = json!({"workspaceId": workspace_id, "userId": user_id});
 
-        Ok(self.query(WORKSPACE_QUERIES_USER_ROLE, data)?
+        Ok(self
+            .query(WORKSPACE_QUERIES_USER_ROLE, data)?
             .workspace()?
             .one()?
             .users()?
@@ -259,10 +267,14 @@ impl GraphQLClient {
             .role()?)
     }
 
-    pub fn get_workspace_users_by_name(&self, workspace_name: String) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
+    pub fn get_workspace_users_by_name(
+        &self,
+        workspace_name: String,
+    ) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
         let data = json!({"name": workspace_name});
 
-        let workspace_users = self.query(WORKSPACE_QUERIES_USERS_BY_NAME, data)?
+        let workspace_users = self
+            .query(WORKSPACE_QUERIES_USERS_BY_NAME, data)?
             .workspace()?
             .one()?
             .users()?;
@@ -276,10 +288,14 @@ impl GraphQLClient {
         Ok(users)
     }
 
-    pub fn get_workspace_users(&self, workspace_id: Id) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
+    pub fn get_workspace_users(
+        &self,
+        workspace_id: Id,
+    ) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
         let data = json!({"workspaceId": workspace_id});
 
-        let workspace_users = self.query(WORKSPACE_QUERIES_USERS, data)?
+        let workspace_users = self
+            .query(WORKSPACE_QUERIES_USERS, data)?
             .workspace()?
             .one()?
             .users()?;
@@ -316,7 +332,8 @@ impl GraphQLClient {
             }
         );
 
-        Ok(self.mutation(USER_MUTATIONS_CREATE, data)?
+        Ok(self
+            .mutation(USER_MUTATIONS_CREATE, data)?
             .user()?
             .create()?
             .propagate_errors()?
@@ -335,16 +352,21 @@ impl GraphQLClient {
         Ok(())
     }
 
-    pub fn create_user_api_key(&self, name: String, user_id: String, duration_days: Option<isize>) -> Result<String, GraphQLError> {
+    pub fn create_user_api_key(
+        &self,
+        name: String,
+        user_id: String,
+        duration_days: Option<isize>,
+    ) -> Result<String, GraphQLError> {
         let data = json!({"name": name, "userId": user_id, "durationDays": duration_days});
 
-        Ok(self.mutation(USER_MUTATIONS_CREATE_USER_API_KEY, data)?
+        Ok(self
+            .mutation(USER_MUTATIONS_CREATE_USER_API_KEY, data)?
             .user()?
             .create_user_api_key()?
             .propagate_errors()?
             .api_key()?
-            .api_key()?
-        )
+            .api_key()?)
     }
 
     pub fn delete_user_api_key(&self, api_key_id: Id, user_id: Id) -> Result<(), GraphQLError> {
@@ -361,8 +383,7 @@ impl GraphQLClient {
     pub fn all_users(&self) -> Result<Vec<User>, GraphQLError> {
         let data = json!({});
 
-        let result = self.query(USER_QUERIES_ALL, data)?
-            .user()?;
+        let result = self.query(USER_QUERIES_ALL, data)?.user()?;
 
         let mut users: Vec<User> = Vec::new();
 
@@ -376,7 +397,8 @@ impl GraphQLClient {
     pub fn get_user_by_name(&self, username: String) -> Result<User, GraphQLError> {
         let data = json!({"username": username});
 
-        Ok(self.query(USER_QUERIES_BY_USERNAME, data)?
+        Ok(self
+            .query(USER_QUERIES_BY_USERNAME, data)?
             .user()?
             .one()?
             .to_model()?)
@@ -385,7 +407,8 @@ impl GraphQLClient {
     pub fn get_user_workspaces(&self, user_id: Id) -> Result<Vec<Workspace>, GraphQLError> {
         let data = json!({"Id": user_id});
 
-        let workspaces = self.query(USER_QUERIES_WORKSPACES, data)?
+        let workspaces = self
+            .query(USER_QUERIES_WORKSPACES, data)?
             .user()?
             .one()?
             .workspaces()?;
@@ -399,10 +422,14 @@ impl GraphQLClient {
         Ok(user_workspaces)
     }
 
-    pub fn get_user_workspaces_by_username(&self, username: String) -> Result<Vec<(WorkspaceRole, Workspace)>, GraphQLError> {
+    pub fn get_user_workspaces_by_username(
+        &self,
+        username: String,
+    ) -> Result<Vec<(WorkspaceRole, Workspace)>, GraphQLError> {
         let data = json!({"username": username});
 
-        let workspaces = self.query(USER_QUERIES_WORKSPACES_BY_USERNAME, data)?
+        let workspaces = self
+            .query(USER_QUERIES_WORKSPACES_BY_USERNAME, data)?
             .user()?
             .one()?
             .workspaces()?;
@@ -410,10 +437,7 @@ impl GraphQLClient {
         let mut user_workspaces: Vec<(WorkspaceRole, Workspace)> = Vec::new();
 
         for workspace in workspaces.inner() {
-            user_workspaces.push((
-                workspace.users()?.one()?.role()?,
-                workspace.to_model()?,
-            ));
+            user_workspaces.push((workspace.users()?.one()?.role()?, workspace.to_model()?));
         }
 
         Ok(user_workspaces)
@@ -422,7 +446,8 @@ impl GraphQLClient {
     pub fn get_user_api_keys(&self, user_id: Id) -> Result<Vec<UserApiKey>, GraphQLError> {
         let data = json!({"userId": user_id});
 
-        let api_keys = self.query(USER_QUERIES_USER_API_KEYS, data)?
+        let api_keys = self
+            .query(USER_QUERIES_USER_API_KEYS, data)?
             .user()?
             .one()?
             .user_api_keys()?;
