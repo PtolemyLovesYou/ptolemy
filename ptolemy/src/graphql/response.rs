@@ -7,68 +7,68 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ValidationError {
+pub struct GQLValidationError {
     pub field: Option<String>,
     pub message: Option<String>,
 }
 
-graphql_response!(ValidationError, [(field, String), (message, String)]);
+graphql_response!(GQLValidationError, [(field, String), (message, String)]);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DeletionResult {
+pub struct GQLDeletionResult {
     pub success: Option<bool>,
-    pub error: Option<Vec<ValidationError>>,
+    pub error: Option<Vec<GQLValidationError>>,
 }
 
-graphql_response!(DeletionResult, [(success, bool)]);
+graphql_response!(GQLDeletionResult, [(success, bool)]);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateApiKeyResponse {
+pub struct GQLCreateApiKeyResponse {
     pub api_key: Option<String>,
     pub id: Option<Uuid>,
 }
 
-graphql_response!(CreateApiKeyResponse, [(api_key, String), (id, Uuid)]);
+graphql_response!(GQLCreateApiKeyResponse, [(api_key, String), (id, Uuid)]);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateApiKeyResult {
-    pub api_key: Option<CreateApiKeyResponse>,
+pub struct GQLCreateApiKeyResult {
+    pub api_key: Option<GQLCreateApiKeyResponse>,
     pub success: Option<bool>,
-    pub error: Option<Vec<ValidationError>>,
+    pub error: Option<Vec<GQLValidationError>>,
 }
 
 graphql_response!(
-    CreateApiKeyResult,
-    [(api_key, CreateApiKeyResponse), (success, bool)]
+    GQLCreateApiKeyResult,
+    [(api_key, GQLCreateApiKeyResponse), (success, bool)]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UserResult {
+pub struct GQLUserResult {
     pub success: Option<bool>,
-    pub user: Option<User>,
-    pub error: Option<Vec<ValidationError>>,
+    pub user: Option<GQLUser>,
+    pub error: Option<Vec<GQLValidationError>>,
 }
 
-graphql_response!(UserResult, [(success, bool), (user, User)]);
+graphql_response!(GQLUserResult, [(success, bool), (user, GQLUser)]);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct User {
+pub struct GQLUser {
     pub id: Option<Uuid>,
     pub username: Option<String>,
     pub display_name: Option<String>,
     pub status: Option<UserStatus>,
     pub is_admin: Option<bool>,
     pub is_sysadmin: Option<bool>,
-    pub user_api_keys: Option<Vec<UserApiKey>>,
+    pub user_api_keys: Option<Vec<GQLUserApiKey>>,
 }
 
 graphql_response!(
-    User,
+    GQLUser,
     [
         (id, Uuid),
         (username, String),
@@ -80,67 +80,67 @@ graphql_response!(
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Workspace {
+pub struct GQLWorkspace {
     pub id: Option<Uuid>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub archived: Option<bool>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
-    pub service_api_keys: Option<Vec<ServiceApiKey>>,
+    pub service_api_keys: Option<Vec<GQLServiceApiKey>>,
 }
 
 graphql_response!(
-    Workspace,
+    GQLWorkspace,
     [
         (id, Uuid),
         (name, String),
         (archived, bool),
         (created_at, NaiveDateTime),
         (updated_at, NaiveDateTime),
-        (service_api_keys, Vec<ServiceApiKey>)
+        (service_api_keys, Vec<GQLServiceApiKey>)
         ]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WorkspaceResult {
+pub struct GQLWorkspaceResult {
     pub success: Option<bool>,
-    pub workspace: Option<Workspace>,
-    pub error: Option<Vec<ValidationError>>,
+    pub workspace: Option<GQLWorkspace>,
+    pub error: Option<Vec<GQLValidationError>>,
 }
 
-graphql_response!(WorkspaceResult, [(success, bool), (workspace, Workspace)]);
+graphql_response!(GQLWorkspaceResult, [(success, bool), (workspace, GQLWorkspace)]);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WorkspaceUser {
+pub struct GQLWorkspaceUser {
     pub role: Option<WorkspaceRole>,
-    pub user: Option<User>,
-    pub workspace: Option<Workspace>,
+    pub user: Option<GQLUser>,
+    pub workspace: Option<GQLWorkspace>,
 }
 
 graphql_response!(
-    WorkspaceUser,
-    [(role, WorkspaceRole), (user, User), (workspace, Workspace)]
+    GQLWorkspaceUser,
+    [(role, WorkspaceRole), (user, GQLUser), (workspace, GQLWorkspace)]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WorkspaceUserResult {
+pub struct GQLWorkspaceUserResult {
     pub success: Option<bool>,
-    pub workspace_user: Option<WorkspaceUser>,
-    pub error: Option<Vec<ValidationError>>,
+    pub workspace_user: Option<GQLWorkspaceUser>,
+    pub error: Option<Vec<GQLValidationError>>,
 }
 
 graphql_response!(
-    WorkspaceUserResult,
-    [(success, bool), (workspace_user, WorkspaceUser)]
+    GQLWorkspaceUserResult,
+    [(success, bool), (workspace_user, GQLWorkspaceUser)]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceApiKey {
+pub struct GQLServiceApiKey {
     pub id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
     pub name: Option<String>,
@@ -150,7 +150,7 @@ pub struct ServiceApiKey {
 }
 
 graphql_response!(
-    ServiceApiKey,
+    GQLServiceApiKey,
     [
         (id, Uuid),
         (workspace_id, Uuid),
@@ -162,7 +162,7 @@ graphql_response!(
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UserApiKey {
+pub struct GQLUserApiKey {
     pub id: Option<Uuid>,
     pub user_id: Option<Uuid>,
     pub name: Option<String>,
@@ -171,7 +171,7 @@ pub struct UserApiKey {
 }
 
 graphql_response!(
-    UserApiKey,
+    GQLUserApiKey,
     [
         (id, Uuid),
         (user_id, Uuid),
@@ -182,66 +182,66 @@ graphql_response!(
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UserMutation {
-    pub create: Option<UserResult>,
-    pub delete: Option<DeletionResult>,
-    pub create_user_api_key: Option<CreateApiKeyResult>,
-    pub delete_user_api_key: Option<DeletionResult>,
+pub struct GQLUserMutation {
+    pub create: Option<GQLUserResult>,
+    pub delete: Option<GQLDeletionResult>,
+    pub create_user_api_key: Option<GQLCreateApiKeyResult>,
+    pub delete_user_api_key: Option<GQLDeletionResult>,
 }
 
 graphql_response!(
-    UserMutation,
+    GQLUserMutation,
     [
-        (create, UserResult),
-        (delete, DeletionResult),
-        (create_user_api_key, CreateApiKeyResult),
-        (delete_user_api_key, DeletionResult)
+        (create, GQLUserResult),
+        (delete, GQLDeletionResult),
+        (create_user_api_key, GQLCreateApiKeyResult),
+        (delete_user_api_key, GQLDeletionResult)
     ]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WorkspaceMutation {
-    pub create: Option<WorkspaceResult>,
-    pub delete: Option<DeletionResult>,
-    pub create_service_api_key: Option<CreateApiKeyResult>,
-    pub delete_service_api_key: Option<DeletionResult>,
-    pub add_user: Option<WorkspaceUserResult>,
-    pub remove_user: Option<DeletionResult>,
-    pub change_workspace_user_role: Option<WorkspaceUserResult>,
+pub struct GQLWorkspaceMutation {
+    pub create: Option<GQLWorkspaceResult>,
+    pub delete: Option<GQLDeletionResult>,
+    pub create_service_api_key: Option<GQLCreateApiKeyResult>,
+    pub delete_service_api_key: Option<GQLDeletionResult>,
+    pub add_user: Option<GQLWorkspaceUserResult>,
+    pub remove_user: Option<GQLDeletionResult>,
+    pub change_workspace_user_role: Option<GQLWorkspaceUserResult>,
 }
 
 graphql_response!(
-    WorkspaceMutation,
+    GQLWorkspaceMutation,
     [
-        (create, WorkspaceResult),
-        (delete, DeletionResult),
-        (create_service_api_key, CreateApiKeyResult),
-        (delete_service_api_key, DeletionResult),
-        (add_user, WorkspaceUserResult),
-        (remove_user, DeletionResult),
-        (change_workspace_user_role, WorkspaceUserResult)
+        (create, GQLWorkspaceResult),
+        (delete, GQLDeletionResult),
+        (create_service_api_key, GQLCreateApiKeyResult),
+        (delete_service_api_key, GQLDeletionResult),
+        (add_user, GQLWorkspaceUserResult),
+        (remove_user, GQLDeletionResult),
+        (change_workspace_user_role, GQLWorkspaceUserResult)
     ]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Mutation {
-    pub user: Option<UserMutation>,
-    pub workspace: Option<WorkspaceMutation>,
+    pub user: Option<GQLUserMutation>,
+    pub workspace: Option<GQLWorkspaceMutation>,
 }
 
 graphql_response!(
     Mutation,
-    [(user, UserMutation), (workspace, WorkspaceMutation)]
+    [(user, GQLUserMutation), (workspace, GQLWorkspaceMutation)]
 );
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
     pub ping: Option<String>,
-    pub user: Option<Vec<User>>,
-    pub workspace: Option<Vec<Workspace>>,
+    pub user: Option<Vec<GQLUser>>,
+    pub workspace: Option<Vec<GQLWorkspace>>,
 }
 
-graphql_response!(Query, [(ping, String), (user, Vec<User>), (workspace, Vec<Workspace>)]);
+graphql_response!(Query, [(ping, String), (user, Vec<GQLUser>), (workspace, Vec<GQLWorkspace>)]);
