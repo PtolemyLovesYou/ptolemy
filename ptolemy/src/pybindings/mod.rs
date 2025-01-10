@@ -3,9 +3,10 @@ use pyo3::prelude::*;
 pub mod enums;
 pub mod models;
 pub mod types;
+pub mod client;
 
 use crate::{
-    client::client::PtolemyClient,
+    pybindings::client::client::PtolemyClient,
     pybindings::{
         enums::{api_key_permission, user_status, workspace_role},
         models::add_models_to_module,

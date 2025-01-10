@@ -7,8 +7,6 @@ pub mod prelude;
 pub mod generated;
 
 #[cfg(feature = "python")]
-pub mod client;
-#[cfg(feature = "python")]
 pub mod pybindings;
 
 #[cfg(feature = "python")]

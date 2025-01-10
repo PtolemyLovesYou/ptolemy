@@ -1,6 +1,6 @@
-use crate::client::server_handler::ServerHandler;
-use crate::client::state::PtolemyClientState;
-use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
+use crate::pybindings::client::server_handler::ServerHandler;
+use crate::pybindings::client::state::PtolemyClientState;
+use crate::pybindings::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::generated::observer::Tier;
 use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
