@@ -16,3 +16,5 @@ api/src/generated/*.rs -linguist-detectable
 
 # Set migrations as detectable
 api/diesel/**/*.sql linguist-detectable
+
+*.sql linguist-language=SQL
