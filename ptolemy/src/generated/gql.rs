@@ -109,11 +109,7 @@ pub const MUTATION: &'static str = r###"mutation CreateUserApiKey($name: String!
       apiKey {
         apiKey
       }
-      success
-      error {
-        field
-        message
-      }
+      ...Result
     }
   }
 }
@@ -123,11 +119,7 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
     create(
       userData: {username: $username, password: $password, isSysadmin: false, isAdmin: $isAdmin, displayName: $displayName}
     ) {
-        success
-        error {
-          field
-          message
-        }
+      ...Result
       user {
         displayName
         id
@@ -143,11 +135,7 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
 mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
   user(userId: $userId) {
     deleteUserApiKey(apiKeyId: $apiKeyId) {
-      success
-      error {
-        field
-        message
-      }
+      ...Result
     }
   }
 }
@@ -155,11 +143,7 @@ mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
 mutation DeleteUser($Id: Uuid!, $userId: Uuid!) {
   user(userId: $userId) {
     delete(id: $Id) {
-      success
-      error {
-        field
-        message
-      }
+      ...Result
     }
   }
 }
@@ -169,11 +153,7 @@ mutation AddUserToWorkspace($userId: Uuid!, $targetUserId: Uuid!, $workspaceId: 
     addUser(
       workspaceUser: {userId: $targetUserId, workspaceId: $workspaceId, role: $role}
     ) {
-      success
-      error {
-        field
-        message
-      }
+      ...Result
     }
   }
 }
@@ -185,11 +165,7 @@ mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $targetUserId: Uuid!
       userId: $targetUserId
       workspaceId: $workspaceId
     ) {
-      success
-      error {
-        field
-        message
-      }
+      ...Result
     }
   }
 }
@@ -202,11 +178,7 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
       workspaceId: $workspaceId
       durationDays: $durationDays
     ) {
-          success
-          error {
-            field
-            message
-          }
+      ...Result
       apiKey {
         apiKey
       }
@@ -217,11 +189,7 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
 mutation DeleteServiceApiKey($apiKeyId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
   workspace(userId: $userId) {
     deleteServiceApiKey(apiKeyId: $apiKeyId, workspaceId: $workspaceId) {
-      success
-      error {
-        field
-        message
-      }
+      ...Result
     }
   }
 }
@@ -232,11 +200,7 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
       workspaceData: {name: $name, description: $description}
       adminUserId: $adminUserId
     ) {
-          success
-          error {
-            field
-            message
-          }
+      ...Result
       workspace {
         id
         name
@@ -252,11 +216,7 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
 mutation RemoveUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
   workspace(userId: $userId) {
     removeUser(userId: $targetUserId, workspaceId: $workspaceId) {
-          success
-          error {
-            field
-            message
-          }
+      ...Result
     }
   }
 }
@@ -264,22 +224,14 @@ mutation RemoveUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspac
 mutation DeleteWorkspace($userId: Uuid!, $workspaceId: Uuid!) {
   workspace(userId: $userId) {
     delete(workspaceId: $workspaceId) {
-          success
-          error {
-            field
-            message
-          }
+      ...Result
     }
   }
 }
 
 mutation Login($username: String!, $password: String!) {
   auth(userData: {username: $username, password: $password}) {
-    success
-    error {
-      field
-      message
-    }
+    ...Result
     payload {
       token
       user {
@@ -292,6 +244,14 @@ mutation Login($username: String!, $password: String!) {
       }
     }
   }
+}
+
+fragment Result on GQLResult {
+  error {
+    field
+    message
+  }
+  success
 }
 "###;
 
