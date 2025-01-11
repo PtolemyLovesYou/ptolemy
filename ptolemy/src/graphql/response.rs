@@ -221,6 +221,22 @@ graphql_result!(GQLWorkspaceResult);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct AuthResult {
+    pub success: Option<bool>,
+    pub token: Option<String>,
+    pub user: Option<GQLUser>,
+    pub error: Option<GQLValidationErrors>,
+}
+
+graphql_response!(
+    AuthResult,
+    [(success, bool), (token, String), (user, GQLUser)]
+);
+
+graphql_result!(AuthResult);
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GQLWorkspaceUser {
     pub role: Option<WorkspaceRole>,
     pub user: Option<GQLUser>,
@@ -387,11 +403,16 @@ graphql_response!(
 pub struct Mutation {
     pub user: Option<GQLUserMutation>,
     pub workspace: Option<GQLWorkspaceMutation>,
+    pub auth: Option<AuthResult>,
 }
 
 graphql_response!(
     Mutation,
-    [(user, GQLUserMutation), (workspace, GQLWorkspaceMutation)]
+    [
+        (user, GQLUserMutation),
+        (workspace, GQLWorkspaceMutation),
+        (auth, AuthResult)
+    ]
 );
 
 #[derive(Debug, Clone, Deserialize)]

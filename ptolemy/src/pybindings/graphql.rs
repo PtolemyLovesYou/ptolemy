@@ -223,4 +223,11 @@ impl PyGraphQLClient {
             .get_user_api_keys(user_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
+
+    pub fn login(&self, username: String, password: String) -> PyResult<(String, User)> {
+        Ok(self
+            .0
+            .login(username, password)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?)
+    }
 }

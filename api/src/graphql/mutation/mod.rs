@@ -1,17 +1,17 @@
-use crate::state::AppState;
-use crate::models::auth::User;
 use crate::crud::auth::user::auth_user;
+use crate::models::auth::User;
+use crate::mutation_error;
+use crate::state::AppState;
 use juniper::{graphql_object, GraphQLInputObject};
 use uuid::Uuid;
-use crate::mutation_error;
 
 pub mod result;
 pub mod user;
 pub mod workspace;
 
+use self::result::{MutationResult, ValidationError};
 use self::user::UserMutation;
 use self::workspace::WorkspaceMutation;
-use self::result::{MutationResult, ValidationError};
 
 #[derive(Clone, Debug, GraphQLInputObject)]
 pub struct LoginInput {
@@ -70,7 +70,14 @@ impl Mutation {
             }
         };
 
-        let user = match auth_user(&mut conn, &user_data.username, &user_data.password, &ctx.password_handler).await {
+        let user = match auth_user(
+            &mut conn,
+            &user_data.username,
+            &user_data.password,
+            &ctx.password_handler,
+        )
+        .await
+        {
             Ok(u) => match u {
                 Some(u) => u,
                 None => {
@@ -82,7 +89,7 @@ impl Mutation {
 
         MutationResult(Ok(AuthPayload {
             token: "".to_string(),
-            user
+            user,
         }))
     }
 }
