@@ -5,7 +5,7 @@ use crate::crud::auth::{
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use crate::state::AppState;
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 

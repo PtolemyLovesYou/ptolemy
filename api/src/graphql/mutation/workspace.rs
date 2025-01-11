@@ -4,12 +4,13 @@ use crate::crud::auth::{
 };
 use crate::{
     models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
-    models::auth::{Workspace, WorkspaceCreate, WorkspaceUser, WorkspaceUserCreate},
+    models::auth::{WorkspaceCreate, WorkspaceUserCreate},
     state::AppState,
 };
 
 use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, DeletionResult, MutationResult, ValidationError,
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, ValidationError, WorkspaceResult,
+    WorkspaceUserResult,
 };
 use crate::{deletion_error, mutation_error};
 use juniper::graphql_object;
@@ -33,11 +34,12 @@ impl WorkspaceMutation {
         ctx: &AppState,
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
-    ) -> MutationResult<Workspace> {
+    ) -> WorkspaceResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    WorkspaceResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -48,16 +50,30 @@ impl WorkspaceMutation {
             Ok(user) => match user.is_admin {
                 true => (),
                 false => {
-                    return mutation_error!("user", "You must be an admin to create a workspace")
+                    return mutation_error!(
+                        WorkspaceResult,
+                        "user",
+                        "You must be an admin to create a workspace"
+                    )
                 }
             },
-            Err(e) => return mutation_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => {
+                return mutation_error!(
+                    WorkspaceResult,
+                    "user",
+                    format!("Failed to get user: {:?}", e)
+                )
+            }
         };
 
         let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
             Ok(w) => w,
             Err(e) => {
-                return mutation_error!("workspace", format!("Failed to create workspace: {:?}", e))
+                return mutation_error!(
+                    WorkspaceResult,
+                    "workspace",
+                    format!("Failed to create workspace: {:?}", e)
+                )
             }
         };
 
@@ -81,13 +97,14 @@ impl WorkspaceMutation {
             Ok(_) => (),
             Err(e) => {
                 return mutation_error!(
+                    WorkspaceResult,
                     "workspace_user",
                     format!("Failed to create workspace user: {:?}", e)
                 )
             }
         };
 
-        MutationResult(Ok(workspace))
+        WorkspaceResult(Ok(workspace))
     }
 
     async fn delete(&self, ctx: &AppState, workspace_id: Uuid) -> DeletionResult {
@@ -121,11 +138,12 @@ impl WorkspaceMutation {
         &self,
         ctx: &AppState,
         workspace_user: WorkspaceUserCreate,
-    ) -> MutationResult<WorkspaceUser> {
+    ) -> WorkspaceUserResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    WorkspaceUserResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -143,6 +161,7 @@ impl WorkspaceMutation {
             Ok(role) => role,
             Err(e) => {
                 return mutation_error!(
+                    WorkspaceUserResult,
                     "permission",
                     format!("Failed to get workspace user permission: {:?}", e)
                 )
@@ -152,12 +171,19 @@ impl WorkspaceMutation {
         // Verify user has admin or manager role
         match user_permission {
             WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-            _ => return mutation_error!("permission", "Insufficient permissions"),
+            _ => {
+                return mutation_error!(
+                    WorkspaceUserResult,
+                    "permission",
+                    "Insufficient permissions"
+                )
+            }
         }
 
         match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
-            Ok(result) => MutationResult(Ok(result)),
+            Ok(result) => WorkspaceUserResult(Ok(result)),
             Err(e) => mutation_error!(
+                WorkspaceUserResult,
                 "workspace_user",
                 format!("Failed to add user to workspace: {:?}", e)
             ),
@@ -239,11 +265,12 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
-    ) -> MutationResult<WorkspaceUser> {
+    ) -> WorkspaceUserResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    WorkspaceUserResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -261,6 +288,7 @@ impl WorkspaceMutation {
             Ok(role) => role,
             Err(e) => {
                 return mutation_error!(
+                    WorkspaceUserResult,
                     "permission",
                     format!("Failed to get workspace user permission: {:?}", e)
                 )
@@ -272,10 +300,20 @@ impl WorkspaceMutation {
             WorkspaceRoleEnum::Admin => (),
             WorkspaceRoleEnum::Manager => {
                 if new_role == WorkspaceRoleEnum::Admin {
-                    return mutation_error!("permission", "Managers cannot assign admin role");
+                    return mutation_error!(
+                        WorkspaceUserResult,
+                        "permission",
+                        "Managers cannot assign admin role"
+                    );
                 }
             }
-            _ => return mutation_error!("permission", "Insufficient permissions"),
+            _ => {
+                return mutation_error!(
+                    WorkspaceUserResult,
+                    "permission",
+                    "Insufficient permissions"
+                )
+            }
         }
 
         match workspace_user_crud::set_workspace_user_role(
@@ -286,8 +324,9 @@ impl WorkspaceMutation {
         )
         .await
         {
-            Ok(result) => MutationResult(Ok(result)),
+            Ok(result) => WorkspaceUserResult(Ok(result)),
             Err(e) => mutation_error!(
+                WorkspaceUserResult,
                 "workspace_user",
                 format!("Failed to change user role: {:?}", e)
             ),
@@ -301,11 +340,12 @@ impl WorkspaceMutation {
         name: String,
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
-    ) -> MutationResult<CreateApiKeyResponse> {
+    ) -> CreateApiKeyResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    CreateApiKeyResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -322,10 +362,17 @@ impl WorkspaceMutation {
         {
             Ok(role) => match role {
                 WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => return mutation_error!("permission", "Insufficient permissions"),
+                _ => {
+                    return mutation_error!(
+                        CreateApiKeyResult,
+                        "permission",
+                        "Insufficient permissions"
+                    )
+                }
             },
             Err(e) => {
                 return mutation_error!(
+                    CreateApiKeyResult,
                     "permission",
                     format!("Failed to get workspace user permission: {:?}", e)
                 )
@@ -347,11 +394,12 @@ impl WorkspaceMutation {
         )
         .await
         {
-            Ok((api_key_id, api_key)) => MutationResult(Ok(CreateApiKeyResponse {
+            Ok((api_key_id, api_key)) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
                 id: api_key_id,
                 api_key,
             })),
             Err(e) => mutation_error!(
+                CreateApiKeyResult,
                 "service_api_key",
                 format!("Failed to create service API key: {:?}", e)
             ),

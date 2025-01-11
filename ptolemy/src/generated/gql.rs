@@ -64,7 +64,12 @@ query UserWorkspaces($Id: Uuid, $username: String) {
 
 query SearchUsers($username: String, $userId: Uuid) {
   user(username: $username, id: $userId) {
-    ...ReturnsUserModel
+    id
+    username
+    displayName
+    status
+    isAdmin
+    isSysadmin
   }
 }
 
@@ -73,7 +78,12 @@ query WorkspaceUsers($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, 
     users {
       role
       user(id: $userId, username: $username) {
-        ...ReturnsUserModel
+        id
+        username
+        displayName
+        status
+        isAdmin
+        isSysadmin
       }
     }
   }
@@ -91,22 +101,19 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
     }
   }
 }
-
-fragment ReturnsUserModel {
-  id
-  username
-  displayName
-  status
-  isAdmin
-  isSysadmin
-}
 "###;
 
 pub const MUTATION: &'static str = r###"mutation CreateUserApiKey($name: String!, $userId: Uuid!, $durationDays: Int) {
   user(userId: $userId) {
     createUserApiKey(name: $name, durationDays: $durationDays) {
-      ...CreateApiKey
-      ...StatusFields
+      apiKey {
+        apiKey
+      }
+      success
+      error {
+        field
+        message
+      }
     }
   }
 }
@@ -116,8 +123,19 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
     create(
       userData: {username: $username, password: $password, isSysadmin: false, isAdmin: $isAdmin, displayName: $displayName}
     ) {
-      ...StatusFields
-      ...ReturnsUserModel
+        success
+        error {
+          field
+          message
+        }
+      user {
+        displayName
+        id
+        isAdmin
+        isSysadmin
+        status
+        username
+      }
     }
   }
 }
@@ -125,7 +143,11 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
 mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
   user(userId: $userId) {
     deleteUserApiKey(apiKeyId: $apiKeyId) {
-      ...StatusFields
+      success
+      error {
+        field
+        message
+      }
     }
   }
 }
@@ -133,7 +155,11 @@ mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
 mutation DeleteUser($Id: Uuid!, $userId: Uuid!) {
   user(userId: $userId) {
     delete(id: $Id) {
-      ...StatusFields
+      success
+      error {
+        field
+        message
+      }
     }
   }
 }
@@ -143,7 +169,11 @@ mutation AddUserToWorkspace($userId: Uuid!, $targetUserId: Uuid!, $workspaceId: 
     addUser(
       workspaceUser: {userId: $targetUserId, workspaceId: $workspaceId, role: $role}
     ) {
-      ...StatusFields
+      success
+      error {
+        field
+        message
+      }
     }
   }
 }
@@ -155,7 +185,11 @@ mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $targetUserId: Uuid!
       userId: $targetUserId
       workspaceId: $workspaceId
     ) {
-      ...StatusFields
+      success
+      error {
+        field
+        message
+      }
     }
   }
 }
@@ -168,8 +202,14 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
       workspaceId: $workspaceId
       durationDays: $durationDays
     ) {
-      ...StatusFields
-      ...CreateApiKey
+          success
+          error {
+            field
+            message
+          }
+      apiKey {
+        apiKey
+      }
     }
   }
 }
@@ -177,7 +217,11 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
 mutation DeleteServiceApiKey($apiKeyId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
   workspace(userId: $userId) {
     deleteServiceApiKey(apiKeyId: $apiKeyId, workspaceId: $workspaceId) {
-      ...StatusFields
+      success
+      error {
+        field
+        message
+      }
     }
   }
 }
@@ -188,7 +232,11 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
       workspaceData: {name: $name, description: $description}
       adminUserId: $adminUserId
     ) {
-      ...StatusFields
+          success
+          error {
+            field
+            message
+          }
       workspace {
         id
         name
@@ -204,7 +252,11 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
 mutation RemoveUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
   workspace(userId: $userId) {
     removeUser(userId: $targetUserId, workspaceId: $workspaceId) {
-      ...StatusFields
+          success
+          error {
+            field
+            message
+          }
     }
   }
 }
@@ -212,41 +264,33 @@ mutation RemoveUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspac
 mutation DeleteWorkspace($userId: Uuid!, $workspaceId: Uuid!) {
   workspace(userId: $userId) {
     delete(workspaceId: $workspaceId) {
-      ...StatusFields
+          success
+          error {
+            field
+            message
+          }
     }
   }
 }
 
 mutation Login($username: String!, $password: String!) {
   auth(userData: {username: $username, password: $password}) {
-    ...StatusFields
-    ...ReturnsUserModel
-    token
-  }
-}
-
-fragment StatusFields {
-  success
-  error {
-    field
-    message
-  }
-}
-
-fragment ReturnsUserModel {
-  user {
-      displayName
-      id
-      isAdmin
-      isSysadmin
-      status
-      username
+    success
+    error {
+      field
+      message
     }
-}
-
-fragment CreateApiKey {
-  apiKey {
-    apiKey
+    payload {
+      token
+      user {
+        displayName
+        id
+        isAdmin
+        isSysadmin
+        status
+        username
+      }
+    }
   }
 }
 "###;

@@ -1,11 +1,8 @@
 use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
-use crate::{
-    models::auth::{User, UserCreate},
-    state::AppState,
-};
+use crate::{models::auth::UserCreate, state::AppState};
 
 use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, DeletionResult, MutationResult, ValidationError,
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult, ValidationError,
 };
 use crate::{deletion_error, mutation_error};
 use juniper::graphql_object;
@@ -24,11 +21,12 @@ impl UserMutation {
 
 #[graphql_object]
 impl UserMutation {
-    async fn create(&self, ctx: &AppState, user_data: UserCreate) -> MutationResult<User> {
+    async fn create(&self, ctx: &AppState, user_data: UserCreate) -> UserResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    UserResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -38,30 +36,41 @@ impl UserMutation {
         // get user permissions
         let user = match user_crud::get_user(&mut conn, &self.user_id).await {
             Ok(u) => u,
-            Err(e) => return mutation_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => {
+                return mutation_error!(UserResult, "user", format!("Failed to get user: {:?}", e))
+            }
         };
 
         // if user is not admin or sysadmin, return forbidden
         if !user.is_admin && !user.is_sysadmin {
-            return mutation_error!("user", "You must be an admin or sysadmin to create a user");
+            return mutation_error!(
+                UserResult,
+                "user",
+                "You must be an admin or sysadmin to create a user"
+            );
         }
 
         // sysadmin cannot be created via REST API
         if user_data.is_sysadmin {
-            return mutation_error!("user", "Sysadmin cannot be created via API");
+            return mutation_error!(UserResult, "user", "Sysadmin cannot be created via API");
         }
 
         // if user is admin and they're trying to make another admin, return forbidden
         if user.is_admin && user_data.is_admin {
             return mutation_error!(
+                UserResult,
                 "user",
                 "You cannot create another admin. Contact your sysadmin."
             );
         }
 
         match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
-            Ok(result) => MutationResult(Ok(result)),
-            Err(e) => mutation_error!("user", format!("Failed to create user: {:?}", e)),
+            Ok(result) => UserResult(Ok(result)),
+            Err(e) => mutation_error!(
+                UserResult,
+                "user",
+                format!("Failed to create user: {:?}", e)
+            ),
         }
     }
 
@@ -113,11 +122,12 @@ impl UserMutation {
         ctx: &AppState,
         name: String,
         duration_days: Option<i32>,
-    ) -> MutationResult<CreateApiKeyResponse> {
+    ) -> CreateApiKeyResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    CreateApiKeyResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -138,11 +148,12 @@ impl UserMutation {
         )
         .await
         {
-            Ok((api_key_id, api_key)) => MutationResult(Ok(CreateApiKeyResponse {
+            Ok((api_key_id, api_key)) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
                 id: api_key_id,
                 api_key,
             })),
             Err(e) => mutation_error!(
+                CreateApiKeyResult,
                 "user_api_key",
                 format!("Failed to create user API key: {:?}", e)
             ),

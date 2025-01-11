@@ -50,9 +50,14 @@ impl GraphQLClient {
             .map_err(|e| GraphQLError::ClientError(e.to_string()))?
             .json::<T>()
             .await
-            .map_err(|e: reqwest::Error| GraphQLError::ClientError(format!("Error decoding response into {}: {}", std::any::type_name::<T>(), e)))?
-            ;
-    
+            .map_err(|e: reqwest::Error| {
+                GraphQLError::ClientError(format!(
+                    "Error decoding response into {}: {}",
+                    std::any::type_name::<T>(),
+                    e
+                ))
+            })?;
+
         match resp.is_ok() {
             true => Ok(resp),
             false => Err(GraphQLError::ClientError(resp.errors().unwrap())),
@@ -73,10 +78,15 @@ impl GraphQLClient {
     }
 
     pub fn query(&self, query_name: &str, variables: Value) -> Result<Query, GraphQLError> {
-        self.query_sync::<QueryResponse>(QUERY, query_name, variables)?.data()
+        self.query_sync::<QueryResponse>(QUERY, query_name, variables)?
+            .data()
     }
 
-    pub fn mutation(&self, mutation_name: &str, variables: Value) -> Result<Mutation, GraphQLError> {
+    pub fn mutation(
+        &self,
+        mutation_name: &str,
+        variables: Value,
+    ) -> Result<Mutation, GraphQLError> {
         self.query_sync::<MutationResponse>(MUTATION, mutation_name, variables)?
             .data()
     }
@@ -479,8 +489,12 @@ impl GraphQLClient {
     ) -> Result<(String, User), GraphQLError> {
         let data = json!({"username": username, "password": password});
 
-        let data = self.mutation(LOGIN_MUTATION, data)?.auth()?;
+        let data = self.mutation(LOGIN_MUTATION, data)?.auth()?.payload()?;
 
-        Ok((data.token()?, data.user()?.to_model()?))
+        let token = data.token()?;
+
+        let user = data.user()?.to_model()?;
+
+        Ok((token, user))
     }
 }

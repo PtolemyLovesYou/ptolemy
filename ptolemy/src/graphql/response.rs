@@ -220,18 +220,22 @@ graphql_response!(
 graphql_result!(GQLWorkspaceResult);
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct AuthPayload {
+    pub token: Option<String>,
+    pub user: Option<GQLUser>,
+}
+
+graphql_response!(AuthPayload, [(token, String), (user, GQLUser)]);
+
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthResult {
     pub success: Option<bool>,
-    pub token: Option<String>,
-    pub user: Option<GQLUser>,
+    pub payload: Option<AuthPayload>,
     pub error: Option<GQLValidationErrors>,
 }
 
-graphql_response!(
-    AuthResult,
-    [(success, bool), (token, String), (user, GQLUser)]
-);
+graphql_response!(AuthResult, [(success, bool), (payload, AuthPayload)]);
 
 graphql_result!(AuthResult);
 

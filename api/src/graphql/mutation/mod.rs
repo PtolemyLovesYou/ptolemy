@@ -2,14 +2,14 @@ use crate::crud::auth::user::auth_user;
 use crate::models::auth::User;
 use crate::mutation_error;
 use crate::state::AppState;
-use juniper::{graphql_object, GraphQLInputObject};
+use juniper::{graphql_object, GraphQLInputObject, GraphQLObject};
 use uuid::Uuid;
 
 pub mod result;
 pub mod user;
 pub mod workspace;
 
-use self::result::{MutationResult, ValidationError};
+use self::result::ValidationError;
 use self::user::UserMutation;
 use self::workspace::WorkspaceMutation;
 
@@ -19,25 +19,24 @@ pub struct LoginInput {
     pub password: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, GraphQLObject)]
+#[graphql(context = AppState)]
 pub struct AuthPayload {
     pub token: String,
     pub user: User,
 }
 
+pub struct AuthResult(Result<AuthPayload, Vec<ValidationError>>);
+
 #[graphql_object]
-#[graphql(name = "AuthResult", context = AppState)]
-impl MutationResult<AuthPayload> {
+#[graphql(context = AppState)]
+impl AuthResult {
     pub fn success(&self) -> bool {
         self.0.as_ref().is_ok()
     }
 
-    pub fn token(&self) -> Option<&String> {
-        self.0.as_ref().ok().map(|r| &r.token)
-    }
-
-    pub fn user(&self) -> Option<&User> {
-        self.0.as_ref().ok().map(|r| &r.user)
+    pub fn payload(&self) -> Option<&AuthPayload> {
+        self.0.as_ref().ok()
     }
 
     pub fn error(&self) -> Option<&[ValidationError]> {
@@ -59,11 +58,12 @@ impl Mutation {
         WorkspaceMutation::new(user_id)
     }
 
-    async fn auth(&self, ctx: &AppState, user_data: LoginInput) -> MutationResult<AuthPayload> {
+    async fn auth(&self, ctx: &AppState, user_data: LoginInput) -> AuthResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return mutation_error!(
+                    AuthResult,
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -81,13 +81,15 @@ impl Mutation {
             Ok(u) => match u {
                 Some(u) => u,
                 None => {
-                    return mutation_error!("user", "Invalid username or password");
+                    return mutation_error!(AuthResult, "user", "Invalid username or password");
                 }
             },
-            Err(e) => return mutation_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => {
+                return mutation_error!(AuthResult, "user", format!("Failed to get user: {:?}", e))
+            }
         };
 
-        MutationResult(Ok(AuthPayload {
+        AuthResult(Ok(AuthPayload {
             token: "token-will-go-here-eventually".to_string(),
             user,
         }))

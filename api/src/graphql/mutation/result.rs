@@ -33,8 +33,8 @@ pub struct MutationResult<T>(pub Result<T, Vec<ValidationError>>);
 
 #[macro_export]
 macro_rules! mutation_error {
-    ($field:expr, $message:expr) => {
-        MutationResult(Err(vec![ValidationError {
+    ($result_type: ident, $field: expr, $message:expr) => {
+        $result_type(Err(vec![ValidationError {
             field: $field.to_string(),
             message: $message.to_string(),
         }]))
@@ -51,9 +51,10 @@ macro_rules! deletion_error {
     };
 }
 
+pub struct UserResult(pub Result<User, Vec<ValidationError>>);
+
 #[graphql_object]
-#[graphql(name = "UserResult")]
-impl MutationResult<User> {
+impl UserResult {
     pub fn success(&self) -> bool {
         self.0.as_ref().is_ok()
     }
@@ -67,9 +68,10 @@ impl MutationResult<User> {
     }
 }
 
+pub struct WorkspaceUserResult(pub Result<WorkspaceUser, Vec<ValidationError>>);
+
 #[graphql_object]
-#[graphql(name = "WorkspaceUserResult")]
-impl MutationResult<WorkspaceUser> {
+impl WorkspaceUserResult {
     pub fn success(&self) -> bool {
         self.0.as_ref().is_ok()
     }
@@ -83,9 +85,10 @@ impl MutationResult<WorkspaceUser> {
     }
 }
 
+pub struct WorkspaceResult(pub Result<Workspace, Vec<ValidationError>>);
+
 #[graphql_object]
-#[graphql(name = "WorkspaceResult")]
-impl MutationResult<Workspace> {
+impl WorkspaceResult {
     pub fn success(&self) -> bool {
         self.0.as_ref().is_ok()
     }
@@ -99,9 +102,10 @@ impl MutationResult<Workspace> {
     }
 }
 
+pub struct ServiceApiKeyResult(pub Result<ServiceApiKey, Vec<ValidationError>>);
+
 #[graphql_object]
-#[graphql(name = "ServiceApiKeyResult")]
-impl MutationResult<ServiceApiKey> {
+impl ServiceApiKeyResult {
     pub fn success(&self) -> bool {
         self.0.as_ref().is_ok()
     }
@@ -115,9 +119,10 @@ impl MutationResult<ServiceApiKey> {
     }
 }
 
+pub struct CreateApiKeyResult(pub Result<CreateApiKeyResponse, Vec<ValidationError>>);
+
 #[graphql_object]
-#[graphql(name = "CreateApiKeyResult")]
-impl MutationResult<CreateApiKeyResponse> {
+impl CreateApiKeyResult {
     pub fn api_key(&self, _ctx: &AppState) -> Option<&CreateApiKeyResponse> {
         self.0.as_ref().ok()
     }

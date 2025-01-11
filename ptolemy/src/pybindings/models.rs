@@ -30,7 +30,7 @@ macro_rules! pymodel {
                 $(
                     dict.set_item(stringify!($getter), self.$getter()?)?;
                 )+
-                
+
                 Ok(dict)
             }
 
