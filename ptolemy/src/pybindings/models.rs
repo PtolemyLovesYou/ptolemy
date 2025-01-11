@@ -9,6 +9,7 @@ static MODEL_FORMATTER: &CStr =
     c_str!(r#"'{}({})'.format(name, ', '.join(k + '=' + repr(v) for k, v in model_attrs))"#);
 
 macro_rules! pymodel {
+    // if name isn't specified in the $meta macro, no guarantees that the Python class name will be correct
     ($struct:ty, $name:ident, [$($meta:tt)*], [$($getter:ident),+ $(,)?]) => {
         #[pyclass(frozen, $($meta)*)]
         #[derive(Clone, Debug)]
