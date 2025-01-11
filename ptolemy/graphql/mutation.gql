@@ -16,12 +16,7 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
     ) {
       ...Result
       user {
-        displayName
-        id
-        isAdmin
-        isSysadmin
-        status
-        username
+        ...ReturnsUser
       }
     }
   }
@@ -130,15 +125,19 @@ mutation Login($username: String!, $password: String!) {
     payload {
       token
       user {
-        displayName
-        id
-        isAdmin
-        isSysadmin
-        status
-        username
+        ...ReturnsUser
       }
     }
   }
+}
+
+fragment ReturnsUser on User {
+  displayName
+  id
+  isAdmin
+  isSysadmin
+  status
+  username
 }
 
 fragment Result on GQLResult {
