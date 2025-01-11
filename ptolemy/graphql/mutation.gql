@@ -92,12 +92,7 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
     ) {
       ...Result
       workspace {
-        id
-        name
-        description
-        archived
-        createdAt
-        updatedAt
+        ...ReturnsWorkspace
       }
     }
   }
@@ -146,4 +141,13 @@ fragment Result on GQLResult {
     message
   }
   success
+}
+
+fragment ReturnsWorkspace on Workspace {
+  id
+  name
+  description
+  archived
+  createdAt
+  updatedAt
 }

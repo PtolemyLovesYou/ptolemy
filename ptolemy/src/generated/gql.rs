@@ -49,12 +49,7 @@ pub const QUERY: &'static str = r###"query UserApiKeys($userId: Uuid) {
 query UserWorkspaces($Id: Uuid, $username: String) {
   user(id: $Id, username: $username) {
     workspaces {
-      archived
-      description
-      id
-      name
-      createdAt
-      updatedAt
+      ...ReturnsWorkspace
       users(username: $username) {
         role
       }
@@ -64,12 +59,7 @@ query UserWorkspaces($Id: Uuid, $username: String) {
 
 query SearchUsers($username: String, $userId: Uuid) {
   user(username: $username, id: $userId) {
-    id
-    username
-    displayName
-    status
-    isAdmin
-    isSysadmin
+    ...ReturnsUser
   }
 }
 
@@ -78,12 +68,7 @@ query WorkspaceUsers($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, 
     users {
       role
       user(id: $userId, username: $username) {
-        id
-        username
-        displayName
-        status
-        isAdmin
-        isSysadmin
+        ...ReturnsUser
       }
     }
   }
@@ -100,6 +85,24 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
       workspaceId
     }
   }
+}
+
+fragment ReturnsUser on User {
+  displayName
+  id
+  isAdmin
+  isSysadmin
+  status
+  username
+}
+
+fragment ReturnsWorkspace on Workspace {
+  archived
+  description
+  id
+  name
+  createdAt
+  updatedAt
 }
 "###;
 
@@ -121,12 +124,7 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
     ) {
       ...Result
       user {
-        displayName
-        id
-        isAdmin
-        isSysadmin
-        status
-        username
+        ...ReturnsUser
       }
     }
   }
@@ -202,12 +200,7 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
     ) {
       ...Result
       workspace {
-        id
-        name
-        description
-        archived
-        createdAt
-        updatedAt
+        ...ReturnsWorkspace
       }
     }
   }
@@ -235,15 +228,19 @@ mutation Login($username: String!, $password: String!) {
     payload {
       token
       user {
-        displayName
-        id
-        isAdmin
-        isSysadmin
-        status
-        username
+        ...ReturnsUser
       }
     }
   }
+}
+
+fragment ReturnsUser on User {
+  displayName
+  id
+  isAdmin
+  isSysadmin
+  status
+  username
 }
 
 fragment Result on GQLResult {
@@ -252,6 +249,15 @@ fragment Result on GQLResult {
     message
   }
   success
+}
+
+fragment ReturnsWorkspace on Workspace {
+  id
+  name
+  description
+  archived
+  createdAt
+  updatedAt
 }
 "###;
 
