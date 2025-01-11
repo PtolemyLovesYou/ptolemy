@@ -22,7 +22,7 @@ def run_cli():
         try:
             current_user = login(session, client)
 
-            cli_data = {"user": current_user}
+            cli_data = {"user": current_user, "client": client}
             wk = select_workspace(current_user, client)
 
             if wk:

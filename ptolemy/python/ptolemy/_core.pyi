@@ -86,6 +86,8 @@ class Workspace:
     created_at: datetime
     updated_at: datetime
 
+    def to_dict(self) -> dict: ...
+
 class User:
     """User object."""
 
@@ -96,6 +98,8 @@ class User:
     is_admin: bool
     is_sysadmin: bool
 
+    def to_dict(self) -> dict: ...
+
 class UserApiKey:
     """User API key."""
 
@@ -104,6 +108,8 @@ class UserApiKey:
     name: str
     key_preview: str
     expires_at: Optional[datetime]
+
+    def to_dict(self) -> dict: ...
 
 class ServiceApiKey:
     """Service API key."""
@@ -115,12 +121,16 @@ class ServiceApiKey:
     permissions: ApiKeyPermission
     expires_at: Optional[datetime]
 
+    def to_dict(self) -> dict: ...
+
 class WorkspaceUser:
     """Workspace user."""
 
     workspace_id: UUID
     user_id: UUID
     role: WorkspaceRole
+
+    def to_dict(self) -> dict: ...
 
 class GraphQLClient:
     """GraphQL client."""

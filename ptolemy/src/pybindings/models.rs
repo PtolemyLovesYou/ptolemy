@@ -24,6 +24,20 @@ macro_rules! pymodel {
                 }
             )+
 
+            pub fn __dict__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+                let dict = PyDict::new(py);
+
+                $(
+                    dict.set_item(stringify!($getter), self.$getter()?)?;
+                )+
+                
+                Ok(dict)
+            }
+
+            pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+                self.__dict__(py)
+            }
+
             pub fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
                 let attrs: Bound<'_, PyList> = PyList::empty(py);
 
