@@ -1,0 +1,67 @@
+query UserApiKeys($userId: Uuid) {
+  user(id: $userId) {
+    userApiKeys {
+      expiresAt
+      id
+      keyPreview
+      name
+      userId
+    }
+  }
+}
+
+query UserWorkspaces($Id: Uuid, $username: String) {
+  user(id: $Id, username: $username) {
+    workspaces {
+      archived
+      description
+      id
+      name
+      createdAt
+      updatedAt
+      users(username: $username) {
+        role
+      }
+    }
+  }
+}
+
+query SearchUsers($username: String, $userId: Uuid) {
+  user(username: $username, id: $userId) {
+    id
+    username
+    displayName
+    isAdmin
+    isSysadmin
+    status
+  }
+}
+
+query WorkspaceUsers($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, $username: String) {
+  workspace(id: $workspaceId, name: $workspaceName) {
+    users {
+      role
+      user(id: $userId, username: $username) {
+        id
+        username
+        displayName
+        status
+        isAdmin
+        isSysadmin
+      }
+    }
+  }
+}
+
+query WorkspaceServiceApiKeys($workspaceId: Uuid) {
+  workspace(id: $workspaceId) {
+    serviceApiKeys {
+      id
+      expiresAt
+      keyPreview
+      name
+      permissions
+      workspaceId
+    }
+  }
+}
