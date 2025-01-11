@@ -1,6 +1,6 @@
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use crate::models::id::Id;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone)]
 pub struct Workspace {
@@ -8,8 +8,8 @@ pub struct Workspace {
     pub name: String,
     pub description: Option<String>,
     pub archived: bool,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone)]
@@ -28,7 +28,7 @@ pub struct UserApiKey {
     pub user_id: Id,
     pub name: String,
     pub key_preview: String,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ pub struct ServiceApiKey {
     pub name: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermission,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone)]

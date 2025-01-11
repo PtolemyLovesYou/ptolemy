@@ -4,7 +4,7 @@ from typing import Optional
 import click
 from tabulate import tabulate
 from ..models.gql import GQLQuery, uses_gql
-from ..gql import GET_USER_WORKSPACES, GET_WORKSPACE_USERS_BY_NAME
+from ..gql import GET_WORKSPACE_USERS_BY_NAME
 from .cli import CLIState
 
 
@@ -20,12 +20,13 @@ def list_workspaces(ctx):
     """List workspaces."""
     cli_state: CLIState = ctx.obj["state"]
     # Now you can use cli_state.user and cli_state.workspace
-    resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": cli_state.user.id.hex})
-    workspaces = list(resp.user)[0].workspaces
+    workspaces = cli_state.client.get_user_workspaces(cli_state.user.id)
 
-    data = [i.to_model().model_dump() for i in workspaces]
-    click.echo(tabulate(data, headers="keys"))
-
+    data = [i.to_dict() for i in workspaces]
+    if data:
+        click.echo(tabulate(data, headers="keys"))
+    else:
+        click.echo("No workspaces found.")
 
 @workspace.group(name="users")
 def workspace_users():

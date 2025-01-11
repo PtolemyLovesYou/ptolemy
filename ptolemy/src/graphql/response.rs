@@ -3,7 +3,7 @@ use crate::graphql_response;
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use crate::models::id::Id;
 use crate::prelude::{GraphQLResponse, IntoModel};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -169,8 +169,8 @@ pub struct GQLWorkspace {
     pub name: Option<String>,
     pub description: Option<String>,
     pub archived: Option<bool>,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
     pub service_api_keys: Option<GQLServiceApiKeys>,
     pub users: Option<GQLWorkspaceUsers>,
 }
@@ -181,8 +181,8 @@ graphql_response!(
         (id, Id),
         (name, String),
         (archived, bool),
-        (created_at, NaiveDateTime),
-        (updated_at, NaiveDateTime),
+        (created_at, DateTime<Utc>),
+        (updated_at, DateTime<Utc>),
         (service_api_keys, GQLServiceApiKeys),
         (users, GQLWorkspaceUsers)
     ]
@@ -288,7 +288,7 @@ pub struct GQLServiceApiKey {
     pub name: Option<String>,
     pub key_preview: Option<String>,
     pub permissions: Option<ApiKeyPermission>,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 graphql_response!(
@@ -325,7 +325,7 @@ pub struct GQLUserApiKey {
     pub user_id: Option<Id>,
     pub name: Option<String>,
     pub key_preview: Option<String>,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 graphql_response!(

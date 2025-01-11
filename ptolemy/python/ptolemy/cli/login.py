@@ -19,7 +19,7 @@ def login(session: PromptSession, client: GraphQLClient):
 
 def select_workspace(usr: User, client: GraphQLClient) -> Optional[Workspace]:
     """Select workspaces."""
-    workspaces = client.get_user_workspaces(usr.id)
+    workspaces = {wk.name: wk for wk in client.get_user_workspaces(usr.id)}
 
     if workspaces:
         wk = questionary.select(

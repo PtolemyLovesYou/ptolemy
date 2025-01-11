@@ -3,10 +3,7 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from ..models.gql import GQLQuery, uses_gql
-from ..gql import (
-    GET_USER_WORKSPACES_BY_USERNAME,
-)
+from ..models.gql import uses_gql
 from .cli import CLIState
 from .format import format_user_info
 
@@ -33,6 +30,7 @@ def info(ctx: click.Context, username: Optional[str] = None):
             return None
 
     click.echo(format_user_info(usr))
+    return None
 
 
 @user.command(name="list")
@@ -103,17 +101,13 @@ def user_workspaces():
 def list_workspaces_of_user(ctx, username: Optional[str] = None):
     """Get workspaces of user."""
     cli_state: CLIState = ctx.obj["state"]
-    resp = GQLQuery.query(
-        GET_USER_WORKSPACES_BY_USERNAME,
-        {"username": username or cli_state.user.username},
-    )
+    wks = cli_state.client.get_user_workspaces_by_username(username or cli_state.user.username)
     data = []
 
-    for usr in list(resp.user):
-        for workspace in usr.workspaces:
-            data.append({"workspace": workspace.name, "role": workspace.users[0].role})
+    for (role, wk) in wks:
+        data.append({"workspace": wk.name, "role": role})
 
     if not data:
-        click.echo("No data found.")
+        click.echo(f"No workspaces found for {username}.")
 
     click.echo(tabulate(data, headers="keys"))

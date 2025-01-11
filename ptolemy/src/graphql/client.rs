@@ -34,11 +34,12 @@ impl GraphQLClient {
         }
     }
 
-    async fn query_graphql<'a, 'de, T: GQLResponse<'de> + DeserializeOwned>(
+    async fn query_graphql<'de, 'a, T: GQLResponse<'de> + DeserializeOwned>(
         &'a self,
         query: &str,
         variables: Value,
     ) -> Result<T, GraphQLError> {
+        // Get the raw text response first
         let resp = self
             .client
             .post(&self.url)
@@ -48,8 +49,9 @@ impl GraphQLClient {
             .map_err(|e| GraphQLError::ClientError(e.to_string()))?
             .json::<T>()
             .await
-            .map_err(|e| GraphQLError::ClientError(e.to_string()))?;
-
+            .map_err(|e: reqwest::Error| GraphQLError::ClientError(format!("Error decoding response into {}: {}", std::any::type_name::<T>(), e)))?
+            ;
+    
         match resp.is_ok() {
             true => Ok(resp),
             false => Err(GraphQLError::ClientError(resp.errors().unwrap())),

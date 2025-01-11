@@ -5,7 +5,7 @@ use crate::crud::auth::{
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use crate::state::AppState;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc, DateTime};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 
@@ -27,12 +27,12 @@ impl Workspace {
         self.archived
     }
 
-    async fn created_at(&self) -> NaiveDateTime {
-        self.created_at
+    async fn created_at(&self) -> DateTime<Utc> {
+        DateTime::from_naive_utc_and_offset(self.created_at, Utc)
     }
 
-    async fn updated_at(&self) -> NaiveDateTime {
-        self.updated_at
+    async fn updated_at(&self) -> DateTime<Utc> {
+        DateTime::from_naive_utc_and_offset(self.updated_at, Utc)
     }
 
     async fn users(
