@@ -5,7 +5,7 @@ use crate::crud::auth::{
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use crate::state::AppState;
-use chrono::{NaiveDateTime, Utc, DateTime};
+use chrono::{Utc, DateTime};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 
@@ -152,8 +152,11 @@ impl ServiceApiKey {
         self.permissions.clone()
     }
 
-    async fn expires_at(&self) -> Option<NaiveDateTime> {
-        self.expires_at
+    async fn expires_at(&self) -> Option<DateTime<Utc>> {
+        match self.expires_at {
+            Some(e) => Some(DateTime::from_naive_utc_and_offset(e, Utc)),
+            None => None,
+        }
     }
 }
 
@@ -175,8 +178,11 @@ impl UserApiKey {
         self.key_preview.clone()
     }
 
-    async fn expires_at(&self) -> Option<NaiveDateTime> {
-        self.expires_at
+    async fn expires_at(&self) -> Option<DateTime<Utc>> {
+        match self.expires_at {
+            Some(e) => Some(DateTime::from_naive_utc_and_offset(e, Utc)),
+            None => None,
+        }
     }
 }
 
