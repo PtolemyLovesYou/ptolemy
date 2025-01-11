@@ -206,7 +206,7 @@ impl GraphQLClient {
                 "userId": user_id,
                 "workspaceId": workspace_id,
                 "name": name,
-                "permissions": permissions,
+                "permission": permissions,
                 "durationDays": duration,
             }
         );

@@ -173,8 +173,8 @@ query UserWorkspacesByName($name: String) {
 
 /// Pulled from graphql/queries/workspace/queries/service_api_keys.gql
 pub const WORKSPACE_QUERIES_SERVICE_API_KEYS: &'static str = r###"
-query WorkspaceServiceApiKeys($Id: Uuid) {
-  workspace(id: $Id) {
+query WorkspaceServiceApiKeys($workspaceId: Uuid) {
+  workspace(id: $workspaceId) {
     serviceApiKeys {
       id
       expiresAt

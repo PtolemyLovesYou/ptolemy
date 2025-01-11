@@ -1,5 +1,5 @@
-query WorkspaceServiceApiKeys($Id: Uuid) {
-  workspace(id: $Id) {
+query WorkspaceServiceApiKeys($workspaceId: Uuid) {
+  workspace(id: $workspaceId) {
     serviceApiKeys {
       id
       expiresAt
