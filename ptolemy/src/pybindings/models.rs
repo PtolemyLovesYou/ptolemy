@@ -10,7 +10,11 @@ static MODEL_FORMATTER: &CStr =
 
 macro_rules! pymodel {
     ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
-        #[pyclass(frozen)]
+        pymodel!($struct, $name, [name = stringify!($struct)], [$($getter),+]);
+    };
+
+    ($struct:ty, $name:ident, [$($meta:tt)*], [$($getter:ident),+ $(,)?]) => {
+        #[pyclass(frozen, $($meta)*)]
         #[derive(Clone, Debug)]
         pub struct $name($struct);
 
@@ -37,7 +41,7 @@ macro_rules! pymodel {
 
                 let data: Bound<'_, PyDict> = PyDict::new(py);
                 data.set_item("model_attrs", attrs)?;
-                data.set_item("name", stringify!($name))?;
+                data.set_item("name", stringify!($struct))?;
 
                 let repr = py.eval(
                     MODEL_FORMATTER,
@@ -82,26 +86,31 @@ macro_rules! pymodel {
 pymodel!(
     Workspace,
     PyWorkspace,
+    [name = "Workspace"],
     [id, name, description, archived, created_at, updated_at]
 );
 pymodel!(
     User,
     PyUser,
+    [name = "User"],
     [id, username, display_name, status, is_admin, is_sysadmin]
 );
 pymodel!(
     UserApiKey,
     PyUserApiKey,
+    [name = "UserApiKey"],
     [id, user_id, name, key_preview, expires_at]
 );
 pymodel!(
     ServiceApiKey,
     PyServiceApiKey,
+    [name = "ServiceApiKey"],
     [id, workspace_id, name, key_preview, expires_at]
 );
 pymodel!(
     WorkspaceUser,
     PyWorkspaceUser,
+    [name = "WorkspaceUser"],
     [workspace_id, user_id, role]
 );
 
