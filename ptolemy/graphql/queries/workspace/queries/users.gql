@@ -1,8 +1,8 @@
-query UserWorkspaces($Id: Uuid) {
-  workspace(id: $Id) {
+query UserWorkspaces($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, $username: String) {
+  workspace(id: $workspaceId, name: $workspaceName) {
     users {
       role
-      user {
+      user(id: $userId, username: $username) {
         id
         username
         displayName

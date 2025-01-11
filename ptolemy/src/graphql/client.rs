@@ -267,7 +267,7 @@ impl GraphQLClient {
         let data = json!({"workspaceId": workspace_id, "userId": user_id});
 
         Ok(self
-            .query(WORKSPACE_QUERIES_USER_ROLE, data)?
+            .query(WORKSPACE_QUERIES_USERS, data)?
             .workspace()?
             .one()?
             .users()?
@@ -279,10 +279,10 @@ impl GraphQLClient {
         &self,
         workspace_name: String,
     ) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
-        let data = json!({"name": workspace_name});
+        let data = json!({"workspaceName": workspace_name});
 
         let workspace_users = self
-            .query(WORKSPACE_QUERIES_USERS_BY_NAME, data)?
+            .query(WORKSPACE_QUERIES_USERS, data)?
             .workspace()?
             .one()?
             .users()?;

@@ -151,26 +151,6 @@ mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $targetUserId: Uuid!
 }
 "###;
 
-/// Pulled from graphql/queries/workspace/queries/users_by_name.gql
-pub const WORKSPACE_QUERIES_USERS_BY_NAME: &'static str = r###"
-query UserWorkspacesByName($name: String) {
-  workspace(name: $name) {
-    name
-    users {
-      role
-      user {
-        id
-        username
-        displayName
-        status
-        isAdmin
-        isSysadmin
-      }
-    }
-  }
-}
-"###;
-
 /// Pulled from graphql/queries/workspace/queries/service_api_keys.gql
 pub const WORKSPACE_QUERIES_SERVICE_API_KEYS: &'static str = r###"
 query WorkspaceServiceApiKeys($workspaceId: Uuid) {
@@ -189,11 +169,11 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
 
 /// Pulled from graphql/queries/workspace/queries/users.gql
 pub const WORKSPACE_QUERIES_USERS: &'static str = r###"
-query UserWorkspaces($Id: Uuid) {
-  workspace(id: $Id) {
+query UserWorkspaces($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, $username: String) {
+  workspace(id: $workspaceId, name: $workspaceName) {
     users {
       role
-      user {
+      user(id: $userId, username: $username) {
         id
         username
         displayName
@@ -201,17 +181,6 @@ query UserWorkspaces($Id: Uuid) {
         isAdmin
         isSysadmin
       }
-    }
-  }
-}
-"###;
-
-/// Pulled from graphql/queries/workspace/queries/user_role.gql
-pub const WORKSPACE_QUERIES_USER_ROLE: &'static str = r###"
-query GetUserWorkspaceRole($workspaceId: Uuid, $userId: Uuid) {
-  workspace(id: $workspaceId) {
-    users(userId: $userId) {
-      role
     }
   }
 }
