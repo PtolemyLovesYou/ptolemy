@@ -1,0 +1,11 @@
+query UserApiKeys($userId: Uuid) {
+  user(id: $userId) {
+    userApiKeys {
+      expiresAt
+      id
+      keyPreview
+      name
+      userId
+    }
+  }
+}

@@ -1,12 +1,12 @@
-use crate::models::records::event::{SystemEventRecord, SubsystemEventRecord, ComponentEventRecord, SubcomponentEventRecord};
 use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
+use crate::models::records::event::{
+    ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+};
 use crate::models::records::utils::get_foreign_keys;
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record};
-use ptolemy::models::event::{
-    ProtoFeedback, ProtoInput, ProtoOutput, ProtoRecord
-};
+use ptolemy::models::event::{ProtoFeedback, ProtoInput, ProtoOutput, ProtoRecord};
 use ptolemy::models::json_serializable::JsonSerializable;
 use serde::{Deserialize, Serialize};
 use tracing::error;

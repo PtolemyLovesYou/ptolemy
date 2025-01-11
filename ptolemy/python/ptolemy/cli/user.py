@@ -3,14 +3,6 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from ..models.gql import GQLQuery, GQLMutation, uses_gql
-from ..gql import (
-    ALL_USERS,
-    GET_USER_BY_NAME,
-    GET_USER_WORKSPACES_BY_USERNAME,
-    CREATE_USER,
-    DELETE_USER,
-)
 from .cli import CLIState
 from .format import format_user_info
 
@@ -23,34 +15,27 @@ def user():
 @user.command()
 @click.option("--username", required=False, type=str)
 @click.pass_context
-@uses_gql
 def info(ctx: click.Context, username: Optional[str] = None):
     """Get user info."""
     cli_state: CLIState = ctx.obj["state"]
     if username is None:
         usr = cli_state.user
     else:
-        resp = GQLQuery.query(GET_USER_BY_NAME, {"username": username})
-        if not resp.user:
+        try:
+            usr = cli_state.client.get_user_by_name(username)
+            click.echo(format_user_info(usr))
+        except ValueError:
             click.echo(f"Unable to find user: {username}")
-            return None
-
-        usr = list(resp.user)[0].to_model()
-
-    click.echo(format_user_info(usr))
 
 
 @user.command(name="list")
 @click.pass_context
-@uses_gql
 def list_users(ctx):
     """List users."""
     cli_state: CLIState = ctx.obj["state"]
-    resp = GQLQuery.query(ALL_USERS, {"Id": cli_state.user.id.hex})
-    users = [i.to_model() for i in list(resp.user)]
+    users = cli_state.client.all_users()
 
-    data = [i.model_dump() for i in users]
-    click.echo(tabulate(data, headers="keys"))
+    click.echo(tabulate(map(lambda u: u.to_dict(), users), headers="keys"))
 
 
 @user.command(name="create")
@@ -59,7 +44,6 @@ def list_users(ctx):
 @click.option("--display-name", type=str)
 @click.option("--admin", is_flag=True, default=False)
 @click.pass_context
-@uses_gql
 def create_user(
     ctx,
     username: str,
@@ -69,43 +53,32 @@ def create_user(
 ):
     """Create user."""
     cli_state: CLIState = ctx.obj["state"]
-    resp = GQLMutation.query(
-        CREATE_USER,
-        {
-            "userId": cli_state.user.id.hex,
-            "username": username,
-            "password": password,
-            "displayName": display_name,
-            "isAdmin": admin,
-        },
-    )
-
-    data = resp.user.create
-
-    if data.success:
-        click.echo(f"Successfully created user {username}")
-    else:
-        click.echo(f"Error creating user: {data.error}")
+    try:
+        usr = cli_state.client.create_user(
+            cli_state.user.id,
+            username,
+            password,
+            admin,
+            False,
+            display_name=display_name,
+        )
+        click.echo(f"Successfully created user {usr.username}")
+    except ValueError as e:
+        click.echo(f"Failed to create user: {e}")
 
 
 @user.command(name="delete")
 @click.argument("user_id")
 @click.pass_context
-@uses_gql
 def delete_user(ctx, user_id: str):
     """Delete user."""
     cli_state: CLIState = ctx.obj["state"]
 
-    resp = GQLMutation.query(
-        DELETE_USER, variables={"userId": cli_state.user.id.hex, "Id": user_id}
-    )
-
-    data = resp.user.delete
-
-    if data.success:
+    try:
+        cli_state.client.delete_user(cli_state.user.id, user_id)
         click.echo(f"Successfully deleted user {user_id}")
-    else:
-        click.echo(f"Error deleting user: {data.error}")
+    except ValueError as e:
+        click.echo(f"Failed to delete user: {e}")
 
 
 @user.group(name="workspaces")
@@ -116,21 +89,63 @@ def user_workspaces():
 @user_workspaces.command(name="list")
 @click.option("--username", required=False, type=str)
 @click.pass_context
-@uses_gql
 def list_workspaces_of_user(ctx, username: Optional[str] = None):
     """Get workspaces of user."""
     cli_state: CLIState = ctx.obj["state"]
-    resp = GQLQuery.query(
-        GET_USER_WORKSPACES_BY_USERNAME,
-        {"username": username or cli_state.user.username},
-    )
-    data = []
+    wks = [
+        {"workspace": wk, "role": role}
+        for (role, wk) in cli_state.client.get_user_workspaces_by_username(
+            username or cli_state.user.username
+        )
+    ]
 
-    for usr in list(resp.user):
-        for workspace in usr.workspaces:
-            data.append({"workspace": workspace.name, "role": workspace.users[0].role})
+    if not wks:
+        click.echo(f"No workspaces found for {username}.")
 
-    if not data:
-        click.echo("No data found.")
+    click.echo(tabulate(wks, headers="keys"))
 
-    click.echo(tabulate(data, headers="keys"))
+@user.group(name="api-keys")
+def user_api_keys():
+    """User API keys."""
+
+
+@user_api_keys.command(name="list")
+@click.pass_context
+def list_api_keys(ctx):
+    """List API keys."""
+    cli_state: CLIState = ctx.obj["state"]
+    api_keys = cli_state.client.get_user_api_keys(cli_state.user.id)
+
+    if not api_keys:
+        click.echo("No API keys found.")
+    else:
+        click.echo(tabulate((i.to_dict() for i in api_keys), headers="keys"))
+
+@user_api_keys.command(name="delete")
+@click.argument("api_key_id")
+@click.pass_context
+def delete_api_key(ctx, api_key_id: str):
+    """Delete API key."""
+    cli_state: CLIState = ctx.obj["state"]
+
+    try:
+        cli_state.client.delete_user_api_key(cli_state.user.id, api_key_id)
+        click.echo(f"Successfully deleted API key {api_key_id}")
+    except ValueError as e:
+        click.echo(f"Failed to delete API key: {e}")
+
+@user_api_keys.command(name="create")
+@click.option("--name", required=True, type=str)
+@click.option("--duration", required=False, type=int)
+@click.pass_context
+def create_api_key(ctx, name: str, duration: Optional[int] = None):
+    """Create API key."""
+    cli_state: CLIState = ctx.obj["state"]
+
+    try:
+        api_key = cli_state.client.create_user_api_key(
+            name, cli_state.user.id, duration
+        )
+        click.echo(f"Successfully created API key {api_key}")
+    except ValueError as e:
+        click.echo(f"Failed to create API key: {e}")

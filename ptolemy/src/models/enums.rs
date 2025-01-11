@@ -1,3 +1,6 @@
+use crate::prelude::enum_utils::*;
+use crate::serialize_enum;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ApiKeyPermission {
     ReadOnly,
@@ -5,11 +8,19 @@ pub enum ApiKeyPermission {
     ReadWrite,
 }
 
+serialize_enum!(
+    ApiKeyPermission,
+    ShoutySnakeCase,
+    [ReadOnly, WriteOnly, ReadWrite]
+);
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum UserStatus {
     Active,
     Suspended,
 }
+
+serialize_enum!(UserStatus, ShoutySnakeCase, [Active, Suspended]);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum WorkspaceRole {
@@ -17,3 +28,5 @@ pub enum WorkspaceRole {
     Manager,
     Admin,
 }
+
+serialize_enum!(WorkspaceRole, ShoutySnakeCase, [User, Manager, Admin]);

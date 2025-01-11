@@ -1,0 +1,16 @@
+query UserWorkspacesByName($name: String) {
+  workspace(name: $name) {
+    name
+    users {
+      role
+      user {
+        id
+        username
+        displayName
+        status
+        isAdmin
+        isSysadmin
+      }
+    }
+  }
+}

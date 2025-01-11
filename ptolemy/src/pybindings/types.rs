@@ -8,12 +8,36 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
+#[derive(FromPyObject)]
+pub struct PyUUIDWrapper {
+    hex: String,
+}
+
+impl Into<Uuid> for PyUUIDWrapper {
+    fn into(self) -> Uuid {
+        Uuid::from_str(&self.hex).unwrap()
+    }
+}
+
+#[derive(FromPyObject)]
+pub enum PyId {
+    UUID(PyUUIDWrapper),
+    String(String),
+}
+
+impl Into<Id> for PyId {
+    fn into(self) -> Id {
+        match self {
+            PyId::UUID(u) => Id::from(Uuid::from_str(&u.hex).unwrap()),
+            PyId::String(s) => Id::from(Uuid::from_str(&s).unwrap()),
+        }
+    }
+}
+
 impl<'py> FromPyObject<'py> for Id {
     fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Id> {
-        let uuid = Uuid::from_str(&obj.extract::<String>()?)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
-
-        Ok(Id::from(uuid))
+        let uuid = obj.extract::<PyId>().map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(uuid.into())
     }
 }
 

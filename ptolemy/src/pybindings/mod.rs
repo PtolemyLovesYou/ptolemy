@@ -1,13 +1,16 @@
 use pyo3::prelude::*;
 
+pub mod client;
 pub mod enums;
+pub mod graphql;
 pub mod models;
 pub mod types;
 
 use crate::{
-    client::client::PtolemyClient,
+    pybindings::client::client::PtolemyClient,
     pybindings::{
         enums::{api_key_permission, user_status, workspace_role},
+        graphql::PyGraphQLClient,
         models::add_models_to_module,
     },
 };
@@ -17,6 +20,7 @@ use crate::{
 #[pymodule]
 pub fn _core<'a>(py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {
     m.add_class::<PtolemyClient>()?;
+    m.add_class::<PyGraphQLClient>()?;
     add_models_to_module(py, m)?;
     api_key_permission::add_enum_to_module(py, m)?;
     user_status::add_enum_to_module(py, m)?;

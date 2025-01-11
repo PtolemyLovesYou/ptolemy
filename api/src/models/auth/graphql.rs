@@ -5,7 +5,7 @@ use crate::crud::auth::{
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use crate::state::AppState;
-use chrono::NaiveDateTime;
+use chrono::{Utc, DateTime};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 
@@ -27,12 +27,12 @@ impl Workspace {
         self.archived
     }
 
-    async fn created_at(&self) -> NaiveDateTime {
-        self.created_at
+    async fn created_at(&self) -> DateTime<Utc> {
+        DateTime::from_naive_utc_and_offset(self.created_at, Utc)
     }
 
-    async fn updated_at(&self) -> NaiveDateTime {
-        self.updated_at
+    async fn updated_at(&self) -> DateTime<Utc> {
+        DateTime::from_naive_utc_and_offset(self.updated_at, Utc)
     }
 
     async fn users(
@@ -136,8 +136,8 @@ impl ServiceApiKey {
         self.id
     }
 
-    async fn workspace_id(&self) -> String {
-        self.workspace_id.to_string()
+    async fn workspace_id(&self) -> Uuid {
+        self.workspace_id
     }
 
     async fn name(&self) -> String {
@@ -152,19 +152,22 @@ impl ServiceApiKey {
         self.permissions.clone()
     }
 
-    async fn expires_at(&self) -> Option<NaiveDateTime> {
-        self.expires_at
+    async fn expires_at(&self) -> Option<DateTime<Utc>> {
+        match self.expires_at {
+            Some(e) => Some(DateTime::from_naive_utc_and_offset(e, Utc)),
+            None => None,
+        }
     }
 }
 
 #[graphql_object]
 impl UserApiKey {
-    async fn id(&self) -> String {
-        self.id.to_string()
+    async fn id(&self) -> Uuid {
+        self.id
     }
 
-    async fn user_id(&self) -> String {
-        self.user_id.to_string()
+    async fn user_id(&self) -> Uuid {
+        self.user_id
     }
 
     async fn name(&self) -> String {
@@ -175,8 +178,11 @@ impl UserApiKey {
         self.key_preview.clone()
     }
 
-    async fn expires_at(&self) -> Option<NaiveDateTime> {
-        self.expires_at
+    async fn expires_at(&self) -> Option<DateTime<Utc>> {
+        match self.expires_at {
+            Some(e) => Some(DateTime::from_naive_utc_and_offset(e, Utc)),
+            None => None,
+        }
     }
 }
 

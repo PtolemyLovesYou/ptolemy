@@ -1,10 +1,17 @@
+use std::ffi::CStr;
+
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
+use pyo3::ffi::c_str;
 use pyo3::prelude::*;
-use pyo3::types::PyAny;
+use pyo3::types::{PyAny, PyDict, PyList};
+
+static MODEL_FORMATTER: &CStr =
+    c_str!(r#"'{}({})'.format(name, ', '.join(k + '=' + repr(v) for k, v in model_attrs))"#);
 
 macro_rules! pymodel {
-    ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
-        #[pyclass]
+    // if name isn't specified in the $meta macro, no guarantees that the Python class name will be correct
+    ($struct:ty, $name:ident, [$($meta:tt)*], [$($getter:ident),+ $(,)?]) => {
+        #[pyclass(frozen, $($meta)*)]
         #[derive(Clone, Debug)]
         pub struct $name($struct);
 
@@ -16,6 +23,45 @@ macro_rules! pymodel {
                     Ok(self.0.$getter.clone())
                 }
             )+
+
+            pub fn __dict__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+                let dict = PyDict::new(py);
+
+                $(
+                    dict.set_item(stringify!($getter), self.$getter()?)?;
+                )+
+                
+                Ok(dict)
+            }
+
+            pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+                self.__dict__(py)
+            }
+
+            pub fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+                let attrs: Bound<'_, PyList> = PyList::empty(py);
+
+                $(
+                    attrs.append(
+                        (
+                            stringify!($getter),
+                            self.$getter()?
+                        )
+                    )?;
+                )+
+
+                let data: Bound<'_, PyDict> = PyDict::new(py);
+                data.set_item("model_attrs", attrs)?;
+                data.set_item("name", stringify!($struct))?;
+
+                let repr = py.eval(
+                    MODEL_FORMATTER,
+                    None,
+                    Some(&data)
+                )?;
+
+                Ok(repr)
+            }
         }
 
         impl From<$struct> for $name {
@@ -51,26 +97,31 @@ macro_rules! pymodel {
 pymodel!(
     Workspace,
     PyWorkspace,
+    [name = "Workspace"],
     [id, name, description, archived, created_at, updated_at]
 );
 pymodel!(
     User,
     PyUser,
+    [name = "User"],
     [id, username, display_name, status, is_admin, is_sysadmin]
 );
 pymodel!(
     UserApiKey,
     PyUserApiKey,
-    [id, user_id, name, key_preview, permissions, expires_at]
+    [name = "UserApiKey"],
+    [id, user_id, name, key_preview, expires_at]
 );
 pymodel!(
     ServiceApiKey,
     PyServiceApiKey,
+    [name = "ServiceApiKey"],
     [id, workspace_id, name, key_preview, expires_at]
 );
 pymodel!(
     WorkspaceUser,
     PyWorkspaceUser,
+    [name = "WorkspaceUser"],
     [workspace_id, user_id, role]
 );
 
