@@ -3,7 +3,6 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from ..models.gql import uses_gql
 from .cli import CLIState
 from .format import format_user_info
 
@@ -16,7 +15,6 @@ def user():
 @user.command()
 @click.option("--username", required=False, type=str)
 @click.pass_context
-@uses_gql
 def info(ctx: click.Context, username: Optional[str] = None):
     """Get user info."""
     cli_state: CLIState = ctx.obj["state"]
@@ -25,17 +23,13 @@ def info(ctx: click.Context, username: Optional[str] = None):
     else:
         try:
             usr = cli_state.client.get_user_by_name(username)
+            click.echo(format_user_info(usr))
         except ValueError:
             click.echo(f"Unable to find user: {username}")
-            return None
-
-    click.echo(format_user_info(usr))
-    return None
 
 
 @user.command(name="list")
 @click.pass_context
-@uses_gql
 def list_users(ctx):
     """List users."""
     cli_state: CLIState = ctx.obj["state"]
@@ -50,7 +44,6 @@ def list_users(ctx):
 @click.option("--display-name", type=str)
 @click.option("--admin", is_flag=True, default=False)
 @click.pass_context
-@uses_gql
 def create_user(
     ctx,
     username: str,
@@ -67,8 +60,8 @@ def create_user(
             password,
             admin,
             False,
-            display_name=display_name
-            )
+            display_name=display_name,
+        )
         click.echo(f"Successfully created user {usr.username}")
     except ValueError as e:
         click.echo(f"Failed to create user: {e}")
@@ -77,7 +70,6 @@ def create_user(
 @user.command(name="delete")
 @click.argument("user_id")
 @click.pass_context
-@uses_gql
 def delete_user(ctx, user_id: str):
     """Delete user."""
     cli_state: CLIState = ctx.obj["state"]
@@ -97,17 +89,17 @@ def user_workspaces():
 @user_workspaces.command(name="list")
 @click.option("--username", required=False, type=str)
 @click.pass_context
-@uses_gql
 def list_workspaces_of_user(ctx, username: Optional[str] = None):
     """Get workspaces of user."""
     cli_state: CLIState = ctx.obj["state"]
-    wks = cli_state.client.get_user_workspaces_by_username(username or cli_state.user.username)
-    data = []
+    wks = [
+        {"workspace": wk, "role": role}
+        for (role, wk) in cli_state.client.get_user_workspaces_by_username(
+            username or cli_state.user.username
+        )
+    ]
 
-    for (role, wk) in wks:
-        data.append({"workspace": wk.name, "role": role})
-
-    if not data:
+    if not wks:
         click.echo(f"No workspaces found for {username}.")
 
-    click.echo(tabulate(data, headers="keys"))
+    click.echo(tabulate(wks, headers="keys"))

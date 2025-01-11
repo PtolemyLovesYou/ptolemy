@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 from pydantic import BaseModel, Field, ConfigDict
-from .._core import User, Workspace, GraphQLClient # pylint: disable=no-name-in-module
+from .._core import User, Workspace, GraphQLClient  # pylint: disable=no-name-in-module
 
 
 class Commands(StrEnum):

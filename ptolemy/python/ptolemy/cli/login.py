@@ -3,7 +3,7 @@
 from typing import Optional
 import questionary
 from prompt_toolkit import PromptSession, print_formatted_text as printf
-from .._core import GraphQLClient, User, Workspace # pylint: disable=no-name-in-module
+from .._core import GraphQLClient, User, Workspace  # pylint: disable=no-name-in-module
 
 
 def login(session: PromptSession, client: GraphQLClient):

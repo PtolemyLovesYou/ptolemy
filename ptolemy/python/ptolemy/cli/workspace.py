@@ -3,8 +3,6 @@
 from typing import Optional
 import click
 from tabulate import tabulate
-from ..models.gql import GQLQuery, uses_gql
-from ..gql import GET_WORKSPACE_USERS_BY_NAME
 from .cli import CLIState
 
 
@@ -15,7 +13,6 @@ def workspace():
 
 @workspace.command(name="list")
 @click.pass_context
-@uses_gql
 def list_workspaces(ctx):
     """List workspaces."""
     cli_state: CLIState = ctx.obj["state"]
@@ -28,6 +25,7 @@ def list_workspaces(ctx):
     else:
         click.echo("No workspaces found.")
 
+
 @workspace.group(name="users")
 def workspace_users():
     """Workspace users group."""
@@ -36,18 +34,15 @@ def workspace_users():
 @workspace_users.command(name="list", help="List users in a workspace.")
 @click.option("--name", required=False, type=str)
 @click.pass_context
-@uses_gql
 def list_workspace_users(ctx, name: Optional[str] = None):
     """List workspace users."""
     cli_state: CLIState = ctx.obj["state"]
     wk_name = name if name is not None else cli_state.workspace.name
-    resp = GQLQuery.query(GET_WORKSPACE_USERS_BY_NAME, {"name": wk_name})
-    if not resp.workspace:
-        click.echo(f"Workspace {name} not found.")
-    else:
-        wk = list(resp.workspace)[0]
 
-        data = [{"username": u.user.username, "role": u.role} for u in wk.users]
-
-        print(f"Users in workspace {wk.name}:")
+    try:
+        resp = cli_state.client.get_workspace_users_by_name(wk_name)
+        data = [{"username": u.username, "role": role} for (role, u) in resp]
+        click.echo(f"Users in workspace {wk_name}:")
         click.echo(tabulate(data, headers="keys"))
+    except ValueError:
+        click.echo(f"Unable to find workspace {wk_name}")

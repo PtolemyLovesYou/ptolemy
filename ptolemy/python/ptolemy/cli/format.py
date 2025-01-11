@@ -1,7 +1,7 @@
 """Format utils."""
 
 import click
-from ..models.auth import User
+from .._core import User  # pylint: disable=no-name-in-module
 
 
 def format_user_info(user: User):
