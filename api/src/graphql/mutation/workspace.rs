@@ -4,14 +4,13 @@ use crate::crud::auth::{
 };
 use crate::{
     models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
-    models::auth::{Workspace, WorkspaceCreate, WorkspaceUser, WorkspaceUserCreate},
+    models::auth::{WorkspaceCreate, WorkspaceUserCreate},
     state::AppState,
 };
 
 use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, DeletionResult, MutationResult, ValidationError,
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
 };
-use crate::{deletion_error, mutation_error};
 use juniper::graphql_object;
 use uuid::Uuid;
 
@@ -33,13 +32,13 @@ impl WorkspaceMutation {
         ctx: &AppState,
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
-    ) -> MutationResult<Workspace> {
+    ) -> WorkspaceResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
+                return WorkspaceResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -48,16 +47,22 @@ impl WorkspaceMutation {
             Ok(user) => match user.is_admin {
                 true => (),
                 false => {
-                    return mutation_error!("user", "You must be an admin to create a workspace")
+                    return WorkspaceResult::err(
+                        "user",
+                        "You must be an admin to create a workspace".to_string(),
+                    )
                 }
             },
-            Err(e) => return mutation_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => return WorkspaceResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
             Ok(w) => w,
             Err(e) => {
-                return mutation_error!("workspace", format!("Failed to create workspace: {:?}", e))
+                return WorkspaceResult::err(
+                    "workspace",
+                    format!("Failed to create workspace: {:?}", e),
+                )
             }
         };
 
@@ -80,23 +85,23 @@ impl WorkspaceMutation {
         {
             Ok(_) => (),
             Err(e) => {
-                return mutation_error!(
+                return WorkspaceResult::err(
                     "workspace_user",
-                    format!("Failed to create workspace user: {:?}", e)
+                    format!("Failed to create workspace user: {:?}", e),
                 )
             }
         };
 
-        MutationResult(Ok(workspace))
+        WorkspaceResult(Ok(workspace))
     }
 
     async fn delete(&self, ctx: &AppState, workspace_id: Uuid) -> DeletionResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -105,15 +110,20 @@ impl WorkspaceMutation {
             Ok(user) => match user.is_admin {
                 true => (),
                 false => {
-                    return deletion_error!("user", "You must be an admin to delete a workspace")
+                    return DeletionResult::err(
+                        "user",
+                        "You must be an admin to delete a workspace".to_string(),
+                    )
                 }
             },
-            Err(e) => return deletion_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
-            Ok(_) => DeletionResult(Ok(())),
-            Err(e) => deletion_error!("workspace", format!("Failed to delete workspace: {:?}", e)),
+            Ok(_) => DeletionResult(Ok(true)),
+            Err(e) => {
+                DeletionResult::err("workspace", format!("Failed to delete workspace: {:?}", e))
+            }
         }
     }
 
@@ -121,13 +131,13 @@ impl WorkspaceMutation {
         &self,
         ctx: &AppState,
         workspace_user: WorkspaceUserCreate,
-    ) -> MutationResult<WorkspaceUser> {
+    ) -> WorkspaceUserResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
+                return WorkspaceUserResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -142,9 +152,9 @@ impl WorkspaceMutation {
         {
             Ok(role) => role,
             Err(e) => {
-                return mutation_error!(
+                return WorkspaceUserResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -152,14 +162,19 @@ impl WorkspaceMutation {
         // Verify user has admin or manager role
         match user_permission {
             WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-            _ => return mutation_error!("permission", "Insufficient permissions"),
+            _ => {
+                return WorkspaceUserResult::err(
+                    "permission",
+                    "Insufficient permissions".to_string(),
+                )
+            }
         }
 
         match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
-            Ok(result) => MutationResult(Ok(result)),
-            Err(e) => mutation_error!(
+            Ok(result) => WorkspaceUserResult(Ok(result)),
+            Err(e) => WorkspaceUserResult::err(
                 "workspace_user",
-                format!("Failed to add user to workspace: {:?}", e)
+                format!("Failed to add user to workspace: {:?}", e),
             ),
         }
     }
@@ -173,9 +188,9 @@ impl WorkspaceMutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -190,9 +205,9 @@ impl WorkspaceMutation {
         {
             Ok(role) => role,
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -210,25 +225,28 @@ impl WorkspaceMutation {
                 {
                     Ok(role) => role,
                     Err(e) => {
-                        return deletion_error!(
+                        return DeletionResult::err(
                             "permission",
-                            format!("Failed to get target user permission: {:?}", e)
+                            format!("Failed to get target user permission: {:?}", e),
                         )
                     }
                 };
 
                 if target_permission == WorkspaceRoleEnum::Admin {
-                    return deletion_error!("permission", "Managers cannot delete admin users");
+                    return DeletionResult::err(
+                        "permission",
+                        "Managers cannot delete admin users".to_string(),
+                    );
                 }
             }
-            _ => return deletion_error!("permission", "Insufficient permissions"),
+            _ => return DeletionResult::err("permission", "Insufficient permissions".to_string()),
         }
 
         match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
-            Ok(_) => DeletionResult(Ok(())),
-            Err(e) => deletion_error!(
+            Ok(_) => DeletionResult(Ok(true)),
+            Err(e) => DeletionResult::err(
                 "workspace_user",
-                format!("Failed to delete user from workspace: {:?}", e)
+                format!("Failed to delete user from workspace: {:?}", e),
             ),
         }
     }
@@ -239,13 +257,13 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
-    ) -> MutationResult<WorkspaceUser> {
+    ) -> WorkspaceUserResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
+                return WorkspaceUserResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -260,9 +278,9 @@ impl WorkspaceMutation {
         {
             Ok(role) => role,
             Err(e) => {
-                return mutation_error!(
+                return WorkspaceUserResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -272,10 +290,18 @@ impl WorkspaceMutation {
             WorkspaceRoleEnum::Admin => (),
             WorkspaceRoleEnum::Manager => {
                 if new_role == WorkspaceRoleEnum::Admin {
-                    return mutation_error!("permission", "Managers cannot assign admin role");
+                    return WorkspaceUserResult::err(
+                        "permission",
+                        "Managers cannot assign admin role".to_string(),
+                    );
                 }
             }
-            _ => return mutation_error!("permission", "Insufficient permissions"),
+            _ => {
+                return WorkspaceUserResult::err(
+                    "permission",
+                    "Insufficient permissions".to_string(),
+                )
+            }
         }
 
         match workspace_user_crud::set_workspace_user_role(
@@ -286,10 +312,10 @@ impl WorkspaceMutation {
         )
         .await
         {
-            Ok(result) => MutationResult(Ok(result)),
-            Err(e) => mutation_error!(
+            Ok(result) => WorkspaceUserResult(Ok(result)),
+            Err(e) => WorkspaceUserResult::err(
                 "workspace_user",
-                format!("Failed to change user role: {:?}", e)
+                format!("Failed to change user role: {:?}", e),
             ),
         }
     }
@@ -301,13 +327,13 @@ impl WorkspaceMutation {
         name: String,
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
-    ) -> MutationResult<CreateApiKeyResponse> {
+    ) -> CreateApiKeyResult {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
+                return CreateApiKeyResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -322,12 +348,17 @@ impl WorkspaceMutation {
         {
             Ok(role) => match role {
                 WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => return mutation_error!("permission", "Insufficient permissions"),
+                _ => {
+                    return CreateApiKeyResult::err(
+                        "permission",
+                        "Insufficient permissions".to_string(),
+                    )
+                }
             },
             Err(e) => {
-                return mutation_error!(
+                return CreateApiKeyResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -347,13 +378,13 @@ impl WorkspaceMutation {
         )
         .await
         {
-            Ok((api_key_id, api_key)) => MutationResult(Ok(CreateApiKeyResponse {
+            Ok((api_key_id, api_key)) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
                 id: api_key_id,
                 api_key,
             })),
-            Err(e) => mutation_error!(
+            Err(e) => CreateApiKeyResult::err(
                 "service_api_key",
-                format!("Failed to create service API key: {:?}", e)
+                format!("Failed to create service API key: {:?}", e),
             ),
         }
     }
@@ -367,9 +398,9 @@ impl WorkspaceMutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -384,12 +415,17 @@ impl WorkspaceMutation {
         {
             Ok(role) => match role {
                 WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => return deletion_error!("permission", "Insufficient permissions"),
+                _ => {
+                    return DeletionResult::err(
+                        "permission",
+                        "Insufficient permissions".to_string(),
+                    )
+                }
             },
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -397,10 +433,10 @@ impl WorkspaceMutation {
         match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id)
             .await
         {
-            Ok(_) => DeletionResult(Ok(())),
-            Err(e) => deletion_error!(
+            Ok(_) => DeletionResult(Ok(true)),
+            Err(e) => DeletionResult::err(
                 "service_api_key",
-                format!("Failed to delete service API key: {:?}", e)
+                format!("Failed to delete service API key: {:?}", e),
             ),
         }
     }

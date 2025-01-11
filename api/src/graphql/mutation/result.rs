@@ -1,7 +1,61 @@
 use crate::models::auth::{ServiceApiKey, User, Workspace, WorkspaceUser};
 use crate::state::AppState;
-use juniper::{graphql_object, GraphQLObject};
+use juniper::{graphql_interface, graphql_object, GraphQLInputObject, GraphQLObject};
 use uuid::Uuid;
+
+#[graphql_interface]
+#[graphql(
+    context = AppState,
+    for = [
+        DeletionResult,
+        AuthResult,
+        UserResult,
+        WorkspaceResult,
+        WorkspaceUserResult,
+        ServiceApiKeyResult,
+        CreateApiKeyResult
+        ]
+    )
+    ]
+pub trait GQLResult {
+    fn success(&self) -> bool;
+    fn error(&self) -> Option<&[ValidationError]>;
+}
+
+macro_rules! result_model {
+    ($name:ident, $result_type:ty, $field_name:ident) => {
+        pub struct $name(pub Result<$result_type, Vec<ValidationError>>);
+
+        #[graphql_object]
+        #[graphql(context = AppState, impl = GQLResultValue)]
+        impl $name {
+            fn success(&self) -> bool {
+                self.0.as_ref().is_ok()
+            }
+
+            fn $field_name(&self) -> Option<&$result_type> {
+                self.0.as_ref().ok()
+            }
+
+            fn error(&self) -> Option<&[ValidationError]> {
+                self.0.as_ref().err().map(Vec::as_slice)
+            }
+        }
+
+        impl $name {
+            pub fn err(field: &str, message: String) -> Self {
+                $name(Err(vec![ValidationError {
+                    field: field.to_string(),
+                    message: message,
+                }]))
+            }
+
+            pub fn ok(value: $result_type) -> Self {
+                $name(Ok(value))
+            }
+        }
+    };
+}
 
 #[derive(Debug, GraphQLObject)]
 pub struct CreateApiKeyResponse {
@@ -15,118 +69,29 @@ pub struct ValidationError {
     pub message: String,
 }
 
-pub struct DeletionResult(pub Result<(), Vec<ValidationError>>);
+result_model!(DeletionResult, bool, deleted);
 
-#[graphql_object]
-#[graphql(name = "DeletionResult")]
-impl DeletionResult {
-    fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
-
-    fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
+#[derive(Clone, Debug, GraphQLInputObject)]
+pub struct LoginInput {
+    pub username: String,
+    pub password: String,
 }
 
-pub struct MutationResult<T>(pub Result<T, Vec<ValidationError>>);
-
-#[macro_export]
-macro_rules! mutation_error {
-    ($field:expr, $message:expr) => {
-        MutationResult(Err(vec![ValidationError {
-            field: $field.to_string(),
-            message: $message.to_string(),
-        }]))
-    };
+#[derive(Debug, GraphQLObject)]
+#[graphql(context = AppState)]
+pub struct AuthPayload {
+    pub token: String,
+    pub user: User,
 }
 
-#[macro_export]
-macro_rules! deletion_error {
-    ($field:expr, $message:expr) => {
-        DeletionResult(Err(vec![ValidationError {
-            field: $field.to_string(),
-            message: $message.to_string(),
-        }]))
-    };
-}
+result_model!(AuthResult, AuthPayload, payload);
 
-#[graphql_object]
-#[graphql(name = "UserResult")]
-impl MutationResult<User> {
-    pub fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
+result_model!(UserResult, User, user);
 
-    pub fn user(&self, _ctx: &AppState) -> Option<&User> {
-        self.0.as_ref().ok()
-    }
+result_model!(WorkspaceUserResult, WorkspaceUser, workspace_user);
 
-    pub fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
+result_model!(WorkspaceResult, Workspace, workspace);
 
-#[graphql_object]
-#[graphql(name = "WorkspaceUserResult")]
-impl MutationResult<WorkspaceUser> {
-    pub fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
+result_model!(ServiceApiKeyResult, ServiceApiKey, service_api_key);
 
-    pub fn workspace_user(&self, _ctx: &AppState) -> Option<&WorkspaceUser> {
-        self.0.as_ref().ok()
-    }
-
-    pub fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
-
-#[graphql_object]
-#[graphql(name = "WorkspaceResult")]
-impl MutationResult<Workspace> {
-    pub fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
-
-    pub fn workspace(&self, _ctx: &AppState) -> Option<&Workspace> {
-        self.0.as_ref().ok()
-    }
-
-    pub fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
-
-#[graphql_object]
-#[graphql(name = "ServiceApiKeyResult")]
-impl MutationResult<ServiceApiKey> {
-    pub fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
-
-    pub fn service_api_key(&self, _ctx: &AppState) -> Option<&ServiceApiKey> {
-        self.0.as_ref().ok()
-    }
-
-    pub fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
-
-#[graphql_object]
-#[graphql(name = "CreateApiKeyResult")]
-impl MutationResult<CreateApiKeyResponse> {
-    pub fn api_key(&self, _ctx: &AppState) -> Option<&CreateApiKeyResponse> {
-        self.0.as_ref().ok()
-    }
-
-    pub fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
-
-    pub fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
+result_model!(CreateApiKeyResult, CreateApiKeyResponse, api_key);

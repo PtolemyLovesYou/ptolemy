@@ -36,7 +36,9 @@ impl Into<Id> for PyId {
 
 impl<'py> FromPyObject<'py> for Id {
     fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Id> {
-        let uuid = obj.extract::<PyId>().map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let uuid = obj
+            .extract::<PyId>()
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(uuid.into())
     }
 }

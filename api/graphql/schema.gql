@@ -44,21 +44,37 @@ input WorkspaceUserCreate {
   role: WorkspaceRoleEnum!
 }
 
-"""
-  Combined date and time (without time zone) in `yyyy-MM-dd HH:mm:ss` format.
+interface GQLResult {
+  success: Boolean!
+  error: [ValidationError!]
+}
 
-  See also [`chrono::NaiveDateTime`][1] for details.
-
-  [1]: https://docs.rs/chrono/latest/chrono/naive/struct.NaiveDateTime.html
 """
-scalar LocalDateTime
+  Combined date and time (with time zone) in [RFC 3339][0] format.
+
+  Represents a description of an exact instant on the time-line (such as the
+  instant that a user account was created).
+
+  [`DateTime` scalar][1] compliant.
+
+  See also [`chrono::DateTime`][2] for details.
+
+  [0]: https://datatracker.ietf.org/doc/html/rfc3339#section-5
+  [1]: https://graphql-scalars.dev/docs/scalars/date-time
+  [2]: https://docs.rs/chrono/latest/chrono/struct.DateTime.html
+"""
+scalar DateTime
 
 scalar Uuid
 
-type AuthResult {
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+type AuthResult implements GQLResult {
   success: Boolean!
-  token: String
-  user: User
+  payload: AuthPayload
   error: [ValidationError!]
 }
 
@@ -67,14 +83,15 @@ type CreateApiKeyResponse {
   id: Uuid!
 }
 
-type CreateApiKeyResult {
-  apiKey: CreateApiKeyResponse
+type CreateApiKeyResult implements GQLResult {
   success: Boolean!
+  apiKey: CreateApiKeyResponse
   error: [ValidationError!]
 }
 
-type DeletionResult {
+type DeletionResult implements GQLResult {
   success: Boolean!
+  deleted: Boolean
   error: [ValidationError!]
 }
 
@@ -96,7 +113,13 @@ type ServiceApiKey {
   name: String!
   keyPreview: String!
   permissions: ApiKeyPermissionEnum!
-  expiresAt: LocalDateTime
+  expiresAt: DateTime
+}
+
+type ServiceApiKeyResult implements GQLResult {
+  success: Boolean!
+  serviceApiKey: ServiceApiKey
+  error: [ValidationError!]
 }
 
 type User {
@@ -115,7 +138,7 @@ type UserApiKey {
   userId: Uuid!
   name: String!
   keyPreview: String!
-  expiresAt: LocalDateTime
+  expiresAt: DateTime
 }
 
 type UserMutation {
@@ -125,7 +148,7 @@ type UserMutation {
   deleteUserApiKey(apiKeyId: Uuid!): DeletionResult!
 }
 
-type UserResult {
+type UserResult implements GQLResult {
   success: Boolean!
   user: User
   error: [ValidationError!]
@@ -141,8 +164,8 @@ type Workspace {
   name: String!
   description: String
   archived: Boolean!
-  createdAt: LocalDateTime!
-  updatedAt: LocalDateTime!
+  createdAt: DateTime!
+  updatedAt: DateTime!
   users(userId: Uuid, username: String): [WorkspaceUser!]!
   serviceApiKeys: [ServiceApiKey!]!
 }
@@ -157,7 +180,7 @@ type WorkspaceMutation {
   deleteServiceApiKey(workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
 }
 
-type WorkspaceResult {
+type WorkspaceResult implements GQLResult {
   success: Boolean!
   workspace: Workspace
   error: [ValidationError!]
@@ -169,7 +192,7 @@ type WorkspaceUser {
   workspace: Workspace!
 }
 
-type WorkspaceUserResult {
+type WorkspaceUserResult implements GQLResult {
   success: Boolean!
   workspaceUser: WorkspaceUser
   error: [ValidationError!]

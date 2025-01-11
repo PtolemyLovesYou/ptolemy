@@ -37,21 +37,27 @@ impl GraphQLClient {
     async fn query_graphql<'de, 'a, T: GQLResponse<'de> + DeserializeOwned>(
         &'a self,
         query: &str,
+        operation_name: &str,
         variables: Value,
     ) -> Result<T, GraphQLError> {
         // Get the raw text response first
         let resp = self
             .client
             .post(&self.url)
-            .json(&json!({"query": query, "variables": variables}))
+            .json(&json!({"query": query, "operationName": operation_name, "variables": variables}))
             .send()
             .await
             .map_err(|e| GraphQLError::ClientError(e.to_string()))?
             .json::<T>()
             .await
-            .map_err(|e: reqwest::Error| GraphQLError::ClientError(format!("Error decoding response into {}: {}", std::any::type_name::<T>(), e)))?
-            ;
-    
+            .map_err(|e: reqwest::Error| {
+                GraphQLError::ClientError(format!(
+                    "Error decoding response into {}: {}",
+                    std::any::type_name::<T>(),
+                    e
+                ))
+            })?;
+
         match resp.is_ok() {
             true => Ok(resp),
             false => Err(GraphQLError::ClientError(resp.errors().unwrap())),
@@ -61,21 +67,27 @@ impl GraphQLClient {
     fn query_sync<'a, 'de, T: GQLResponse<'de> + DeserializeOwned>(
         &self,
         query: &str,
+        operation_name: &str,
         variables: Value,
     ) -> Result<T, GraphQLError> {
         let rt_clone = self.rt.clone();
 
-        let resp = rt_clone.block_on(self.query_graphql(query, variables));
+        let resp = rt_clone.block_on(self.query_graphql(query, operation_name, variables));
 
         Ok(resp.map_err(|e| GraphQLError::ClientError(format!("GraphQL server error: {}", e)))?)
     }
 
-    pub fn query(&self, query: &str, variables: Value) -> Result<Query, GraphQLError> {
-        self.query_sync::<QueryResponse>(query, variables)?.data()
+    pub fn query(&self, query_name: &str, variables: Value) -> Result<Query, GraphQLError> {
+        self.query_sync::<QueryResponse>(QUERY, query_name, variables)?
+            .data()
     }
 
-    pub fn mutation(&self, mutation: &str, variables: Value) -> Result<Mutation, GraphQLError> {
-        self.query_sync::<MutationResponse>(mutation, variables)?
+    pub fn mutation(
+        &self,
+        mutation_name: &str,
+        variables: Value,
+    ) -> Result<Mutation, GraphQLError> {
+        self.query_sync::<MutationResponse>(MUTATION, mutation_name, variables)?
             .data()
     }
 }
@@ -99,7 +111,7 @@ impl GraphQLClient {
         );
 
         Ok(self
-            .mutation(WORKSPACE_MUTATIONS_CREATE, data)?
+            .mutation(CREATE_WORKSPACE_MUTATION, data)?
             .workspace()?
             .create()?
             .propagate_errors()?
@@ -115,7 +127,7 @@ impl GraphQLClient {
             }
         );
 
-        self.mutation(WORKSPACE_MUTATIONS_DELETE, data)?
+        self.mutation(DELETE_WORKSPACE_MUTATION, data)?
             .workspace()?
             .delete()?
             .propagate_errors()?;
@@ -139,7 +151,7 @@ impl GraphQLClient {
             }
         );
 
-        self.mutation(WORKSPACE_MUTATIONS_ADD_USER, data)?
+        self.mutation(ADD_USER_TO_WORKSPACE_MUTATION, data)?
             .workspace()?
             .add_user()?
             .propagate_errors()?;
@@ -161,7 +173,7 @@ impl GraphQLClient {
             }
         );
 
-        self.mutation(WORKSPACE_MUTATIONS_REMOVE_USER, data)?
+        self.mutation(REMOVE_USER_FROM_WORKSPACE_MUTATION, data)?
             .workspace()?
             .remove_user()?
             .propagate_errors()?;
@@ -185,7 +197,7 @@ impl GraphQLClient {
             }
         );
 
-        self.mutation(WORKSPACE_MUTATIONS_CHANGE_USER_ROLE, data)?
+        self.mutation(CHANGE_WORKSPACE_USER_ROLE_MUTATION, data)?
             .workspace()?
             .change_workspace_user_role()?
             .propagate_errors()?;
@@ -212,7 +224,7 @@ impl GraphQLClient {
         );
 
         Ok(self
-            .mutation(WORKSPACE_MUTATIONS_CREATE_SERVICE_API_KEY, data)?
+            .mutation(CREATE_SERVICE_API_KEY_MUTATION, data)?
             .workspace()?
             .create_service_api_key()?
             .propagate_errors()?
@@ -234,7 +246,7 @@ impl GraphQLClient {
             }
         );
 
-        self.mutation(WORKSPACE_MUTATIONS_DELETE_SERVICE_API_KEY, data)?
+        self.mutation(DELETE_SERVICE_API_KEY_MUTATION, data)?
             .workspace()?
             .delete_service_api_key()?
             .propagate_errors()?;
@@ -249,7 +261,7 @@ impl GraphQLClient {
         let data = json!({"workspaceId": id});
 
         Ok(self
-            .query(WORKSPACE_QUERIES_SERVICE_API_KEYS, data)?
+            .query(WORKSPACE_SERVICE_API_KEYS_QUERY, data)?
             .workspace()?
             .one()?
             .service_api_keys()?
@@ -267,7 +279,7 @@ impl GraphQLClient {
         let data = json!({"workspaceId": workspace_id, "userId": user_id});
 
         Ok(self
-            .query(WORKSPACE_QUERIES_USER_ROLE, data)?
+            .query(WORKSPACE_USERS_QUERY, data)?
             .workspace()?
             .one()?
             .users()?
@@ -279,10 +291,10 @@ impl GraphQLClient {
         &self,
         workspace_name: String,
     ) -> Result<Vec<(WorkspaceRole, User)>, GraphQLError> {
-        let data = json!({"name": workspace_name});
+        let data = json!({"workspaceName": workspace_name});
 
         let workspace_users = self
-            .query(WORKSPACE_QUERIES_USERS_BY_NAME, data)?
+            .query(WORKSPACE_USERS_QUERY, data)?
             .workspace()?
             .one()?
             .users()?;
@@ -303,7 +315,7 @@ impl GraphQLClient {
         let data = json!({"workspaceId": workspace_id});
 
         let workspace_users = self
-            .query(WORKSPACE_QUERIES_USERS, data)?
+            .query(WORKSPACE_USERS_QUERY, data)?
             .workspace()?
             .one()?
             .users()?;
@@ -341,7 +353,7 @@ impl GraphQLClient {
         );
 
         Ok(self
-            .mutation(USER_MUTATIONS_CREATE, data)?
+            .mutation(CREATE_USER_MUTATION, data)?
             .user()?
             .create()?
             .propagate_errors()?
@@ -352,7 +364,7 @@ impl GraphQLClient {
     pub fn delete_user(&self, user_id: Id, target_user_id: Id) -> Result<(), GraphQLError> {
         let data = json!({"userId": user_id, "Id": target_user_id});
 
-        self.mutation(USER_MUTATIONS_DELETE, data)?
+        self.mutation(DELETE_USER_MUTATION, data)?
             .user()?
             .delete()?
             .propagate_errors()?;
@@ -369,7 +381,7 @@ impl GraphQLClient {
         let data = json!({"name": name, "userId": user_id, "durationDays": duration_days});
 
         Ok(self
-            .mutation(USER_MUTATIONS_CREATE_USER_API_KEY, data)?
+            .mutation(CREATE_USER_API_KEY_MUTATION, data)?
             .user()?
             .create_user_api_key()?
             .propagate_errors()?
@@ -380,7 +392,7 @@ impl GraphQLClient {
     pub fn delete_user_api_key(&self, api_key_id: Id, user_id: Id) -> Result<(), GraphQLError> {
         let data = json!({"apiKeyId": api_key_id, "userId": user_id});
 
-        self.mutation(USER_MUTATIONS_DELETE_USER_API_KEY, data)?
+        self.mutation(DELETE_USER_API_KEY_MUTATION, data)?
             .user()?
             .delete_user_api_key()?
             .propagate_errors()?;
@@ -389,9 +401,7 @@ impl GraphQLClient {
     }
 
     pub fn all_users(&self) -> Result<Vec<User>, GraphQLError> {
-        let data = json!({});
-
-        let result = self.query(USER_QUERIES_ALL, data)?.user()?;
+        let result = self.query(SEARCH_USERS_QUERY, json!({}))?.user()?;
 
         let mut users: Vec<User> = Vec::new();
 
@@ -406,7 +416,7 @@ impl GraphQLClient {
         let data = json!({"username": username});
 
         Ok(self
-            .query(USER_QUERIES_BY_USERNAME, data)?
+            .query(SEARCH_USERS_QUERY, data)?
             .user()?
             .one()?
             .to_model()?)
@@ -416,7 +426,7 @@ impl GraphQLClient {
         let data = json!({"Id": user_id});
 
         let workspaces = self
-            .query(USER_QUERIES_WORKSPACES, data)?
+            .query(USER_WORKSPACES_QUERY, data)?
             .user()?
             .one()?
             .workspaces()?;
@@ -437,7 +447,7 @@ impl GraphQLClient {
         let data = json!({"username": username});
 
         let workspaces = self
-            .query(USER_QUERIES_WORKSPACES_BY_USERNAME, data)?
+            .query(USER_WORKSPACES_QUERY, data)?
             .user()?
             .one()?
             .workspaces()?;
@@ -455,7 +465,7 @@ impl GraphQLClient {
         let data = json!({"userId": user_id});
 
         let api_keys = self
-            .query(USER_QUERIES_USER_API_KEYS, data)?
+            .query(USER_API_KEYS_QUERY, data)?
             .user()?
             .one()?
             .user_api_keys()?;
@@ -479,8 +489,12 @@ impl GraphQLClient {
     ) -> Result<(String, User), GraphQLError> {
         let data = json!({"username": username, "password": password});
 
-        let data = self.mutation(AUTH_MUTATIONS_LOGIN, data)?.auth()?;
+        let data = self.mutation(LOGIN_MUTATION, data)?.auth()?.payload()?;
 
-        Ok((data.token()?, data.user()?.to_model()?))
+        let token = data.token()?;
+
+        let user = data.user()?.to_model()?;
+
+        Ok((token, user))
     }
 }
