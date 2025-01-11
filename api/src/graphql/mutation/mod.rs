@@ -1,5 +1,4 @@
 use crate::crud::auth::user::auth_user;
-use crate::mutation_error;
 use crate::state::AppState;
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -8,7 +7,7 @@ pub mod result;
 pub mod user;
 pub mod workspace;
 
-use self::result::{ValidationError, LoginInput, AuthPayload, AuthResult};
+use self::result::{LoginInput, AuthPayload, AuthResult};
 use self::user::UserMutation;
 use self::workspace::WorkspaceMutation;
 
@@ -30,11 +29,7 @@ impl Mutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
-                    AuthResult,
-                    "database",
-                    format!("Failed to get database connection: {}", e)
-                )
+                return AuthResult::err("database", format!("Failed to get database connection: {}", e));
             }
         };
 
@@ -49,17 +44,17 @@ impl Mutation {
             Ok(u) => match u {
                 Some(u) => u,
                 None => {
-                    return mutation_error!(AuthResult, "user", "Invalid username or password");
+                    return AuthResult::err("user", "Invalid username or password".to_string());
                 }
             },
             Err(e) => {
-                return mutation_error!(AuthResult, "user", format!("Failed to get user: {:?}", e))
+                return AuthResult::err("user", format!("Failed to get user: {:?}", e))
             }
         };
 
-        AuthResult(Ok(AuthPayload {
+        AuthResult::ok(AuthPayload {
             token: "token-will-go-here-eventually".to_string(),
             user,
-        }))
+        })
     }
 }

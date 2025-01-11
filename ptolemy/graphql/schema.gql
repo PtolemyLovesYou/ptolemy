@@ -79,13 +79,14 @@ type CreateApiKeyResponse {
 }
 
 type CreateApiKeyResult {
-  apiKey: CreateApiKeyResponse
   success: Boolean!
+  apiKey: CreateApiKeyResponse
   error: [ValidationError!]
 }
 
 type DeletionResult {
   success: Boolean!
+  deleted: Boolean
   error: [ValidationError!]
 }
 

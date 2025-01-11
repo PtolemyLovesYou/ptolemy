@@ -2,9 +2,8 @@ use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
 use crate::{models::auth::UserCreate, state::AppState};
 
 use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult, ValidationError,
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult
 };
-use crate::{deletion_error, mutation_error};
 use juniper::graphql_object;
 use uuid::Uuid;
 
@@ -25,8 +24,7 @@ impl UserMutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
-                    UserResult,
+                return UserResult::err(
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -37,37 +35,34 @@ impl UserMutation {
         let user = match user_crud::get_user(&mut conn, &self.user_id).await {
             Ok(u) => u,
             Err(e) => {
-                return mutation_error!(UserResult, "user", format!("Failed to get user: {:?}", e))
+                return UserResult::err("user", format!("Failed to get user: {:?}", e))
             }
         };
 
         // if user is not admin or sysadmin, return forbidden
         if !user.is_admin && !user.is_sysadmin {
-            return mutation_error!(
-                UserResult,
+            return UserResult::err(
                 "user",
-                "You must be an admin or sysadmin to create a user"
+                "You must be an admin or sysadmin to create a user".to_string()
             );
         }
 
         // sysadmin cannot be created via REST API
         if user_data.is_sysadmin {
-            return mutation_error!(UserResult, "user", "Sysadmin cannot be created via API");
+            return UserResult::err("user", "Sysadmin cannot be created via API".to_string());
         }
 
         // if user is admin and they're trying to make another admin, return forbidden
         if user.is_admin && user_data.is_admin {
-            return mutation_error!(
-                UserResult,
+            return UserResult::err(
                 "user",
-                "You cannot create another admin. Contact your sysadmin."
+                "You cannot create another admin. Contact your sysadmin.".to_string()
             );
         }
 
         match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
             Ok(result) => UserResult(Ok(result)),
-            Err(e) => mutation_error!(
-                UserResult,
+            Err(e) => UserResult::err(
                 "user",
                 format!("Failed to create user: {:?}", e)
             ),
@@ -78,7 +73,7 @@ impl UserMutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -88,32 +83,32 @@ impl UserMutation {
         // get user permissions
         let acting_user = match user_crud::get_user(&mut conn, &self.user_id).await {
             Ok(u) => u,
-            Err(e) => return deletion_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
             Ok(u) => u,
-            Err(e) => return deletion_error!("user", format!("Failed to get user: {:?}", e)),
+            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         // if acting user is admin and they're trying to delete another admin, forbidden
         if acting_user.is_admin && user_to_delete.is_admin {
-            return deletion_error!("user", "You cannot delete another admin.");
+            return DeletionResult::err("user", "You cannot delete another admin.".to_string());
         }
 
         // cannot delete themselves
         if acting_user.id == id {
-            return deletion_error!("user", "You cannot delete yourself.");
+            return DeletionResult::err("user", "You cannot delete yourself.".to_string());
         }
 
         // sysadmin cannot be deleted via API
         if user_to_delete.is_sysadmin {
-            return deletion_error!("user", "Sysadmin cannot be deleted via API");
+            return DeletionResult::err("user", "Sysadmin cannot be deleted via API".to_string());
         }
 
         match user_crud::delete_user(&mut conn, &id).await {
             Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => deletion_error!("user", format!("Failed to delete user: {:?}", e)),
+            Err(e) => DeletionResult::err("user", format!("Failed to delete user: {:?}", e)),
         }
     }
 
@@ -126,8 +121,7 @@ impl UserMutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return mutation_error!(
-                    CreateApiKeyResult,
+                return CreateApiKeyResult::err(
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -148,12 +142,11 @@ impl UserMutation {
         )
         .await
         {
-            Ok((api_key_id, api_key)) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
+            Ok((api_key_id, api_key)) => CreateApiKeyResult::ok(CreateApiKeyResponse {
                 id: api_key_id,
                 api_key,
-            })),
-            Err(e) => mutation_error!(
-                CreateApiKeyResult,
+            }),
+            Err(e) => CreateApiKeyResult::err(
                 "user_api_key",
                 format!("Failed to create user API key: {:?}", e)
             ),
@@ -164,7 +157,7 @@ impl UserMutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return deletion_error!(
+                return DeletionResult::err(
                     "database",
                     format!("Failed to get database connection: {}", e)
                 )
@@ -173,7 +166,7 @@ impl UserMutation {
 
         match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &self.user_id).await {
             Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => deletion_error!(
+            Err(e) => DeletionResult::err(
                 "user_api_key",
                 format!("Failed to delete user API key: {:?}", e)
             ),

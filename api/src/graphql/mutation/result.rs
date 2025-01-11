@@ -3,26 +3,6 @@ use crate::state::AppState;
 use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
 use uuid::Uuid;
 
-#[macro_export]
-macro_rules! mutation_error {
-    ($result_type: ident, $field: expr, $message:expr) => {
-        $result_type(Err(vec![ValidationError {
-            field: $field.to_string(),
-            message: $message.to_string(),
-        }]))
-    };
-}
-
-#[macro_export]
-macro_rules! deletion_error {
-    ($field:expr, $message:expr) => {
-        DeletionResult(Err(vec![ValidationError {
-            field: $field.to_string(),
-            message: $message.to_string(),
-        }]))
-    };
-}
-
 macro_rules! result_model {
     ($name:ident, $result_type:ty, $field_name:ident) => {
         pub struct $name(pub Result<$result_type, Vec<ValidationError>>);
@@ -40,6 +20,19 @@ macro_rules! result_model {
 
             fn error(&self) -> Option<&[ValidationError]> {
                 self.0.as_ref().err().map(Vec::as_slice)
+            }
+        }
+
+        impl $name {
+            pub fn err(field: &str, message: String) -> Self {
+                $name(Err(vec![ValidationError {
+                    field: field.to_string(),
+                    message: message,
+                }]))
+            }
+
+            pub fn ok(value: $result_type) -> Self {
+                $name(Ok(value))
             }
         }
     }
