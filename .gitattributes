@@ -15,4 +15,4 @@ prototype/ -linguist-detectable
 api/src/generated/*.rs -linguist-detectable
 
 # Set migrations as detectable
-api/diesel/**/*.sql linguist-detectable
+# api/diesel/**/*.sql linguist-detectable
