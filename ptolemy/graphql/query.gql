@@ -28,12 +28,7 @@ query UserWorkspaces($Id: Uuid, $username: String) {
 
 query SearchUsers($username: String, $userId: Uuid) {
   user(username: $username, id: $userId) {
-    id
-    username
-    displayName
-    status
-    isAdmin
-    isSysadmin
+    ...ReturnsUser
   }
 }
 
@@ -42,12 +37,7 @@ query WorkspaceUsers($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, 
     users {
       role
       user(id: $userId, username: $username) {
-        id
-        username
-        displayName
-        status
-        isAdmin
-        isSysadmin
+        ...ReturnsUser
       }
     }
   }
@@ -64,4 +54,13 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
       workspaceId
     }
   }
+}
+
+fragment ReturnsUser on User {
+  displayName
+  id
+  isAdmin
+  isSysadmin
+  status
+  username
 }
