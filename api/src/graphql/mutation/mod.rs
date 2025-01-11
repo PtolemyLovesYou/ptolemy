@@ -1,48 +1,16 @@
 use crate::crud::auth::user::auth_user;
-use crate::models::auth::User;
 use crate::mutation_error;
 use crate::state::AppState;
-use juniper::{graphql_object, GraphQLInputObject, GraphQLObject};
+use juniper::graphql_object;
 use uuid::Uuid;
 
 pub mod result;
 pub mod user;
 pub mod workspace;
 
-use self::result::ValidationError;
+use self::result::{ValidationError, LoginInput, AuthPayload, AuthResult};
 use self::user::UserMutation;
 use self::workspace::WorkspaceMutation;
-
-#[derive(Clone, Debug, GraphQLInputObject)]
-pub struct LoginInput {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Debug, GraphQLObject)]
-#[graphql(context = AppState)]
-pub struct AuthPayload {
-    pub token: String,
-    pub user: User,
-}
-
-pub struct AuthResult(Result<AuthPayload, Vec<ValidationError>>);
-
-#[graphql_object]
-#[graphql(context = AppState)]
-impl AuthResult {
-    pub fn success(&self) -> bool {
-        self.0.as_ref().is_ok()
-    }
-
-    pub fn payload(&self) -> Option<&AuthPayload> {
-        self.0.as_ref().ok()
-    }
-
-    pub fn error(&self) -> Option<&[ValidationError]> {
-        self.0.as_ref().err().map(Vec::as_slice)
-    }
-}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Mutation;

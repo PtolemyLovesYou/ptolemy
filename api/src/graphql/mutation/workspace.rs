@@ -129,7 +129,7 @@ impl WorkspaceMutation {
         };
 
         match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
-            Ok(_) => DeletionResult(Ok(())),
+            Ok(_) => DeletionResult(Ok(true)),
             Err(e) => deletion_error!("workspace", format!("Failed to delete workspace: {:?}", e)),
         }
     }
@@ -251,7 +251,7 @@ impl WorkspaceMutation {
         }
 
         match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
-            Ok(_) => DeletionResult(Ok(())),
+            Ok(_) => DeletionResult(Ok(true)),
             Err(e) => deletion_error!(
                 "workspace_user",
                 format!("Failed to delete user from workspace: {:?}", e)
@@ -445,7 +445,7 @@ impl WorkspaceMutation {
         match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id)
             .await
         {
-            Ok(_) => DeletionResult(Ok(())),
+            Ok(_) => DeletionResult(Ok(true)),
             Err(e) => deletion_error!(
                 "service_api_key",
                 format!("Failed to delete service API key: {:?}", e)

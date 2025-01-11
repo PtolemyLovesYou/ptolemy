@@ -112,7 +112,7 @@ impl UserMutation {
         }
 
         match user_crud::delete_user(&mut conn, &id).await {
-            Ok(_) => DeletionResult(Ok(())),
+            Ok(_) => DeletionResult(Ok(true)),
             Err(e) => deletion_error!("user", format!("Failed to delete user: {:?}", e)),
         }
     }
@@ -172,7 +172,7 @@ impl UserMutation {
         };
 
         match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &self.user_id).await {
-            Ok(_) => DeletionResult(Ok(())),
+            Ok(_) => DeletionResult(Ok(true)),
             Err(e) => deletion_error!(
                 "user_api_key",
                 format!("Failed to delete user API key: {:?}", e)

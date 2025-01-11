@@ -1,6 +1,6 @@
 use crate::models::auth::{ServiceApiKey, User, Workspace, WorkspaceUser};
 use crate::state::AppState;
-use juniper::{graphql_object, GraphQLObject};
+use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
 use uuid::Uuid;
 
 #[derive(Debug, GraphQLObject)]
@@ -15,12 +15,16 @@ pub struct ValidationError {
     pub message: String,
 }
 
-pub struct DeletionResult(pub Result<(), Vec<ValidationError>>);
+pub struct DeletionResult(pub Result<bool, Vec<ValidationError>>);
 
 #[graphql_object]
 #[graphql(name = "DeletionResult")]
 impl DeletionResult {
     fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+
+    fn deleted(&self) -> bool {
         self.0.as_ref().is_ok()
     }
 
@@ -47,6 +51,37 @@ macro_rules! deletion_error {
             message: $message.to_string(),
         }]))
     };
+}
+
+#[derive(Clone, Debug, GraphQLInputObject)]
+pub struct LoginInput {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, GraphQLObject)]
+#[graphql(context = AppState)]
+pub struct AuthPayload {
+    pub token: String,
+    pub user: User,
+}
+
+pub struct AuthResult(pub Result<AuthPayload, Vec<ValidationError>>);
+
+#[graphql_object]
+#[graphql(context = AppState)]
+impl AuthResult {
+    pub fn success(&self) -> bool {
+        self.0.as_ref().is_ok()
+    }
+
+    pub fn payload(&self) -> Option<&AuthPayload> {
+        self.0.as_ref().ok()
+    }
+
+    pub fn error(&self) -> Option<&[ValidationError]> {
+        self.0.as_ref().err().map(Vec::as_slice)
+    }
 }
 
 pub struct UserResult(pub Result<User, Vec<ValidationError>>);
