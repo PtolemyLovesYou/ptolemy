@@ -10,7 +10,7 @@ static MODEL_FORMATTER: &CStr =
 
 macro_rules! pymodel {
     ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
-        #[pyclass]
+        #[pyclass(frozen)]
         #[derive(Clone, Debug)]
         pub struct $name($struct);
 
