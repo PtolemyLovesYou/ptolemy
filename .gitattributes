@@ -18,3 +18,5 @@ api/src/generated/*.rs -linguist-detectable
 api/diesel/**/*.sql linguist-detectable
 
 *.sql linguist-language=SQL
+
+docs/**/* -linguist-detectable
