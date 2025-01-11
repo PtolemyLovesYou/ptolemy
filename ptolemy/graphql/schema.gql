@@ -20,6 +20,11 @@ enum WorkspaceRoleEnum {
   ADMIN
 }
 
+input LoginInput {
+  username: String!
+  password: String!
+}
+
 input UserCreate {
   username: String!
   password: String!
@@ -50,6 +55,13 @@ scalar LocalDateTime
 
 scalar Uuid
 
+type AuthResult {
+  success: Boolean!
+  token: String
+  user: User
+  error: [ValidationError!]
+}
+
 type CreateApiKeyResponse {
   apiKey: String!
   id: Uuid!
@@ -69,6 +81,7 @@ type DeletionResult {
 type Mutation {
   user(userId: Uuid!): UserMutation!
   workspace(userId: Uuid!): WorkspaceMutation!
+  auth(userData: LoginInput!): AuthResult!
 }
 
 type Query {

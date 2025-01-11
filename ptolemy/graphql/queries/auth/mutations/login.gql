@@ -1,0 +1,18 @@
+mutation Login($username: String!, $password: String!) {
+  auth(userData: {username: $username, password: $password}) {
+    error {
+      field
+      message
+    }
+    success
+    token
+    user {
+      displayName
+      id
+      isAdmin
+      isSysadmin
+      status
+      username
+    }
+  }
+}
