@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 from pydantic import BaseModel, Field, ConfigDict
-from ..models.auth import User, Workspace
+from .._core import User, Workspace # pylint: disable=no-name-in-module
 
 
 class Commands(StrEnum):
@@ -14,7 +14,7 @@ class Commands(StrEnum):
 class CLIState(BaseModel):
     """Holds the CLI state."""
 
-    model_config = ConfigDict(validate_default=False)
+    model_config = ConfigDict(validate_default=False, arbitrary_types_allowed=True)
 
     user: User
     workspace: Workspace = Field(default=None)

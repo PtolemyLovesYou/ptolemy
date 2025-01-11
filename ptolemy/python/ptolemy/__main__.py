@@ -8,20 +8,22 @@ from prompt_toolkit.completion import WordCompleter
 from .cli.login import login, select_workspace
 from .cli import get_cli
 from .cli.cli import CLIState, Commands
+from . import GraphQLClient
 
 
 def run_cli():
     """Run Ptolemy CLI."""
     session = PromptSession()
     completer = WordCompleter(list(Commands))
+    client = GraphQLClient("http://localhost:8000/graphql")
     current_user = None
 
     while current_user is None:
         try:
-            current_user = login(session)
+            current_user = login(session, client)
 
             cli_data = {"user": current_user}
-            wk = select_workspace(current_user)
+            wk = select_workspace(current_user, client)
 
             if wk:
                 cli_data["workspace"] = wk

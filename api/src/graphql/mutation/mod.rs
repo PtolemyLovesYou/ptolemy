@@ -88,7 +88,7 @@ impl Mutation {
         };
 
         MutationResult(Ok(AuthPayload {
-            token: "".to_string(),
+            token: "token-will-go-here-eventually".to_string(),
             user,
         }))
     }

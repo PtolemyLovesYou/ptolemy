@@ -1,44 +1,25 @@
 """Login."""
 
-from urllib.parse import urljoin
-import requests
+from typing import Optional
 import questionary
 from prompt_toolkit import PromptSession, print_formatted_text as printf
-from ..models.auth import User, Workspace
-from ..models.gql import GQLQuery
-from ..gql import GET_USER_WORKSPACES
+from .._core import GraphQLClient, User, Workspace # pylint: disable=no-name-in-module
 
 
-def login(session: PromptSession):
+def login(session: PromptSession, client: GraphQLClient):
     """Login."""
     printf("Welcome to Ptolemy CLI!")
     username = session.prompt("Please enter your username:\n> ", is_password=False)
     password = session.prompt("Please enter your password:\n> ", is_password=True)
 
-    resp = requests.post(
-        urljoin("http://localhost:8000", "/auth"),
-        json={"username": username, "password": password},
-        timeout=5,
-    )
+    _, user = client.login(username, password)
 
-    if resp.ok:
-        data = resp.json()
-        return User(
-            id=data["id"],
-            username=data["username"],
-            is_admin=data["is_admin"],
-            is_sysadmin=data["is_sysadmin"],
-            display_name=data.get("display_name"),
-            status=data["status"].upper(),
-        )
-
-    raise ValueError("Failed to login.")
+    return user
 
 
-def select_workspace(usr: User) -> Workspace:
+def select_workspace(usr: User, client: GraphQLClient) -> Optional[Workspace]:
     """Select workspaces."""
-    resp = GQLQuery.query(GET_USER_WORKSPACES, {"Id": usr.id.hex})
-    workspaces = {w.name: w.to_model() for w in resp.user[0].workspaces}
+    workspaces = client.get_user_workspaces(usr.id)
 
     if workspaces:
         wk = questionary.select(
@@ -48,3 +29,5 @@ def select_workspace(usr: User) -> Workspace:
         ).ask()
 
         return workspaces[wk]
+
+    return None
