@@ -292,8 +292,8 @@ mutation CreateUserApiKey($name: String!, $userId: Uuid!, $durationDays: Int) {
 
 /// Pulled from graphql/queries/user/queries/workspaces.gql
 pub const USER_QUERIES_WORKSPACES: &'static str = r###"
-query UserWorkspaces($Id: Uuid) {
-  user(id: $Id) {
+query UserWorkspaces($Id: Uuid, $username: String) {
+  user(id: $Id, username: $username) {
     workspaces {
       archived
       description
@@ -301,6 +301,9 @@ query UserWorkspaces($Id: Uuid) {
       name
       createdAt
       updatedAt
+      users(username: $username) {
+        role
+      }
     }
   }
 }
@@ -321,43 +324,10 @@ query UserApiKeys($userId: Uuid) {
 }
 "###;
 
-/// Pulled from graphql/queries/user/queries/workspaces_by_username.gql
-pub const USER_QUERIES_WORKSPACES_BY_USERNAME: &'static str = r###"
-query UserWorkspacesByUsername($username: String!) {
-  user(username: $username) {
-    workspaces {
-      archived
-      description
-      id
-      name
-      createdAt
-      updatedAt
-      users(username: $username) {
-        role
-      }
-    }
-  }
-}
-"###;
-
-/// Pulled from graphql/queries/user/queries/all.gql
-pub const USER_QUERIES_ALL: &'static str = r###"
-query AllUsers {
-  user {
-    id
-    username
-    displayName
-    isAdmin
-    isSysadmin
-    status
-  }
-}
-"###;
-
-/// Pulled from graphql/queries/user/queries/by_username.gql
-pub const USER_QUERIES_BY_USERNAME: &'static str = r###"
-query UserByName($username: String!) {
-  user(username: $username) {
+/// Pulled from graphql/queries/user/queries/users.gql
+pub const USER_QUERIES_USERS: &'static str = r###"
+query UserByName($username: String, $userId: Uuid) {
+  user(username: $username, id: $userId) {
     id
     username
     displayName

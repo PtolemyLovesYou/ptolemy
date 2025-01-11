@@ -93,7 +93,7 @@ def list_workspaces_of_user(ctx, username: Optional[str] = None):
     """Get workspaces of user."""
     cli_state: CLIState = ctx.obj["state"]
     wks = [
-        {"workspace": wk, "role": role}
+        {"workspace": wk.name, "role": role}
         for (role, wk) in cli_state.client.get_user_workspaces_by_username(
             username or cli_state.user.username
         )

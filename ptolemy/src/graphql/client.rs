@@ -389,9 +389,7 @@ impl GraphQLClient {
     }
 
     pub fn all_users(&self) -> Result<Vec<User>, GraphQLError> {
-        let data = json!({});
-
-        let result = self.query(USER_QUERIES_ALL, data)?.user()?;
+        let result = self.query(USER_QUERIES_USERS, json!({}))?.user()?;
 
         let mut users: Vec<User> = Vec::new();
 
@@ -406,7 +404,7 @@ impl GraphQLClient {
         let data = json!({"username": username});
 
         Ok(self
-            .query(USER_QUERIES_BY_USERNAME, data)?
+            .query(USER_QUERIES_USERS, data)?
             .user()?
             .one()?
             .to_model()?)
@@ -437,7 +435,7 @@ impl GraphQLClient {
         let data = json!({"username": username});
 
         let workspaces = self
-            .query(USER_QUERIES_WORKSPACES_BY_USERNAME, data)?
+            .query(USER_QUERIES_WORKSPACES, data)?
             .user()?
             .one()?
             .workspaces()?;

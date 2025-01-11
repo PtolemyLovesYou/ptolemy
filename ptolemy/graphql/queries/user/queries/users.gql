@@ -1,0 +1,10 @@
+query UserByName($username: String, $userId: Uuid) {
+  user(username: $username, id: $userId) {
+    id
+    username
+    displayName
+    isAdmin
+    isSysadmin
+    status
+  }
+}
