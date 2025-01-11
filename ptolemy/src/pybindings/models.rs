@@ -9,10 +9,6 @@ static MODEL_FORMATTER: &CStr =
     c_str!(r#"'{}({})'.format(name, ', '.join(k + '=' + repr(v) for k, v in model_attrs))"#);
 
 macro_rules! pymodel {
-    ($struct:ty, $name:ident, [$($getter:ident),+ $(,)?]) => {
-        pymodel!($struct, $name, [name = stringify!($struct)], [$($getter),+]);
-    };
-
     ($struct:ty, $name:ident, [$($meta:tt)*], [$($getter:ident),+ $(,)?]) => {
         #[pyclass(frozen, $($meta)*)]
         #[derive(Clone, Debug)]
