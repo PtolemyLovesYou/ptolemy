@@ -44,6 +44,11 @@ input WorkspaceUserCreate {
   role: WorkspaceRoleEnum!
 }
 
+interface GQLResult {
+  success: Boolean!
+  error: [ValidationError!]
+}
+
 """
   Combined date and time (with time zone) in [RFC 3339][0] format.
 
@@ -67,7 +72,7 @@ type AuthPayload {
   user: User!
 }
 
-type AuthResult {
+type AuthResult implements GQLResult {
   success: Boolean!
   payload: AuthPayload
   error: [ValidationError!]
@@ -78,13 +83,13 @@ type CreateApiKeyResponse {
   id: Uuid!
 }
 
-type CreateApiKeyResult {
+type CreateApiKeyResult implements GQLResult {
   success: Boolean!
   apiKey: CreateApiKeyResponse
   error: [ValidationError!]
 }
 
-type DeletionResult {
+type DeletionResult implements GQLResult {
   success: Boolean!
   deleted: Boolean
   error: [ValidationError!]
@@ -109,6 +114,12 @@ type ServiceApiKey {
   keyPreview: String!
   permissions: ApiKeyPermissionEnum!
   expiresAt: DateTime
+}
+
+type ServiceApiKeyResult implements GQLResult {
+  success: Boolean!
+  serviceApiKey: ServiceApiKey
+  error: [ValidationError!]
 }
 
 type User {
@@ -137,7 +148,7 @@ type UserMutation {
   deleteUserApiKey(apiKeyId: Uuid!): DeletionResult!
 }
 
-type UserResult {
+type UserResult implements GQLResult {
   success: Boolean!
   user: User
   error: [ValidationError!]
@@ -169,7 +180,7 @@ type WorkspaceMutation {
   deleteServiceApiKey(workspaceId: Uuid!, apiKeyId: Uuid!): DeletionResult!
 }
 
-type WorkspaceResult {
+type WorkspaceResult implements GQLResult {
   success: Boolean!
   workspace: Workspace
   error: [ValidationError!]
@@ -181,7 +192,7 @@ type WorkspaceUser {
   workspace: Workspace!
 }
 
-type WorkspaceUserResult {
+type WorkspaceUserResult implements GQLResult {
   success: Boolean!
   workspaceUser: WorkspaceUser
   error: [ValidationError!]

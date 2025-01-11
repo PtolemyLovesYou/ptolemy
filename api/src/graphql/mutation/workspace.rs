@@ -9,8 +9,7 @@ use crate::{
 };
 
 use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
-    WorkspaceUserResult,
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
 };
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -39,7 +38,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -50,16 +49,11 @@ impl WorkspaceMutation {
                 false => {
                     return WorkspaceResult::err(
                         "user",
-                        "You must be an admin to create a workspace".to_string()
+                        "You must be an admin to create a workspace".to_string(),
                     )
                 }
             },
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "user",
-                    format!("Failed to get user: {:?}", e)
-                )
-            }
+            Err(e) => return WorkspaceResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
@@ -67,7 +61,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceResult::err(
                     "workspace",
-                    format!("Failed to create workspace: {:?}", e)
+                    format!("Failed to create workspace: {:?}", e),
                 )
             }
         };
@@ -93,7 +87,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceResult::err(
                     "workspace_user",
-                    format!("Failed to create workspace user: {:?}", e)
+                    format!("Failed to create workspace user: {:?}", e),
                 )
             }
         };
@@ -107,7 +101,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -116,7 +110,10 @@ impl WorkspaceMutation {
             Ok(user) => match user.is_admin {
                 true => (),
                 false => {
-                    return DeletionResult::err("user", "You must be an admin to delete a workspace".to_string())
+                    return DeletionResult::err(
+                        "user",
+                        "You must be an admin to delete a workspace".to_string(),
+                    )
                 }
             },
             Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
@@ -124,7 +121,9 @@ impl WorkspaceMutation {
 
         match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
             Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => DeletionResult::err("workspace", format!("Failed to delete workspace: {:?}", e)),
+            Err(e) => {
+                DeletionResult::err("workspace", format!("Failed to delete workspace: {:?}", e))
+            }
         }
     }
 
@@ -138,7 +137,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceUserResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -155,7 +154,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceUserResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -166,7 +165,7 @@ impl WorkspaceMutation {
             _ => {
                 return WorkspaceUserResult::err(
                     "permission",
-                    "Insufficient permissions".to_string()
+                    "Insufficient permissions".to_string(),
                 )
             }
         }
@@ -175,7 +174,7 @@ impl WorkspaceMutation {
             Ok(result) => WorkspaceUserResult(Ok(result)),
             Err(e) => WorkspaceUserResult::err(
                 "workspace_user",
-                format!("Failed to add user to workspace: {:?}", e)
+                format!("Failed to add user to workspace: {:?}", e),
             ),
         }
     }
@@ -191,7 +190,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -208,7 +207,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return DeletionResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -228,13 +227,16 @@ impl WorkspaceMutation {
                     Err(e) => {
                         return DeletionResult::err(
                             "permission",
-                            format!("Failed to get target user permission: {:?}", e)
+                            format!("Failed to get target user permission: {:?}", e),
                         )
                     }
                 };
 
                 if target_permission == WorkspaceRoleEnum::Admin {
-                    return DeletionResult::err("permission", "Managers cannot delete admin users".to_string());
+                    return DeletionResult::err(
+                        "permission",
+                        "Managers cannot delete admin users".to_string(),
+                    );
                 }
             }
             _ => return DeletionResult::err("permission", "Insufficient permissions".to_string()),
@@ -244,7 +246,7 @@ impl WorkspaceMutation {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "workspace_user",
-                format!("Failed to delete user from workspace: {:?}", e)
+                format!("Failed to delete user from workspace: {:?}", e),
             ),
         }
     }
@@ -261,7 +263,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceUserResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -278,7 +280,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return WorkspaceUserResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -290,14 +292,14 @@ impl WorkspaceMutation {
                 if new_role == WorkspaceRoleEnum::Admin {
                     return WorkspaceUserResult::err(
                         "permission",
-                        "Managers cannot assign admin role".to_string()
+                        "Managers cannot assign admin role".to_string(),
                     );
                 }
             }
             _ => {
                 return WorkspaceUserResult::err(
                     "permission",
-                    "Insufficient permissions".to_string()
+                    "Insufficient permissions".to_string(),
                 )
             }
         }
@@ -313,7 +315,7 @@ impl WorkspaceMutation {
             Ok(result) => WorkspaceUserResult(Ok(result)),
             Err(e) => WorkspaceUserResult::err(
                 "workspace_user",
-                format!("Failed to change user role: {:?}", e)
+                format!("Failed to change user role: {:?}", e),
             ),
         }
     }
@@ -331,7 +333,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return CreateApiKeyResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -349,14 +351,14 @@ impl WorkspaceMutation {
                 _ => {
                     return CreateApiKeyResult::err(
                         "permission",
-                        "Insufficient permissions".to_string()
+                        "Insufficient permissions".to_string(),
                     )
                 }
             },
             Err(e) => {
                 return CreateApiKeyResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -382,7 +384,7 @@ impl WorkspaceMutation {
             })),
             Err(e) => CreateApiKeyResult::err(
                 "service_api_key",
-                format!("Failed to create service API key: {:?}", e)
+                format!("Failed to create service API key: {:?}", e),
             ),
         }
     }
@@ -398,7 +400,7 @@ impl WorkspaceMutation {
             Err(e) => {
                 return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -413,12 +415,17 @@ impl WorkspaceMutation {
         {
             Ok(role) => match role {
                 WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => return DeletionResult::err("permission", "Insufficient permissions".to_string()),
+                _ => {
+                    return DeletionResult::err(
+                        "permission",
+                        "Insufficient permissions".to_string(),
+                    )
+                }
             },
             Err(e) => {
                 return DeletionResult::err(
                     "permission",
-                    format!("Failed to get workspace user permission: {:?}", e)
+                    format!("Failed to get workspace user permission: {:?}", e),
                 )
             }
         };
@@ -429,7 +436,7 @@ impl WorkspaceMutation {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "service_api_key",
-                format!("Failed to delete service API key: {:?}", e)
+                format!("Failed to delete service API key: {:?}", e),
             ),
         }
     }

@@ -7,7 +7,7 @@ pub mod result;
 pub mod user;
 pub mod workspace;
 
-use self::result::{LoginInput, AuthPayload, AuthResult};
+use self::result::{AuthPayload, AuthResult, LoginInput};
 use self::user::UserMutation;
 use self::workspace::WorkspaceMutation;
 
@@ -29,7 +29,10 @@ impl Mutation {
         let mut conn = match ctx.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return AuthResult::err("database", format!("Failed to get database connection: {}", e));
+                return AuthResult::err(
+                    "database",
+                    format!("Failed to get database connection: {}", e),
+                );
             }
         };
 
@@ -47,9 +50,7 @@ impl Mutation {
                     return AuthResult::err("user", "Invalid username or password".to_string());
                 }
             },
-            Err(e) => {
-                return AuthResult::err("user", format!("Failed to get user: {:?}", e))
-            }
+            Err(e) => return AuthResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         AuthResult::ok(AuthPayload {

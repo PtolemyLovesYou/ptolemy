@@ -2,7 +2,7 @@ use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
 use crate::{models::auth::UserCreate, state::AppState};
 
 use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult,
 };
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -26,7 +26,7 @@ impl UserMutation {
             Err(e) => {
                 return UserResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -34,16 +34,14 @@ impl UserMutation {
         // get user permissions
         let user = match user_crud::get_user(&mut conn, &self.user_id).await {
             Ok(u) => u,
-            Err(e) => {
-                return UserResult::err("user", format!("Failed to get user: {:?}", e))
-            }
+            Err(e) => return UserResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
         // if user is not admin or sysadmin, return forbidden
         if !user.is_admin && !user.is_sysadmin {
             return UserResult::err(
                 "user",
-                "You must be an admin or sysadmin to create a user".to_string()
+                "You must be an admin or sysadmin to create a user".to_string(),
             );
         }
 
@@ -56,16 +54,13 @@ impl UserMutation {
         if user.is_admin && user_data.is_admin {
             return UserResult::err(
                 "user",
-                "You cannot create another admin. Contact your sysadmin.".to_string()
+                "You cannot create another admin. Contact your sysadmin.".to_string(),
             );
         }
 
         match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
             Ok(result) => UserResult(Ok(result)),
-            Err(e) => UserResult::err(
-                "user",
-                format!("Failed to create user: {:?}", e)
-            ),
+            Err(e) => UserResult::err("user", format!("Failed to create user: {:?}", e)),
         }
     }
 
@@ -75,7 +70,7 @@ impl UserMutation {
             Err(e) => {
                 return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -123,7 +118,7 @@ impl UserMutation {
             Err(e) => {
                 return CreateApiKeyResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -148,7 +143,7 @@ impl UserMutation {
             }),
             Err(e) => CreateApiKeyResult::err(
                 "user_api_key",
-                format!("Failed to create user API key: {:?}", e)
+                format!("Failed to create user API key: {:?}", e),
             ),
         }
     }
@@ -159,7 +154,7 @@ impl UserMutation {
             Err(e) => {
                 return DeletionResult::err(
                     "database",
-                    format!("Failed to get database connection: {}", e)
+                    format!("Failed to get database connection: {}", e),
                 )
             }
         };
@@ -168,7 +163,7 @@ impl UserMutation {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "user_api_key",
-                format!("Failed to delete user API key: {:?}", e)
+                format!("Failed to delete user API key: {:?}", e),
             ),
         }
     }
