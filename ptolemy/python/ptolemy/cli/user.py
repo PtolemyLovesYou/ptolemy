@@ -103,3 +103,49 @@ def list_workspaces_of_user(ctx, username: Optional[str] = None):
         click.echo(f"No workspaces found for {username}.")
 
     click.echo(tabulate(wks, headers="keys"))
+
+@user.group(name="api-keys")
+def user_api_keys():
+    """User API keys."""
+
+
+@user_api_keys.command(name="list")
+@click.pass_context
+def list_api_keys(ctx):
+    """List API keys."""
+    cli_state: CLIState = ctx.obj["state"]
+    api_keys = cli_state.client.get_user_api_keys(cli_state.user.id)
+
+    if not api_keys:
+        click.echo("No API keys found.")
+    else:
+        click.echo(tabulate((i.to_dict() for i in api_keys), headers="keys"))
+
+@user_api_keys.command(name="delete")
+@click.argument("api_key_id")
+@click.pass_context
+def delete_api_key(ctx, api_key_id: str):
+    """Delete API key."""
+    cli_state: CLIState = ctx.obj["state"]
+
+    try:
+        cli_state.client.delete_user_api_key(cli_state.user.id, api_key_id)
+        click.echo(f"Successfully deleted API key {api_key_id}")
+    except ValueError as e:
+        click.echo(f"Failed to delete API key: {e}")
+
+@user_api_keys.command(name="create")
+@click.option("--name", required=True, type=str)
+@click.option("--duration", required=False, type=int)
+@click.pass_context
+def create_api_key(ctx, name: str, duration: Optional[int] = None):
+    """Create API key."""
+    cli_state: CLIState = ctx.obj["state"]
+
+    try:
+        api_key = cli_state.client.create_user_api_key(
+            name, cli_state.user.id, duration
+        )
+        click.echo(f"Successfully created API key {api_key}")
+    except ValueError as e:
+        click.echo(f"Failed to create API key: {e}")

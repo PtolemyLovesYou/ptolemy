@@ -363,7 +363,7 @@ impl GraphQLClient {
     pub fn create_user_api_key(
         &self,
         name: String,
-        user_id: String,
+        user_id: Id,
         duration_days: Option<isize>,
     ) -> Result<String, GraphQLError> {
         let data = json!({"name": name, "userId": user_id, "durationDays": duration_days});

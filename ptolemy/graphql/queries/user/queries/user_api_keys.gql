@@ -1,5 +1,5 @@
-query UserApiKeys($Id: Uuid) {
-  user(id: $Id) {
+query UserApiKeys($userId: Uuid) {
+  user(id: $userId) {
     userApiKeys {
       expiresAt
       id

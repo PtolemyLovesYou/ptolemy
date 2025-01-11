@@ -170,7 +170,7 @@ impl PyGraphQLClient {
     pub fn create_user_api_key(
         &self,
         name: String,
-        user_id: String,
+        user_id: Id,
         duration_days: Option<isize>,
     ) -> PyResult<String> {
         Ok(self

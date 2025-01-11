@@ -308,8 +308,8 @@ query UserWorkspaces($Id: Uuid) {
 
 /// Pulled from graphql/queries/user/queries/user_api_keys.gql
 pub const USER_QUERIES_USER_API_KEYS: &'static str = r###"
-query UserApiKeys($Id: Uuid) {
-  user(id: $Id) {
+query UserApiKeys($userId: Uuid) {
+  user(id: $userId) {
     userApiKeys {
       expiresAt
       id
