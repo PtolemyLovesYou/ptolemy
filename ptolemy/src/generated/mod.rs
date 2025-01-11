@@ -1,2 +1,2 @@
 pub mod observer;
-pub mod gql_ops;
+pub mod gql;

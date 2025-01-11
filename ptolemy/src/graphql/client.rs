@@ -1,6 +1,6 @@
 use crate::{
     error::GraphQLError,
-    generated::gql_ops::*,
+    generated::gql::*,
     graphql::response::{GQLResponse, GraphQLResult, MutationResponse, QueryResponse},
     models::{
         auth::{ServiceApiKey, User, UserApiKey, Workspace},
