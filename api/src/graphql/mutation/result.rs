@@ -29,8 +29,6 @@ impl DeletionResult {
     }
 }
 
-pub struct MutationResult<T>(pub Result<T, Vec<ValidationError>>);
-
 #[macro_export]
 macro_rules! mutation_error {
     ($result_type: ident, $field: expr, $message:expr) => {
