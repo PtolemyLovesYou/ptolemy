@@ -3,7 +3,7 @@ from ptolemy._core import GraphQLClient
 
 client = GraphQLClient("http://localhost:8000/graphql")
 
-user = client.get_user_by_name("admin")
+_, user = client.login("admin", "admin")
 
 print(user)
 
