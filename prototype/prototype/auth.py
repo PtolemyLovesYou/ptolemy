@@ -1,22 +1,31 @@
 """Auth services."""
 
 import streamlit as st
-from .client import get_client
+import requests
+from ptolemy import GraphQLClient
 
-
-def login(username: str, password: str) -> bool:
+def login(username: str, password: str):
     """Login."""
-    client = get_client()
-
     try:
-        _, user = client.login(username, password)
+        resp = requests.post(
+            "http://api:8000/auth",
+            json={"username": username, "password": password},
+            timeout=5
+            )
+        if not resp.ok:
+            raise ValueError(f"Invalid username or password: {resp.text}")
+
+        token = resp.json()["token"]
+        client = GraphQLClient("http://api:8000/graphql", token)
+        user = client.me()
 
         st.session_state.authenticated = True
         st.session_state.user_info = user
+        st.session_state.client = client
 
-        return True
-    except ValueError:
-        return False
+        st.rerun()
+    except ValueError as e:
+        return st.error(e)
 
 
 def logout():
@@ -40,8 +49,4 @@ def get_login_layout():
             password = st.text_input("Password", type="password", key="auth_password")
             submit = st.form_submit_button("Login")
             if submit:
-                if login(username, password):
-                    st.session_state.authenticated = True
-                    st.rerun()
-                else:
-                    st.error("Invalid username or password")
+                login(username, password)

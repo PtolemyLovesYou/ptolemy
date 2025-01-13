@@ -2,17 +2,11 @@ use crate::crud::auth::user_api_key::get_user_api_key_user;
 use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
 use crate::state::AppState;
 use axum::{
-    extract::State,
-    http::Request,
-    http::StatusCode,
-    middleware::from_fn_with_state,
-    middleware::Next,
-    response::IntoResponse,
-    routing::{get, on, MethodFilter},
-    Extension, Router,
+    extract::State, http::Request, http::{StatusCode, header}, middleware::Next, response::IntoResponse,
+    Extension,
 };
 use juniper::EmptySubscription;
-use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
+use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use std::sync::Arc;
 
 pub async fn api_key_guard(
@@ -22,7 +16,7 @@ pub async fn api_key_guard(
 ) -> Result<impl IntoResponse, StatusCode> {
     let api_key = req
         .headers()
-        .get("X-Api-Key")
+        .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .and_then(|header| header.strip_prefix("Bearer "))
         .ok_or(StatusCode::UNAUTHORIZED)?;
@@ -40,7 +34,7 @@ pub async fn api_key_guard(
     Ok(next.run(req).await)
 }
 
-async fn graphql_handler(
+pub async fn graphql_handler(
     Extension(user): Extension<Arc<crate::models::auth::User>>,
     State(state): State<Arc<AppState>>,
     JuniperRequest(request): JuniperRequest,
@@ -53,18 +47,4 @@ async fn graphql_handler(
 
     let result = request.execute(&schema, &state_clone).await;
     JuniperResponse(result)
-}
-
-pub async fn graphql_router(state: &Arc<AppState>) -> Router {
-    let mut router = Router::new().route(
-        "/",
-        on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler)
-            .route_layer(from_fn_with_state(state.clone(), api_key_guard)),
-    );
-
-    if state.enable_graphiql {
-        router = router.route("/graphiql", get(graphiql("/graphql", None)))
-    }
-
-    router.with_state(state.clone())
 }
