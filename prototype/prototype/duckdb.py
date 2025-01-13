@@ -5,7 +5,7 @@ from importlib import resources
 import jinja2 as j2
 from pydantic import BaseModel, ConfigDict
 import duckdb
-from .. import sql
+from . import sql
 
 J2_ENV = j2.Environment()
 

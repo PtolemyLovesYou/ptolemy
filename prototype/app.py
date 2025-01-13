@@ -3,10 +3,10 @@
 from urllib.parse import urljoin
 import streamlit as st
 from prototype.auth import logout, get_login_layout
+from prototype.client import current_user
 from prototype.user import usr_management_view
 from prototype.workspace.view import wk_management_view
 from prototype.profile import profile_view
-from prototype.models import User
 from prototype.sql_ide import get_ide_view
 from prototype.env_settings import API_URL
 from ptolemy import GraphQLClient
@@ -41,7 +41,7 @@ def get_layout():
     if not st.session_state.authenticated:
         get_login_layout()
     else:
-        user_info = User.current_user()
+        user_info = current_user()
 
         sidebar_column, main_column = st.columns(
             [1, 11], border=False, vertical_alignment="bottom"

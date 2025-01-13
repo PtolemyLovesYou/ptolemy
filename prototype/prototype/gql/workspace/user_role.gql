@@ -1,7 +1,0 @@
-query GetUserWorkspaceRole($workspaceId: Uuid, $userId: Uuid) {
-  workspace(id: $workspaceId) {
-    users(userId: $userId) {
-      role
-    }
-  }
-}
