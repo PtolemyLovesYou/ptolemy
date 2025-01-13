@@ -75,13 +75,12 @@ def usr_management_view():
                         label_visibility="collapsed",
                     )
                 with cols[2]:
-                    st.selectbox(
-                        label=f"user_role_{user.id}",
-                        options=list(UserRole),
-                        index=list(UserRole).index(user.role),
+                    st.checkbox(
+                        label=f"user_is_admin_{user.id}",
                         disabled=user.is_sysadmin,
-                        key=f"user_role_{user.id}",
+                        key=f"user_is_admin_{user.id}",
                         label_visibility="collapsed",
+                        value=user.is_admin,
                     )
                 with cols[3]:
                     st.selectbox(
