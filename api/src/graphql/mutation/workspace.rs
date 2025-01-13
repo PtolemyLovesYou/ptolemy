@@ -1,39 +1,30 @@
 use crate::crud::auth::{
-    service_api_key as service_api_key_crud, user as user_crud, workspace as workspace_crud,
+    service_api_key as service_api_key_crud, workspace as workspace_crud,
     workspace_user as workspace_user_crud,
 };
+use crate::graphql::mutation::result::{
+    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
+};
+use crate::graphql::state::JuniperAppState;
 use crate::{
     models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
     models::auth::{WorkspaceCreate, WorkspaceUserCreate},
-    state::AppState,
-};
-
-use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
 };
 use juniper::graphql_object;
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug)]
-pub struct WorkspaceMutation {
-    pub user_id: Uuid,
-}
-
-impl WorkspaceMutation {
-    pub fn new(user_id: Uuid) -> WorkspaceMutation {
-        WorkspaceMutation { user_id }
-    }
-}
+pub struct WorkspaceMutation;
 
 #[graphql_object]
 impl WorkspaceMutation {
     async fn create(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return WorkspaceResult::err(
@@ -43,18 +34,12 @@ impl WorkspaceMutation {
             }
         };
 
-        match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(user) => match user.is_admin {
-                true => (),
-                false => {
-                    return WorkspaceResult::err(
-                        "user",
-                        "You must be an admin to create a workspace".to_string(),
-                    )
-                }
-            },
-            Err(e) => return WorkspaceResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        if !ctx.user.is_admin {
+            return WorkspaceResult::err(
+                "user",
+                "You must be an admin to create a workspace".to_string(),
+            );
+        }
 
         let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
             Ok(w) => w,
@@ -70,7 +55,7 @@ impl WorkspaceMutation {
         let admin_id = match admin_user_id {
             Some(id) => id,
             // if none provided, default to user_id
-            None => self.user_id,
+            None => ctx.user.id,
         };
 
         match workspace_user_crud::create_workspace_user(
@@ -95,8 +80,8 @@ impl WorkspaceMutation {
         WorkspaceResult(Ok(workspace))
     }
 
-    async fn delete(&self, ctx: &AppState, workspace_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -106,18 +91,12 @@ impl WorkspaceMutation {
             }
         };
 
-        match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(user) => match user.is_admin {
-                true => (),
-                false => {
-                    return DeletionResult::err(
-                        "user",
-                        "You must be an admin to delete a workspace".to_string(),
-                    )
-                }
-            },
-            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        if !ctx.user.is_admin {
+            return DeletionResult::err(
+                "user",
+                "You must be an admin to delete a workspace".to_string(),
+            );
+        }
 
         match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
             Ok(_) => DeletionResult(Ok(true)),
@@ -129,10 +108,10 @@ impl WorkspaceMutation {
 
     async fn add_user(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_user: WorkspaceUserCreate,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return WorkspaceUserResult::err(
@@ -146,7 +125,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_user.workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -181,11 +160,11 @@ impl WorkspaceMutation {
 
     async fn remove_user(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         user_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -199,7 +178,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -253,12 +232,12 @@ impl WorkspaceMutation {
 
     async fn change_workspace_user_role(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return WorkspaceUserResult::err(
@@ -272,7 +251,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -322,13 +301,13 @@ impl WorkspaceMutation {
 
     async fn create_service_api_key(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         name: String,
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return CreateApiKeyResult::err(
@@ -342,7 +321,7 @@ impl WorkspaceMutation {
         match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -374,7 +353,7 @@ impl WorkspaceMutation {
             name,
             permission,
             duration,
-            &ctx.password_handler,
+            &ctx.state.password_handler,
         )
         .await
         {
@@ -391,11 +370,11 @@ impl WorkspaceMutation {
 
     async fn delete_service_api_key(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -409,7 +388,7 @@ impl WorkspaceMutation {
         match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {

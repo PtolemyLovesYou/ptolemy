@@ -96,8 +96,8 @@ type DeletionResult implements GQLResult {
 }
 
 type Mutation {
-  user(userId: Uuid!): UserMutation!
-  workspace(userId: Uuid!): WorkspaceMutation!
+  user: UserMutation!
+  workspace: WorkspaceMutation!
   auth(userData: LoginInput!): AuthResult!
 }
 
@@ -105,6 +105,7 @@ type Query {
   ping: String!
   user(id: Uuid, username: String): [User!]!
   workspace(id: Uuid, name: String, archived: Boolean): [Workspace!]!
+  me: User!
 }
 
 type ServiceApiKey {

@@ -1,6 +1,5 @@
 """Streamlit prototype app."""
 
-from urllib.parse import urljoin
 import streamlit as st
 from prototype.auth import logout, get_login_layout
 from prototype.client import current_user
@@ -8,8 +7,6 @@ from prototype.user import usr_management_view
 from prototype.workspace.view import wk_management_view
 from prototype.profile import profile_view
 from prototype.sql_ide import get_ide_view
-from prototype.env_settings import API_URL
-from ptolemy import GraphQLClient
 
 st.set_page_config(layout="wide", page_title="Ptolemy")
 
@@ -17,8 +14,6 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "user_info" not in st.session_state:
     st.session_state.user_info = None
-if "client" not in st.session_state:
-    st.session_state.client = GraphQLClient(urljoin(API_URL, "/graphql"))
 
 if st.session_state.authenticated:
     st.logo("assets/logomark_lime.svg")

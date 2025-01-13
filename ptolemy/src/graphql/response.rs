@@ -220,26 +220,6 @@ graphql_response!(
 graphql_result!(GQLWorkspaceResult);
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct AuthPayload {
-    pub token: Option<String>,
-    pub user: Option<GQLUser>,
-}
-
-graphql_response!(AuthPayload, [(token, String), (user, GQLUser)]);
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AuthResult {
-    pub success: Option<bool>,
-    pub payload: Option<AuthPayload>,
-    pub error: Option<GQLValidationErrors>,
-}
-
-graphql_response!(AuthResult, [(success, bool), (payload, AuthPayload)]);
-
-graphql_result!(AuthResult);
-
-#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GQLWorkspaceUser {
     pub role: Option<WorkspaceRole>,
@@ -407,7 +387,6 @@ graphql_response!(
 pub struct Mutation {
     pub user: Option<GQLUserMutation>,
     pub workspace: Option<GQLWorkspaceMutation>,
-    pub auth: Option<AuthResult>,
 }
 
 graphql_response!(
@@ -415,7 +394,6 @@ graphql_response!(
     [
         (user, GQLUserMutation),
         (workspace, GQLWorkspaceMutation),
-        (auth, AuthResult)
     ]
 );
 
@@ -425,11 +403,17 @@ pub struct Query {
     pub ping: Option<String>,
     pub user: Option<GQLUsers>,
     pub workspace: Option<GQLWorkspaces>,
+    pub me: Option<GQLUser>,
 }
 
 graphql_response!(
     Query,
-    [(ping, String), (user, GQLUsers), (workspace, GQLWorkspaces)]
+    [
+        (ping, String),
+        (user, GQLUsers),
+        (workspace, GQLWorkspaces),
+        (me, GQLUser)
+    ]
 );
 
 pub trait GQLResponse<'de>: GraphQLResponse<'de> {

@@ -27,10 +27,9 @@ def create_workspace_form():
         if sk_submit:
             try:
                 client.create_workspace(
-                    current_usr.id,
                     sk_name,
                     valid_admins[sk_admin].id if sk_admin else current_usr.id,
-                    description=sk_description
+                    description=sk_description,
                 )
                 st.rerun(scope="fragment")
             except ValueError as e:
@@ -67,8 +66,7 @@ def wk_management_view():
             pass
         else:
             user_workspace_role = client.get_user_workspace_role(
-                selected_workspace.id,
-                current_usr.id
+                selected_workspace.id, current_usr.id
             )
 
             wk_mgmnt, wk_users, api_keys = st.tabs(

@@ -4,6 +4,8 @@ use tower_http::{
 };
 use tracing::Level;
 
+pub mod auth;
+
 type HttpTraceLayer = TraceLayer<
     tower_http::classify::SharedClassifier<tower_http::classify::ServerErrorsAsFailures>,
 >;

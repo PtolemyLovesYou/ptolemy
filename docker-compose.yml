@@ -13,6 +13,8 @@ services:
       RUST_LOG: info,api=debug,ptolemy=debug
       # set to "PROD" for production
       PTOLEMY_ENV: DEV
+      # JWT secret goes here
+      JWT_SECRET: pC15dRLduel2TYONYEfyjHZ289j7dIXv1RXL09T/t0o=
     ports:
       - "8000:8000"
       - "50051:50051"

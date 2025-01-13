@@ -1,43 +1,50 @@
-use crate::graphql::{Mutation, Query, Schema};
+use crate::crud::auth::user_api_key::get_user_api_key_user;
+use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
 use crate::state::AppState;
 use axum::{
-    extract::State,
-    routing::{get, on, MethodFilter},
-    Router,
+    extract::State, http::Request, http::{StatusCode, header}, middleware::Next, response::IntoResponse,
+    Extension,
 };
 use juniper::EmptySubscription;
-use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
+use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use std::sync::Arc;
 
-// Define an AppState struct to hold both schema and context
-#[derive(Clone)]
-pub struct JuniperAppState {
-    schema: Arc<Schema>,
-    context: Arc<AppState>,
+pub async fn api_key_guard(
+    State(state): State<Arc<AppState>>,
+    mut req: Request<axum::body::Body>,
+    next: Next,
+) -> Result<impl IntoResponse, StatusCode> {
+    let api_key = req
+        .headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer "))
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let state = Arc::clone(&state);
+
+    let mut conn = state.get_conn_http().await?;
+
+    let user = get_user_api_key_user(&mut conn, api_key, &state.password_handler)
+        .await
+        .map_err(|e| e.http_status_code())?;
+
+    req.extensions_mut().insert(Arc::new(user));
+
+    Ok(next.run(req).await)
 }
 
-async fn graphql_handler(
-    State(state): State<JuniperAppState>,
+pub async fn graphql_handler(
+    Extension(user): Extension<Arc<crate::models::auth::User>>,
+    State(state): State<Arc<AppState>>,
     JuniperRequest(request): JuniperRequest,
 ) -> JuniperResponse {
-    let result = request.execute(&state.schema, &state.context).await;
+    let schema = Schema::new(Query, Mutation, EmptySubscription::new());
+    let state_clone = JuniperAppState {
+        state: state.clone(),
+        user: user.clone(),
+    };
+
+    let result = request.execute(&schema, &state_clone).await;
     JuniperResponse(result)
-}
-
-pub async fn graphql_router(state: &Arc<AppState>) -> Router {
-    let schema = Arc::new(Schema::new(Query, Mutation, EmptySubscription::new()));
-    let context = Arc::clone(state);
-
-    let state = JuniperAppState { schema, context };
-
-    let mut router = Router::new().route(
-        "/",
-        on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
-    );
-
-    if state.context.enable_graphiql {
-        router = router.route("/graphiql", get(graphiql("/graphql", None)))
-    }
-
-    router.with_state(state)
 }

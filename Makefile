@@ -1,6 +1,8 @@
 .PHONY: format
 format:
-	black ptolemy prototype
+	black ptolemy prototype \
+	&& black ptolemy/python \
+	&& cargo fmt
 
 .PHONY: diesel
 diesel:

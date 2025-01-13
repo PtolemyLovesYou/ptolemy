@@ -31,13 +31,12 @@ def usr_management_view():
 
                 if submit:
                     client.create_user(
-                        current_usr.id,
                         new_usr_username,
                         new_usr_password,
                         new_usr_is_admin,
                         False,
-                        display_name=new_usr_display_name
-                        )
+                        display_name=new_usr_display_name,
+                    )
 
     users = client.all_users()
 
@@ -100,10 +99,7 @@ def usr_management_view():
                         disabled=(
                             user.is_sysadmin
                             or user.id == current_usr.id
-                            or (
-                                user.is_admin
-                                and current_usr.is_admin
-                            )
+                            or (user.is_admin and current_usr.is_admin)
                         ),
                         key=f"user_delete_{user.id}",
                         label_visibility="collapsed",
@@ -112,6 +108,6 @@ def usr_management_view():
         def delete_users():
             for user in users:
                 if st.session_state[f"user_delete_{user.id}"]:
-                    client.delete_user(current_usr.id, user.id)
+                    client.delete_user(user.id)
 
         st.form_submit_button(label="Save", on_click=delete_users)

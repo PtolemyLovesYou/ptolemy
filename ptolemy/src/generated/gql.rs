@@ -10,6 +10,8 @@ pub const WORKSPACE_USERS_QUERY: &'static str = r###"WorkspaceUsers"###;
 
 pub const WORKSPACE_SERVICE_API_KEYS_QUERY: &'static str = r###"WorkspaceServiceApiKeys"###;
 
+pub const ME_QUERY: &'static str = r###"Me"###;
+
 pub const CREATE_USER_API_KEY_MUTATION: &'static str = r###"CreateUserApiKey"###;
 
 pub const CREATE_USER_MUTATION: &'static str = r###"CreateUser"###;
@@ -32,8 +34,6 @@ pub const REMOVE_USER_FROM_WORKSPACE_MUTATION: &'static str = r###"RemoveUserFro
 
 pub const DELETE_WORKSPACE_MUTATION: &'static str = r###"DeleteWorkspace"###;
 
-pub const LOGIN_MUTATION: &'static str = r###"Login"###;
-
 pub const QUERY: &'static str = r###"query UserApiKeys($userId: Uuid) {
   user(id: $userId) {
     userApiKeys {
@@ -46,8 +46,8 @@ pub const QUERY: &'static str = r###"query UserApiKeys($userId: Uuid) {
   }
 }
 
-query UserWorkspaces($Id: Uuid, $username: String) {
-  user(id: $Id, username: $username) {
+query UserWorkspaces($userId: Uuid, $username: String) {
+  user(id: $userId, username: $username) {
     workspaces {
       ...ReturnsWorkspace
       users(username: $username) {
@@ -87,6 +87,12 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
   }
 }
 
+query Me {
+  me {
+    ...ReturnsUser
+  }
+}
+
 fragment ReturnsUser on User {
   displayName
   id
@@ -106,8 +112,8 @@ fragment ReturnsWorkspace on Workspace {
 }
 "###;
 
-pub const MUTATION: &'static str = r###"mutation CreateUserApiKey($name: String!, $userId: Uuid!, $durationDays: Int) {
-  user(userId: $userId) {
+pub const MUTATION: &'static str = r###"mutation CreateUserApiKey($name: String!, $durationDays: Int) {
+  user {
     createUserApiKey(name: $name, durationDays: $durationDays) {
       apiKey {
         apiKey
@@ -117,8 +123,8 @@ pub const MUTATION: &'static str = r###"mutation CreateUserApiKey($name: String!
   }
 }
 
-mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isAdmin: Boolean!, $displayName: String) {
-  user(userId: $userId) {
+mutation CreateUser($username: String!, $password: String!, $isAdmin: Boolean!, $displayName: String) {
+  user {
     create(
       userData: {username: $username, password: $password, isSysadmin: false, isAdmin: $isAdmin, displayName: $displayName}
     ) {
@@ -130,37 +136,37 @@ mutation CreateUser($userId: Uuid!, $username: String!, $password: String!, $isA
   }
 }
 
-mutation DeleteUserApiKey($apiKeyId: Uuid!, $userId: Uuid!) {
-  user(userId: $userId) {
+mutation DeleteUserApiKey($apiKeyId: Uuid!) {
+  user {
     deleteUserApiKey(apiKeyId: $apiKeyId) {
       ...Result
     }
   }
 }
 
-mutation DeleteUser($Id: Uuid!, $userId: Uuid!) {
-  user(userId: $userId) {
-    delete(id: $Id) {
+mutation DeleteUser($userId: Uuid!) {
+  user {
+    delete(id: $userId) {
       ...Result
     }
   }
 }
 
-mutation AddUserToWorkspace($userId: Uuid!, $targetUserId: Uuid!, $workspaceId: Uuid!, $role: WorkspaceRoleEnum!) {
-  workspace(userId: $userId) {
+mutation AddUserToWorkspace($userId: Uuid!, $workspaceId: Uuid!, $role: WorkspaceRoleEnum!) {
+  workspace {
     addUser(
-      workspaceUser: {userId: $targetUserId, workspaceId: $workspaceId, role: $role}
+      workspaceUser: {userId: $userId, workspaceId: $workspaceId, role: $role}
     ) {
       ...Result
     }
   }
 }
 
-mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
-  workspace(userId: $userId) {
+mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $userId: Uuid!, $workspaceId: Uuid!) {
+  workspace {
     changeWorkspaceUserRole(
       newRole: $role
-      userId: $targetUserId
+      userId: $userId
       workspaceId: $workspaceId
     ) {
       ...Result
@@ -168,8 +174,8 @@ mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $targetUserId: Uuid!
   }
 }
 
-mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!, $userId: Uuid!, $workspaceId: Uuid!, $durationDays: Int) {
-  workspace(userId: $userId) {
+mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!, $workspaceId: Uuid!, $durationDays: Int) {
+  workspace {
     createServiceApiKey(
       name: $name
       permission: $permission
@@ -184,16 +190,16 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
   }
 }
 
-mutation DeleteServiceApiKey($apiKeyId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
-  workspace(userId: $userId) {
+mutation DeleteServiceApiKey($apiKeyId: Uuid!, $workspaceId: Uuid!) {
+  workspace {
     deleteServiceApiKey(apiKeyId: $apiKeyId, workspaceId: $workspaceId) {
       ...Result
     }
   }
 }
 
-mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $adminUserId: Uuid!) {
-  workspace(userId: $userId) {
+mutation CreateWorkspace($name: String!, $description: String, $adminUserId: Uuid!) {
+  workspace {
     create(
       workspaceData: {name: $name, description: $description}
       adminUserId: $adminUserId
@@ -206,30 +212,18 @@ mutation CreateWorkspace($userId: Uuid!, $name: String!, $description: String, $
   }
 }
 
-mutation RemoveUserFromWorkspace($targetUserId: Uuid!, $userId: Uuid!, $workspaceId: Uuid!) {
-  workspace(userId: $userId) {
-    removeUser(userId: $targetUserId, workspaceId: $workspaceId) {
+mutation RemoveUserFromWorkspace($userId: Uuid!, $workspaceId: Uuid!) {
+  workspace {
+    removeUser(userId: $userId, workspaceId: $workspaceId) {
       ...Result
     }
   }
 }
 
-mutation DeleteWorkspace($userId: Uuid!, $workspaceId: Uuid!) {
-  workspace(userId: $userId) {
+mutation DeleteWorkspace($workspaceId: Uuid!) {
+  workspace {
     delete(workspaceId: $workspaceId) {
       ...Result
-    }
-  }
-}
-
-mutation Login($username: String!, $password: String!) {
-  auth(userData: {username: $username, password: $password}) {
-    ...Result
-    payload {
-      token
-      user {
-        ...ReturnsUser
-      }
     }
   }
 }

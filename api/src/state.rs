@@ -4,7 +4,9 @@ use axum::http::StatusCode;
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
+use serde::{Deserialize, Serialize};
 use tracing::error;
+use uuid::Uuid;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
@@ -26,6 +28,7 @@ pub struct AppState {
     pub enable_prometheus: bool,
     pub enable_graphiql: bool,
     pub ptolemy_env: String,
+    pub jwt_secret: String,
 }
 
 impl AppState {
@@ -37,6 +40,7 @@ impl AppState {
         let postgres_password = get_env_var("POSTGRES_PASSWORD")?;
         let postgres_db = get_env_var("POSTGRES_DB")?;
         let ptolemy_env = get_env_var("PTOLEMY_ENV")?;
+        let jwt_secret = get_env_var("JWT_SECRET")?;
 
         // Default to false if the env var is not set
         let enable_prometheus = std::env::var("ENABLE_PROMETHEUS")
@@ -64,6 +68,7 @@ impl AppState {
             password_handler,
             enable_graphiql,
             ptolemy_env,
+            jwt_secret,
         };
 
         Ok(state)
@@ -86,4 +91,10 @@ impl AppState {
     }
 }
 
-impl juniper::Context for AppState {}
+// Claims struct for JWT payload
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub user_id: Uuid, // Subject (user id)
+    pub exp: usize,    // Expiration time
+    pub iat: usize,    // Issued at
+}

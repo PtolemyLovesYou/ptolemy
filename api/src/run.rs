@@ -10,7 +10,10 @@ use tower::ServiceBuilder;
 use tracing::error;
 
 pub async fn run_rest_api(shared_state: Arc<AppState>) -> Result<(), ApiError> {
-    let app = get_router(&shared_state).await;
+    let state_clone = Arc::clone(&shared_state);
+
+    let app = get_router(&state_clone).await.with_state(state_clone);
+
     let server_url = format!("0.0.0.0:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 

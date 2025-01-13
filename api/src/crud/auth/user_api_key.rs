@@ -9,6 +9,42 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
+pub async fn get_user_api_key_user(
+    conn: &mut DbConnection<'_>,
+    api_key: &str,
+    password_handler: &PasswordHandler,
+) -> Result<User, CRUDError> {
+    let chars = api_key.chars().take(12).collect::<String>();
+
+    let api_keys: Vec<UserApiKey> = user_api_key::table
+        .select(UserApiKey::as_select())
+        .filter(user_api_key::key_preview.eq(chars))
+        .get_results(conn)
+        .await
+        .map_err(|e| {
+            error!("Unable to get service_api_key: {}", e);
+            CRUDError::GetError
+        })?;
+
+    for ak in api_keys {
+        if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
+            match users::table
+                .filter(users::id.eq(&ak.user_id))
+                .get_result(conn)
+                .await
+            {
+                Ok(user) => return Ok(user),
+                Err(e) => {
+                    error!("Failed to get user: {}", e);
+                    return Err(CRUDError::GetError);
+                }
+            }
+        }
+    }
+
+    Err(CRUDError::NotFoundError)
+}
+
 pub async fn create_user_api_key(
     conn: &mut DbConnection<'_>,
     user_id: Uuid,

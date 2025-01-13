@@ -1,7 +1,7 @@
 """CLI."""
 
 import click
-from .._core import User # pylint: disable=no-name-in-module
+from .._core import User  # pylint: disable=no-name-in-module
 from .workspace import workspace
 from .user import user
 

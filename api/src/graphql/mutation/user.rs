@@ -1,5 +1,6 @@
 use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
-use crate::{models::auth::UserCreate, state::AppState};
+use crate::graphql::state::JuniperAppState;
+use crate::models::auth::UserCreate;
 
 use crate::graphql::mutation::result::{
     CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult,
@@ -8,20 +9,12 @@ use juniper::graphql_object;
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug)]
-pub struct UserMutation {
-    pub user_id: Uuid,
-}
-
-impl UserMutation {
-    pub fn new(user_id: Uuid) -> UserMutation {
-        UserMutation { user_id }
-    }
-}
+pub struct UserMutation;
 
 #[graphql_object]
 impl UserMutation {
-    async fn create(&self, ctx: &AppState, user_data: UserCreate) -> UserResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn create(&self, ctx: &JuniperAppState, user_data: UserCreate) -> UserResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return UserResult::err(
@@ -31,11 +24,7 @@ impl UserMutation {
             }
         };
 
-        // get user permissions
-        let user = match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(u) => u,
-            Err(e) => return UserResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        let user = ctx.user.clone();
 
         // if user is not admin or sysadmin, return forbidden
         if !user.is_admin && !user.is_sysadmin {
@@ -58,14 +47,14 @@ impl UserMutation {
             );
         }
 
-        match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
+        match user_crud::create_user(&mut conn, &user_data, &ctx.state.password_handler).await {
             Ok(result) => UserResult(Ok(result)),
             Err(e) => UserResult::err("user", format!("Failed to create user: {:?}", e)),
         }
     }
 
-    async fn delete(&self, ctx: &AppState, id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -76,10 +65,7 @@ impl UserMutation {
         };
 
         // get user permissions
-        let acting_user = match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(u) => u,
-            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        let acting_user = ctx.user.clone();
 
         let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
             Ok(u) => u,
@@ -109,11 +95,11 @@ impl UserMutation {
 
     async fn create_user_api_key(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         name: String,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return CreateApiKeyResult::err(
@@ -130,10 +116,10 @@ impl UserMutation {
 
         match user_api_key_crud::create_user_api_key(
             &mut conn,
-            self.user_id,
+            ctx.user.id,
             name,
             duration,
-            &ctx.password_handler,
+            &ctx.state.password_handler,
         )
         .await
         {
@@ -148,8 +134,8 @@ impl UserMutation {
         }
     }
 
-    async fn delete_user_api_key(&self, ctx: &AppState, api_key_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -159,7 +145,7 @@ impl UserMutation {
             }
         };
 
-        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &self.user_id).await {
+        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &ctx.user.id).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "user_api_key",
