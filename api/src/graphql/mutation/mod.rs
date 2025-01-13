@@ -1,5 +1,5 @@
 use crate::crud::auth::user::auth_user;
-use crate::state::AppState;
+use crate::graphql::state::JuniperAppState;
 use juniper::graphql_object;
 use uuid::Uuid;
 
@@ -15,18 +15,18 @@ use self::workspace::WorkspaceMutation;
 pub struct Mutation;
 
 #[graphql_object]
-#[graphql(context = AppState)]
+#[graphql(context = JuniperAppState)]
 impl Mutation {
-    async fn user(&self, _ctx: &AppState, user_id: Uuid) -> UserMutation {
+    async fn user(&self, _ctx: &JuniperAppState, user_id: Uuid) -> UserMutation {
         UserMutation::new(user_id)
     }
 
-    async fn workspace(&self, _ctx: &AppState, user_id: Uuid) -> WorkspaceMutation {
+    async fn workspace(&self, _ctx: &JuniperAppState, user_id: Uuid) -> WorkspaceMutation {
         WorkspaceMutation::new(user_id)
     }
 
-    async fn auth(&self, ctx: &AppState, user_data: LoginInput) -> AuthResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn auth(&self, ctx: &JuniperAppState, user_data: LoginInput) -> AuthResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return AuthResult::err(
@@ -40,7 +40,7 @@ impl Mutation {
             &mut conn,
             &user_data.username,
             &user_data.password,
-            &ctx.password_handler,
+            &ctx.state.password_handler,
         )
         .await
         {

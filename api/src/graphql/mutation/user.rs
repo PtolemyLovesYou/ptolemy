@@ -1,5 +1,6 @@
 use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
-use crate::{models::auth::UserCreate, state::AppState};
+use crate::models::auth::UserCreate;
+use crate::graphql::state::JuniperAppState;
 
 use crate::graphql::mutation::result::{
     CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult,
@@ -20,8 +21,8 @@ impl UserMutation {
 
 #[graphql_object]
 impl UserMutation {
-    async fn create(&self, ctx: &AppState, user_data: UserCreate) -> UserResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn create(&self, ctx: &JuniperAppState, user_data: UserCreate) -> UserResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return UserResult::err(
@@ -58,14 +59,14 @@ impl UserMutation {
             );
         }
 
-        match user_crud::create_user(&mut conn, &user_data, &ctx.password_handler).await {
+        match user_crud::create_user(&mut conn, &user_data, &ctx.state.password_handler).await {
             Ok(result) => UserResult(Ok(result)),
             Err(e) => UserResult::err("user", format!("Failed to create user: {:?}", e)),
         }
     }
 
-    async fn delete(&self, ctx: &AppState, id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -109,11 +110,11 @@ impl UserMutation {
 
     async fn create_user_api_key(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         name: String,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return CreateApiKeyResult::err(
@@ -133,7 +134,7 @@ impl UserMutation {
             self.user_id,
             name,
             duration,
-            &ctx.password_handler,
+            &ctx.state.password_handler,
         )
         .await
         {
@@ -148,8 +149,8 @@ impl UserMutation {
         }
     }
 
-    async fn delete_user_api_key(&self, ctx: &AppState, api_key_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(

@@ -4,7 +4,7 @@ use crate::crud::auth::{
 };
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
-use crate::state::AppState;
+use crate::graphql::state::JuniperAppState;
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
@@ -37,11 +37,11 @@ impl Workspace {
 
     async fn users(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         user_id: Option<Uuid>,
         username: Option<String>,
     ) -> FieldResult<Vec<WorkspaceUser>> {
-        let mut conn = ctx.get_conn_http().await.unwrap();
+        let mut conn = ctx.state.get_conn_http().await.unwrap();
 
         let users = workspace_user_crud::search_workspace_users(
             &mut conn,
@@ -59,8 +59,8 @@ impl Workspace {
         Ok(users)
     }
 
-    async fn service_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<ServiceApiKey>> {
-        let mut conn = ctx.get_conn_http().await.unwrap();
+    async fn service_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<ServiceApiKey>> {
+        let mut conn = ctx.state.get_conn_http().await.unwrap();
 
         let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &self.id)
             .await
@@ -98,11 +98,11 @@ impl User {
 
     async fn workspaces(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Option<Uuid>,
         workspace_name: Option<String>,
     ) -> FieldResult<Vec<Workspace>> {
-        let mut conn = &mut ctx.get_conn_http().await.unwrap();
+        let mut conn = &mut ctx.state.get_conn_http().await.unwrap();
         let workspaces = workspace_user_crud::search_workspace_users(
             &mut conn,
             &workspace_id,
@@ -119,8 +119,8 @@ impl User {
         Ok(workspaces)
     }
 
-    async fn user_api_keys(&self, ctx: &AppState) -> FieldResult<Vec<UserApiKey>> {
-        let mut conn = ctx.get_conn_http().await.unwrap();
+    async fn user_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<UserApiKey>> {
+        let mut conn = ctx.state.get_conn_http().await.unwrap();
 
         let api_keys = user_api_key_crud::get_user_api_keys(&mut conn, &self.id)
             .await
@@ -192,16 +192,16 @@ impl WorkspaceUser {
         self.role.clone()
     }
 
-    async fn user(&self, ctx: &AppState) -> FieldResult<User> {
-        let mut conn = ctx.get_conn().await.map_err(|e| e.juniper_field_error())?;
+    async fn user(&self, ctx: &JuniperAppState) -> FieldResult<User> {
+        let mut conn = ctx.state.get_conn().await.map_err(|e| e.juniper_field_error())?;
 
         user_crud::get_user(&mut conn, &self.user_id)
             .await
             .map_err(|e| e.juniper_field_error())
     }
 
-    async fn workspace(&self, ctx: &AppState) -> FieldResult<Workspace> {
-        let mut conn = ctx.get_conn().await.map_err(|e| e.juniper_field_error())?;
+    async fn workspace(&self, ctx: &JuniperAppState) -> FieldResult<Workspace> {
+        let mut conn = ctx.state.get_conn().await.map_err(|e| e.juniper_field_error())?;
 
         workspace_crud::get_workspace(&mut conn, &self.workspace_id)
             .await

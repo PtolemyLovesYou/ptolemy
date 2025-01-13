@@ -5,9 +5,8 @@ use crate::crud::auth::{
 use crate::{
     models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
     models::auth::{WorkspaceCreate, WorkspaceUserCreate},
-    state::AppState,
 };
-
+use crate::graphql::state::JuniperAppState;
 use crate::graphql::mutation::result::{
     CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
 };
@@ -29,11 +28,11 @@ impl WorkspaceMutation {
 impl WorkspaceMutation {
     async fn create(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return WorkspaceResult::err(
@@ -95,8 +94,8 @@ impl WorkspaceMutation {
         WorkspaceResult(Ok(workspace))
     }
 
-    async fn delete(&self, ctx: &AppState, workspace_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+    async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -129,10 +128,10 @@ impl WorkspaceMutation {
 
     async fn add_user(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_user: WorkspaceUserCreate,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return WorkspaceUserResult::err(
@@ -181,11 +180,11 @@ impl WorkspaceMutation {
 
     async fn remove_user(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         user_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
@@ -253,12 +252,12 @@ impl WorkspaceMutation {
 
     async fn change_workspace_user_role(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return WorkspaceUserResult::err(
@@ -322,13 +321,13 @@ impl WorkspaceMutation {
 
     async fn create_service_api_key(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         name: String,
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return CreateApiKeyResult::err(
@@ -374,7 +373,7 @@ impl WorkspaceMutation {
             name,
             permission,
             duration,
-            &ctx.password_handler,
+            &ctx.state.password_handler,
         )
         .await
         {
@@ -391,11 +390,11 @@ impl WorkspaceMutation {
 
     async fn delete_service_api_key(
         &self,
-        ctx: &AppState,
+        ctx: &JuniperAppState,
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.get_conn_http().await {
+        let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
                 return DeletionResult::err(
