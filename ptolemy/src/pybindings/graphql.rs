@@ -15,6 +15,13 @@ impl PyGraphQLClient {
         Self(GraphQLClient::new(url, api_key, None))
     }
 
+    pub fn me(&self) -> PyResult<User> {
+        Ok(self
+            .0
+            .me()
+            .map_err(|e| PyValueError::new_err(e.to_string()))?)
+    }
+
     #[pyo3(signature = (name, admin_user_id, description=None))]
     pub fn create_workspace(
         &self,

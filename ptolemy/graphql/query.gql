@@ -51,6 +51,12 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
   }
 }
 
+query Me {
+  me {
+    ...ReturnsUser
+  }
+}
+
 fragment ReturnsUser on User {
   displayName
   id

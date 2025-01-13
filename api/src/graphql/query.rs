@@ -38,4 +38,8 @@ impl Query {
             .await
             .map_err(|e| e.juniper_field_error())
     }
+
+    async fn me(ctx: &JuniperAppState) -> FieldResult<std::sync::Arc<User>> {
+        Ok(ctx.user.clone())
+    }
 }

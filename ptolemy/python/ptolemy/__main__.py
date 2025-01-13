@@ -5,7 +5,7 @@ import shlex
 import click
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
-from .cli.login import login, select_workspace
+from .cli.login import select_workspace
 from .cli import get_cli
 from .cli.cli import CLIState, Commands
 from . import GraphQLClient
@@ -15,26 +15,26 @@ def run_cli():
     """Run Ptolemy CLI."""
     session = PromptSession()
     completer = WordCompleter(list(Commands))
-    client = GraphQLClient("http://localhost:8000/graphql")
+    client = None
     current_user = None
 
-    while current_user is None:
+    while client is None and current_user is None:
+        key = session.prompt("Please enter your API key: >\n")
+        client = GraphQLClient("http://localhost:8000/graphql", key)
         try:
-            current_user = login(session, client)
-
-            click.echo(f"Welcome, {current_user.username}! 💚")
-
-            cli_data = {"user": current_user, "client": client}
-
-            wk = select_workspace(current_user, client)
-
-            if wk:
-                cli_data["workspace"] = wk
-
-            cli_state = CLIState(**cli_data)
+            current_user = client.me()
         except ValueError as e:
             click.echo(f"Failed to login. Please try again. Details: {e}")
             continue
+
+        click.echo(f"Welcome, {current_user.username}! 💚")
+        cli_data = {"user": current_user, "client": client}
+        wk = select_workspace(current_user, client)
+
+        if wk:
+            cli_data["workspace"] = wk
+
+        cli_state = CLIState(**cli_data)
 
     while True:
         cmd = session.prompt("💚 ptolemy> ", completer=completer, is_password=False)

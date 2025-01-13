@@ -55,7 +55,6 @@ def create_user(
     cli_state: CLIState = ctx.obj["state"]
     try:
         usr = cli_state.client.create_user(
-            cli_state.user.id,
             username,
             password,
             admin,
@@ -75,7 +74,7 @@ def delete_user(ctx, user_id: str):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        cli_state.client.delete_user(cli_state.user.id, user_id)
+        cli_state.client.delete_user(user_id)
         click.echo(f"Successfully deleted user {user_id}")
     except ValueError as e:
         click.echo(f"Failed to delete user: {e}")
@@ -129,7 +128,7 @@ def delete_api_key(ctx, api_key_id: str):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        cli_state.client.delete_user_api_key(cli_state.user.id, api_key_id)
+        cli_state.client.delete_user_api_key(api_key_id)
         click.echo(f"Successfully deleted API key {api_key_id}")
     except ValueError as e:
         click.echo(f"Failed to delete API key: {e}")
@@ -144,7 +143,7 @@ def create_api_key(ctx, name: str, duration: Optional[int] = None):
 
     try:
         api_key = cli_state.client.create_user_api_key(
-            name, cli_state.user.id, duration
+            name, duration_days=duration
         )
         click.echo(f"Successfully created API key {api_key}")
     except ValueError as e:

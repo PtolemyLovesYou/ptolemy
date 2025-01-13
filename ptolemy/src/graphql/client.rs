@@ -28,7 +28,7 @@ impl GraphQLClient {
         let rt = rt.unwrap_or_else(|| Arc::new(Runtime::new().unwrap()));
 
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.append("X-Api-Key", reqwest::header::HeaderValue::from_str(api_key).unwrap());
+        headers.append("X-Api-Key", reqwest::header::HeaderValue::from_str(format!("Bearer {}", api_key).as_str()).unwrap());
 
         let client = reqwest::Client::builder()
             .default_headers(headers)
@@ -488,5 +488,13 @@ impl GraphQLClient {
         let user = data.user()?.to_model()?;
 
         Ok((token, user))
+    }
+
+    pub fn me(&self) -> Result<User, GraphQLError> {
+        Ok(
+            self.query(ME_QUERY, json!({}))?
+                .me()?
+                .to_model()?,
+        )
     }
 }

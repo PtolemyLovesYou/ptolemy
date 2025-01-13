@@ -105,6 +105,7 @@ type Query {
   ping: String!
   user(id: Uuid, username: String): [User!]!
   workspace(id: Uuid, name: String, archived: Boolean): [Workspace!]!
+  me: User!
 }
 
 type ServiceApiKey {

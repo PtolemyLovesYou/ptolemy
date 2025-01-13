@@ -75,7 +75,7 @@ def create_api_key(ctx, name: str, permission: ApiKeyPermission, duration: Optio
 
     try:
         api_key = cli_state.client.create_service_api_key(
-            cli_state.user.id, cli_state.workspace.id, name, permission, valid_for=duration
+            cli_state.workspace.id, name, permission, valid_for=duration
         )
         click.echo(f"Successfully created API key {api_key}")
     except ValueError as e:
@@ -90,7 +90,7 @@ def delete_api_key(ctx, api_key_id: str):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        cli_state.client.delete_service_api_key(cli_state.user.id, cli_state.workspace.id, api_key_id)
+        cli_state.client.delete_service_api_key(cli_state.workspace.id, api_key_id)
         click.echo(f"Successfully deleted API key {api_key_id}")
     except ValueError as e:
         click.echo(f"Failed to delete API key: {e}")

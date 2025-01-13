@@ -10,6 +10,8 @@ pub const WORKSPACE_USERS_QUERY: &'static str = r###"WorkspaceUsers"###;
 
 pub const WORKSPACE_SERVICE_API_KEYS_QUERY: &'static str = r###"WorkspaceServiceApiKeys"###;
 
+pub const ME_QUERY: &'static str = r###"Me"###;
+
 pub const CREATE_USER_API_KEY_MUTATION: &'static str = r###"CreateUserApiKey"###;
 
 pub const CREATE_USER_MUTATION: &'static str = r###"CreateUser"###;
@@ -84,6 +86,12 @@ query WorkspaceServiceApiKeys($workspaceId: Uuid) {
       permissions
       workspaceId
     }
+  }
+}
+
+query Me {
+  me {
+    ...ReturnsUser
   }
 }
 
