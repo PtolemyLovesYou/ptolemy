@@ -1,5 +1,5 @@
 # For my own vanity...
-ptolemy/**/*.gql linguist-detectable
+# ptolemy/**/*.gql linguist-detectable
 api/**/*.gql linguist-detectable
 # *.sql.j2 linguist-detectable
 # *.yaml linguist-detectable
