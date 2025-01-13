@@ -1,17 +1,18 @@
 """Profile management view."""
 
 import streamlit as st
-from .models import User, UserApiKey
+from .client import get_client, current_user
 
 
 @st.fragment
 def profile_view():
     """Profile view."""
-    current_user = User.current_user()
+    client = get_client()
+    current_usr = current_user()
 
     st.subheader("Profile")
-    st.text_input("Username", value=current_user.username, disabled=True)
-    st.text_input("Display Name", value=current_user.display_name, disabled=True)
+    st.text_input("Username", value=current_usr.username, disabled=True)
+    st.text_input("Display Name", value=current_usr.display_name, disabled=True)
 
     st.subheader("API Keys")
     with st.container(border=False):
@@ -24,17 +25,20 @@ def profile_view():
                 create_user_api_key_button = st.form_submit_button("Create")
 
                 if create_user_api_key_button:
-                    new_api_key = UserApiKey.create(
-                        new_personal_api_key_name,
-                        duration=new_personal_api_key_duration,
-                    )
+                    try:
+                        new_api_key = client.create_user_api_key(
+                            new_personal_api_key_name,
+                            current_usr.id,
+                            duration_days=new_personal_api_key_duration
+                            )
 
-                    if new_api_key:
                         st.write("Copy API key here:")
                         st.code(new_api_key)
+                    except ValueError as e:
+                        st.error(f"Failed to create API key: {e}")
 
         with st.form("API Keys", clear_on_submit=True, border=False):
-            api_keys = User.current_user().api_keys
+            api_keys = client.get_user_api_keys(current_usr.id)
             api_keys_editor = st.data_editor(
                 [
                     {
@@ -59,6 +63,6 @@ def profile_view():
             if update_user_api_key_button:
                 for key, row in zip(api_keys, api_keys_editor):
                     if row["delete"]:
-                        key.delete()
+                        client.delete_user_api_key(current_usr.id, key.id)
 
                 st.rerun(scope="fragment")

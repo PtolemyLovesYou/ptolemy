@@ -1,7 +1,7 @@
 """SQL IDE view."""
 
 import streamlit as st
-from .models.duckdb import DuckDB
+from .duckdb import DuckDB
 
 st.session_state.ide_data = None
 

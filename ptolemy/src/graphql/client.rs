@@ -106,7 +106,7 @@ impl GraphQLClient {
                 "userId": user_id,
                 "name": name,
                 "description": description,
-                "admin_user_id": admin_user_id,
+                "adminUserId": admin_user_id,
             }
         );
 

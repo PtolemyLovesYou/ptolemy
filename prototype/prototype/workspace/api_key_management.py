@@ -1,7 +1,8 @@
 """Service API key management form."""
 
 import streamlit as st
-from ..models import Workspace, WorkspaceRole, ApiKeyPermission, ServiceApiKey
+from ptolemy import Workspace, WorkspaceRole, ApiKeyPermission
+from ..client import get_client, current_user
 
 
 @st.fragment
@@ -9,6 +10,8 @@ def service_api_key_management_form(
     workspace: Workspace, user_workspace_role: WorkspaceRole
 ):
     """Service API Key Management"""
+    client = get_client()
+
     disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
 
     with st.popover("New API Key", use_container_width=True, disabled=disabled):
@@ -26,18 +29,21 @@ def service_api_key_management_form(
 
             submit_new_api_key = st.form_submit_button(label="Create")
             if submit_new_api_key:
-                api_key = ServiceApiKey.create(
-                    workspace,
-                    new_api_key_name,
-                    new_api_key_permission,
-                    duration=new_api_key_duration,
-                )
+                try:
+                    api_key = client.create_service_api_key(
+                        current_user().id,
+                        workspace.id,
+                        new_api_key_name,
+                        new_api_key_permission,
+                        valid_for=new_api_key_duration,
+                    )
 
-                if api_key is not None:
                     st.markdown("Copy the API key otherwise it will be lost:")
                     st.code(api_key, language=None)
+                except ValueError as e:
+                    st.error(f"Failed to create API key: {e}")
 
-    keys = workspace.api_keys
+    keys = client.get_workspace_service_api_keys(workspace.id)
 
     with st.form("Service API Key Management", clear_on_submit=True, border=False):
         api_keys = st.data_editor(
@@ -74,6 +80,6 @@ def service_api_key_management_form(
         if submit_api_keys:
             for key, key_row in zip(keys, api_keys):
                 if key_row["delete"]:
-                    key.delete()
+                    client.delete_service_api_key(current_user().id, workspace.id, key.id)
 
             st.rerun(scope="fragment")

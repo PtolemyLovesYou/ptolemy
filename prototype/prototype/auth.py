@@ -1,28 +1,22 @@
 """Auth services."""
 
-from urllib.parse import urljoin
 import streamlit as st
-import requests
-from .models import User
-from .env_settings import API_URL
+from .client import get_client
 
 
 def login(username: str, password: str) -> bool:
     """Login."""
-    resp = requests.post(
-        urljoin(API_URL, "/auth"),
-        json={"username": username, "password": password},
-        timeout=5,
-    )
+    client = get_client()
 
-    if resp.ok:
-        data = resp.json()
+    try:
+        _, user = client.login(username, password)
+
         st.session_state.authenticated = True
-        st.session_state.user_info = User(**data)
+        st.session_state.user_info = user
 
         return True
-
-    return False
+    except ValueError:
+        return False
 
 
 def logout():

@@ -1,25 +1,27 @@
 """Workspace user management."""
 
 import streamlit as st
-from ..models import Workspace, WorkspaceRole, UserRole, User
+from ptolemy import WorkspaceRole, Workspace
+from ..client import get_client, current_user
 
 
 def add_user_to_workspace_form(workspace: Workspace):
     """Add user to workspace."""
+    client = get_client()
+
     with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
-        valid_users = [
-            i
-            for i in User.all()
+        valid_users = {
+            i.username: i
+            for i in client.all_users()
             if (
-                i.role != UserRole.SYSADMIN
-                and i.id not in [usr.id for usr in workspace.users]
+                (not i.is_sysadmin)
+                and i.id not in [usr.id for (_, usr) in client.get_workspace_users(workspace.id)]
             )
-        ]
+        }
 
         sk_user = st.selectbox(
             "User",
-            options=valid_users,
-            format_func=lambda u: u.username,
+            options=valid_users.keys(),
             index=None,
             placeholder="Select user...",
         )
@@ -33,16 +35,25 @@ def add_user_to_workspace_form(workspace: Workspace):
         sk_submit = st.form_submit_button(label="Submit")
 
         if sk_submit:
-            success = workspace.add_user(sk_user, sk_role)
-            if success:
+            try:
+                client.add_user_to_workspace(
+                    current_user().id,
+                    valid_users[sk_user].id,
+                    workspace.id,
+                    sk_role
+                    )
+
                 st.rerun(scope="fragment")
+            except ValueError as e:
+                st.error(f"Failed to add user to workspace: {e}")
 
 
 @st.fragment
 def wk_user_management_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
     """Workspace user management form"""
+    client = get_client()
     disabled = user_workspace_role not in (WorkspaceRole.ADMIN, WorkspaceRole.MANAGER)
-    users = workspace.users
+    roles, users = zip(*client.get_workspace_users(workspace.id))
 
     with st.popover(
         "Add User to Workspace", use_container_width=True, disabled=disabled
@@ -54,10 +65,10 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
             [
                 {
                     "username": u.username,
-                    "role": u.role,
+                    "role": r,
                     "delete": False,
                 }
-                for u in users
+                for (r, u) in zip(roles, users)
             ],
             use_container_width=True,
             column_config={
@@ -79,10 +90,14 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
         if submit_wk_users:
             for user, user_row in zip(users, wk_users):
                 if user_row["delete"]:
-                    workspace.remove_user(user)
+                    client.remove_user_from_workspace(current_user().id, workspace.id, user.id)
                     continue
 
-                if user_row["role"] != user.role:
-                    workspace.change_user_role(user, user_row["role"])
+                client.change_user_workspace_role(
+                    current_user().id,
+                    user.id,
+                    workspace.id,
+                    user_row["role"]
+                    )
 
             st.rerun(scope="fragment")
