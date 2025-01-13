@@ -19,8 +19,8 @@ def run_cli():
     current_user = None
 
     while client is None and current_user is None:
-        key = session.prompt("Please enter your API key: >\n")
-        client = GraphQLClient("http://localhost:8000/graphql", key)
+        key = session.prompt("Please enter your API key: > ")
+        client = GraphQLClient("http://localhost:8000/external/graphql", key)
         try:
             current_user = client.me()
         except ValueError as e:
