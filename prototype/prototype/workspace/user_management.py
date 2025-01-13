@@ -10,19 +10,18 @@ def add_user_to_workspace_form(workspace: Workspace):
     client = get_client()
 
     with st.form("add_user_to_workspace", clear_on_submit=True, border=False):
-        valid_users = [
-            i
+        valid_users = {
+            i.username: i
             for i in client.all_users()
             if (
                 (not i.is_sysadmin)
                 and i.id not in [usr.id for (_, usr) in client.get_workspace_users(workspace.id)]
             )
-        ]
+        }
 
         sk_user = st.selectbox(
             "User",
-            options=valid_users,
-            format_func=lambda u: u.username,
+            options=valid_users.keys(),
             index=None,
             placeholder="Select user...",
         )
@@ -38,7 +37,7 @@ def add_user_to_workspace_form(workspace: Workspace):
         if sk_submit:
             success = client.add_user_to_workspace(
                 current_user().id,
-                sk_user.id,
+                valid_users[sk_user].id,
                 workspace.id,
                 sk_role
                 )
@@ -92,12 +91,11 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
                     client.remove_user_from_workspace(current_user().id, workspace.id, user.id)
                     continue
 
-                if user_row["role"] != user.role:
-                    client.change_user_workspace_role(
-                        current_user().id,
-                        user.id,
-                        workspace.id,
-                        user_row["role"]
-                        )
+                client.change_user_workspace_role(
+                    current_user().id,
+                    user.id,
+                    workspace.id,
+                    user_row["role"]
+                    )
 
             st.rerun(scope="fragment")
