@@ -2,7 +2,7 @@
 
 import streamlit as st
 from ptolemy import WorkspaceRole, Workspace
-from ..client import get_client, current_user
+from ..client import get_client
 
 
 def add_user_to_workspace_form(workspace: Workspace):
@@ -38,7 +38,7 @@ def add_user_to_workspace_form(workspace: Workspace):
         if sk_submit:
             try:
                 client.add_user_to_workspace(
-                    current_user().id, valid_users[sk_user].id, workspace.id, sk_role
+                    valid_users[sk_user].id, workspace.id, sk_role
                 )
 
                 st.rerun(scope="fragment")
@@ -89,12 +89,12 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
             for user, user_row in zip(users, wk_users):
                 if user_row["delete"]:
                     client.remove_user_from_workspace(
-                        current_user().id, workspace.id, user.id
+                        workspace.id, user.id
                     )
                     continue
 
                 client.change_user_workspace_role(
-                    current_user().id, user.id, workspace.id, user_row["role"]
+                    user.id, workspace.id, user_row["role"]
                 )
 
             st.rerun(scope="fragment")

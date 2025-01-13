@@ -27,7 +27,6 @@ def create_workspace_form():
         if sk_submit:
             try:
                 client.create_workspace(
-                    current_usr.id,
                     sk_name,
                     valid_admins[sk_admin].id if sk_admin else current_usr.id,
                     description=sk_description,

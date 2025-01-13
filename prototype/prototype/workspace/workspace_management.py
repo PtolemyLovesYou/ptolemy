@@ -2,7 +2,7 @@
 
 import streamlit as st
 from ptolemy import Workspace, WorkspaceRole
-from ..client import get_client, current_user
+from ..client import get_client
 
 
 def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
@@ -30,7 +30,7 @@ def workspace_form(workspace: Workspace, user_workspace_role: WorkspaceRole):
         delete_wk_button = st.button("Delete", disabled=disabled)
         if delete_wk_button:
             try:
-                client.delete_workspace(current_user().id, workspace.id)
+                client.delete_workspace(workspace.id)
                 st.rerun(scope="fragment")
             except ValueError as e:
                 st.error(f"Failed to delete workspace: {e}")

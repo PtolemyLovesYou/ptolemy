@@ -31,7 +31,6 @@ def usr_management_view():
 
                 if submit:
                     client.create_user(
-                        current_usr.id,
                         new_usr_username,
                         new_usr_password,
                         new_usr_is_admin,
@@ -109,6 +108,6 @@ def usr_management_view():
         def delete_users():
             for user in users:
                 if st.session_state[f"user_delete_{user.id}"]:
-                    client.delete_user(current_usr.id, user.id)
+                    client.delete_user(user.id)
 
         st.form_submit_button(label="Save", on_click=delete_users)

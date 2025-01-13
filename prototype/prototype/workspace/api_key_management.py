@@ -2,7 +2,7 @@
 
 import streamlit as st
 from ptolemy import Workspace, WorkspaceRole, ApiKeyPermission
-from ..client import get_client, current_user
+from ..client import get_client
 
 
 @st.fragment
@@ -31,7 +31,6 @@ def service_api_key_management_form(
             if submit_new_api_key:
                 try:
                     api_key = client.create_service_api_key(
-                        current_user().id,
                         workspace.id,
                         new_api_key_name,
                         new_api_key_permission,
@@ -81,7 +80,7 @@ def service_api_key_management_form(
             for key, key_row in zip(keys, api_keys):
                 if key_row["delete"]:
                     client.delete_service_api_key(
-                        current_user().id, workspace.id, key.id
+                        workspace.id, key.id
                     )
 
             st.rerun(scope="fragment")

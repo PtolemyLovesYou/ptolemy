@@ -28,7 +28,6 @@ def profile_view():
                     try:
                         new_api_key = client.create_user_api_key(
                             new_personal_api_key_name,
-                            current_usr.id,
                             duration_days=new_personal_api_key_duration,
                         )
 
@@ -63,6 +62,6 @@ def profile_view():
             if update_user_api_key_button:
                 for key, row in zip(api_keys, api_keys_editor):
                     if row["delete"]:
-                        client.delete_user_api_key(current_usr.id, key.id)
+                        client.delete_user_api_key(key.id)
 
                 st.rerun(scope="fragment")
