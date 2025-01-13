@@ -24,13 +24,21 @@ pub struct GraphQLClient {
 }
 
 impl GraphQLClient {
-    pub fn new(url: String, rt: Option<Arc<Runtime>>) -> Self {
+    pub fn new(url: String, api_key: &str, rt: Option<Arc<Runtime>>) -> Self {
         let rt = rt.unwrap_or_else(|| Arc::new(Runtime::new().unwrap()));
+
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.append("X-Api-Key", reqwest::header::HeaderValue::from_str(api_key).unwrap());
+
+        let client = reqwest::Client::builder()
+            .default_headers(headers)
+            .build()
+            .unwrap();
 
         Self {
             url,
             rt,
-            client: reqwest::Client::new(),
+            client,
         }
     }
 

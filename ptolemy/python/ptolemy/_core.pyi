@@ -135,7 +135,7 @@ class WorkspaceUser:
 class GraphQLClient:
     """GraphQL client."""
 
-    def __init__(self, url: str): ...
+    def __init__(self, url: str, api_key: str): ...
     def create_workspace(
         self,
         name: str,
