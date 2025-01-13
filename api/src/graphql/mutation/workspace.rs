@@ -1,5 +1,5 @@
 use crate::crud::auth::{
-    service_api_key as service_api_key_crud, user as user_crud, workspace as workspace_crud,
+    service_api_key as service_api_key_crud, workspace as workspace_crud,
     workspace_user as workspace_user_crud,
 };
 use crate::{
@@ -14,15 +14,7 @@ use juniper::graphql_object;
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug)]
-pub struct WorkspaceMutation {
-    pub user_id: Uuid,
-}
-
-impl WorkspaceMutation {
-    pub fn new(user_id: Uuid) -> WorkspaceMutation {
-        WorkspaceMutation { user_id }
-    }
-}
+pub struct WorkspaceMutation;
 
 #[graphql_object]
 impl WorkspaceMutation {
@@ -42,18 +34,12 @@ impl WorkspaceMutation {
             }
         };
 
-        match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(user) => match user.is_admin {
-                true => (),
-                false => {
-                    return WorkspaceResult::err(
-                        "user",
-                        "You must be an admin to create a workspace".to_string(),
-                    )
-                }
-            },
-            Err(e) => return WorkspaceResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        if !ctx.user.is_admin {
+            return WorkspaceResult::err(
+                "user",
+                "You must be an admin to create a workspace".to_string(),
+            );
+        }
 
         let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
             Ok(w) => w,
@@ -69,7 +55,7 @@ impl WorkspaceMutation {
         let admin_id = match admin_user_id {
             Some(id) => id,
             // if none provided, default to user_id
-            None => self.user_id,
+            None => ctx.user.id,
         };
 
         match workspace_user_crud::create_workspace_user(
@@ -105,18 +91,12 @@ impl WorkspaceMutation {
             }
         };
 
-        match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(user) => match user.is_admin {
-                true => (),
-                false => {
-                    return DeletionResult::err(
-                        "user",
-                        "You must be an admin to delete a workspace".to_string(),
-                    )
-                }
-            },
-            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        if !ctx.user.is_admin {
+            return DeletionResult::err(
+                "user",
+                "You must be an admin to delete a workspace".to_string(),
+            );
+        }
 
         match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
             Ok(_) => DeletionResult(Ok(true)),
@@ -145,7 +125,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_user.workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -198,7 +178,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -271,7 +251,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -341,7 +321,7 @@ impl WorkspaceMutation {
         match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {
@@ -408,7 +388,7 @@ impl WorkspaceMutation {
         match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &self.user_id,
+            &ctx.user.id,
         )
         .await
         {

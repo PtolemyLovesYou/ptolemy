@@ -9,15 +9,7 @@ use juniper::graphql_object;
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug)]
-pub struct UserMutation {
-    pub user_id: Uuid,
-}
-
-impl UserMutation {
-    pub fn new(user_id: Uuid) -> UserMutation {
-        UserMutation { user_id }
-    }
-}
+pub struct UserMutation;
 
 #[graphql_object]
 impl UserMutation {
@@ -32,11 +24,7 @@ impl UserMutation {
             }
         };
 
-        // get user permissions
-        let user = match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(u) => u,
-            Err(e) => return UserResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        let user = ctx.user.clone();
 
         // if user is not admin or sysadmin, return forbidden
         if !user.is_admin && !user.is_sysadmin {
@@ -77,10 +65,7 @@ impl UserMutation {
         };
 
         // get user permissions
-        let acting_user = match user_crud::get_user(&mut conn, &self.user_id).await {
-            Ok(u) => u,
-            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
+        let acting_user = ctx.user.clone();
 
         let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
             Ok(u) => u,
@@ -131,7 +116,7 @@ impl UserMutation {
 
         match user_api_key_crud::create_user_api_key(
             &mut conn,
-            self.user_id,
+            ctx.user.id,
             name,
             duration,
             &ctx.state.password_handler,
@@ -160,7 +145,7 @@ impl UserMutation {
             }
         };
 
-        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &self.user_id).await {
+        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &ctx.user.id).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "user_api_key",

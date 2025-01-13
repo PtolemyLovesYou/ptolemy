@@ -1,7 +1,6 @@
 use crate::crud::auth::user::auth_user;
 use crate::graphql::state::JuniperAppState;
 use juniper::graphql_object;
-use uuid::Uuid;
 
 pub mod result;
 pub mod user;
@@ -17,12 +16,12 @@ pub struct Mutation;
 #[graphql_object]
 #[graphql(context = JuniperAppState)]
 impl Mutation {
-    async fn user(&self, _ctx: &JuniperAppState, user_id: Uuid) -> UserMutation {
-        UserMutation::new(user_id)
+    async fn user(&self, _ctx: &JuniperAppState) -> UserMutation {
+        UserMutation {}
     }
 
-    async fn workspace(&self, _ctx: &JuniperAppState, user_id: Uuid) -> WorkspaceMutation {
-        WorkspaceMutation::new(user_id)
+    async fn workspace(&self, _ctx: &JuniperAppState) -> WorkspaceMutation {
+        WorkspaceMutation {}
     }
 
     async fn auth(&self, ctx: &JuniperAppState, user_data: LoginInput) -> AuthResult {
