@@ -96,8 +96,8 @@ type DeletionResult implements GQLResult {
 }
 
 type Mutation {
-  user(userId: Uuid!): UserMutation!
-  workspace(userId: Uuid!): WorkspaceMutation!
+  user: UserMutation!
+  workspace: WorkspaceMutation!
   auth(userData: LoginInput!): AuthResult!
 }
 

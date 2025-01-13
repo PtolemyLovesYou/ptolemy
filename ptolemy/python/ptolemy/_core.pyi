@@ -138,43 +138,38 @@ class GraphQLClient:
     def __init__(self, url: str): ...
     def create_workspace(
         self,
-        user_id: UUID,
         name: str,
         admin_user_id: UUID,
         description: Optional[str] = None,
     ) -> Workspace: ...
     def delete_workspace(
         self,
-        user_id: UUID,
         workspace_id: UUID,
     ): ...
     def add_user_to_workspace(
         self,
-        user_id: UUID,
         target_user_id: UUID,
         workspace_id: UUID,
         role: WorkspaceRole,
     ): ...
     def remove_user_from_workspace(
-        self, user_id: UUID, workspace_id: UUID, target_user_id: UUID
+        self, workspace_id: UUID, user_id: UUID
     ): ...
     def change_user_workspace_role(
         self,
         user_id: UUID,
-        target_user_id: UUID,
         workspace_id: UUID,
         role: WorkspaceRole,
     ): ...
     def create_service_api_key(
         self,
-        user_id: UUID,
         workspace_id: UUID,
         name: str,
         permissions: ApiKeyPermission,
         valid_for: Optional[int] = None,
     ) -> str: ...
     def delete_service_api_key(
-        self, user_id: UUID, workspace_id: UUID, api_key_id: UUID
+        self, workspace_id: UUID, api_key_id: UUID
     ): ...
     def get_workspace_service_api_keys(
         self, workspace_id: UUID
@@ -190,18 +185,17 @@ class GraphQLClient:
     ) -> List[tuple[WorkspaceRole, User]]: ...
     def create_user(
         self,
-        user_id: UUID,
         username: str,
         password: str,
         is_admin: bool,
         is_sysadmin: bool,
         display_name: Optional[str] = None,
     ) -> User: ...
-    def delete_user(self, user_id: UUID, target_user_id: UUID): ...
+    def delete_user(self, user_id: UUID): ...
     def create_user_api_key(
-        self, name: str, user_id: UUID, duration_days: Optional[int] = None
+        self, name: str, duration_days: Optional[int] = None
     ) -> str: ...
-    def delete_user_api_key(self, user_id: UUID, api_key_id: UUID): ...
+    def delete_user_api_key(self, api_key_id: UUID): ...
     def all_users(self) -> List[User]: ...
     def get_user_by_name(self, username: str) -> User: ...
     def get_user_workspaces(self, user_id: UUID) -> List[Workspace]: ...

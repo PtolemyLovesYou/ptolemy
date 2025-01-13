@@ -15,69 +15,64 @@ impl PyGraphQLClient {
         Self(GraphQLClient::new(url, None))
     }
 
-    #[pyo3(signature = (user_id, name, admin_user_id, description=None))]
+    #[pyo3(signature = (name, admin_user_id, description=None))]
     pub fn create_workspace(
         &self,
-        user_id: Id,
         name: String,
         admin_user_id: Id,
         description: Option<String>,
     ) -> PyResult<Workspace> {
         Ok(self
             .0
-            .create_workspace(user_id, name, description, admin_user_id)
+            .create_workspace(name, description, admin_user_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
-    pub fn delete_workspace(&self, user_id: Id, workspace_id: Id) -> PyResult<()> {
+    pub fn delete_workspace(&self, workspace_id: Id) -> PyResult<()> {
         Ok(self
             .0
-            .delete_workspace(user_id, workspace_id)
+            .delete_workspace(workspace_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
     pub fn add_user_to_workspace(
         &self,
         user_id: Id,
-        target_user_id: Id,
         workspace_id: Id,
         role: WorkspaceRole,
     ) -> PyResult<()> {
         Ok(self
             .0
-            .add_user_to_workspace(user_id, target_user_id, workspace_id, role)
+            .add_user_to_workspace(user_id, workspace_id, role)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
     pub fn remove_user_from_workspace(
         &self,
-        user_id: Id,
         workspace_id: Id,
-        target_user_id: Id,
+        user_id: Id,
     ) -> PyResult<()> {
         Ok(self
             .0
-            .remove_user_from_workspace(user_id, target_user_id, workspace_id)
+            .remove_user_from_workspace(user_id, workspace_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
     pub fn change_user_workspace_role(
         &self,
         user_id: Id,
-        target_user_id: Id,
         workspace_id: Id,
         role: WorkspaceRole,
     ) -> PyResult<()> {
         Ok(self
             .0
-            .change_user_workspace_role(user_id, target_user_id, workspace_id, role)
+            .change_user_workspace_role(user_id, workspace_id, role)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
-    #[pyo3(signature = (user_id, workspace_id, name, permissions, valid_for=None))]
+    #[pyo3(signature = (workspace_id, name, permissions, valid_for=None))]
     pub fn create_service_api_key(
         &self,
-        user_id: Id,
         workspace_id: Id,
         name: String,
         permissions: ApiKeyPermission,
@@ -85,19 +80,18 @@ impl PyGraphQLClient {
     ) -> PyResult<String> {
         Ok(self
             .0
-            .create_service_api_key(user_id, workspace_id, name, permissions, valid_for)
+            .create_service_api_key(workspace_id, name, permissions, valid_for)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
     pub fn delete_service_api_key(
         &self,
-        user_id: Id,
         workspace_id: Id,
         api_key_id: Id,
     ) -> PyResult<()> {
         Ok(self
             .0
-            .delete_service_api_key(user_id, workspace_id, api_key_id)
+            .delete_service_api_key(workspace_id, api_key_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
@@ -136,10 +130,9 @@ impl PyGraphQLClient {
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
-    #[pyo3(signature = (user_id, username, password, is_admin, is_sysadmin, display_name=None))]
+    #[pyo3(signature = (username, password, is_admin, is_sysadmin, display_name=None))]
     pub fn create_user(
         &self,
-        user_id: Id,
         username: String,
         password: String,
         is_admin: bool,
@@ -149,7 +142,6 @@ impl PyGraphQLClient {
         Ok(self
             .0
             .create_user(
-                user_id,
                 username,
                 password,
                 is_admin,
@@ -159,30 +151,29 @@ impl PyGraphQLClient {
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
-    pub fn delete_user(&self, user_id: Id, target_user_id: Id) -> PyResult<()> {
+    pub fn delete_user(&self, user_id: Id) -> PyResult<()> {
         Ok(self
             .0
-            .delete_user(user_id, target_user_id)
+            .delete_user(user_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
-    #[pyo3(signature = (name, user_id, duration_days=None))]
+    #[pyo3(signature = (name, duration_days=None))]
     pub fn create_user_api_key(
         &self,
         name: String,
-        user_id: Id,
         duration_days: Option<isize>,
     ) -> PyResult<String> {
         Ok(self
             .0
-            .create_user_api_key(name, user_id, duration_days)
+            .create_user_api_key(name, duration_days)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
-    pub fn delete_user_api_key(&self, user_id: Id, api_key_id: Id) -> PyResult<()> {
+    pub fn delete_user_api_key(&self, api_key_id: Id) -> PyResult<()> {
         Ok(self
             .0
-            .delete_user_api_key(user_id, api_key_id)
+            .delete_user_api_key(api_key_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 

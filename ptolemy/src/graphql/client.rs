@@ -96,14 +96,12 @@ impl GraphQLClient {
 impl GraphQLClient {
     pub fn create_workspace(
         &self,
-        user_id: Id,
         name: String,
         description: Option<String>,
         admin_user_id: Id,
     ) -> Result<Workspace, GraphQLError> {
         let data = json!(
             {
-                "userId": user_id,
                 "name": name,
                 "description": description,
                 "adminUserId": admin_user_id,
@@ -119,10 +117,9 @@ impl GraphQLClient {
             .to_model()?)
     }
 
-    pub fn delete_workspace(&self, user_id: Id, workspace_id: Id) -> Result<(), GraphQLError> {
+    pub fn delete_workspace(&self, workspace_id: Id) -> Result<(), GraphQLError> {
         let data = json!(
             {
-                "userId": user_id,
                 "workspaceId": workspace_id,
             }
         );
@@ -138,14 +135,12 @@ impl GraphQLClient {
     pub fn add_user_to_workspace(
         &self,
         user_id: Id,
-        target_user_id: Id,
         workspace_id: Id,
         role: WorkspaceRole,
     ) -> Result<(), GraphQLError> {
         let data = json!(
             {
                 "userId": user_id,
-                "targetUserId": target_user_id,
                 "workspaceId": workspace_id,
                 "role": role,
             }
@@ -162,13 +157,11 @@ impl GraphQLClient {
     pub fn remove_user_from_workspace(
         &self,
         user_id: Id,
-        target_user_id: Id,
         workspace_id: Id,
     ) -> Result<(), GraphQLError> {
         let data = json!(
             {
                 "userId": user_id,
-                "targetUserId": target_user_id,
                 "workspaceId": workspace_id,
             }
         );
@@ -184,14 +177,12 @@ impl GraphQLClient {
     pub fn change_user_workspace_role(
         &self,
         user_id: Id,
-        target_user_id: Id,
         workspace_id: Id,
         role: WorkspaceRole,
     ) -> Result<(), GraphQLError> {
         let data = json!(
             {
                 "userId": user_id,
-                "targetUserId": target_user_id,
                 "workspaceId": workspace_id,
                 "role": role,
             }
@@ -207,7 +198,6 @@ impl GraphQLClient {
 
     pub fn create_service_api_key(
         &self,
-        user_id: Id,
         workspace_id: Id,
         name: String,
         permissions: ApiKeyPermission,
@@ -215,7 +205,6 @@ impl GraphQLClient {
     ) -> Result<String, GraphQLError> {
         let data = json!(
             {
-                "userId": user_id,
                 "workspaceId": workspace_id,
                 "name": name,
                 "permission": permissions,
@@ -234,13 +223,11 @@ impl GraphQLClient {
 
     pub fn delete_service_api_key(
         &self,
-        user_id: Id,
         workspace_id: Id,
         api_key_id: Id,
     ) -> Result<(), GraphQLError> {
         let data = json!(
             {
-                "userId": user_id,
                 "workspaceId": workspace_id,
                 "apiKeyId": api_key_id,
             }
@@ -334,7 +321,6 @@ impl GraphQLClient {
 impl GraphQLClient {
     pub fn create_user(
         &self,
-        user_id: Id,
         username: String,
         password: String,
         is_admin: bool,
@@ -343,7 +329,6 @@ impl GraphQLClient {
     ) -> Result<User, GraphQLError> {
         let data = json!(
             {
-                "userId": user_id,
                 "username": username,
                 "password": password,
                 "isAdmin": is_admin,
@@ -361,8 +346,8 @@ impl GraphQLClient {
             .to_model()?)
     }
 
-    pub fn delete_user(&self, user_id: Id, target_user_id: Id) -> Result<(), GraphQLError> {
-        let data = json!({"userId": user_id, "Id": target_user_id});
+    pub fn delete_user(&self, user_id: Id) -> Result<(), GraphQLError> {
+        let data = json!({"userId": user_id});
 
         self.mutation(DELETE_USER_MUTATION, data)?
             .user()?
@@ -375,10 +360,9 @@ impl GraphQLClient {
     pub fn create_user_api_key(
         &self,
         name: String,
-        user_id: Id,
         duration_days: Option<isize>,
     ) -> Result<String, GraphQLError> {
-        let data = json!({"name": name, "userId": user_id, "durationDays": duration_days});
+        let data = json!({"name": name, "durationDays": duration_days});
 
         Ok(self
             .mutation(CREATE_USER_API_KEY_MUTATION, data)?
@@ -389,8 +373,8 @@ impl GraphQLClient {
             .api_key()?)
     }
 
-    pub fn delete_user_api_key(&self, api_key_id: Id, user_id: Id) -> Result<(), GraphQLError> {
-        let data = json!({"apiKeyId": api_key_id, "userId": user_id});
+    pub fn delete_user_api_key(&self, api_key_id: Id) -> Result<(), GraphQLError> {
+        let data = json!({"apiKeyId": api_key_id});
 
         self.mutation(DELETE_USER_API_KEY_MUTATION, data)?
             .user()?
@@ -423,7 +407,7 @@ impl GraphQLClient {
     }
 
     pub fn get_user_workspaces(&self, user_id: Id) -> Result<Vec<Workspace>, GraphQLError> {
-        let data = json!({"Id": user_id});
+        let data = json!({"userId": user_id});
 
         let workspaces = self
             .query(USER_WORKSPACES_QUERY, data)?
