@@ -1,6 +1,6 @@
 use crate::graphql::state::JuniperAppState;
 use crate::models::auth::{ServiceApiKey, User, Workspace, WorkspaceUser};
-use juniper::{graphql_interface, graphql_object, GraphQLInputObject, GraphQLObject};
+use juniper::{graphql_interface, graphql_object, GraphQLObject};
 use uuid::Uuid;
 
 #[graphql_interface]
@@ -8,7 +8,6 @@ use uuid::Uuid;
     context = JuniperAppState,
     for = [
         DeletionResult,
-        AuthResult,
         UserResult,
         WorkspaceResult,
         WorkspaceUserResult,
@@ -17,6 +16,7 @@ use uuid::Uuid;
         ]
     )
     ]
+
 pub trait GQLResult {
     fn success(&self) -> bool;
     fn error(&self) -> Option<&[ValidationError]>;
@@ -70,21 +70,6 @@ pub struct ValidationError {
 }
 
 result_model!(DeletionResult, bool, deleted);
-
-#[derive(Clone, Debug, GraphQLInputObject)]
-pub struct LoginInput {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Debug, GraphQLObject)]
-#[graphql(context = JuniperAppState)]
-pub struct AuthPayload {
-    pub token: String,
-    pub user: User,
-}
-
-result_model!(AuthResult, AuthPayload, payload);
 
 result_model!(UserResult, User, user);
 

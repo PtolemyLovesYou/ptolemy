@@ -473,22 +473,6 @@ impl GraphQLClient {
 
 // Auth functions
 impl GraphQLClient {
-    pub fn login(
-        &self,
-        username: String,
-        password: String,
-    ) -> Result<(String, User), GraphQLError> {
-        let data = json!({"username": username, "password": password});
-
-        let data = self.mutation(LOGIN_MUTATION, data)?.auth()?.payload()?;
-
-        let token = data.token()?;
-
-        let user = data.user()?.to_model()?;
-
-        Ok((token, user))
-    }
-
     pub fn me(&self) -> Result<User, GraphQLError> {
         Ok(self.query(ME_QUERY, json!({}))?.me()?.to_model()?)
     }

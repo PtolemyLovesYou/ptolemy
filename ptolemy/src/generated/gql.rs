@@ -34,8 +34,6 @@ pub const REMOVE_USER_FROM_WORKSPACE_MUTATION: &'static str = r###"RemoveUserFro
 
 pub const DELETE_WORKSPACE_MUTATION: &'static str = r###"DeleteWorkspace"###;
 
-pub const LOGIN_MUTATION: &'static str = r###"Login"###;
-
 pub const QUERY: &'static str = r###"query UserApiKeys($userId: Uuid) {
   user(id: $userId) {
     userApiKeys {
@@ -226,18 +224,6 @@ mutation DeleteWorkspace($workspaceId: Uuid!) {
   workspace {
     delete(workspaceId: $workspaceId) {
       ...Result
-    }
-  }
-}
-
-mutation Login($username: String!, $password: String!) {
-  auth(userData: {username: $username, password: $password}) {
-    ...Result
-    payload {
-      token
-      user {
-        ...ReturnsUser
-      }
     }
   }
 }

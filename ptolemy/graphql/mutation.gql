@@ -114,18 +114,6 @@ mutation DeleteWorkspace($workspaceId: Uuid!) {
   }
 }
 
-mutation Login($username: String!, $password: String!) {
-  auth(userData: {username: $username, password: $password}) {
-    ...Result
-    payload {
-      token
-      user {
-        ...ReturnsUser
-      }
-    }
-  }
-}
-
 fragment ReturnsUser on User {
   displayName
   id
