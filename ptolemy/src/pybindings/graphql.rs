@@ -57,7 +57,7 @@ impl PyGraphQLClient {
     ) -> PyResult<()> {
         Ok(self
             .0
-            .remove_user_from_workspace(user_id, workspace_id, target_user_id)
+            .remove_user_from_workspace(user_id, target_user_id, workspace_id)
             .map_err(|e| PyValueError::new_err(e.to_string()))?)
     }
 
