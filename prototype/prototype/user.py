@@ -1,12 +1,15 @@
 """User management."""
 
 import streamlit as st
-from .models import User, UserRole
+from .client import get_client, current_user
 
 
 @st.fragment
 def usr_management_view():
     """Get user management view."""
+    client = get_client()
+    current_usr = current_user()
+
     # header
     header_columns = st.columns([1, 1, 5])
     with header_columns[0]:
@@ -22,21 +25,21 @@ def usr_management_view():
                 new_usr_username = st.text_input("Username")
                 new_usr_password = st.text_input("Password")
                 new_usr_display_name = st.text_input("Display name")
-                new_usr_role = st.pills(
-                    "Role", options=list(UserRole), default=UserRole.USER
-                )
+                new_usr_is_admin = st.checkbox("Admin", value=False)
 
                 submit = st.form_submit_button(label="Create")
 
                 if submit:
-                    User.create(
+                    client.create_user(
+                        current_usr.id,
                         new_usr_username,
                         new_usr_password,
-                        new_usr_role,
-                        display_name=new_usr_display_name,
-                    )
+                        new_usr_is_admin,
+                        False,
+                        display_name=new_usr_display_name
+                        )
 
-    users = User.all()
+    users = client.all_users()
 
     header_container = st.container()
     with header_container:
@@ -46,7 +49,7 @@ def usr_management_view():
         with header[1]:
             st.markdown("**NAME**")
         with header[2]:
-            st.markdown("**ROLE**")
+            st.markdown("**ADMIN**")
         with header[3]:
             st.markdown("**STATUS**")
         with header[4]:
@@ -96,10 +99,10 @@ def usr_management_view():
                         label=f"user_delete_{user.id}",
                         disabled=(
                             user.is_sysadmin
-                            or user.id == User.current_user().id
+                            or user.id == current_usr.id
                             or (
                                 user.is_admin
-                                and User.current_user().is_admin
+                                and current_usr.is_admin
                             )
                         ),
                         key=f"user_delete_{user.id}",
@@ -109,6 +112,6 @@ def usr_management_view():
         def delete_users():
             for user in users:
                 if st.session_state[f"user_delete_{user.id}"]:
-                    user.delete()
+                    client.delete_user(current_usr.id, user.id)
 
         st.form_submit_button(label="Save", on_click=delete_users)

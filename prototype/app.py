@@ -70,7 +70,7 @@ def get_layout():
                     "",
                     use_container_width=True,
                     icon=":material/group:",
-                    disabled=(not (user_info.is_admin and user_info.is_sysadmin)),
+                    disabled=(not (user_info.is_admin or user_info.is_sysadmin)),
                 )
 
                 # spacer
