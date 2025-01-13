@@ -430,7 +430,12 @@ pub struct Query {
 
 graphql_response!(
     Query,
-    [(ping, String), (user, GQLUsers), (workspace, GQLWorkspaces), (me, GQLUser)]
+    [
+        (ping, String),
+        (user, GQLUsers),
+        (workspace, GQLWorkspaces),
+        (me, GQLUser)
+    ]
 );
 
 pub trait GQLResponse<'de>: GraphQLResponse<'de> {

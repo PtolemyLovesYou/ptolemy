@@ -1,16 +1,15 @@
-use crate::graphql::{Mutation, Query, Schema, state::JuniperAppState};
-use crate::state::AppState;
 use crate::crud::auth::user_api_key::get_user_api_key_user;
+use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
+use crate::state::AppState;
 use axum::{
     extract::State,
-    routing::{get, on, MethodFilter},
-    Router,
-    middleware::from_fn_with_state,
     http::Request,
-    response::IntoResponse,
     http::StatusCode,
+    middleware::from_fn_with_state,
     middleware::Next,
-    Extension,
+    response::IntoResponse,
+    routing::{get, on, MethodFilter},
+    Extension, Router,
 };
 use juniper::EmptySubscription;
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
@@ -19,9 +18,10 @@ use std::sync::Arc;
 pub async fn api_key_guard(
     State(state): State<Arc<AppState>>,
     mut req: Request<axum::body::Body>,
-    next: Next
+    next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let api_key = req.headers()
+    let api_key = req
+        .headers()
         .get("X-Api-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|header| header.strip_prefix("Bearer "))
@@ -58,9 +58,8 @@ async fn graphql_handler(
 pub async fn graphql_router(state: &Arc<AppState>) -> Router {
     let mut router = Router::new().route(
         "/",
-        on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler).route_layer(
-            from_fn_with_state(state.clone(), api_key_guard),
-        ),
+        on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler)
+            .route_layer(from_fn_with_state(state.clone(), api_key_guard)),
     );
 
     if state.enable_graphiql {

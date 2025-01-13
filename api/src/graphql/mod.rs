@@ -6,4 +6,5 @@ pub mod mutation;
 pub mod query;
 pub mod state;
 
-pub type Schema = RootNode<'static, Query, Mutation, EmptySubscription<self::state::JuniperAppState>>;
+pub type Schema =
+    RootNode<'static, Query, Mutation, EmptySubscription<self::state::JuniperAppState>>;

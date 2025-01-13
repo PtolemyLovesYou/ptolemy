@@ -1,6 +1,6 @@
 use crate::crud::auth::{user as user_crud, workspace as workspace_crud};
-use crate::models::auth::{User, Workspace};
 use crate::graphql::state::JuniperAppState;
+use crate::models::auth::{User, Workspace};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
 

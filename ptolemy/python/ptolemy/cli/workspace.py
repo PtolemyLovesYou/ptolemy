@@ -4,7 +4,7 @@ from typing import Optional
 import click
 from tabulate import tabulate
 from .cli import CLIState
-from .._core import ApiKeyPermission # pylint: disable=no-name-in-module
+from .._core import ApiKeyPermission  # pylint: disable=no-name-in-module
 
 
 @click.group()
@@ -48,9 +48,11 @@ def list_workspace_users(ctx, name: Optional[str] = None):
     except ValueError:
         click.echo(f"Unable to find workspace {wk_name}")
 
+
 @workspace.group(name="api-keys")
 def service_api_keys():
     """Service API keys group."""
+
 
 @service_api_keys.command(name="list")
 @click.pass_context
@@ -64,12 +66,15 @@ def list_api_keys(ctx):
     else:
         click.echo(tabulate((i.to_dict() for i in api_keys), headers="keys"))
 
+
 @service_api_keys.command(name="create")
 @click.option("--name", required=True, type=str)
 @click.option("--permission", required=True, type=click.Choice(ApiKeyPermission))
 @click.option("--duration", required=False, type=int)
 @click.pass_context
-def create_api_key(ctx, name: str, permission: ApiKeyPermission, duration: Optional[int] = None):
+def create_api_key(
+    ctx, name: str, permission: ApiKeyPermission, duration: Optional[int] = None
+):
     """Create API key."""
     cli_state: CLIState = ctx.obj["state"]
 

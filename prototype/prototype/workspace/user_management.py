@@ -15,7 +15,8 @@ def add_user_to_workspace_form(workspace: Workspace):
             for i in client.all_users()
             if (
                 (not i.is_sysadmin)
-                and i.id not in [usr.id for (_, usr) in client.get_workspace_users(workspace.id)]
+                and i.id
+                not in [usr.id for (_, usr) in client.get_workspace_users(workspace.id)]
             )
         }
 
@@ -37,11 +38,8 @@ def add_user_to_workspace_form(workspace: Workspace):
         if sk_submit:
             try:
                 client.add_user_to_workspace(
-                    current_user().id,
-                    valid_users[sk_user].id,
-                    workspace.id,
-                    sk_role
-                    )
+                    current_user().id, valid_users[sk_user].id, workspace.id, sk_role
+                )
 
                 st.rerun(scope="fragment")
             except ValueError as e:
@@ -90,14 +88,13 @@ def wk_user_management_form(workspace: Workspace, user_workspace_role: Workspace
         if submit_wk_users:
             for user, user_row in zip(users, wk_users):
                 if user_row["delete"]:
-                    client.remove_user_from_workspace(current_user().id, workspace.id, user.id)
+                    client.remove_user_from_workspace(
+                        current_user().id, workspace.id, user.id
+                    )
                     continue
 
                 client.change_user_workspace_role(
-                    current_user().id,
-                    user.id,
-                    workspace.id,
-                    user_row["role"]
-                    )
+                    current_user().id, user.id, workspace.id, user_row["role"]
+                )
 
             st.rerun(scope="fragment")

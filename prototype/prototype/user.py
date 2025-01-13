@@ -36,8 +36,8 @@ def usr_management_view():
                         new_usr_password,
                         new_usr_is_admin,
                         False,
-                        display_name=new_usr_display_name
-                        )
+                        display_name=new_usr_display_name,
+                    )
 
     users = client.all_users()
 
@@ -100,10 +100,7 @@ def usr_management_view():
                         disabled=(
                             user.is_sysadmin
                             or user.id == current_usr.id
-                            or (
-                                user.is_admin
-                                and current_usr.is_admin
-                            )
+                            or (user.is_admin and current_usr.is_admin)
                         ),
                         key=f"user_delete_{user.id}",
                         label_visibility="collapsed",

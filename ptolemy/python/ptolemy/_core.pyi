@@ -136,9 +136,7 @@ class GraphQLClient:
     """GraphQL client."""
 
     def __init__(self, url: str, api_key: str): ...
-
     def me(self) -> User: ...
-
     def create_workspace(
         self,
         name: str,
@@ -155,9 +153,7 @@ class GraphQLClient:
         workspace_id: UUID,
         role: WorkspaceRole,
     ): ...
-    def remove_user_from_workspace(
-        self, workspace_id: UUID, user_id: UUID
-    ): ...
+    def remove_user_from_workspace(self, workspace_id: UUID, user_id: UUID): ...
     def change_user_workspace_role(
         self,
         user_id: UUID,
@@ -171,9 +167,7 @@ class GraphQLClient:
         permissions: ApiKeyPermission,
         valid_for: Optional[int] = None,
     ) -> str: ...
-    def delete_service_api_key(
-        self, workspace_id: UUID, api_key_id: UUID
-    ): ...
+    def delete_service_api_key(self, workspace_id: UUID, api_key_id: UUID): ...
     def get_workspace_service_api_keys(
         self, workspace_id: UUID
     ) -> List[ServiceApiKey]: ...

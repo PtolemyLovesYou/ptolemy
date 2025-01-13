@@ -28,18 +28,17 @@ impl GraphQLClient {
         let rt = rt.unwrap_or_else(|| Arc::new(Runtime::new().unwrap()));
 
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.append("X-Api-Key", reqwest::header::HeaderValue::from_str(format!("Bearer {}", api_key).as_str()).unwrap());
+        headers.append(
+            "X-Api-Key",
+            reqwest::header::HeaderValue::from_str(format!("Bearer {}", api_key).as_str()).unwrap(),
+        );
 
         let client = reqwest::Client::builder()
             .default_headers(headers)
             .build()
             .unwrap();
 
-        Self {
-            url,
-            rt,
-            client,
-        }
+        Self { url, rt, client }
     }
 
     async fn query_graphql<'de, 'a, T: GQLResponse<'de> + DeserializeOwned>(
@@ -491,10 +490,6 @@ impl GraphQLClient {
     }
 
     pub fn me(&self) -> Result<User, GraphQLError> {
-        Ok(
-            self.query(ME_QUERY, json!({}))?
-                .me()?
-                .to_model()?,
-        )
+        Ok(self.query(ME_QUERY, json!({}))?.me()?.to_model()?)
     }
 }

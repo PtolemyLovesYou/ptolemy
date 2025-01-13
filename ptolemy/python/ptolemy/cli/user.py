@@ -103,6 +103,7 @@ def list_workspaces_of_user(ctx, username: Optional[str] = None):
 
     click.echo(tabulate(wks, headers="keys"))
 
+
 @user.group(name="api-keys")
 def user_api_keys():
     """User API keys."""
@@ -120,6 +121,7 @@ def list_api_keys(ctx):
     else:
         click.echo(tabulate((i.to_dict() for i in api_keys), headers="keys"))
 
+
 @user_api_keys.command(name="delete")
 @click.argument("api_key_id")
 @click.pass_context
@@ -133,6 +135,7 @@ def delete_api_key(ctx, api_key_id: str):
     except ValueError as e:
         click.echo(f"Failed to delete API key: {e}")
 
+
 @user_api_keys.command(name="create")
 @click.option("--name", required=True, type=str)
 @click.option("--duration", required=False, type=int)
@@ -142,9 +145,7 @@ def create_api_key(ctx, name: str, duration: Optional[int] = None):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        api_key = cli_state.client.create_user_api_key(
-            name, duration_days=duration
-        )
+        api_key = cli_state.client.create_user_api_key(name, duration_days=duration)
         click.echo(f"Successfully created API key {api_key}")
     except ValueError as e:
         click.echo(f"Failed to create API key: {e}")

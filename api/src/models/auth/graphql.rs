@@ -2,9 +2,9 @@ use crate::crud::auth::{
     service_api_key as service_api_key_crud, user as user_crud, user_api_key as user_api_key_crud,
     workspace as workspace_crud, workspace_user as workspace_user_crud,
 };
+use crate::graphql::state::JuniperAppState;
 use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
 use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
-use crate::graphql::state::JuniperAppState;
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
@@ -193,7 +193,11 @@ impl WorkspaceUser {
     }
 
     async fn user(&self, ctx: &JuniperAppState) -> FieldResult<User> {
-        let mut conn = ctx.state.get_conn().await.map_err(|e| e.juniper_field_error())?;
+        let mut conn = ctx
+            .state
+            .get_conn()
+            .await
+            .map_err(|e| e.juniper_field_error())?;
 
         user_crud::get_user(&mut conn, &self.user_id)
             .await
@@ -201,7 +205,11 @@ impl WorkspaceUser {
     }
 
     async fn workspace(&self, ctx: &JuniperAppState) -> FieldResult<Workspace> {
-        let mut conn = ctx.state.get_conn().await.map_err(|e| e.juniper_field_error())?;
+        let mut conn = ctx
+            .state
+            .get_conn()
+            .await
+            .map_err(|e| e.juniper_field_error())?;
 
         workspace_crud::get_workspace(&mut conn, &self.workspace_id)
             .await

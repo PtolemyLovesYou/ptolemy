@@ -29,8 +29,8 @@ def profile_view():
                         new_api_key = client.create_user_api_key(
                             new_personal_api_key_name,
                             current_usr.id,
-                            duration_days=new_personal_api_key_duration
-                            )
+                            duration_days=new_personal_api_key_duration,
+                        )
 
                         st.write("Copy API key here:")
                         st.code(new_api_key)
