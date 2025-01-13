@@ -7,7 +7,7 @@ api/**/*.gql linguist-detectable
 # *.toml linguist-detectable
 *.proto linguist-detectable
 
-prototype/**/* -linguist-detectable
+# prototype/**/* -linguist-detectable
 
 # *.sql.j2 linguist-language=sql
 
