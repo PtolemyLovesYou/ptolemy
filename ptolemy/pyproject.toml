@@ -26,6 +26,7 @@ module-name = "ptolemy._core"
 python-packages = ["ptolemy"]
 python-source = "python"
 strip = true
+features = ["client"]
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]

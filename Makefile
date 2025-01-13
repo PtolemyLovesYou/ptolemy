@@ -22,7 +22,7 @@ test-client:
 
 .PHONY: build-client
 build-client:
-	cd ptolemy && maturin develop --uv --features client
+	cd ptolemy && maturin develop
 
 .PHONY: setup-client-dev
 setup-client-dev:

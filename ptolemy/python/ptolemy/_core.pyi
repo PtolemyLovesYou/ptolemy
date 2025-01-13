@@ -2,7 +2,7 @@
 
 # pylint: disable=unused-argument,missing-function-docstring,too-few-public-methods
 from __future__ import annotations
-from typing import Optional, Any, Dict, TypeVar, Final, List
+from typing import Optional, Any, Dict, TypeVar, List
 from uuid import UUID
 from datetime import datetime
 from enum import Enum
@@ -12,22 +12,22 @@ T = TypeVar("T", bound=Enum)
 class ApiKeyPermission(Enum):
     """API Key Permissions Enum."""
 
-    READ_ONLY: Final[str] = "READ_ONLY"
-    WRITE_ONLY: Final[str] = "WRITE_ONLY"
-    READ_WRITE: Final[str] = "READ_WRITE"
+    READ_ONLY: str = "READ_ONLY"
+    WRITE_ONLY: str = "WRITE_ONLY"
+    READ_WRITE: str = "READ_WRITE"
 
 class UserStatus(Enum):
     """User Status Enum."""
 
-    ACTIVE: Final[str] = "ACTIVE"
-    SUSPENDED: Final[str] = "SUSPENDED"
+    ACTIVE: str = "ACTIVE"
+    SUSPENDED: str = "SUSPENDED"
 
 class WorkspaceRole(Enum):
     """Workspace Role Enum."""
 
-    USER: Final[str] = "USER"
-    MANAGER: Final[str] = "MANAGER"
-    ADMIN: Final[str] = "ADMIN"
+    USER: str = "USER"
+    MANAGER: str = "MANAGER"
+    ADMIN: str = "ADMIN"
 
 class Ptolemy:
     """Ptolemy Client."""
@@ -146,9 +146,7 @@ class GraphQLClient:
     def delete_workspace(
         self,
         user_id: UUID,
-        target_user_id: UUID,
         workspace_id: UUID,
-        role: WorkspaceRole,
     ): ...
     def add_user_to_workspace(
         self,

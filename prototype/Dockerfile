@@ -37,6 +37,8 @@ RUN chmod +x /usr/local/bin/maturin
 
 FROM base as builder
 
+WORKDIR /app
+
 ARG CFFI_VERSION=1.17.1
 
 ENV BUILD_PROTOBUFS=0 \
@@ -54,13 +56,11 @@ RUN uv pip install cffi==${CFFI_VERSION}
 
 # Build ptolemy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/root/.cache/uv \
-    maturin develop --uv --features client -m /app/ptolemy/Cargo.toml
-
-# Install the project's dependencies using the lockfile and settings
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=./prototype/pyproject.toml,target=prototype/pyproject.toml \
-    uv sync --frozen --no-install-project --package prototype --inexact
+    --mount=type=cache,target=/app/target \
+    cargo clean -p ptolemy && \
+    maturin develop --uv -m /app/ptolemy/Cargo.toml
 
 COPY ./prototype ./prototype
 
@@ -75,11 +75,11 @@ WORKDIR /app
 
 # Copy venv from build stage
 COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/ptolemy /app/ptolemy
+COPY --from=builder /app/prototype /app/prototype
 
 # Then, add the rest of the project source code and install it
 COPY pyproject.toml uv.lock .
-COPY ./ptolemy ./ptolemy
-COPY ./prototype ./prototype
 
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
     STREAMLIT_BROWSER_ADDRESS=0.0.0.0
