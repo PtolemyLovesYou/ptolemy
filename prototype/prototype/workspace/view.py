@@ -43,17 +43,20 @@ def wk_management_view():
     wk_selection_col, new_col = st.columns([3, 1])
     client = get_client()
     current_usr = current_user()
-    workspaces = client.get_user_workspaces(current_usr.id)
+    workspaces = {wk.name: wk for wk in client.get_user_workspaces(current_usr.id)}
+    selected_workspace = None
 
     with wk_selection_col:
-        selected_workspace = st.selectbox(
+        selected_wk = st.selectbox(
             "Select workspace",
-            options=workspaces,
-            format_func=lambda i: i.name,
+            options=workspaces.keys(),
             placeholder="Select Workspace",
             label_visibility="collapsed",
             index=None,
         )
+
+        if selected_wk is not None:
+            selected_workspace = workspaces[selected_wk]
 
     with new_col:
         with st.popover(r"\+", use_container_width=True):
