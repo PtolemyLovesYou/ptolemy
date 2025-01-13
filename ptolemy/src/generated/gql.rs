@@ -46,8 +46,8 @@ pub const QUERY: &'static str = r###"query UserApiKeys($userId: Uuid) {
   }
 }
 
-query UserWorkspaces($Id: Uuid, $username: String) {
-  user(id: $Id, username: $username) {
+query UserWorkspaces($userId: Uuid, $username: String) {
+  user(id: $userId, username: $username) {
     workspaces {
       ...ReturnsWorkspace
       users(username: $username) {
