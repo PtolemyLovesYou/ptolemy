@@ -4,7 +4,7 @@ import streamlit as st
 from .workspace_management import workspace_form
 from .user_management import wk_user_management_form
 from .api_key_management import service_api_key_management_form
-from ..models import User, Workspace, UserRole
+from ..models import User, Workspace
 
 
 def create_workspace_form():
@@ -12,7 +12,7 @@ def create_workspace_form():
     with st.form(
         "create_new_wk", border=False, clear_on_submit=True, enter_to_submit=False
     ):
-        valid_admins = [i for i in User.all() if i.role != UserRole.SYSADMIN]
+        valid_admins = [i for i in User.all() if not i.is_sysadmin]
         sk_name = st.text_input("Name")
         sk_description = st.text_area("Description")
         sk_admin = st.pills(

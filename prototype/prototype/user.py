@@ -70,7 +70,7 @@ def usr_management_view():
                     st.text_input(
                         "display_name",
                         value=user.display_name,
-                        disabled=user.role == UserRole.SYSADMIN,
+                        disabled=user.is_sysadmin,
                         key=f"user_display_name_{user.id}",
                         label_visibility="collapsed",
                     )
@@ -79,7 +79,7 @@ def usr_management_view():
                         label=f"user_role_{user.id}",
                         options=list(UserRole),
                         index=list(UserRole).index(user.role),
-                        disabled=user.role == UserRole.SYSADMIN,
+                        disabled=user.is_sysadmin,
                         key=f"user_role_{user.id}",
                         label_visibility="collapsed",
                     )
@@ -88,7 +88,7 @@ def usr_management_view():
                         label=f"user_status_{user.id}",
                         options=["ACTIVE", "SUSPENDED"],
                         index=["ACTIVE", "SUSPENDED"].index(user.status),
-                        disabled=user.role == UserRole.SYSADMIN,
+                        disabled=user.is_sysadmin,
                         key=f"user_status_{user.id}",
                         label_visibility="collapsed",
                     )
@@ -96,11 +96,11 @@ def usr_management_view():
                     st.checkbox(
                         label=f"user_delete_{user.id}",
                         disabled=(
-                            user.role == UserRole.SYSADMIN
+                            user.is_sysadmin
                             or user.id == User.current_user().id
                             or (
-                                user.role == UserRole.ADMIN
-                                and User.current_user().role == UserRole.ADMIN
+                                user.is_admin
+                                and User.current_user().is_admin
                             )
                         ),
                         key=f"user_delete_{user.id}",

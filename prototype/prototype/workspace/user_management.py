@@ -1,7 +1,7 @@
 """Workspace user management."""
 
 import streamlit as st
-from ..models import Workspace, WorkspaceRole, UserRole, User
+from ..models import Workspace, WorkspaceRole, User
 
 
 def add_user_to_workspace_form(workspace: Workspace):
@@ -11,7 +11,7 @@ def add_user_to_workspace_form(workspace: Workspace):
             i
             for i in User.all()
             if (
-                i.role != UserRole.SYSADMIN
+                (not i.is_sysadmin)
                 and i.id not in [usr.id for usr in workspace.users]
             )
         ]
