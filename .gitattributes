@@ -1,6 +1,6 @@
 # For my own vanity...
 ptolemy/**/*.gql linguist-detectable
-# api/**/*.gql linguist-detectable
+api/**/*.gql linguist-detectable
 # *.sql.j2 linguist-detectable
 # *.yaml linguist-detectable
 # *.yml linguist-detectable
@@ -13,6 +13,9 @@ ptolemy/**/*.gql linguist-detectable
 
 # Set generated code as undetectable >:)
 api/src/generated/*.rs -linguist-detectable
+ptolemy/src/generated/*.rs -linguist-detectable
+api/graphql/schema.gql -linguist-detectable
+ptolemy/graphql/schema.gql -linguist-detectable
 
 # Set migrations as detectable
 api/diesel/**/*.sql linguist-detectable
