@@ -35,15 +35,17 @@ def add_user_to_workspace_form(workspace: Workspace):
         sk_submit = st.form_submit_button(label="Submit")
 
         if sk_submit:
-            success = client.add_user_to_workspace(
-                current_user().id,
-                valid_users[sk_user].id,
-                workspace.id,
-                sk_role
-                )
+            try:
+                client.add_user_to_workspace(
+                    current_user().id,
+                    valid_users[sk_user].id,
+                    workspace.id,
+                    sk_role
+                    )
 
-            if success:
                 st.rerun(scope="fragment")
+            except ValueError as e:
+                st.error(f"Failed to add user to workspace: {e}")
 
 
 @st.fragment

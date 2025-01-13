@@ -58,9 +58,9 @@ RUN uv pip install cffi==${CFFI_VERSION}
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=cache,target=/app/target \
+    --mount=type=cache,target=/app/target/release/deps \
     cargo clean -p ptolemy && \
-    maturin develop --uv -m /app/ptolemy/Cargo.toml
+    maturin develop --uv --release -m /app/ptolemy/Cargo.toml
 
 COPY ./prototype ./prototype
 
