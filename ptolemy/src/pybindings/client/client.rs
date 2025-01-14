@@ -65,6 +65,7 @@ impl PtolemyClient {
     fn new(
         base_url: String,
         observer_url: String,
+        api_key: String,
         workspace_name: String,
         autoflush: bool,
         batch_size: usize,
@@ -72,6 +73,7 @@ impl PtolemyClient {
         let grpc_client = Arc::new(Mutex::new(ServerHandler::new(
             observer_url.clone(),
             batch_size,
+            api_key,
         )?));
 
         let grpc_client_clone = Arc::clone(&grpc_client);

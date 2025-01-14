@@ -391,10 +391,7 @@ pub struct Mutation {
 
 graphql_response!(
     Mutation,
-    [
-        (user, GQLUserMutation),
-        (workspace, GQLWorkspaceMutation),
-    ]
+    [(user, GQLUserMutation), (workspace, GQLWorkspaceMutation),]
 );
 
 #[derive(Debug, Clone, Deserialize)]

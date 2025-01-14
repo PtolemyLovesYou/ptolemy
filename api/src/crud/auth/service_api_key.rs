@@ -14,7 +14,7 @@ pub async fn verify_service_api_key_by_workspace(
     conn: &mut DbConnection<'_>,
     workspace_name: &str,
     api_key: &str,
-    password_handler: &PasswordHandler
+    password_handler: &PasswordHandler,
 ) -> Result<(ServiceApiKey, Workspace), CRUDError> {
     let key_preview = api_key.chars().take(12).collect::<String>();
 
@@ -29,7 +29,7 @@ pub async fn verify_service_api_key_by_workspace(
             error!("Failed to get workspace: {}", e);
             CRUDError::GetError
         })?;
-    
+
     for (ak, workspace) in results {
         if password_handler.verify_password(&api_key, ak.key_hash.as_str()) {
             return Ok((ak, workspace));

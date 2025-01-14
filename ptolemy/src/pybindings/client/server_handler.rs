@@ -1,38 +1,75 @@
 use crate::generated::observer::{
-    observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
-    WorkspaceVerificationRequest, WorkspaceVerificationResponse,
+    observer_authentication_client::ObserverAuthenticationClient, observer_client::ObserverClient,
+    AuthenticationRequest, PublishRequest, PublishResponse, Record, WorkspaceVerificationRequest,
+    WorkspaceVerificationResponse,
 };
+use crate::models::id::Id;
 use pyo3::prelude::*;
 use std::collections::VecDeque;
+use std::str::FromStr;
 use tonic::transport::Channel;
 
 #[derive(Debug)]
 pub struct ServerHandler {
     client: ObserverClient<Channel>,
+    auth_client: ObserverAuthenticationClient<Channel>,
     queue: VecDeque<Record>,
     rt: tokio::runtime::Runtime,
     batch_size: usize,
+    api_key: String,
+    token: Option<String>,
+    workspace_id: Option<Id>,
 }
 
 impl ServerHandler {
-    pub fn new(observer_url: String, batch_size: usize) -> PyResult<Self> {
+    pub fn new(observer_url: String, batch_size: usize, api_key: String) -> PyResult<Self> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
         let queue: VecDeque<Record> = VecDeque::new();
 
-        let client = rt.block_on(ObserverClient::connect(observer_url)).unwrap();
+        let client = rt
+            .block_on(ObserverClient::connect(observer_url.clone()))
+            .unwrap();
+        let auth_client = rt
+            .block_on(ObserverAuthenticationClient::connect(observer_url.clone()))
+            .unwrap();
 
         Ok(Self {
             client,
             rt,
             queue,
             batch_size,
+            auth_client,
+            api_key,
+            token: None,
+            workspace_id: None,
         })
     }
 }
 
 impl ServerHandler {
+    pub fn authenticate(
+        &mut self,
+        workspace_name: String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut request = tonic::Request::new(AuthenticationRequest { workspace_name });
+
+        request.metadata_mut().insert(
+            tonic::metadata::MetadataKey::from_str("X-Api-Key")?,
+            tonic::metadata::MetadataValue::from_str(&self.api_key)?,
+        );
+
+        let resp = self
+            .rt
+            .block_on(self.auth_client.authenticate(request))?
+            .into_inner();
+
+        self.token = Some(resp.token);
+        self.workspace_id = Some(TryFrom::try_from(resp.workspace_id).unwrap());
+
+        Ok(())
+    }
     pub fn verify_workspace(
         &mut self,
         workspace_name: String,

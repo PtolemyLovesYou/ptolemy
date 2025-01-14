@@ -1,20 +1,20 @@
-use crate::crud::auth::{workspace as workspace_crud, service_api_key as service_api_key_crud};
-use crate::models::auth::enums::ApiKeyPermissionEnum;
+use crate::crud::auth::{service_api_key as service_api_key_crud, workspace as workspace_crud};
 use crate::error::CRUDError;
+use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::observer::records::EventRecords;
 use crate::state::AppState;
+use jsonwebtoken::{encode, EncodingKey, Header};
 use ptolemy::generated::observer::{
-    observer_server::Observer, ObserverStatusCode, PublishRequest, PublishResponse, Record,
-    WorkspaceVerificationRequest, WorkspaceVerificationResponse,
-    observer_authentication_server::ObserverAuthentication, AuthenticationRequest, AuthenticationResponse
+    observer_authentication_server::ObserverAuthentication, observer_server::Observer,
+    AuthenticationRequest, AuthenticationResponse, ObserverStatusCode, PublishRequest,
+    PublishResponse, Record, WorkspaceVerificationRequest, WorkspaceVerificationResponse,
 };
-use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
-use jsonwebtoken::{encode, EncodingKey, Header};
-use serde::{Serialize, Deserialize};
-use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObserverClaimsPayload {
@@ -39,7 +39,11 @@ impl MyObserverAuthentication {
         Self { state }
     }
 
-    fn generate_auth_token(&self, workspace_id: &Uuid, permissions: &ApiKeyPermissionEnum) -> Result<String, Status> {
+    fn generate_auth_token(
+        &self,
+        workspace_id: &Uuid,
+        permissions: &ApiKeyPermissionEnum,
+    ) -> Result<String, Status> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -74,7 +78,8 @@ impl ObserverAuthentication for MyObserverAuthentication {
         &self,
         request: Request<AuthenticationRequest>,
     ) -> Result<Response<AuthenticationResponse>, Status> {
-        let api_key = request.metadata()
+        let api_key = request
+            .metadata()
             .get("X-Api-Key")
             .ok_or_else(|| {
                 error!("API key not found in metadata");
@@ -100,25 +105,21 @@ impl ObserverAuthentication for MyObserverAuthentication {
             &mut conn,
             &data.workspace_name,
             api_key,
-            &self.state.password_handler
-            )
-            .await
-            .map_err(|e| {
-                match e {
-                    CRUDError::NotFoundError => Status::not_found("Invalid API key."),
-                    _ => {
-                        error!("Failed to verify API key: {:?}", e);
-                        Status::internal("Failed to verify API key.")
-                    },
-                }
-            })?;
-        
-        Ok(Response::new(
-            AuthenticationResponse {
-                token: self.generate_auth_token(&workspace.id, &api_key.permissions)?,
-                workspace_id: workspace.id.to_string(),
+            &self.state.password_handler,
+        )
+        .await
+        .map_err(|e| match e {
+            CRUDError::NotFoundError => Status::not_found("Invalid API key."),
+            _ => {
+                error!("Failed to verify API key: {:?}", e);
+                Status::internal("Failed to verify API key.")
             }
-        ))
+        })?;
+
+        Ok(Response::new(AuthenticationResponse {
+            token: self.generate_auth_token(&workspace.id, &api_key.permissions)?,
+            workspace_id: workspace.id.to_string(),
+        }))
     }
 }
 
