@@ -49,6 +49,13 @@ impl ServerHandler {
 }
 
 impl ServerHandler {
+    pub fn workspace_id(&self) -> Result<Id, Box<dyn std::error::Error>> {
+        match &self.workspace_id {
+            Some(id) => Ok(id.clone()),
+            None => Err("Not authenticated".into()),
+        }
+    }
+
     pub fn authenticate(
         &mut self,
         workspace_name: String,

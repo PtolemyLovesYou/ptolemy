@@ -116,7 +116,7 @@ pymodel!(
     ServiceApiKey,
     PyServiceApiKey,
     [name = "ServiceApiKey"],
-    [id, workspace_id, name, key_preview, expires_at]
+    [id, workspace_id, name, key_preview, expires_at, permissions]
 );
 pymodel!(
     WorkspaceUser,

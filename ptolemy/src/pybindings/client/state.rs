@@ -2,10 +2,10 @@ use crate::generated::observer::Record;
 use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
+use crate::models::id::Id;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
-use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct PtolemyClientState {
@@ -93,7 +93,7 @@ impl PtolemyClientState {
         self.metadata = Some(metadata);
     }
 
-    pub fn event_id(&self) -> PyResult<Uuid> {
+    pub fn event_id(&self) -> PyResult<Id> {
         match &self.event {
             Some(event) => Ok(event.id.into()),
             None => Err(PyValueError::new_err("No event set!")),

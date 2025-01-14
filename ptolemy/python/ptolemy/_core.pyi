@@ -36,6 +36,7 @@ class Ptolemy:
         self,
         base_url: str,
         observer_url: str,
+        api_key: str,
         workspace_name: str,
         autoflush: bool,
         batch_size: int,
