@@ -1,9 +1,9 @@
 use crate::error::ApiError;
 use crate::middleware::trace_layer_grpc;
-use crate::observer::service::MyObserver;
+use crate::observer::service::{MyObserver, MyObserverAuthentication};
 use crate::routes::get_router;
 use crate::state::AppState;
-use ptolemy::generated::observer::observer_server::ObserverServer;
+use ptolemy::generated::observer::{observer_server::ObserverServer, observer_authentication_server::ObserverAuthenticationServer};
 use std::sync::Arc;
 use tonic::transport::Server;
 use tower::ServiceBuilder;
@@ -29,12 +29,14 @@ pub async fn run_rest_api(shared_state: Arc<AppState>) -> Result<(), ApiError> {
 pub async fn run_grpc_server(shared_state: Arc<AppState>) -> Result<(), ApiError> {
     let grpc_addr = "[::]:50051".parse().unwrap();
     let observer = MyObserver::new(shared_state.clone()).await;
+    let authenticator = MyObserverAuthentication::new(shared_state.clone()).await;
 
     let grpc_trace_layer = ServiceBuilder::new().layer(trace_layer_grpc()).into_inner();
 
     let server = Server::builder()
         .layer(grpc_trace_layer)
-        .add_service(ObserverServer::new(observer));
+        .add_service(ObserverServer::new(observer))
+        .add_service(ObserverAuthenticationServer::new(authenticator));
 
     match server.serve(grpc_addr).await {
         Ok(_) => Ok(()),

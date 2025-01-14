@@ -4,6 +4,19 @@ import "google/protobuf/struct.proto";
 
 package observer;
 
+service ObserverAuthentication {
+    rpc Authenticate(AuthenticationRequest) returns (AuthenticationResponse);
+}
+
+message AuthenticationRequest {
+    string workspace_name = 1;
+}
+
+message AuthenticationResponse {
+    string workspace_id = 1;
+    string token = 2;
+}
+
 service Observer {
     rpc Publish(PublishRequest) returns (PublishResponse);
     rpc VerifyWorkspace(WorkspaceVerificationRequest) returns (WorkspaceVerificationResponse);
