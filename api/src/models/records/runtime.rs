@@ -43,7 +43,7 @@ impl TryFrom<Record> for RuntimeRecord {
 
         let rec = RuntimeRecord {
             id: val.id.into(),
-            tier: val.tier.try_into()?,
+            tier: val.tier.into(),
             system_event_id,
             subsystem_event_id,
             component_event_id,

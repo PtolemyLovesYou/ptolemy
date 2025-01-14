@@ -5,6 +5,7 @@ use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 #[derive(
     Debug,
@@ -28,6 +29,8 @@ pub struct ServiceApiKey {
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
@@ -42,4 +45,6 @@ pub struct ServiceApiKeyCreate {
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
+    // pub deleted_at: Option<DateTime<Utc>>,
+    // pub deletion_reason: Option<String>,
 }

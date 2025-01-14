@@ -1,5 +1,5 @@
 use crate::models::auth::user::User;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,8 @@ pub struct UserApiKey {
     pub key_preview: String,
     // pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]

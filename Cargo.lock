@@ -108,6 +108,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "hyper",
+ "ipnet",
  "jsonwebtoken",
  "juniper",
  "juniper_axum",
@@ -563,7 +564,9 @@ dependencies = [
  "byteorder",
  "chrono",
  "diesel_derives",
+ "ipnet",
  "itoa",
+ "libc",
  "pq-sys",
  "serde_json",
  "uuid",
@@ -641,6 +644,12 @@ dependencies = [
  "quote",
  "syn 2.0.95",
 ]
+
+[[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
 name = "either"
@@ -1295,6 +1304,10 @@ name = "ipnet"
 version = "2.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddc24109865250148c2e0f3d25d4f0f479571723792d3802153c60922a4fb708"
+dependencies = [
+ "schemars",
+ "serde",
+]
 
 [[package]]
 name = "is-terminal"
@@ -2329,6 +2342,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "schemars"
+version = "0.8.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09c024468a378b7e36765cd36702b7a90cc3cba11654f6685c8f233408e89e92"
+dependencies = [
+ "dyn-clone",
+ "schemars_derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "0.8.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1eee588578aff73f856ab961cd2f79e36bc45d7ded33a7562adba4667aecc0e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "syn 2.0.95",
+]
+
+[[package]]
 name = "scoped-futures"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2380,6 +2417,17 @@ name = "serde_derive"
 version = "1.0.216"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46f859dbbf73865c6627ed570e78961cd3ac92407a2d117204c49232485da55e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.95",
+]
+
+[[package]]
+name = "serde_derive_internals"
+version = "0.29.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
 dependencies = [
  "proc-macro2",
  "quote",

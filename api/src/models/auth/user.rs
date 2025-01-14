@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
 #[diesel(table_name = crate::generated::auth_schema::users)]
@@ -16,6 +17,8 @@ pub struct User {
     pub status: UserStatusEnum,
     pub is_sysadmin: bool,
     pub is_admin: bool,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]

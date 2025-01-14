@@ -1,5 +1,5 @@
 -- Your SQL goes here
-create type operation_type as enum ('create', 'update', 'delete', 'grant', 'revoke');
+create type operation_type as enum ('read', 'create', 'update', 'delete', 'grant', 'revoke');
 
 -- Record audit logs
 create table record_audit_logs (

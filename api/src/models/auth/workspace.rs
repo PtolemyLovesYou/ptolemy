@@ -1,4 +1,4 @@
-use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
+use chrono::{naive::serde::ts_microseconds, NaiveDateTime, Utc, DateTime};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,8 @@ pub struct Workspace {
     pub created_at: NaiveDateTime,
     #[serde(with = "ts_microseconds")]
     pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]

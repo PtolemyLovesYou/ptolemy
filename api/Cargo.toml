@@ -38,6 +38,7 @@ tower-http = { version = "0.6.2", features = ["trace"] }
 argon2 = "0.5.3"
 tower = "0.5.2"
 jsonwebtoken = "9.3.0"
+ipnet = {version = "2.10.1", features = ["json", "serde"]}
 
 [dependencies.ptolemy]
 path = "../ptolemy"

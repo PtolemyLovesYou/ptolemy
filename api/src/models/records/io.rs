@@ -109,7 +109,7 @@ impl TryFrom<Record> for IORecord {
 
         let rec = IORecord {
             id: id.into(),
-            tier: tier.try_into()?,
+            tier: tier.into(),
             io_type,
             system_event_id,
             subsystem_event_id,
