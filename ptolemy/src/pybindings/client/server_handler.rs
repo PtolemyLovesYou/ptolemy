@@ -1,7 +1,6 @@
 use crate::generated::observer::{
     observer_authentication_client::ObserverAuthenticationClient, observer_client::ObserverClient,
-    AuthenticationRequest, PublishRequest, PublishResponse, Record, WorkspaceVerificationRequest,
-    WorkspaceVerificationResponse,
+    AuthenticationRequest, PublishRequest, PublishResponse, Record,
 };
 use crate::models::id::Id;
 use pyo3::prelude::*;
@@ -76,19 +75,6 @@ impl ServerHandler {
         self.workspace_id = Some(TryFrom::try_from(resp.workspace_id).unwrap());
 
         Ok(())
-    }
-    pub fn verify_workspace(
-        &mut self,
-        workspace_name: String,
-    ) -> Result<WorkspaceVerificationResponse, Box<dyn std::error::Error>> {
-        let request = tonic::Request::new(WorkspaceVerificationRequest { workspace_name });
-
-        let response = self.rt.block_on(async {
-            let response = self.client.verify_workspace(request).await?;
-            Ok(response.into_inner())
-        });
-
-        response
     }
 
     pub fn publish_request(
