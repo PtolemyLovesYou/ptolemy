@@ -52,19 +52,19 @@ create table iam_audit_logs (
 
 -- Soft deletion for iam tables
 alter table service_api_key
-    add column deleted_at timestamp,
+    add column deleted_at timestamptz,
     add column deletion_reason varchar;
 
 alter table user_api_key
-    add column deleted_at timestamp,
+    add column deleted_at timestamptz,
     add column deletion_reason varchar;
 
 alter table workspace
-    add column deleted_at timestamp,
+    add column deleted_at timestamptz,
     add column deletion_reason varchar;
 
 alter table users
-    add column deleted_at timestamp,
+    add column deleted_at timestamptz,
     add column deletion_reason varchar;
 
 alter table workspace_user 

@@ -51,7 +51,7 @@ diesel::table! {
         key_preview -> Varchar,
         permissions -> ApiKeyPermission,
         expires_at -> Nullable<Timestamp>,
-        deleted_at -> Nullable<Timestamp>,
+        deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
 }
@@ -64,7 +64,7 @@ diesel::table! {
         key_hash -> Varchar,
         key_preview -> Varchar,
         expires_at -> Nullable<Timestamp>,
-        deleted_at -> Nullable<Timestamp>,
+        deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
 }
@@ -81,7 +81,7 @@ diesel::table! {
         status -> UserStatus,
         is_sysadmin -> Bool,
         is_admin -> Bool,
-        deleted_at -> Nullable<Timestamp>,
+        deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
 }
@@ -95,7 +95,7 @@ diesel::table! {
         archived -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        deleted_at -> Nullable<Timestamp>,
+        deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
 }

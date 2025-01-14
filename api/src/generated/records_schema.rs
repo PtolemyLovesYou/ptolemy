@@ -162,7 +162,7 @@ diesel::table! {
         archived -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        deleted_at -> Nullable<Timestamp>,
+        deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
 }
