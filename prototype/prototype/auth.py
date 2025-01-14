@@ -4,14 +4,15 @@ import streamlit as st
 import requests
 from ptolemy import GraphQLClient
 
+
 def login(username: str, password: str):
     """Login."""
     try:
         resp = requests.post(
             "http://api:8000/auth",
             json={"username": username, "password": password},
-            timeout=5
-            )
+            timeout=5,
+        )
         if not resp.ok:
             raise ValueError(f"Invalid username or password: {resp.text}")
 

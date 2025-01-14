@@ -1,9 +1,10 @@
 use crate::crud::auth::user::auth_user;
-use crate::state::AppState;
 use crate::crypto::Claims;
+use crate::state::AppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use tracing::error;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthPayload {
@@ -31,7 +32,11 @@ pub async fn login(
     .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let token = Claims::new(user.id, 3600)
-        .generate_auth_token(state.jwt_secret.as_bytes());
+        .generate_auth_token(state.jwt_secret.as_bytes())
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok(Json(AuthResponse { token }))
 }

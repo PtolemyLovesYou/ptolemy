@@ -1,27 +1,16 @@
+use super::claims::ApiKey;
 use crate::{
-    crud::auth::service_api_key as service_api_key_crud,
-    error::CRUDError,
-    models::auth::enums::ApiKeyPermissionEnum,
-    observer::records::EventRecords,
-    state::AppState,
-    crypto::Claims,
+    crud::auth::service_api_key as service_api_key_crud, crypto::Claims, error::CRUDError,
+    models::auth::enums::ApiKeyPermissionEnum, observer::records::EventRecords, state::AppState,
 };
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
-    AuthenticationRequest, AuthenticationResponse, PublishRequest,
-    PublishResponse, Record
+    AuthenticationRequest, AuthenticationResponse, PublishRequest, PublishResponse, Record,
 };
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
 use uuid::Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ObserverClaimsPayload {
-    workspace_id: Uuid,
-    permissions: ApiKeyPermissionEnum,
-}
 
 #[derive(Debug)]
 pub struct MyObserverAuthentication {
@@ -33,18 +22,13 @@ impl MyObserverAuthentication {
         Self { state }
     }
 
-    fn generate_auth_token(
-        &self,
-        workspace_id: &Uuid,
-        permissions: &ApiKeyPermissionEnum,
-    ) -> Result<String, Status> {
-        let payload = ObserverClaimsPayload {
-            workspace_id: workspace_id.clone(),
-            permissions: permissions.clone(),
-        };
-
-        let token = Claims::new(payload, 3600)
-            .generate_auth_token(self.state.jwt_secret.as_bytes());
+    fn generate_auth_token(&self, api_key_id: Uuid) -> Result<String, Status> {
+        let token = Claims::new(api_key_id, 3600)
+            .generate_auth_token(self.state.jwt_secret.as_bytes())
+            .map_err(|e| {
+                error!("Failed to generate auth token: {}", e);
+                Status::internal("Failed to generate auth token")
+            })?;
 
         Ok(token)
     }
@@ -56,18 +40,10 @@ impl ObserverAuthentication for MyObserverAuthentication {
         &self,
         request: Request<AuthenticationRequest>,
     ) -> Result<Response<AuthenticationResponse>, Status> {
-        let api_key = request
-            .metadata()
-            .get("X-Api-Key")
-            .ok_or_else(|| {
-                error!("API key not found in metadata");
-                Status::unauthenticated("API key not found in metadata")
-            })?
-            .to_str()
-            .map_err(|e| {
-                error!("Failed to convert API key to string: {}", e);
-                Status::internal("Failed to convert API key to string")
-            })?;
+        let ApiKey(api_key) = request.extensions().get::<ApiKey>().ok_or_else(|| {
+            error!("API key not found in extensions");
+            Status::internal("API key not found in extensions")
+        })?;
 
         let mut conn = match self.state.get_conn().await {
             Ok(c) => c,
@@ -95,7 +71,7 @@ impl ObserverAuthentication for MyObserverAuthentication {
         })?;
 
         Ok(Response::new(AuthenticationResponse {
-            token: self.generate_auth_token(&workspace.id, &api_key.permissions)?,
+            token: self.generate_auth_token(api_key.id)?,
             workspace_id: workspace.id.to_string(),
         }))
     }
@@ -131,6 +107,35 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
+        let claims = request.extensions().get::<Claims<Uuid>>().ok_or_else(|| {
+            error!("Claims not found in extensions");
+            Status::internal("Claims not found in extensions")
+        })?;
+
+        let mut conn = match self.state.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to get database connection: {:?}", e);
+                return Err(Status::internal("Failed to get database connection"));
+            }
+        };
+
+        let service_api_key =
+            service_api_key_crud::get_service_api_key_by_id(&mut conn, claims.sub())
+                .await
+                .map_err(|e| match e {
+                    CRUDError::GetError => Status::not_found("Invalid API key."),
+                    _ => {
+                        error!("Failed to get service API key: {:?}", e);
+                        Status::internal("Failed to get service API key.")
+                    }
+                })?;
+
+        match service_api_key.permissions {
+            ApiKeyPermissionEnum::ReadWrite | ApiKeyPermissionEnum::WriteOnly => (),
+            _ => return Err(Status::permission_denied("Permission denied")),
+        };
+
         let records = request.into_inner().records;
 
         debug!("Received {} records", records.len());

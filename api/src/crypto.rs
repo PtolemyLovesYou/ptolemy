@@ -3,9 +3,9 @@ use argon2::{
     Argon2,
 };
 use base64::Engine;
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use ring::rand::{SecureRandom, SystemRandom};
-use serde::{Serialize, Deserialize};
-use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Validation, Header};
+use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Generates a 32 byte api key and encodes it as a base64 string.
@@ -51,6 +51,8 @@ impl PasswordHandler {
     }
 }
 
+type ClaimsResult<T> = Result<T, jsonwebtoken::errors::Error>;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims<T> {
     sub: T,
@@ -59,7 +61,9 @@ pub struct Claims<T> {
 }
 
 impl<T: for<'de> Deserialize<'de> + Serialize + Clone> Claims<T>
-    where T: Clone + for<'de> Deserialize<'de> + Serialize {
+where
+    T: Clone + for<'de> Deserialize<'de> + Serialize,
+{
     pub fn new(sub: T, valid_for_secs: usize) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -85,28 +89,28 @@ impl<T: for<'de> Deserialize<'de> + Serialize + Clone> Claims<T>
     }
 
     pub fn is_expired(&self) -> bool {
-        self.exp < SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as usize
+        self.exp
+            < SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as usize
     }
 
-    pub fn generate_auth_token(&self, secret: &[u8]) -> String {
-        encode(
+    pub fn generate_auth_token(&self, secret: &[u8]) -> ClaimsResult<String> {
+        Ok(encode(
             &Header::default(),
             &self,
             &EncodingKey::from_secret(secret),
-        ).unwrap()
+        )?)
     }
 
-    pub fn from_token(token: &str, secret: &[u8]) -> Self {
+    pub fn from_token(token: &str, secret: &[u8]) -> ClaimsResult<Self> {
         let claims = decode::<Self>(
             token,
             &DecodingKey::from_secret(secret),
-            &Validation::default()
-            )
-            .unwrap();
+            &Validation::default(),
+        )?;
 
-        claims.claims
+        Ok(claims.claims)
     }
 }

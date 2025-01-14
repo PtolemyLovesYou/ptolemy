@@ -61,9 +61,11 @@ impl ServerHandler {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut request = tonic::Request::new(AuthenticationRequest { workspace_name });
 
+        let ak = format!("Bearer {}", self.api_key);
+
         request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("X-Api-Key")?,
-            tonic::metadata::MetadataValue::from_str(&self.api_key)?,
+            tonic::metadata::MetadataValue::from_str(&ak)?,
         );
 
         let resp = self
@@ -81,8 +83,17 @@ impl ServerHandler {
         &mut self,
         records: Vec<Record>,
     ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
+        let mut publish_request = tonic::Request::new(PublishRequest { records });
+
+        let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
+        println!("{}", token);
+
+        publish_request.metadata_mut().insert(
+            tonic::metadata::MetadataKey::from_str("Authorization")?,
+            tonic::metadata::MetadataValue::from_str(&format!("Bearer {}", token))?,
+        );
+
         self.rt.block_on(async {
-            let publish_request = tonic::Request::new(PublishRequest { records: records });
             let response = self.client.publish(publish_request).await?;
 
             Ok(response.into_inner())

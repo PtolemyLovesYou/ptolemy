@@ -3,8 +3,8 @@ use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
 use crate::models::{
-    json_serializable::{JsonSerializable, Parameters},
     id::Id,
+    json_serializable::{JsonSerializable, Parameters},
 };
 use crate::pybindings::client::server_handler::ServerHandler;
 use crate::pybindings::client::state::PtolemyClientState;
@@ -86,9 +86,9 @@ impl PtolemyClient {
             pyo3::exceptions::PyPermissionError::new_err(format!("Failed to authenticate: {}", e))
         })?;
 
-        let workspace_id = client.workspace_id().map_err(|e| {
-            PyValueError::new_err(format!("Failed to get workspace id: {}", e))
-        })?;
+        let workspace_id = client
+            .workspace_id()
+            .map_err(|e| PyValueError::new_err(format!("Failed to get workspace id: {}", e)))?;
 
         drop(client);
 

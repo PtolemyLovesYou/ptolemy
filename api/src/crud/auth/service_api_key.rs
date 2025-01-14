@@ -78,6 +78,23 @@ pub async fn create_service_api_key(
     }
 }
 
+pub async fn get_service_api_key_by_id(
+    conn: &mut DbConnection<'_>,
+    id: &Uuid,
+) -> Result<ServiceApiKey, CRUDError> {
+    match service_api_key::table
+        .filter(service_api_key::id.eq(id))
+        .get_result(conn)
+        .await
+    {
+        Ok(key) => Ok(key),
+        Err(e) => {
+            error!("Unable to get service_api_key: {}", e);
+            Err(CRUDError::GetError)
+        }
+    }
+}
+
 pub async fn get_service_api_key(
     conn: &mut DbConnection<'_>,
     id: &Uuid,
