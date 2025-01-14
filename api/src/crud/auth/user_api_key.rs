@@ -18,7 +18,7 @@ pub async fn get_user_api_key_user(
 
     let api_keys: Vec<UserApiKey> = user_api_key::table
         .select(UserApiKey::as_select())
-        .filter(user_api_key::key_preview.eq(chars))
+        .filter(user_api_key::key_preview.eq(chars).and(user_api_key::deleted_at.is_null()))
         .get_results(conn)
         .await
         .map_err(|e| {
@@ -29,7 +29,7 @@ pub async fn get_user_api_key_user(
     for ak in api_keys {
         if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
             match users::table
-                .filter(users::id.eq(&ak.user_id))
+                .filter(users::id.eq(&ak.user_id).and(users::deleted_at.is_null()))
                 .get_result(conn)
                 .await
             {
@@ -91,7 +91,8 @@ pub async fn get_user_api_key(
         .filter(
             user_api_key::id
                 .eq(id)
-                .and(user_api_key::user_id.eq(user_id)),
+                .and(user_api_key::user_id.eq(user_id))
+                .and(user_api_key::deleted_at.is_null()),
         )
         .get_result(conn)
         .await
@@ -119,6 +120,7 @@ pub async fn get_user_api_keys(
 
     let api_keys: Vec<UserApiKey> = UserApiKey::belonging_to(&us)
         .select(UserApiKey::as_select())
+        .filter(user_api_key::deleted_at.is_null())
         .get_results(conn)
         .await
         .map_err(|e| {
@@ -134,19 +136,34 @@ pub async fn delete_user_api_key(
     id: &Uuid,
     user_id: &Uuid,
 ) -> Result<(), CRUDError> {
-    match diesel::delete(user_api_key::table)
+    match diesel::update(user_api_key::table)
         .filter(
             user_api_key::id
                 .eq(id)
                 .and(user_api_key::user_id.eq(user_id)),
         )
+        .set(user_api_key::deleted_at.eq(Utc::now()))
         .execute(conn)
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Unable to delete user_api_key: {:?}", e);
-            Err(CRUDError::DeleteError)
+        .await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("Unable to delete user_api_key: {}", e);
+                Err(CRUDError::DeleteError)
+            }
         }
-    }
+    // match diesel::delete(user_api_key::table)
+    //     .filter(
+    //         user_api_key::id
+    //             .eq(id)
+    //             .and(user_api_key::user_id.eq(user_id)),
+    //     )
+    //     .execute(conn)
+    //     .await
+    // {
+    //     Ok(_) => Ok(()),
+    //     Err(e) => {
+    //         error!("Unable to delete user_api_key: {:?}", e);
+    //         Err(CRUDError::DeleteError)
+    //     }
+    // }
 }
