@@ -2,7 +2,10 @@ use crate::generated::observer::Tier;
 use crate::models::event::{
     ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
 };
-use crate::models::json_serializable::{JsonSerializable, Parameters};
+use crate::models::{
+    id::Id,
+    json_serializable::{JsonSerializable, Parameters},
+};
 use crate::pybindings::client::server_handler::ServerHandler;
 use crate::pybindings::client::state::PtolemyClientState;
 use crate::pybindings::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
@@ -50,9 +53,9 @@ macro_rules! set_io {
 pub struct PtolemyClient {
     observer_url: String,
     base_url: String,
-    workspace_id: Uuid,
+    workspace_id: Id,
     workspace_name: String,
-    parent_id: Option<Uuid>,
+    parent_id: Option<Id>,
     tier: Option<Tier>,
     autoflush: bool,
     state: PtolemyClientState,
@@ -65,6 +68,7 @@ impl PtolemyClient {
     fn new(
         base_url: String,
         observer_url: String,
+        api_key: String,
         workspace_name: String,
         autoflush: bool,
         batch_size: usize,
@@ -72,34 +76,26 @@ impl PtolemyClient {
         let grpc_client = Arc::new(Mutex::new(ServerHandler::new(
             observer_url.clone(),
             batch_size,
+            api_key,
         )?));
 
         let grpc_client_clone = Arc::clone(&grpc_client);
         let mut client = grpc_client_clone.lock().unwrap();
 
-        let workspace_verification_resp = match client.verify_workspace(workspace_name.clone()) {
-            Ok(wk) => wk,
-            Err(e) => return Err(PyValueError::new_err(e.to_string())),
-        };
+        client.authenticate(workspace_name.clone()).map_err(|e| {
+            pyo3::exceptions::PyPermissionError::new_err(format!("Failed to authenticate: {}", e))
+        })?;
+
+        let workspace_id = client
+            .workspace_id()
+            .map_err(|e| PyValueError::new_err(format!("Failed to get workspace id: {}", e)))?;
 
         drop(client);
-
-        let workspace_id = match workspace_verification_resp.workspace_id {
-            Some(id) => id,
-            None => {
-                return Err(PyValueError::new_err(format!(
-                    "Failed to verify workspace {}: [{:?}] {}",
-                    workspace_name,
-                    workspace_verification_resp.status_code(),
-                    workspace_verification_resp.message()
-                )))
-            }
-        };
 
         Ok(Self {
             observer_url,
             base_url,
-            workspace_id: Uuid::parse_str(workspace_id.as_str()).unwrap(),
+            workspace_id,
             workspace_name,
             parent_id: None,
             tier: None,

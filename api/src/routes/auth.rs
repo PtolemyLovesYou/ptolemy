@@ -1,10 +1,10 @@
 use crate::crud::auth::user::auth_user;
-use crate::state::{AppState, Claims};
+use crate::crypto::Claims;
+use crate::state::AppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::error;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthPayload {
@@ -31,26 +31,12 @@ pub async fn login(
     .map_err(|e| e.http_status_code())?
     .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as usize;
-
-    let claims = Claims {
-        user_id: user.id,
-        exp: now + 3600,
-        iat: now,
-    };
-
-    let token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
-    )
-    .map_err(|e| {
-        tracing::error!("Failed to encode JWT token: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let token = Claims::new(user.id, 3600)
+        .generate_auth_token(state.jwt_secret.as_bytes())
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok(Json(AuthResponse { token }))
 }

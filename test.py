@@ -7,12 +7,13 @@ from ptolemy import Ptolemy
 client = Ptolemy(
     base_url="http://localhost:8000",
     observer_url="http://localhost:50051",
-    workspace_name="default",
+    api_key="pt-sk-6EmxiViMDSrFhS53mFff3PjboARmdCOvb7sxEXD_hJ8o_-wMYvjYbWCVtV6gPnRX",
+    workspace_name="fofofofo",
     autoflush=False,
     batch_size=1024
     )
 
-N = 10000
+N = 100
 
 start = time.time()
 for _ in tqdm(list(range(N))):

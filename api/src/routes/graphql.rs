@@ -2,7 +2,11 @@ use crate::crud::auth::user_api_key::get_user_api_key_user;
 use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
 use crate::state::AppState;
 use axum::{
-    extract::State, http::Request, http::{StatusCode, header}, middleware::Next, response::IntoResponse,
+    extract::State,
+    http::Request,
+    http::{header, StatusCode},
+    middleware::Next,
+    response::IntoResponse,
     Extension,
 };
 use juniper::EmptySubscription;

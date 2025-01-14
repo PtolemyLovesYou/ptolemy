@@ -4,9 +4,7 @@ use axum::http::StatusCode;
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
-use serde::{Deserialize, Serialize};
 use tracing::error;
-use uuid::Uuid;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
@@ -89,12 +87,4 @@ impl AppState {
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
     }
-}
-
-// Claims struct for JWT payload
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Claims {
-    pub user_id: Uuid, // Subject (user id)
-    pub exp: usize,    // Expiration time
-    pub iat: usize,    // Issued at
 }

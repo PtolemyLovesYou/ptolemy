@@ -79,8 +79,6 @@ def service_api_key_management_form(
         if submit_api_keys:
             for key, key_row in zip(keys, api_keys):
                 if key_row["delete"]:
-                    client.delete_service_api_key(
-                        workspace.id, key.id
-                    )
+                    client.delete_service_api_key(workspace.id, key.id)
 
             st.rerun(scope="fragment")

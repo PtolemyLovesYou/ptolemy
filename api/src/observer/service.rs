@@ -1,13 +1,81 @@
-use crate::crud::auth::workspace as workspace_crud;
-use crate::observer::records::EventRecords;
-use crate::state::AppState;
+use super::claims::ApiKey;
+use crate::{
+    crud::auth::service_api_key as service_api_key_crud, crypto::Claims, error::CRUDError,
+    models::auth::enums::ApiKeyPermissionEnum, observer::records::EventRecords, state::AppState,
+};
 use ptolemy::generated::observer::{
-    observer_server::Observer, ObserverStatusCode, PublishRequest, PublishResponse, Record,
-    WorkspaceVerificationRequest, WorkspaceVerificationResponse,
+    observer_authentication_server::ObserverAuthentication, observer_server::Observer,
+    AuthenticationRequest, AuthenticationResponse, PublishRequest, PublishResponse, Record,
 };
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
+use uuid::Uuid;
+
+#[derive(Debug)]
+pub struct MyObserverAuthentication {
+    state: Arc<AppState>,
+}
+
+impl MyObserverAuthentication {
+    pub async fn new(state: Arc<AppState>) -> Self {
+        Self { state }
+    }
+
+    fn generate_auth_token(&self, api_key_id: Uuid) -> Result<String, Status> {
+        let token = Claims::new(api_key_id, 3600)
+            .generate_auth_token(self.state.jwt_secret.as_bytes())
+            .map_err(|e| {
+                error!("Failed to generate auth token: {}", e);
+                Status::internal("Failed to generate auth token")
+            })?;
+
+        Ok(token)
+    }
+}
+
+#[tonic::async_trait]
+impl ObserverAuthentication for MyObserverAuthentication {
+    async fn authenticate(
+        &self,
+        request: Request<AuthenticationRequest>,
+    ) -> Result<Response<AuthenticationResponse>, Status> {
+        let ApiKey(api_key) = request.extensions().get::<ApiKey>().ok_or_else(|| {
+            error!("API key not found in extensions");
+            Status::internal("API key not found in extensions")
+        })?;
+
+        let mut conn = match self.state.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to get database connection: {:?}", e);
+                return Err(Status::internal("Failed to get database connection"));
+            }
+        };
+
+        let data = request.get_ref();
+
+        let (api_key, workspace) = service_api_key_crud::verify_service_api_key_by_workspace(
+            &mut conn,
+            &data.workspace_name,
+            api_key,
+            &self.state.password_handler,
+        )
+        .await
+        .map_err(|e| match e {
+            CRUDError::NotFoundError => Status::not_found("Invalid API key."),
+            _ => {
+                error!("Failed to verify API key: {:?}", e);
+                Status::internal("Failed to verify API key.")
+            }
+        })?;
+
+        Ok(Response::new(AuthenticationResponse {
+            token: self.generate_auth_token(api_key.id)?,
+            workspace_id: workspace.id.to_string(),
+        }))
+    }
+}
 
 #[derive(Debug)]
 pub struct MyObserver {
@@ -39,6 +107,35 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
+        let claims = request.extensions().get::<Claims<Uuid>>().ok_or_else(|| {
+            error!("Claims not found in extensions");
+            Status::internal("Claims not found in extensions")
+        })?;
+
+        let mut conn = match self.state.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to get database connection: {:?}", e);
+                return Err(Status::internal("Failed to get database connection"));
+            }
+        };
+
+        let service_api_key =
+            service_api_key_crud::get_service_api_key_by_id(&mut conn, claims.sub())
+                .await
+                .map_err(|e| match e {
+                    CRUDError::GetError => Status::not_found("Invalid API key."),
+                    _ => {
+                        error!("Failed to get service API key: {:?}", e);
+                        Status::internal("Failed to get service API key.")
+                    }
+                })?;
+
+        match service_api_key.permissions {
+            ApiKeyPermissionEnum::ReadWrite | ApiKeyPermissionEnum::WriteOnly => (),
+            _ => return Err(Status::permission_denied("Permission denied")),
+        };
+
         let records = request.into_inner().records;
 
         debug!("Received {} records", records.len());
@@ -49,74 +146,6 @@ impl Observer for MyObserver {
             successful: true,
             jobs: Vec::new(),
             message: Some("Success".to_string()),
-        };
-
-        Ok(Response::new(reply))
-    }
-
-    async fn verify_workspace(
-        &self,
-        request: Request<WorkspaceVerificationRequest>,
-    ) -> Result<Response<WorkspaceVerificationResponse>, Status> {
-        let mut conn = match self.state.get_conn().await {
-            Ok(c) => c,
-            Err(e) => {
-                error!("Failed to get database connection: {:?}", e);
-                let reply = WorkspaceVerificationResponse {
-                    status_code: ObserverStatusCode::InternalServerError.into(),
-                    workspace_id: None,
-                    message: Some("Failed to get database connection".to_string()),
-                };
-
-                return Ok(Response::new(reply));
-            }
-        };
-
-        let workspace_name = request.into_inner().workspace_name;
-
-        let workspace_candidates =
-            match workspace_crud::search_workspaces(&mut conn, None, Some(workspace_name), None)
-                .await
-            {
-                Ok(w) => w,
-                Err(e) => {
-                    error!("Failed to search workspaces: {:?}", e);
-                    let reply = WorkspaceVerificationResponse {
-                        status_code: ObserverStatusCode::InternalServerError.into(),
-                        workspace_id: None,
-                        message: Some("Failed to find workspace.".to_string()),
-                    };
-
-                    return Ok(Response::new(reply));
-                }
-            };
-
-        let workspace = match workspace_candidates.len() {
-            0 => {
-                let reply = WorkspaceVerificationResponse {
-                    status_code: ObserverStatusCode::NotFound.into(),
-                    workspace_id: None,
-                    message: Some("Workspace not found.".to_string()),
-                };
-
-                return Ok(Response::new(reply));
-            }
-            1 => workspace_candidates.get(0).unwrap(),
-            _ => {
-                let reply = WorkspaceVerificationResponse {
-                    status_code: ObserverStatusCode::InternalServerError.into(),
-                    workspace_id: None,
-                    message: Some("Multiple workspaces found.".to_string()),
-                };
-
-                return Ok(Response::new(reply));
-            }
-        };
-
-        let reply = WorkspaceVerificationResponse {
-            status_code: ObserverStatusCode::Ok.into(),
-            workspace_id: Some(workspace.id.to_string()),
-            message: None,
         };
 
         Ok(Response::new(reply))

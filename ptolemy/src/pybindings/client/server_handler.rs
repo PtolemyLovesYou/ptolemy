@@ -1,58 +1,99 @@
 use crate::generated::observer::{
-    observer_client::ObserverClient, PublishRequest, PublishResponse, Record,
-    WorkspaceVerificationRequest, WorkspaceVerificationResponse,
+    observer_authentication_client::ObserverAuthenticationClient, observer_client::ObserverClient,
+    AuthenticationRequest, PublishRequest, PublishResponse, Record,
 };
+use crate::models::id::Id;
 use pyo3::prelude::*;
 use std::collections::VecDeque;
+use std::str::FromStr;
 use tonic::transport::Channel;
 
 #[derive(Debug)]
 pub struct ServerHandler {
     client: ObserverClient<Channel>,
+    auth_client: ObserverAuthenticationClient<Channel>,
     queue: VecDeque<Record>,
     rt: tokio::runtime::Runtime,
     batch_size: usize,
+    api_key: String,
+    token: Option<String>,
+    workspace_id: Option<Id>,
 }
 
 impl ServerHandler {
-    pub fn new(observer_url: String, batch_size: usize) -> PyResult<Self> {
+    pub fn new(observer_url: String, batch_size: usize, api_key: String) -> PyResult<Self> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
         let queue: VecDeque<Record> = VecDeque::new();
 
-        let client = rt.block_on(ObserverClient::connect(observer_url)).unwrap();
+        let client = rt
+            .block_on(ObserverClient::connect(observer_url.clone()))
+            .unwrap();
+        let auth_client = rt
+            .block_on(ObserverAuthenticationClient::connect(observer_url.clone()))
+            .unwrap();
 
         Ok(Self {
             client,
             rt,
             queue,
             batch_size,
+            auth_client,
+            api_key,
+            token: None,
+            workspace_id: None,
         })
     }
 }
 
 impl ServerHandler {
-    pub fn verify_workspace(
+    pub fn workspace_id(&self) -> Result<Id, Box<dyn std::error::Error>> {
+        match &self.workspace_id {
+            Some(id) => Ok(id.clone()),
+            None => Err("Not authenticated".into()),
+        }
+    }
+
+    pub fn authenticate(
         &mut self,
         workspace_name: String,
-    ) -> Result<WorkspaceVerificationResponse, Box<dyn std::error::Error>> {
-        let request = tonic::Request::new(WorkspaceVerificationRequest { workspace_name });
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut request = tonic::Request::new(AuthenticationRequest { workspace_name });
 
-        let response = self.rt.block_on(async {
-            let response = self.client.verify_workspace(request).await?;
-            Ok(response.into_inner())
-        });
+        let ak = format!("Bearer {}", self.api_key);
 
-        response
+        request.metadata_mut().insert(
+            tonic::metadata::MetadataKey::from_str("X-Api-Key")?,
+            tonic::metadata::MetadataValue::from_str(&ak)?,
+        );
+
+        let resp = self
+            .rt
+            .block_on(self.auth_client.authenticate(request))?
+            .into_inner();
+
+        self.token = Some(resp.token);
+        self.workspace_id = Some(TryFrom::try_from(resp.workspace_id).unwrap());
+
+        Ok(())
     }
 
     pub fn publish_request(
         &mut self,
         records: Vec<Record>,
     ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
+        let mut publish_request = tonic::Request::new(PublishRequest { records });
+
+        let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
+        println!("{}", token);
+
+        publish_request.metadata_mut().insert(
+            tonic::metadata::MetadataKey::from_str("Authorization")?,
+            tonic::metadata::MetadataValue::from_str(&format!("Bearer {}", token))?,
+        );
+
         self.rt.block_on(async {
-            let publish_request = tonic::Request::new(PublishRequest { records: records });
             let response = self.client.publish(publish_request).await?;
 
             Ok(response.into_inner())
