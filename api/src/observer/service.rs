@@ -1,9 +1,11 @@
-use crate::crud::auth::{service_api_key as service_api_key_crud, workspace as workspace_crud};
-use crate::error::CRUDError;
-use crate::models::auth::enums::ApiKeyPermissionEnum;
-use crate::observer::records::EventRecords;
-use crate::state::AppState;
-use jsonwebtoken::{encode, EncodingKey, Header};
+use crate::{
+    crud::auth::{service_api_key as service_api_key_crud, workspace as workspace_crud},
+    error::CRUDError,
+    models::auth::enums::ApiKeyPermissionEnum,
+    observer::records::EventRecords,
+    state::AppState,
+    crypto::Claims,
+};
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
     AuthenticationRequest, AuthenticationResponse, ObserverStatusCode, PublishRequest,
@@ -11,7 +13,6 @@ use ptolemy::generated::observer::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
 use uuid::Uuid;
@@ -20,13 +21,6 @@ use uuid::Uuid;
 pub struct ObserverClaimsPayload {
     workspace_id: Uuid,
     permissions: ApiKeyPermissionEnum,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ObserverClaims {
-    pub sub: ObserverClaimsPayload,
-    pub iat: usize,
-    pub exp: usize,
 }
 
 #[derive(Debug)]
@@ -44,29 +38,13 @@ impl MyObserverAuthentication {
         workspace_id: &Uuid,
         permissions: &ApiKeyPermissionEnum,
     ) -> Result<String, Status> {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as usize;
-
-        let claims = ObserverClaims {
-            sub: ObserverClaimsPayload {
-                workspace_id: workspace_id.clone(),
-                permissions: permissions.clone(),
-            },
-            iat: now,
-            exp: now + 3600,
+        let payload = ObserverClaimsPayload {
+            workspace_id: workspace_id.clone(),
+            permissions: permissions.clone(),
         };
 
-        let token = encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.state.jwt_secret.as_ref()),
-        )
-        .map_err(|e| {
-            error!("Failed to generate token: {}", e);
-            Status::internal("Failed to generate token")
-        })?;
+        let token = Claims::new(payload, 3600)
+            .generate_auth_token(self.state.jwt_secret.as_bytes());
 
         Ok(token)
     }

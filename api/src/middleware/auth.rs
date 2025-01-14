@@ -1,5 +1,6 @@
 use crate::crud::auth::{user::get_user, user_api_key::get_user_api_key_user};
-use crate::state::{AppState, Claims};
+use crate::state::AppState;
+use crate::crypto::Claims;
 use axum::{
     body::Body,
     extract::State,
@@ -7,7 +8,7 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use uuid::Uuid;
 use std::sync::Arc;
 
 pub async fn api_key_guard(
@@ -51,17 +52,12 @@ pub async fn jwt_auth_middleware(
     let token = auth_header.map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     // Validate token
-    let token_data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
-        &Validation::default(),
-    )
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let token_data: Claims<Uuid> = Claims::from_token(token, state.jwt_secret.as_bytes());
 
     // Add user to request extensions for later use
     let mut conn = state.get_conn_http().await.unwrap();
 
-    let user = get_user(&mut conn, &token_data.claims.user_id)
+    let user = get_user(&mut conn, token_data.sub())
         .await
         .map_err(|e| e.http_status_code())?;
 

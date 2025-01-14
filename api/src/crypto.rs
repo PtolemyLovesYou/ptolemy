@@ -4,6 +4,9 @@ use argon2::{
 };
 use base64::Engine;
 use ring::rand::{SecureRandom, SystemRandom};
+use serde::{Serialize, Deserialize};
+use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Validation, Header};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Generates a 32 byte api key and encodes it as a base64 string.
 ///
@@ -45,5 +48,65 @@ impl PasswordHandler {
         self.argon2
             .verify_password(password.as_bytes(), &parsed_hash)
             .is_ok()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Claims<T> {
+    sub: T,
+    exp: usize,
+    iat: usize,
+}
+
+impl<T: for<'de> Deserialize<'de> + Serialize + Clone> Claims<T>
+    where T: Clone + for<'de> Deserialize<'de> + Serialize {
+    pub fn new(sub: T, valid_for_secs: usize) -> Self {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize;
+        Self {
+            sub,
+            exp: now + valid_for_secs,
+            iat: now,
+        }
+    }
+
+    pub fn sub(&self) -> &T {
+        &self.sub
+    }
+
+    pub fn exp(&self) -> &usize {
+        &self.exp
+    }
+
+    pub fn iat(&self) -> &usize {
+        &self.iat
+    }
+
+    pub fn is_expired(&self) -> bool {
+        self.exp < SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize
+    }
+
+    pub fn generate_auth_token(&self, secret: &[u8]) -> String {
+        encode(
+            &Header::default(),
+            &self,
+            &EncodingKey::from_secret(secret),
+        ).unwrap()
+    }
+
+    pub fn from_token(token: &str, secret: &[u8]) -> Self {
+        let claims = decode::<Self>(
+            token,
+            &DecodingKey::from_secret(secret),
+            &Validation::default()
+            )
+            .unwrap();
+
+        claims.claims
     }
 }
