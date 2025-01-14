@@ -1,6 +1,6 @@
 use crate::crypto::PasswordHandler;
 use crate::error::CRUDError;
-use crate::generated::auth_schema::users::dsl;
+use crate::generated::auth_schema::users;
 use crate::models::auth::enums::UserStatusEnum;
 use crate::models::auth::{User, UserCreate};
 use crate::state::DbConnection;
@@ -8,6 +8,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
+use chrono::Utc;
 
 /// Creates a new user in the database.
 ///
@@ -27,13 +28,13 @@ pub async fn create_user(
 ) -> Result<User, CRUDError> {
     let hashed_password = password_handler.hash_password(&user.password);
 
-    match diesel::insert_into(dsl::users)
+    match diesel::insert_into(users::table)
         .values((
-            dsl::username.eq(&user.username),
-            dsl::display_name.eq(&user.display_name),
-            dsl::is_sysadmin.eq(&user.is_sysadmin),
-            dsl::is_admin.eq(&user.is_admin),
-            dsl::password_hash.eq(&hashed_password),
+            users::username.eq(&user.username),
+            users::display_name.eq(&user.display_name),
+            users::is_sysadmin.eq(&user.is_sysadmin),
+            users::is_admin.eq(&user.is_admin),
+            users::password_hash.eq(&hashed_password),
         ))
         .returning(User::as_returning())
         .get_result(conn)
@@ -55,14 +56,16 @@ pub async fn search_users(
     id: Option<Uuid>,
     username: Option<String>,
 ) -> Result<Vec<User>, CRUDError> {
-    let mut query = dsl::users.into_boxed();
+    let mut query = users::table.into_boxed();
+
+    query = query.filter(users::deleted_at.is_null());
 
     if let Some(id_) = id {
-        query = query.filter(dsl::id.eq(id_));
+        query = query.filter(users::id.eq(id_));
     }
 
     if let Some(username_) = username {
-        query = query.filter(dsl::username.eq(username_));
+        query = query.filter(users::username.eq(username_));
     }
 
     match query.get_results(conn).await {
@@ -82,9 +85,9 @@ pub async fn change_user_status(
     user_id: &Uuid,
     user_status: &UserStatusEnum,
 ) -> Result<(), CRUDError> {
-    match diesel::update(dsl::users)
-        .filter(dsl::id.eq(user_id))
-        .set(dsl::status.eq(user_status))
+    match diesel::update(users::table)
+        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
+        .set(users::status.eq(user_status))
         .execute(conn)
         .await
     {
@@ -103,8 +106,8 @@ pub async fn get_user(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
 ) -> Result<crate::models::auth::User, CRUDError> {
-    match dsl::users
-        .filter(dsl::id.eq(user_id))
+    match users::table
+        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
         .get_result(conn)
         .await
     {
@@ -123,11 +126,13 @@ pub async fn get_user(
 pub async fn get_all_users(
     conn: &mut DbConnection<'_>,
 ) -> Result<Vec<crate::models::auth::User>, CRUDError> {
-    match dsl::users.get_results(conn).await {
-        Ok(us) => Ok(us),
-        Err(e) => {
-            error!("Failed to get users: {}", e);
-            return Err(CRUDError::GetError);
+    match users::table
+        .filter(users::deleted_at.is_null())
+        .get_results(conn).await {
+            Ok(us) => Ok(us),
+            Err(e) => {
+                error!("Failed to get users: {}", e);
+                return Err(CRUDError::GetError);
         }
     }
 }
@@ -137,9 +142,9 @@ pub async fn change_user_display_name(
     user_id: &Uuid,
     user_display_name: &String,
 ) -> Result<(), CRUDError> {
-    match diesel::update(dsl::users)
-        .filter(dsl::id.eq(user_id))
-        .set(dsl::display_name.eq(user_display_name))
+    match diesel::update(users::table)
+        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
+        .set(users::display_name.eq(user_display_name))
         .execute(conn)
         .await
     {
@@ -159,9 +164,9 @@ pub async fn change_user_password(
 ) -> Result<(), CRUDError> {
     let hashed_password = password_handler.hash_password(&user_password);
 
-    match diesel::update(dsl::users)
-        .filter(dsl::id.eq(user_id))
-        .set(dsl::password_hash.eq(hashed_password))
+    match diesel::update(users::table)
+        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
+        .set(users::password_hash.eq(hashed_password))
         .execute(conn)
         .await
     {
@@ -174,7 +179,9 @@ pub async fn change_user_password(
 }
 
 pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: &Uuid) -> Result<(), CRUDError> {
-    match diesel::delete(dsl::users.filter(dsl::id.eq(user_id)))
+    match diesel::update(users::table)
+        .filter(users::id.eq(user_id))
+        .set(users::deleted_at.eq(Utc::now()))
         .execute(conn)
         .await
     {
@@ -192,8 +199,8 @@ pub async fn auth_user(
     password: &String,
     password_handler: &PasswordHandler,
 ) -> Result<Option<User>, CRUDError> {
-    let user = match dsl::users
-        .filter(dsl::username.eq(&uname))
+    let user = match users::table
+        .filter(users::username.eq(&uname))
         .get_result::<User>(conn)
         .await
     {
