@@ -151,19 +151,4 @@ pub async fn delete_user_api_key(
                 Err(CRUDError::DeleteError)
             }
         }
-    // match diesel::delete(user_api_key::table)
-    //     .filter(
-    //         user_api_key::id
-    //             .eq(id)
-    //             .and(user_api_key::user_id.eq(user_id)),
-    //     )
-    //     .execute(conn)
-    //     .await
-    // {
-    //     Ok(_) => Ok(()),
-    //     Err(e) => {
-    //         error!("Unable to delete user_api_key: {:?}", e);
-    //         Err(CRUDError::DeleteError)
-    //     }
-    // }
 }
