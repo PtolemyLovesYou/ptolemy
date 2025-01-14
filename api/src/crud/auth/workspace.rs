@@ -1,12 +1,12 @@
 use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace;
-use crate::generated::auth_schema::workspace::dsl;
 use crate::models::auth::{Workspace, WorkspaceCreate};
 use crate::state::DbConnection;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
+use chrono::Utc;
 
 /// Creates a new workspace in the database.
 ///
@@ -45,18 +45,20 @@ pub async fn search_workspaces(
     name: Option<String>,
     archived: Option<bool>,
 ) -> Result<Vec<Workspace>, CRUDError> {
-    let mut query = dsl::workspace.into_boxed();
+    let mut query = workspace::table.into_boxed();
+
+    query = query.filter(workspace::deleted_at.is_null());
 
     if let Some(id) = id {
-        query = query.filter(dsl::id.eq(id));
+        query = query.filter(workspace::id.eq(id));
     }
 
     if let Some(name) = name {
-        query = query.filter(dsl::name.eq(name));
+        query = query.filter(workspace::name.eq(name));
     }
 
     if let Some(archived) = archived {
-        query = query.filter(dsl::archived.eq(archived));
+        query = query.filter(workspace::archived.eq(archived));
     }
 
     match query.get_results(conn).await {
@@ -85,8 +87,8 @@ pub async fn get_workspace(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
 ) -> Result<Workspace, CRUDError> {
-    match dsl::workspace
-        .filter(dsl::id.eq(workspace_id))
+    match workspace::table
+        .filter(workspace::id.eq(workspace_id).and(workspace::deleted_at.is_null()))
         .get_result::<Workspace>(conn)
         .await
     {
@@ -116,7 +118,9 @@ pub async fn delete_workspace(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
 ) -> Result<(), CRUDError> {
-    match diesel::delete(dsl::workspace.filter(dsl::id.eq(workspace_id)))
+    match diesel::update(workspace::table)
+        .filter(workspace::id.eq(workspace_id))
+        .set(workspace::deleted_at.eq(Utc::now()))
         .execute(conn)
         .await
     {
