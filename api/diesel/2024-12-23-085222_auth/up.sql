@@ -15,10 +15,11 @@ create table users (
 );
 
 create table workspace_user (
+    id uuid primary key default gen_random_uuid(),
     user_id uuid not null references users(id) on delete cascade,
     workspace_id uuid not null references workspace(id) on delete cascade,
     role workspace_role not null,
-    primary key (user_id, workspace_id)
+    unique(user_id, workspace_id)
 );
 
 create table user_api_key (
