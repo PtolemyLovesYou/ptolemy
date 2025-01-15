@@ -13,7 +13,7 @@ use juniper::EmptySubscription;
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use std::sync::Arc;
 
-pub async fn api_key_guard(
+pub async fn api_key_auth_middleware(
     State(state): State<Arc<AppState>>,
     mut req: Request<axum::body::Body>,
     next: Next,

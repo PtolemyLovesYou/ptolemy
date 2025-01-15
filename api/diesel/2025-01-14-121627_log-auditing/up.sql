@@ -1,6 +1,7 @@
 -- Your SQL goes here
 create type operation_type as enum ('read', 'create', 'update', 'delete', 'grant', 'revoke');
 create type archive_status as enum ('active', 'pending_archive', 'archived');
+create type auth_method as enum ('api_key', 'jwt', 'username_password');
 
 -- API Access logs
 create table api_access_audit_logs (
@@ -20,15 +21,17 @@ create table api_auth_audit_logs (
     service_api_key_id uuid references service_api_key(id),
     user_api_key_id uuid references user_api_key(id),
     user_id uuid references users(id),
-    auth_method varchar not null,
-    auth_status varchar not null,
+    auth_method auth_method not null,
+    success boolean not null,
+    failure_details jsonb,
     is_emergency_access boolean default false,
     emergency_access_reason varchar,
     -- At least one of these should be present
     constraint check_id check (
-        user_id is not null
-        or service_api_key_id is not null
-        or user_api_key_id is not null
+        (user_id is not null) or
+        (service_api_key_id is not null) or
+        (user_api_key_id is not null) or
+        (not success and failure_details is not null)
     )
 );
 

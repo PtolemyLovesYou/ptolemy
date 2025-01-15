@@ -6,6 +6,10 @@ pub mod sql_types {
     pub struct ArchiveStatus;
 
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "auth_method"))]
+    pub struct AuthMethod;
+
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "operation_type"))]
     pub struct OperationType;
 }
@@ -25,14 +29,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::AuthMethod;
+
     api_auth_audit_logs (id) {
         id -> Uuid,
         api_access_audit_log_id -> Uuid,
         service_api_key_id -> Nullable<Uuid>,
         user_api_key_id -> Nullable<Uuid>,
         user_id -> Nullable<Uuid>,
-        auth_method -> Varchar,
-        auth_status -> Varchar,
+        auth_method -> AuthMethod,
+        success -> Bool,
+        failure_details -> Nullable<Jsonb>,
         is_emergency_access -> Nullable<Bool>,
         emergency_access_reason -> Nullable<Varchar>,
     }

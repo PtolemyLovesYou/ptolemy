@@ -84,3 +84,16 @@ serialize_enum!(
     ShoutySnakeCase,
     [System, Subsystem, Component, Subcomponent]
 );
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AuthMethod {
+    ApiKey,
+    JWT,
+    UsernamePassword
+}
+
+serialize_enum!(
+    AuthMethod,
+    ShoutySnakeCase,
+    [ApiKey, JWT, UsernamePassword]
+);

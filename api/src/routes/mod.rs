@@ -1,5 +1,5 @@
 use self::graphql::graphql_handler;
-use crate::middleware::auth::{api_key_guard, jwt_auth_middleware};
+use crate::middleware::auth::{api_key_auth_middleware, jwt_auth_middleware};
 use crate::state::AppState;
 use axum::{
     middleware::from_fn_with_state,
@@ -35,7 +35,7 @@ pub async fn get_external_router(state: &Arc<AppState>) -> Router<Arc<AppState>>
             "/graphql",
             graphql_router!(state, state.enable_graphiql).await,
         )
-        .layer(from_fn_with_state(state.clone(), api_key_guard))
+        .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
         .with_state(state.clone())
 }
 

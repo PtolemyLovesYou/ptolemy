@@ -4,7 +4,10 @@ use argon2::{
 };
 use base64::Engine;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use ring::rand::{SecureRandom, SystemRandom};
+use ring::{
+    rand::{SecureRandom, SystemRandom},
+    digest::{digest, SHA256}
+};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -113,4 +116,9 @@ where
 
         Ok(claims.claims)
     }
+}
+
+pub fn generate_sha256(data: &str) -> String {
+    let digest = digest(&SHA256, data.as_bytes());
+    String::from_utf8_lossy(digest.as_ref()).to_string()
 }
