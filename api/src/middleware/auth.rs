@@ -77,14 +77,14 @@ async fn get_user_from_jwt(state: &Arc<AppState>, token: String) -> Result<(Opti
                 StatusCode::UNAUTHORIZED
             })?;
 
-            // Add user to request extensions for later use
-            let mut conn = state.get_conn_http().await?;
+    // Add user to request extensions for later use
+    let mut conn = state.get_conn_http().await?;
 
-            let user = get_user(&mut conn, token_data.sub())
-                .await
-                .map_err(|e| e.http_status_code())?;
+    let user = get_user(&mut conn, token_data.sub())
+        .await
+        .map_err(|e| e.http_status_code())?;
 
-            Ok((Some(user), None))
+    Ok((Some(user), None))
 }
 
 macro_rules! auth_middleware {
