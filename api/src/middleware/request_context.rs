@@ -1,5 +1,6 @@
 use crate::generated::audit_schema::api_access_audit_logs as schema;
 use crate::models::audit::models::ApiAccessAuditLogCreate;
+use crate::models::AccessContext;
 use crate::state::AppState;
 use axum::{
     extract::{ConnectInfo, State},
@@ -12,10 +13,6 @@ use ipnet::IpNet;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::error;
-use uuid::Uuid;
-
-#[derive(Debug, Clone)]
-pub struct ApiAccessAuditLogId(pub Uuid);
 
 pub async fn request_context_layer(
     State(state): State<Arc<AppState>>,
@@ -39,7 +36,7 @@ pub async fn request_context_layer(
         ip_address,
     };
 
-    let insert_id: Uuid = match diesel::insert_into(schema::table)
+    let insert_id = match diesel::insert_into(schema::table)
         .values(&ins)
         .returning(schema::id)
         .get_result(&mut conn)
@@ -52,7 +49,12 @@ pub async fn request_context_layer(
         }
     };
 
-    req.extensions_mut().insert(ApiAccessAuditLogId(insert_id));
+    req.extensions_mut().insert(AccessContext {
+        api_access_audit_log_id: Some(insert_id),
+        auth_audit_log_id: None,
+        iam_audit_log_id: None,
+        record_audit_log_id: None,
+    });
 
     Ok(next.run(req).await)
 }

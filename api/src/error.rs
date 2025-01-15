@@ -19,6 +19,7 @@ pub enum CRUDError {
     ConnectionError,
     UpdateError,
     BadQuery,
+    InternalError,
 }
 
 impl CRUDError {
@@ -32,6 +33,7 @@ impl CRUDError {
             CRUDError::DeleteError => StatusCode::INTERNAL_SERVER_ERROR,
             CRUDError::ConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
             CRUDError::UpdateError => StatusCode::INTERNAL_SERVER_ERROR,
+            CRUDError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
