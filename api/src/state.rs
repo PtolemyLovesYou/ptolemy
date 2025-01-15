@@ -1,10 +1,13 @@
 use crate::crypto::PasswordHandler;
 use crate::error::{ApiError, CRUDError};
-use axum::http::StatusCode;
+use axum::http::{StatusCode, Request};
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
 use tracing::error;
+use axum::extract::ConnectInfo;
+use std::{net::SocketAddr, str::FromStr};
+use ipnet::IpNet;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
@@ -14,6 +17,27 @@ fn get_env_var(name: &str) -> Result<String, ApiError> {
         Err(_) => {
             tracing::error!("{} must be set.", name);
             Err(ApiError::ConfigError)
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct RequestContext {
+    pub ip_address: Option<IpNet>,
+    pub source: Option<String>,
+}
+
+impl RequestContext {
+    pub fn from_axum_request(req: &Request<axum::body::Body>) -> Self {
+        let source = Some(req.uri().path().to_string());
+        let ip_address = match req.extensions().get::<ConnectInfo<SocketAddr>>() {
+            Some(i) => Some(IpNet::from_str(&i.to_string()).unwrap()),
+            None => None,
+        };
+
+        Self {
+            ip_address,
+            source,
         }
     }
 }

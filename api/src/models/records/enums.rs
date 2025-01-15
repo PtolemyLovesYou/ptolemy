@@ -1,4 +1,4 @@
-use crate::generated::records_schema::sql_types::{FieldValueType, IoType, Tier, OperationType};
+use crate::generated::records_schema::sql_types::{FieldValueType, IoType, Tier};
 use crate::define_enum;
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
@@ -37,5 +37,3 @@ impl From<observer::Tier> for TierEnum {
 }
 
 define_enum!(FieldValueTypeEnum, FieldValueType, [String, Int, Float, Bool, Json]);
-
-define_enum!(OperationTypeEnum, OperationType, [Read, Create, Update, Delete, Grant, Revoke]);

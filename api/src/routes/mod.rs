@@ -13,12 +13,11 @@ pub mod auth;
 pub mod graphql;
 
 macro_rules! graphql_router {
-    ($state:expr, $middleware:ident, $enable_graphiql:expr) => {
+    ($state:expr, $enable_graphiql:expr) => {
         async {
             let mut router = Router::new().route(
                 "/",
-                on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler)
-                    .route_layer(from_fn_with_state($state.clone(), $middleware)),
+                on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
             );
 
             if $enable_graphiql {
@@ -34,8 +33,9 @@ pub async fn get_external_router(state: &Arc<AppState>) -> Router<Arc<AppState>>
     Router::new()
         .nest(
             "/graphql",
-            graphql_router!(state, api_key_guard, state.enable_graphiql).await,
+            graphql_router!(state, state.enable_graphiql).await,
         )
+        .layer(from_fn_with_state(state.clone(), api_key_guard))
         .with_state(state.clone())
 }
 
@@ -48,8 +48,9 @@ pub async fn get_base_router(state: &Arc<AppState>) -> Router<Arc<AppState>> {
         .route("/auth", axum::routing::post(self::auth::login))
         .nest(
             "/graphql",
-            graphql_router!(state, jwt_auth_middleware, state.enable_graphiql).await,
+            graphql_router!(state, state.enable_graphiql).await,
         )
+        .layer(from_fn_with_state(state.clone(), jwt_auth_middleware))
         .with_state(state.clone())
 }
 
@@ -58,4 +59,5 @@ pub async fn get_router(state: &Arc<AppState>) -> axum::Router<Arc<AppState>> {
         .nest("/", get_base_router(&state).await)
         .nest("/external", get_external_router(&state).await)
         .layer(crate::middleware::trace_layer_rest())
+        .layer(from_fn_with_state(state.clone(), crate::middleware::request_context::request_context_layer))
 }

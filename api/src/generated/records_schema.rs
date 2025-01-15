@@ -10,10 +10,6 @@ pub mod sql_types {
     pub struct IoType;
 
     #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "operation_type"))]
-    pub struct OperationType;
-
-    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "tier"))]
     pub struct Tier;
 
@@ -72,27 +68,6 @@ diesel::table! {
         subcomponent_event_id -> Nullable<Uuid>,
         field_name -> Varchar,
         field_value -> Varchar,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::OperationType;
-
-    record_audit_logs (id) {
-        id -> Uuid,
-        service_api_key_id -> Nullable<Uuid>,
-        user_api_key_id -> Nullable<Uuid>,
-        user_id -> Nullable<Uuid>,
-        workspace_id -> Uuid,
-        table_name -> Varchar,
-        hashed_id -> Array<Nullable<Varchar>>,
-        created_at -> Timestamptz,
-        operation_type -> OperationType,
-        source -> Nullable<Varchar>,
-        request_id -> Nullable<Uuid>,
-        ip_address -> Nullable<Inet>,
-        batch_id -> Nullable<Uuid>,
     }
 }
 
@@ -190,7 +165,6 @@ diesel::joinable!(metadata -> component_event (component_event_id));
 diesel::joinable!(metadata -> subcomponent_event (subcomponent_event_id));
 diesel::joinable!(metadata -> subsystem_event (subsystem_event_id));
 diesel::joinable!(metadata -> system_event (system_event_id));
-diesel::joinable!(record_audit_logs -> workspace (workspace_id));
 diesel::joinable!(runtime -> component_event (component_event_id));
 diesel::joinable!(runtime -> subcomponent_event (subcomponent_event_id));
 diesel::joinable!(runtime -> subsystem_event (subsystem_event_id));
@@ -204,7 +178,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     component_event,
     io,
     metadata,
-    record_audit_logs,
     runtime,
     subcomponent_event,
     subsystem_event,

@@ -4,7 +4,6 @@ pub mod io;
 pub mod metadata;
 pub mod runtime;
 pub mod utils;
-pub mod audit;
 
 pub use event::{
     ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,

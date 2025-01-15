@@ -1,25 +1,29 @@
 -- Your SQL goes here
 create type operation_type as enum ('read', 'create', 'update', 'delete', 'grant', 'revoke');
+create type archive_status as enum ('active', 'pending_archive', 'archived');
 
--- Record audit logs
-create table record_audit_logs (
+-- API Access logs
+create table api_access_audit_logs (
     id uuid primary key default gen_random_uuid(),
+    created_at timestamptz not null default now(),
+    -- Endpoint URI
+    source varchar,
+    request_id uuid,
+    ip_address inet,
+    archive_status archive_status not null default 'active'
+);
+
+-- Auth audit logs
+create table api_auth_audit_logs (
+    id uuid primary key default gen_random_uuid(),
+    api_access_audit_log_id uuid not null references api_access_audit_logs(id),
     service_api_key_id uuid references service_api_key(id),
     user_api_key_id uuid references user_api_key(id),
     user_id uuid references users(id),
-    workspace_id uuid not null references workspace(id),
-    table_name varchar not null,
-    hashed_id varchar[] not null,
-    created_at timestamptz not null default now(),
-    operation_type operation_type not null,
-    -- Optional - provides additional context but not essential
-    source varchar,
-    -- Optional - good for request correlation but not essential
-    request_id uuid,
-    -- Optional - helpful for security but may not always be available
-    ip_address inet,
-    -- Optional - for batch operation correlation
-    batch_id uuid,
+    auth_method varchar not null,
+    auth_status varchar not null,
+    is_emergency_access boolean default false,
+    emergency_access_reason varchar,
     -- At least one of these should be present
     constraint check_id check (
         user_id is not null
@@ -28,26 +32,36 @@ create table record_audit_logs (
     )
 );
 
+-- Record audit logs
+create table record_audit_logs (
+    id uuid primary key default gen_random_uuid(),
+    api_access_audit_log_id uuid not null references api_access_audit_logs(id),
+    api_auth_audit_log_id uuid references api_auth_audit_logs(id),
+    workspace_id uuid not null references workspace(id),
+    table_name varchar not null,
+    hashed_id varchar[] not null,
+
+    operation_type operation_type not null,
+    -- Optional - for batch operation correlation
+    batch_id uuid,
+    failure_reason varchar,
+    query_metadata jsonb
+);
+
 create table iam_audit_logs (
     id uuid primary key default gen_random_uuid(),
+    api_access_audit_log_id uuid not null references api_access_audit_logs(id),
+    api_auth_audit_log_id uuid references api_auth_audit_logs(id),
     resource_id uuid not null,
     table_name varchar not null,
-    user_id uuid references users(id),
-    user_api_key_id uuid references user_api_key(id),
 
     operation_type operation_type not null,
 
     old_state jsonb,
     new_state jsonb,
 
-    created_at timestamptz not null default now(),
-    source varchar,
-    request_id uuid,
-    ip_address inet,
-
-    constraint check_id check (
-        user_id is not null or user_api_key_id is not null
-    )
+    failure_reason varchar,
+    query_metadata jsonb
 );
 
 -- Soft deletion for iam tables
@@ -71,19 +85,20 @@ alter table workspace_user
     add column deleted_at timestamptz,
     add column deletion_reason varchar;
 
--- Indices for common query operations
-create index idx_audit_workspace_time 
-    on record_audit_logs(workspace_id, created_at desc);
+-- Indices for archiving
+create index idx_api_access_audit_archive 
+    on api_access_audit_logs(created_at) 
+    where archive_status = 'pending_archive';
 
-create index idx_audit_record_lookup 
-    on record_audit_logs(hashed_id, created_at desc);
+-- Add indices for efficient joins when archiving
+create index idx_api_auth_audit_access_id
+    on api_auth_audit_logs(api_access_audit_log_id);
 
-create index idx_api_key_active 
-    on service_api_key(id) 
-    where deleted_at is null;
+create index idx_record_audit_access_id
+    on record_audit_logs(api_access_audit_log_id);
 
-create index idx_iam_audit_resource_time 
-    on iam_audit_logs(resource_id, created_at desc);
+create index idx_iam_audit_access_id
+    on iam_audit_logs(api_access_audit_log_id);
 
 -- Rules for soft deletion
 create rule soft_delete_service_api_key as on delete to service_api_key do instead (

@@ -1,4 +1,4 @@
-use crate::state::AppState;
+use crate::state::{AppState, RequestContext};
 use std::sync::Arc;
 
 // Define an AppState struct to hold both schema and context
@@ -6,6 +6,7 @@ use std::sync::Arc;
 pub struct JuniperAppState {
     pub state: Arc<AppState>,
     pub user: Arc<crate::models::auth::User>,
+    pub request_context: RequestContext,
 }
 
 impl juniper::Context for JuniperAppState {}
