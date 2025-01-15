@@ -11,9 +11,11 @@ macro_rules! define_enum {
 
         impl ToSql<$type, Pg> for $name {
             fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
+                use heck::ToSnakeCase;
+
                 match *self {
                     $(
-                        $name::$variant => out.write_all(stringify!($variant).to_lowercase().as_bytes())?,
+                        $name::$variant => out.write_all(stringify!($variant).to_snake_case().as_bytes())?,
                     )+
                 }
 
@@ -23,9 +25,11 @@ macro_rules! define_enum {
 
         impl FromSql<$type, Pg> for $name {
             fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
+                use heck::ToSnakeCase;
+
                 let input = bytes.as_bytes();
                 $(
-                    if input == stringify!($variant).to_lowercase().as_bytes() {
+                    if input == stringify!($variant).to_snake_case().as_bytes() {
                         return Ok($name::$variant);
                     }
                 )+

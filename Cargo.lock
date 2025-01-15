@@ -107,6 +107,7 @@ dependencies = [
  "chrono",
  "diesel",
  "diesel-async",
+ "heck 0.5.0",
  "hyper",
  "ipnet",
  "jsonwebtoken",
