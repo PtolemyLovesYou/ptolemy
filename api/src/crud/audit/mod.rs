@@ -1,7 +1,7 @@
 use crate::{
     error::CRUDError,
-    generated::audit_schema::api_auth_audit_logs,
-    models::audit::models::AuthAuditLogCreate,
+    generated::audit_schema::{api_auth_audit_logs, api_access_audit_logs},
+    models::audit::models::{AuthAuditLogCreate, ApiAccessAuditLogCreate},
     state::DbConnection,
 };
 use tracing::error;
@@ -23,4 +23,22 @@ pub async fn insert_api_auth_audit_log(
                 Err(CRUDError::InsertError)
             }
         }
+}
+
+pub async fn insert_api_access_audit_log(
+    conn: &mut DbConnection<'_>,
+    obj: ApiAccessAuditLogCreate,
+) -> Result<Uuid, CRUDError> {
+    match diesel::insert_into(api_access_audit_logs::table)
+        .values(&obj)
+        .returning(api_access_audit_logs::id)
+        .get_result(conn)
+        .await
+    {
+        Ok(i) =>Ok(i),
+        Err(e) => {
+            error!("Failed to insert record: {}", e);
+            return Err(CRUDError::InsertError);
+        }
+    }
 }

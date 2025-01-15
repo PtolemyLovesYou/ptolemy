@@ -1,6 +1,6 @@
-use crate::generated::audit_schema::api_access_audit_logs as schema;
 use crate::models::audit::models::ApiAccessAuditLogCreate;
 use crate::models::AccessContext;
+use crate::crud::audit::insert_api_access_audit_log;
 use crate::state::AppState;
 use axum::{
     extract::{ConnectInfo, State},
@@ -8,7 +8,6 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
-use diesel_async::RunQueryDsl;
 use ipnet::IpNet;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -36,18 +35,9 @@ pub async fn request_context_layer(
         ip_address,
     };
 
-    let insert_id = match diesel::insert_into(schema::table)
-        .values(&ins)
-        .returning(schema::id)
-        .get_result(&mut conn)
+    let insert_id = insert_api_access_audit_log(&mut conn, ins)
         .await
-    {
-        Ok(i) => i,
-        Err(e) => {
-            error!("Failed to insert record: {}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+        .map_err(|e| e.http_status_code())?;
 
     req.extensions_mut().insert(AccessContext {
         api_access_audit_log_id: Some(insert_id),
