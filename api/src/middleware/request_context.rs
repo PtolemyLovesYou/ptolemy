@@ -11,7 +11,6 @@ use axum::{
 use ipnet::IpNet;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tracing::error;
 
 pub async fn request_context_layer(
     State(state): State<Arc<AppState>>,
@@ -24,10 +23,7 @@ pub async fn request_context_layer(
         None => None,
     };
 
-    let mut conn = state.get_conn_http().await.map_err(|e| {
-        error!("Failed to get connection: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let mut conn = state.get_conn_http().await?;
 
     let ins = ApiAccessAuditLogCreate {
         source,
