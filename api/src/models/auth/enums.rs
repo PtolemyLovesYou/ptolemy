@@ -12,5 +12,9 @@ use std::io::Write;
 
 define_enum!(WorkspaceRoleEnum, WorkspaceRole, [User, Manager, Admin]);
 define_enum!(UserStatusEnum, UserStatus, [Active, Suspended]);
-define_enum!(ApiKeyPermissionEnum, ApiKeyPermission, [ReadOnly, WriteOnly, ReadWrite]);
+define_enum!(
+    ApiKeyPermissionEnum,
+    ApiKeyPermission,
+    [ReadOnly, WriteOnly, ReadWrite]
+);
 // define_enum!(OperationTypeEnum, OperationType, [Create, Read, Update, Delete, Grant, Revoke]);

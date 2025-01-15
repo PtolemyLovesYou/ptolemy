@@ -39,7 +39,6 @@ pub async fn api_key_guard(
 }
 
 pub async fn graphql_handler(
-    Extension(request_context): Extension<crate::state::RequestContext>,
     Extension(user): Extension<Arc<crate::models::auth::User>>,
     State(state): State<Arc<AppState>>,
     JuniperRequest(request): JuniperRequest,
@@ -48,7 +47,6 @@ pub async fn graphql_handler(
     let state_clone = JuniperAppState {
         state: state.clone(),
         user: user.clone(),
-        request_context,
     };
 
     let result = request.execute(&schema, &state_clone).await;

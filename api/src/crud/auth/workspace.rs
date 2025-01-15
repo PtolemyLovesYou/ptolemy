@@ -1,13 +1,13 @@
+use crate::delete_db_obj;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace;
 use crate::models::auth::{Workspace, WorkspaceCreate};
 use crate::state::DbConnection;
-use crate::delete_db_obj;
+use chrono::Utc;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-use chrono::Utc;
 
 /// Creates a new workspace in the database.
 ///
@@ -89,7 +89,11 @@ pub async fn get_workspace(
     workspace_id: &Uuid,
 ) -> Result<Workspace, CRUDError> {
     match workspace::table
-        .filter(workspace::id.eq(workspace_id).and(workspace::deleted_at.is_null()))
+        .filter(
+            workspace::id
+                .eq(workspace_id)
+                .and(workspace::deleted_at.is_null()),
+        )
         .get_result::<Workspace>(conn)
         .await
     {

@@ -1,4 +1,5 @@
 use crate::crypto::{generate_api_key, PasswordHandler};
+use crate::delete_db_obj;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
@@ -9,7 +10,6 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-use crate::delete_db_obj;
 
 pub async fn verify_service_api_key_by_workspace(
     conn: &mut DbConnection<'_>,
@@ -20,9 +20,17 @@ pub async fn verify_service_api_key_by_workspace(
     let key_preview = api_key.chars().take(12).collect::<String>();
 
     let results: Vec<(ServiceApiKey, Workspace)> = workspace::table
-        .filter(workspace::name.eq(workspace_name).and(workspace::deleted_at.is_null()))
+        .filter(
+            workspace::name
+                .eq(workspace_name)
+                .and(workspace::deleted_at.is_null()),
+        )
         .inner_join(service_api_key::table.on(service_api_key::workspace_id.eq(workspace::id)))
-        .filter(service_api_key::key_preview.eq(key_preview).and(service_api_key::deleted_at.is_null()))
+        .filter(
+            service_api_key::key_preview
+                .eq(key_preview)
+                .and(service_api_key::deleted_at.is_null()),
+        )
         .select((ServiceApiKey::as_select(), Workspace::as_select()))
         .get_results(conn)
         .await
@@ -84,7 +92,11 @@ pub async fn get_service_api_key_by_id(
     id: &Uuid,
 ) -> Result<ServiceApiKey, CRUDError> {
     match service_api_key::table
-        .filter(service_api_key::id.eq(id).and(service_api_key::deleted_at.is_null()))
+        .filter(
+            service_api_key::id
+                .eq(id)
+                .and(service_api_key::deleted_at.is_null()),
+        )
         .get_result(conn)
         .await
     {

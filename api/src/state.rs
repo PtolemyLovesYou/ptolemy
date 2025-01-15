@@ -1,13 +1,13 @@
 use crate::crypto::PasswordHandler;
 use crate::error::{ApiError, CRUDError};
-use axum::http::{StatusCode, Request};
+use axum::extract::ConnectInfo;
+use axum::http::{Request, StatusCode};
 use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
-use tracing::error;
-use axum::extract::ConnectInfo;
-use std::{net::SocketAddr, str::FromStr};
 use ipnet::IpNet;
+use std::{net::SocketAddr, str::FromStr};
+use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
@@ -35,10 +35,7 @@ impl RequestContext {
             None => None,
         };
 
-        Self {
-            ip_address,
-            source,
-        }
+        Self { ip_address, source }
     }
 }
 

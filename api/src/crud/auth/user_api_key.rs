@@ -1,4 +1,5 @@
 use crate::crypto::{generate_api_key, PasswordHandler};
+use crate::delete_db_obj;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{user_api_key, users};
 use crate::models::auth::{User, UserApiKey, UserApiKeyCreate};
@@ -8,7 +9,6 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-use crate::delete_db_obj;
 
 pub async fn get_user_api_key_user(
     conn: &mut DbConnection<'_>,
@@ -19,7 +19,11 @@ pub async fn get_user_api_key_user(
 
     let api_keys: Vec<UserApiKey> = user_api_key::table
         .select(UserApiKey::as_select())
-        .filter(user_api_key::key_preview.eq(chars).and(user_api_key::deleted_at.is_null()))
+        .filter(
+            user_api_key::key_preview
+                .eq(chars)
+                .and(user_api_key::deleted_at.is_null()),
+        )
         .get_results(conn)
         .await
         .map_err(|e| {

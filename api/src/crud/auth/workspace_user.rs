@@ -1,3 +1,4 @@
+use crate::delete_db_obj;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::users;
 use crate::generated::auth_schema::workspace;
@@ -5,12 +6,11 @@ use crate::generated::auth_schema::workspace_user;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
-use crate::delete_db_obj;
+use chrono::Utc;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-use chrono::Utc;
 
 /// Creates a new entry in the workspace_user table.
 ///
@@ -91,7 +91,12 @@ pub async fn set_workspace_user_role(
     role: &WorkspaceRoleEnum,
 ) -> Result<WorkspaceUser, CRUDError> {
     match diesel::update(workspace_user::table)
-        .filter(workspace_user::workspace_id.eq(wk_id).and(workspace_user::user_id.eq(us_id)).and(workspace_user::deleted_at.is_null()))
+        .filter(
+            workspace_user::workspace_id
+                .eq(wk_id)
+                .and(workspace_user::user_id.eq(us_id))
+                .and(workspace_user::deleted_at.is_null()),
+        )
         .set(workspace_user::role.eq(role))
         .returning(WorkspaceUser::as_returning())
         .get_result(conn)
@@ -151,7 +156,11 @@ pub async fn search_workspace_users(
     let mut query = workspace_user::table
         .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
         .inner_join(users::table.on(users::id.eq(workspace_user::user_id)))
-        .filter(workspace_user::deleted_at.is_null().and(users::deleted_at.is_null()))
+        .filter(
+            workspace_user::deleted_at
+                .is_null()
+                .and(users::deleted_at.is_null()),
+        )
         .select((
             // WorkspaceUser columns
             workspace_user::all_columns,
@@ -196,7 +205,11 @@ pub async fn get_workspaces_of_user(
     user_id: &Uuid,
 ) -> Result<Vec<WorkspaceUser>, CRUDError> {
     match workspace_user::table
-        .filter(workspace_user::user_id.eq(user_id).and(workspace_user::deleted_at.is_null()))
+        .filter(
+            workspace_user::user_id
+                .eq(user_id)
+                .and(workspace_user::deleted_at.is_null()),
+        )
         .get_results(conn)
         .await
     {

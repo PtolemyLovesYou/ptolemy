@@ -1,15 +1,15 @@
 use crate::crypto::PasswordHandler;
+use crate::delete_db_obj;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::users;
 use crate::models::auth::enums::UserStatusEnum;
 use crate::models::auth::{User, UserCreate};
 use crate::state::DbConnection;
+use chrono::Utc;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-use chrono::Utc;
-use crate::delete_db_obj;
 
 /// Creates a new user in the database.
 ///
@@ -129,11 +129,13 @@ pub async fn get_all_users(
 ) -> Result<Vec<crate::models::auth::User>, CRUDError> {
     match users::table
         .filter(users::deleted_at.is_null())
-        .get_results(conn).await {
-            Ok(us) => Ok(us),
-            Err(e) => {
-                error!("Failed to get users: {}", e);
-                return Err(CRUDError::GetError);
+        .get_results(conn)
+        .await
+    {
+        Ok(us) => Ok(us),
+        Err(e) => {
+            error!("Failed to get users: {}", e);
+            return Err(CRUDError::GetError);
         }
     }
 }

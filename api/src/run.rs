@@ -11,7 +11,8 @@ use tracing::error;
 pub async fn run_rest_api(shared_state: Arc<AppState>) -> Result<(), ApiError> {
     let state_clone = Arc::clone(&shared_state);
 
-    let app = get_router(&state_clone).await
+    let app = get_router(&state_clone)
+        .await
         .with_state(state_clone)
         .into_make_service_with_connect_info::<std::net::SocketAddr>();
 

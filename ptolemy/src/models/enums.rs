@@ -41,7 +41,11 @@ pub enum OperationType {
     Revoke,
 }
 
-serialize_enum!(OperationType, ShoutySnakeCase, [Create, Read, Update, Delete, Grant, Revoke]);
+serialize_enum!(
+    OperationType,
+    ShoutySnakeCase,
+    [Create, Read, Update, Delete, Grant, Revoke]
+);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum IoType {
@@ -61,7 +65,11 @@ pub enum FieldValueType {
     Json,
 }
 
-serialize_enum!(FieldValueType, ShoutySnakeCase, [String, Int, Float, Bool, Json]);
+serialize_enum!(
+    FieldValueType,
+    ShoutySnakeCase,
+    [String, Int, Float, Bool, Json]
+);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Tier {
@@ -71,4 +79,8 @@ pub enum Tier {
     Subcomponent,
 }
 
-serialize_enum!(Tier, ShoutySnakeCase, [System, Subsystem, Component, Subcomponent]);
+serialize_enum!(
+    Tier,
+    ShoutySnakeCase,
+    [System, Subsystem, Component, Subcomponent]
+);

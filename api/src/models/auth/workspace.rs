@@ -1,4 +1,4 @@
-use chrono::{naive::serde::ts_microseconds, NaiveDateTime, Utc, DateTime};
+use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};

@@ -1,11 +1,11 @@
 use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::models::auth::workspace::Workspace;
 use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(
     Debug,

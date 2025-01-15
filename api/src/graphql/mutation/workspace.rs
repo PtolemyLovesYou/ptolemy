@@ -409,9 +409,7 @@ impl WorkspaceMutation {
             }
         };
 
-        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, None)
-            .await
-        {
+        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, None).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "service_api_key",

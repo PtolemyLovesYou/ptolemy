@@ -41,11 +41,6 @@ pub async fn get_external_router(state: &Arc<AppState>) -> Router<Arc<AppState>>
 
 pub async fn get_base_router(state: &Arc<AppState>) -> Router<Arc<AppState>> {
     Router::new()
-        .route(
-            "/",
-            axum::routing::get(|| async { "Ptolemy API is up and running <3" }),
-        )
-        .route("/auth", axum::routing::post(self::auth::login))
         .nest(
             "/graphql",
             graphql_router!(state, state.enable_graphiql).await,
@@ -56,8 +51,16 @@ pub async fn get_base_router(state: &Arc<AppState>) -> Router<Arc<AppState>> {
 
 pub async fn get_router(state: &Arc<AppState>) -> axum::Router<Arc<AppState>> {
     Router::new()
+        .route(
+            "/",
+            axum::routing::get(|| async { "Ptolemy API is up and running <3" }),
+        )
+        .route("/auth", axum::routing::post(self::auth::login))
         .nest("/", get_base_router(&state).await)
         .nest("/external", get_external_router(&state).await)
+        .layer(from_fn_with_state(
+            state.clone(),
+            crate::middleware::request_context::request_context_layer,
+        ))
         .layer(crate::middleware::trace_layer_rest())
-        .layer(from_fn_with_state(state.clone(), crate::middleware::request_context::request_context_layer))
 }

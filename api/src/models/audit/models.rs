@@ -1,7 +1,7 @@
 use crate::generated::audit_schema::*;
 use diesel::prelude::*;
-use uuid::Uuid;
 use ipnet::IpNet;
+use uuid::Uuid;
 
 #[derive(Debug, Insertable)]
 #[diesel(table_name = api_access_audit_logs)]

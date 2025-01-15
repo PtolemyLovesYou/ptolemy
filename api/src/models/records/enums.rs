@@ -1,5 +1,5 @@
-use crate::generated::records_schema::sql_types::{FieldValueType, IoType, Tier};
 use crate::define_enum;
+use crate::generated::records_schema::sql_types::{FieldValueType, IoType, Tier};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{
@@ -36,4 +36,8 @@ impl From<observer::Tier> for TierEnum {
     }
 }
 
-define_enum!(FieldValueTypeEnum, FieldValueType, [String, Int, Float, Bool, Json]);
+define_enum!(
+    FieldValueTypeEnum,
+    FieldValueType,
+    [String, Int, Float, Bool, Json]
+);

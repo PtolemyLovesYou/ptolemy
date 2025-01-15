@@ -1,9 +1,9 @@
 use crate::models::auth::enums::UserStatusEnum;
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
 #[diesel(table_name = crate::generated::auth_schema::users)]

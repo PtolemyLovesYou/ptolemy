@@ -1,10 +1,10 @@
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::{user::User, workspace::Workspace};
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations)]
 #[diesel(belongs_to(User))]
