@@ -8,6 +8,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
+use crate::delete_db_obj;
 
 pub async fn get_user_api_key_user(
     conn: &mut DbConnection<'_>,
@@ -131,24 +132,4 @@ pub async fn get_user_api_keys(
     Ok(api_keys)
 }
 
-pub async fn delete_user_api_key(
-    conn: &mut DbConnection<'_>,
-    id: &Uuid,
-    user_id: &Uuid,
-) -> Result<(), CRUDError> {
-    match diesel::update(user_api_key::table)
-        .filter(
-            user_api_key::id
-                .eq(id)
-                .and(user_api_key::user_id.eq(user_id)),
-        )
-        .set(user_api_key::deleted_at.eq(Utc::now()))
-        .execute(conn)
-        .await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                error!("Unable to delete user_api_key: {}", e);
-                Err(CRUDError::DeleteError)
-            }
-        }
-}
+delete_db_obj!(delete_user_api_key, user_api_key);

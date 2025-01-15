@@ -87,7 +87,7 @@ impl UserMutation {
             return DeletionResult::err("user", "Sysadmin cannot be deleted via API".to_string());
         }
 
-        match user_crud::delete_user(&mut conn, &id).await {
+        match user_crud::delete_user(&mut conn, &id, None).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err("user", format!("Failed to delete user: {:?}", e)),
         }
@@ -145,7 +145,7 @@ impl UserMutation {
             }
         };
 
-        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &ctx.user.id).await {
+        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, None).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "user_api_key",

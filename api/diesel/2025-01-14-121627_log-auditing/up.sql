@@ -84,3 +84,24 @@ create index idx_api_key_active
 
 create index idx_iam_audit_resource_time 
     on iam_audit_logs(resource_id, created_at desc);
+
+-- Rules for soft deletion
+create rule soft_delete_service_api_key as on delete to service_api_key do instead (
+    update service_api_key set deleted_at = now(), deletion_reason = 'soft delete' where id = old.id and deleted_at is null
+)
+
+create rule soft_delete_user_api_key as on delete to user_api_key do instead (
+    update user_api_key set deleted_at = now(), deletion_reason = 'soft delete' where id = old.id and deleted_at is null
+)
+
+create rule soft_delete_workspace as on delete to workspace do instead (
+    update workspace set deleted_at = now(), deletion_reason = 'soft delete' where id = old.id and deleted_at is null
+)
+
+create rule soft_delete_users as on delete to users do instead (
+    update users set deleted_at = now(), deletion_reason = 'soft delete' where id = old.id and deleted_at is null
+)
+
+create rule soft_delete_workspace_user as on delete to workspace_user do instead (
+    update workspace_user set deleted_at = now(), deletion_reason = 'soft delete' where id = old.id and deleted_at is null
+)

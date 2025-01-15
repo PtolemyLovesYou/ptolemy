@@ -9,6 +9,7 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 use chrono::Utc;
+use crate::delete_db_obj;
 
 /// Creates a new user in the database.
 ///
@@ -178,20 +179,7 @@ pub async fn change_user_password(
     }
 }
 
-pub async fn delete_user(conn: &mut DbConnection<'_>, user_id: &Uuid) -> Result<(), CRUDError> {
-    match diesel::update(users::table)
-        .filter(users::id.eq(user_id))
-        .set(users::deleted_at.eq(Utc::now()))
-        .execute(conn)
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to delete workspace: {}", e);
-            Err(CRUDError::DeleteError)
-        }
-    }
-}
+delete_db_obj!(delete_user, users);
 
 pub async fn auth_user(
     conn: &mut DbConnection<'_>,

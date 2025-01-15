@@ -5,6 +5,7 @@ use crate::generated::auth_schema::workspace_user;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
+use crate::delete_db_obj;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -107,38 +108,7 @@ pub async fn set_workspace_user_role(
     }
 }
 
-/// Deletes a user from a workspace.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `wk_id` - The UUID of the workspace.
-/// * `us_id` - The UUID of the user.
-///
-/// # Errors
-///
-/// This function will return `CRUDError::DeleteError` if there is an error deleting the user from the workspace_user table.
-pub async fn delete_workspace_user(
-    conn: &mut DbConnection<'_>,
-    wk_id: &Uuid,
-    us_id: &Uuid,
-) -> Result<(), CRUDError> {
-    match diesel::update(workspace_user::table)
-        .filter(workspace_user::workspace_id.eq(wk_id).and(workspace_user::user_id.eq(us_id)).and(workspace_user::deleted_at.is_null()))
-        .set(workspace_user::deleted_at.eq(Utc::now()))
-        .execute(conn)
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to delete workspace_user: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::DeleteError),
-            }
-        }
-    }
-}
+delete_db_obj!(delete_workspace_user, workspace_user);
 
 pub async fn get_workspace_user(
     conn: &mut DbConnection<'_>,

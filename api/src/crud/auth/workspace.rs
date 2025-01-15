@@ -2,6 +2,7 @@ use crate::error::CRUDError;
 use crate::generated::auth_schema::workspace;
 use crate::models::auth::{Workspace, WorkspaceCreate};
 use crate::state::DbConnection;
+use crate::delete_db_obj;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
@@ -104,33 +105,4 @@ pub async fn get_workspace(
     }
 }
 
-/// Deletes a workspace by its UUID.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `workspace_id` - The UUID of the workspace to be deleted.
-///
-/// # Errors
-///
-/// This function will return `CRUDError::DeleteError` if there is an error deleting the workspace from the database.
-pub async fn delete_workspace(
-    conn: &mut DbConnection<'_>,
-    workspace_id: &Uuid,
-) -> Result<(), CRUDError> {
-    match diesel::update(workspace::table)
-        .filter(workspace::id.eq(workspace_id))
-        .set(workspace::deleted_at.eq(Utc::now()))
-        .execute(conn)
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to delete workspace: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::DeleteError),
-            }
-        }
-    }
-}
+delete_db_obj!(delete_workspace, workspace);

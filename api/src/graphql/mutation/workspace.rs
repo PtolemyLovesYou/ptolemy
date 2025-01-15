@@ -98,7 +98,7 @@ impl WorkspaceMutation {
             );
         }
 
-        match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
+        match workspace_crud::delete_workspace(&mut conn, &workspace_id, None).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => {
                 DeletionResult::err("workspace", format!("Failed to delete workspace: {:?}", e))
@@ -221,7 +221,7 @@ impl WorkspaceMutation {
             _ => return DeletionResult::err("permission", "Insufficient permissions".to_string()),
         }
 
-        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
+        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, None).await {
             Ok(_) => DeletionResult(Ok(true)),
             Err(e) => DeletionResult::err(
                 "workspace_user",
@@ -409,7 +409,7 @@ impl WorkspaceMutation {
             }
         };
 
-        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id)
+        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, None)
             .await
         {
             Ok(_) => DeletionResult(Ok(true)),

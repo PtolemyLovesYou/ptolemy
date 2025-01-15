@@ -9,6 +9,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
+use crate::delete_db_obj;
 
 pub async fn verify_service_api_key_by_workspace(
     conn: &mut DbConnection<'_>,
@@ -143,26 +144,4 @@ pub async fn get_workspace_service_api_keys(
     Ok(api_keys)
 }
 
-pub async fn delete_service_api_key(
-    conn: &mut DbConnection<'_>,
-    id: &Uuid,
-    workspace_id: &Uuid,
-) -> Result<(), CRUDError> {
-    match diesel::update(service_api_key::table)
-        .filter(
-            service_api_key::id
-                .eq(id)
-                .and(service_api_key::workspace_id.eq(workspace_id))
-                .and(service_api_key::deleted_at.is_null()),
-        )
-        .set(service_api_key::deleted_at.eq(Utc::now()))
-        .execute(conn)
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Unable to delete service_api_key: {:?}", e);
-            Err(CRUDError::DeleteError)
-        }
-    }
-}
+delete_db_obj!(delete_service_api_key, service_api_key);
