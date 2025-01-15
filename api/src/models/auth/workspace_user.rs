@@ -27,3 +27,9 @@ pub struct WorkspaceUserCreate {
     pub workspace_id: Uuid,
     pub role: WorkspaceRoleEnum,
 }
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = crate::generated::auth_schema::workspace_user)]
+pub struct WorkspaceUserUpdate {
+    role: Option<WorkspaceRoleEnum>,
+}

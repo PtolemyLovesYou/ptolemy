@@ -25,7 +25,6 @@ pub struct UserApiKey {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub key_preview: String,
-    // pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub deletion_reason: Option<String>,
@@ -41,6 +40,5 @@ pub struct UserApiKeyCreate {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub key_preview: String,
-    // pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
 }

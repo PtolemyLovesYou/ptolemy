@@ -26,3 +26,10 @@ pub struct WorkspaceCreate {
     name: String,
     description: Option<String>,
 }
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = crate::generated::auth_schema::workspace)]
+pub struct WorkspaceUpdate {
+    description: Option<String>,
+    archived: Option<bool>,
+}

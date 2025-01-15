@@ -29,3 +29,11 @@ pub struct UserCreate {
     pub is_sysadmin: bool,
     pub is_admin: bool,
 }
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = crate::generated::auth_schema::users)]
+pub struct UserUpdate {
+    pub display_name: Option<String>,
+    pub status: Option<UserStatusEnum>,
+    pub is_admin: Option<bool>,
+}

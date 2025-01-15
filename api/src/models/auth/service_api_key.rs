@@ -45,6 +45,4 @@ pub struct ServiceApiKeyCreate {
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<NaiveDateTime>,
-    // pub deleted_at: Option<DateTime<Utc>>,
-    // pub deletion_reason: Option<String>,
 }
