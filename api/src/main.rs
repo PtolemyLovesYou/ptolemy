@@ -1,10 +1,9 @@
 use api::crud::auth::admin::ensure_sysadmin;
 use api::error::ApiError;
-use api::run::{run_grpc_server, run_rest_api};
+use api::run::run_unified;
 use api::state::AppState;
 use std::sync::Arc;
-use tokio::try_join;
-use tracing::{error, info};
+use tracing::error;
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
@@ -22,16 +21,5 @@ async fn main() -> Result<(), ApiError> {
         }
     };
 
-    info!(
-        "Ptolemy REST API running on http://0.0.0.0:{} <3",
-        shared_state.port
-    );
-    info!("Ptolemy gRPC server running on [::]:50051 <3");
-
-    try_join!(
-        run_rest_api(shared_state.clone()),
-        run_grpc_server(shared_state.clone())
-    )?;
-
-    Ok(())
+    run_unified(shared_state.clone()).await
 }

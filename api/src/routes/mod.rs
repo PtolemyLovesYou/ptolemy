@@ -50,10 +50,6 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
 
 pub async fn get_router(state: &ApiAppState) -> axum::Router<ApiAppState> {
     Router::new()
-        .route(
-            "/",
-            axum::routing::get(|| async { "Ptolemy API is up and running <3" }),
-        )
         .route("/auth", axum::routing::post(self::auth::login))
         .nest("/", get_base_router(&state).await)
         .nest("/external", get_external_router(&state).await)
@@ -61,5 +57,4 @@ pub async fn get_router(state: &ApiAppState) -> axum::Router<ApiAppState> {
             state.clone(),
             crate::middleware::request_context::request_context_rest_layer,
         ))
-        .layer(crate::middleware::trace_layer_rest())
 }
