@@ -95,6 +95,10 @@ impl AppState {
         Ok(state)
     }
 
+    pub async fn new_with_arc() -> Result<Arc<Self>, ApiError> {
+        Ok(Arc::new(Self::new().await?))
+    }
+
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, CRUDError> {
         match self.pg_pool.get().await {
             Ok(c) => Ok(c),

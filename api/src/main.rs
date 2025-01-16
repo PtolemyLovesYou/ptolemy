@@ -4,7 +4,6 @@ use api::{
     state::AppState,
     routes::get_router,
 };
-use std::sync::Arc;
 use tracing::error;
 
 #[tokio::main]
@@ -13,7 +12,7 @@ async fn main() -> Result<(), ApiError> {
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    let shared_state = Arc::new(AppState::new().await?);
+    let shared_state = AppState::new_with_arc().await?;
 
     // ensure sysadmin
     match ensure_sysadmin(&shared_state).await {
