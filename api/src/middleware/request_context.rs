@@ -9,7 +9,7 @@ use axum::{
     response::IntoResponse,
 };
 
-pub async fn request_context_layer(
+pub async fn request_context_rest_layer(
     State(state): State<ApiAppState>,
     mut req: Request<axum::body::Body>,
     next: Next,

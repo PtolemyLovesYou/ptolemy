@@ -59,7 +59,7 @@ pub async fn get_router(state: &ApiAppState) -> axum::Router<ApiAppState> {
         .nest("/external", get_external_router(&state).await)
         .layer(from_fn_with_state(
             state.clone(),
-            crate::middleware::request_context::request_context_layer,
+            crate::middleware::request_context::request_context_rest_layer,
         ))
         .layer(crate::middleware::trace_layer_rest())
 }
