@@ -1,6 +1,8 @@
-use super::claims::ApiKey;
-use crate::crypto::Claims;
-use crate::state::ApiAppState;
+use crate::{
+    crypto::Claims,
+    state::ApiAppState,
+    models::middleware::ApiKey,
+};
 use std::str::FromStr;
 use tonic::{metadata::MetadataKey, service::Interceptor, Request, Status};
 use tracing::error;

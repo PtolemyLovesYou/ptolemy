@@ -1,7 +1,6 @@
-use super::claims::ApiKey;
 use crate::{
     crud::auth::service_api_key as service_api_key_crud, crypto::Claims, error::CRUDError,
-    models::auth::enums::ApiKeyPermissionEnum, observer::records::EventRecords, state::ApiAppState,
+    models::{auth::enums::ApiKeyPermissionEnum, middleware::ApiKey}, observer::records::EventRecords, state::ApiAppState,
 };
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,

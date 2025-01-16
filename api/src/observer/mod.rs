@@ -6,7 +6,6 @@ use ptolemy::generated::observer::{
 use service::{MyObserver, MyObserverAuthentication};
 use tonic::service::interceptor::InterceptedService;
 
-pub mod claims;
 pub mod interceptor;
 pub mod records;
 pub mod service;
