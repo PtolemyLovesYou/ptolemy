@@ -2,6 +2,12 @@ use crate::generated::audit_schema::*;
 use diesel::prelude::*;
 use ipnet::IpNet;
 use uuid::Uuid;
+use std::net::SocketAddr;
+use axum::{
+    extract::ConnectInfo,
+    http::Request,
+    body::Body,
+};
 
 #[derive(Debug, Insertable)]
 #[diesel(table_name = api_access_audit_logs)]
@@ -9,6 +15,22 @@ pub struct ApiAccessAuditLogCreate {
     pub source: Option<String>,
     pub request_id: Option<Uuid>,
     pub ip_address: Option<IpNet>,
+}
+
+impl ApiAccessAuditLogCreate {
+    pub fn from_axum_request(req: &Request<Body>, request_id: Option<Uuid>) -> Self {
+        let source = Some(req.uri().path().to_string());
+        let ip_address = match req.extensions().get::<ConnectInfo<SocketAddr>>() {
+            Some(i) => Some(IpNet::from(i.ip())),
+            None => None,
+        };
+
+        Self {
+            source,
+            ip_address,
+            request_id,
+        }
+    }
 }
 
 #[derive(Debug, Insertable)]

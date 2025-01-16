@@ -3,34 +3,23 @@ use crate::models::AccessContext;
 use crate::crud::audit::insert_api_access_audit_log;
 use crate::state::ApiAppState;
 use axum::{
-    extract::{ConnectInfo, State},
+    extract::State,
     http::{Request, StatusCode},
     middleware::Next,
     response::IntoResponse,
 };
-use ipnet::IpNet;
-use std::net::SocketAddr;
 
 pub async fn request_context_layer(
     State(state): State<ApiAppState>,
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let source = Some(req.uri().path().to_string());
-    let ip_address = match req.extensions().get::<ConnectInfo<SocketAddr>>() {
-        Some(i) => Some(IpNet::from(i.ip())),
-        None => None,
-    };
-
     let mut conn = state.get_conn_http().await?;
 
-    let ins = ApiAccessAuditLogCreate {
-        source,
-        request_id: None,
-        ip_address,
-    };
-
-    let insert_id = insert_api_access_audit_log(&mut conn, ins)
+    let insert_id = insert_api_access_audit_log(
+        &mut conn,
+        ApiAccessAuditLogCreate::from_axum_request(&req, None)
+    )
         .await
         .map_err(|e| e.http_status_code())?;
 
