@@ -9,7 +9,7 @@ use crate::{
         audit::{models::AuthAuditLogCreate, enums::AuthMethodEnum},
     },
     crypto::{Claims, generate_sha256},
-    state::AppState,
+    state::ApiAppState,
 };
 use axum::{
     body::Body,
@@ -53,7 +53,7 @@ fn get_failure_details(to_hash: String, unauthorized_reason: impl Into<String>) 
     json!(failure_details)
 }
 
-async fn get_user_from_api_key(state: &Arc<AppState>, api_key: String) -> Result<(Option<User>, Option<serde_json::Value>), StatusCode> {
+async fn get_user_from_api_key(state: &ApiAppState, api_key: String) -> Result<(Option<User>, Option<serde_json::Value>), StatusCode> {
     let mut conn = state.get_conn_http().await?;
 
     let user_result = get_user_api_key_user(&mut conn, &api_key, &state.password_handler)
@@ -70,7 +70,7 @@ async fn get_user_from_api_key(state: &Arc<AppState>, api_key: String) -> Result
     }
 }
 
-async fn get_user_from_jwt(state: &Arc<AppState>, token: String) -> Result<(Option<User>, Option<serde_json::Value>), StatusCode> {
+async fn get_user_from_jwt(state: &ApiAppState, token: String) -> Result<(Option<User>, Option<serde_json::Value>), StatusCode> {
     let token_data: Claims<Uuid> =
             Claims::from_token(&token, state.jwt_secret.as_bytes()).map_err(|e| {
                 error!("Failed to validate token: {}", e);
@@ -90,7 +90,7 @@ async fn get_user_from_jwt(state: &Arc<AppState>, token: String) -> Result<(Opti
 macro_rules! auth_middleware {
     ($fn_name:ident, $get_user_fn:tt, $auth_method:ident) => {
         pub async fn $fn_name(
-            State(state): State<Arc<AppState>>,
+            State(state): State<ApiAppState>,
             mut req: Request<Body>,
             next: Next,
         ) -> Result<impl IntoResponse, StatusCode> {

@@ -1,9 +1,8 @@
 use crate::crud::auth::user::auth_user;
 use crate::crypto::Claims;
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::error;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -18,7 +17,7 @@ pub struct AuthResponse {
 }
 
 pub async fn login(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiAppState>,
     Json(payload): Json<AuthPayload>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let user = auth_user(

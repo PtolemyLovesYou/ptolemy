@@ -1,6 +1,6 @@
 use super::claims::ApiKey;
 use crate::crypto::Claims;
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use std::str::FromStr;
 use tonic::{metadata::MetadataKey, service::Interceptor, Request, Status};
 use tracing::error;
@@ -8,11 +8,11 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct ObserverAuthenticationInterceptor {
-    pub state: std::sync::Arc<AppState>,
+    pub state: ApiAppState,
 }
 
 impl ObserverAuthenticationInterceptor {
-    pub fn new(state: std::sync::Arc<AppState>) -> Self {
+    pub fn new(state: ApiAppState) -> Self {
         Self { state }
     }
 }
@@ -41,7 +41,7 @@ impl Interceptor for ObserverAuthenticationInterceptor {
 
 #[derive(Debug, Clone)]
 pub struct ObserverInterceptor {
-    pub state: std::sync::Arc<AppState>,
+    pub state: ApiAppState,
 }
 
 impl Interceptor for ObserverInterceptor {

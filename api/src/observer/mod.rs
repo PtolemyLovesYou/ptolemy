@@ -1,10 +1,9 @@
 use self::interceptor::{ObserverAuthenticationInterceptor, ObserverInterceptor};
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthenticationServer, observer_server::ObserverServer,
 };
 use service::{MyObserver, MyObserverAuthentication};
-use std::sync::Arc;
 use tonic::service::interceptor::InterceptedService;
 
 pub mod claims;
@@ -18,7 +17,7 @@ type ObserverAuthenticationService = InterceptedService<
     ObserverAuthenticationInterceptor,
 >;
 
-pub async fn observer_service(state: Arc<AppState>) -> ObserverService {
+pub async fn observer_service(state: ApiAppState) -> ObserverService {
     let service = self::service::MyObserver::new(state.clone()).await;
     let interceptor = interceptor::ObserverInterceptor {
         state: state.clone(),
@@ -27,7 +26,7 @@ pub async fn observer_service(state: Arc<AppState>) -> ObserverService {
     ObserverServer::with_interceptor(service, interceptor)
 }
 
-pub async fn authentication_service(state: Arc<AppState>) -> ObserverAuthenticationService {
+pub async fn authentication_service(state: ApiAppState) -> ObserverAuthenticationService {
     let service = self::service::MyObserverAuthentication::new(state.clone()).await;
     let interceptor = interceptor::ObserverAuthenticationInterceptor::new(state.clone());
     ObserverAuthenticationServer::with_interceptor(service, interceptor)

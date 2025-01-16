@@ -1,24 +1,23 @@
 use super::claims::ApiKey;
 use crate::{
     crud::auth::service_api_key as service_api_key_crud, crypto::Claims, error::CRUDError,
-    models::auth::enums::ApiKeyPermissionEnum, observer::records::EventRecords, state::AppState,
+    models::auth::enums::ApiKeyPermissionEnum, observer::records::EventRecords, state::ApiAppState,
 };
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
     AuthenticationRequest, AuthenticationResponse, PublishRequest, PublishResponse, Record,
 };
-use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct MyObserverAuthentication {
-    state: Arc<AppState>,
+    state: ApiAppState,
 }
 
 impl MyObserverAuthentication {
-    pub async fn new(state: Arc<AppState>) -> Self {
+    pub async fn new(state: ApiAppState) -> Self {
         Self { state }
     }
 
@@ -79,16 +78,16 @@ impl ObserverAuthentication for MyObserverAuthentication {
 
 #[derive(Debug)]
 pub struct MyObserver {
-    state: Arc<AppState>,
+    state: ApiAppState,
 }
 
 impl MyObserver {
-    pub async fn new(state: Arc<AppState>) -> Self {
+    pub async fn new(state: ApiAppState) -> Self {
         Self { state }
     }
 }
 
-async fn insert_rows(state: Arc<AppState>, records: Vec<Record>) {
+async fn insert_rows(state: ApiAppState, records: Vec<Record>) {
     let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(e) => {

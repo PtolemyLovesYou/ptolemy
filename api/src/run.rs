@@ -2,13 +2,13 @@ use crate::error::ApiError;
 use crate::middleware::trace_layer_grpc;
 use crate::observer::{authentication_service, observer_service};
 use crate::routes::get_router;
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use std::sync::Arc;
 use tonic::transport::Server;
 use tower::ServiceBuilder;
 use tracing::error;
 
-pub async fn run_rest_api(shared_state: Arc<AppState>) -> Result<(), ApiError> {
+pub async fn run_rest_api(shared_state: ApiAppState) -> Result<(), ApiError> {
     let state_clone = Arc::clone(&shared_state);
 
     let app = get_router(&state_clone)
@@ -28,7 +28,7 @@ pub async fn run_rest_api(shared_state: Arc<AppState>) -> Result<(), ApiError> {
     }
 }
 
-pub async fn run_grpc_server(shared_state: Arc<AppState>) -> Result<(), ApiError> {
+pub async fn run_grpc_server(shared_state: ApiAppState) -> Result<(), ApiError> {
     let grpc_addr = "[::]:50051".parse().unwrap();
     let grpc_trace_layer = ServiceBuilder::new().layer(trace_layer_grpc()).into_inner();
 

@@ -6,7 +6,7 @@ use bb8::PooledConnection;
 use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
 use diesel_async::AsyncPgConnection;
 use ipnet::IpNet;
-use std::{net::SocketAddr, str::FromStr};
+use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
@@ -38,6 +38,8 @@ impl RequestContext {
         Self { ip_address, source }
     }
 }
+
+pub type ApiAppState = Arc<AppState>;
 
 #[derive(Debug, Clone)]
 pub struct AppState {

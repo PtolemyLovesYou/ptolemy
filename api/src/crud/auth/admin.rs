@@ -1,11 +1,10 @@
 use crate::crud::auth::user::{change_user_password, create_user, get_all_users};
 use crate::error::CRUDError;
 use crate::models::auth::UserCreate;
-use crate::state::AppState;
-use std::sync::Arc;
+use crate::state::ApiAppState;
 use tracing::error;
 
-pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
+pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), CRUDError> {
     let mut conn = state.get_conn().await?;
 
     let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");

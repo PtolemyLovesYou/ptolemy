@@ -1,6 +1,6 @@
 use crate::crud::auth::user_api_key::get_user_api_key_user;
 use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use axum::{
     extract::State,
     http::Request,
@@ -14,7 +14,7 @@ use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use std::sync::Arc;
 
 pub async fn api_key_auth_middleware(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiAppState>,
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
@@ -40,7 +40,7 @@ pub async fn api_key_auth_middleware(
 
 pub async fn graphql_handler(
     Extension(user): Extension<Arc<crate::models::auth::User>>,
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiAppState>,
     JuniperRequest(request): JuniperRequest,
 ) -> JuniperResponse {
     let schema = Schema::new(Query, Mutation, EmptySubscription::new());

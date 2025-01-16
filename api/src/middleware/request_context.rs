@@ -1,7 +1,7 @@
 use crate::models::audit::models::ApiAccessAuditLogCreate;
 use crate::models::AccessContext;
 use crate::crud::audit::insert_api_access_audit_log;
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use axum::{
     extract::{ConnectInfo, State},
     http::{Request, StatusCode},
@@ -10,10 +10,9 @@ use axum::{
 };
 use ipnet::IpNet;
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 pub async fn request_context_layer(
-    State(state): State<Arc<AppState>>,
+    State(state): State<ApiAppState>,
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {

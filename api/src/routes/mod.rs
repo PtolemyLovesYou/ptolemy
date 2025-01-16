@@ -1,13 +1,12 @@
 use self::graphql::graphql_handler;
 use crate::middleware::auth::{api_key_auth_middleware, jwt_auth_middleware};
-use crate::state::AppState;
+use crate::state::ApiAppState;
 use axum::{
     middleware::from_fn_with_state,
     routing::{get, on, MethodFilter},
     Router,
 };
 use juniper_axum::graphiql;
-use std::sync::Arc;
 
 pub mod auth;
 pub mod graphql;
@@ -29,7 +28,7 @@ macro_rules! graphql_router {
     };
 }
 
-pub async fn get_external_router(state: &Arc<AppState>) -> Router<Arc<AppState>> {
+pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
         .nest(
             "/graphql",
@@ -39,7 +38,7 @@ pub async fn get_external_router(state: &Arc<AppState>) -> Router<Arc<AppState>>
         .with_state(state.clone())
 }
 
-pub async fn get_base_router(state: &Arc<AppState>) -> Router<Arc<AppState>> {
+pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
         .nest(
             "/graphql",
@@ -49,7 +48,7 @@ pub async fn get_base_router(state: &Arc<AppState>) -> Router<Arc<AppState>> {
         .with_state(state.clone())
 }
 
-pub async fn get_router(state: &Arc<AppState>) -> axum::Router<Arc<AppState>> {
+pub async fn get_router(state: &ApiAppState) -> axum::Router<ApiAppState> {
     Router::new()
         .route(
             "/",
