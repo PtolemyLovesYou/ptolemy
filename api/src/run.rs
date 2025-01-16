@@ -16,7 +16,7 @@ pub async fn run_rest_api(shared_state: ApiAppState) -> Result<(), ApiError> {
         .with_state(state_clone)
         .into_make_service_with_connect_info::<std::net::SocketAddr>();
 
-    let server_url = format!("0.0.0.0:{}", shared_state.port);
+    let server_url = format!("[::]:{}", shared_state.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 
     match axum::serve(listener, app).await {
