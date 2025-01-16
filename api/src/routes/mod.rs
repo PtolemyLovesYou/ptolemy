@@ -59,10 +59,6 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .route("/auth", axum::routing::post(self::auth::login))
         .nest("/", get_base_router(&state).await)
         .nest("/external", get_external_router(&state).await)
-        .layer(from_fn_with_state(
-            state.clone(),
-            crate::middleware::request_context::request_context_rest_layer,
-        ))
         .with_state(state.clone());
 
     let grpc_router = tonic::service::Routes::builder()
@@ -74,5 +70,9 @@ pub async fn get_router(state: &ApiAppState) -> Router {
     Router::new()
         .merge(grpc_router)
         .merge(http_router)
+        .layer(from_fn_with_state(
+            state.clone(),
+            crate::middleware::request_context::request_context_rest_layer,
+        ))
         .layer(trace_layer_rest())
 }
