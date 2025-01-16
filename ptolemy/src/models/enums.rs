@@ -89,11 +89,7 @@ serialize_enum!(
 pub enum AuthMethod {
     ApiKey,
     JWT,
-    UsernamePassword
+    UsernamePassword,
 }
 
-serialize_enum!(
-    AuthMethod,
-    ShoutySnakeCase,
-    [ApiKey, JWT, UsernamePassword]
-);
+serialize_enum!(AuthMethod, ShoutySnakeCase, [ApiKey, JWT, UsernamePassword]);

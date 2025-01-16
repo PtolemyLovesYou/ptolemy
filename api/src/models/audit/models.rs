@@ -1,13 +1,9 @@
 use crate::generated::audit_schema::*;
+use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
-use uuid::Uuid;
 use std::net::SocketAddr;
-use axum::{
-    extract::ConnectInfo,
-    http::Request,
-    body::Body,
-};
+use uuid::Uuid;
 
 #[derive(Debug, Insertable)]
 #[diesel(table_name = api_access_audit_logs)]
@@ -31,6 +27,23 @@ impl ApiAccessAuditLogCreate {
             request_id,
         }
     }
+
+    pub fn from_tonic_request(
+        service_name: String,
+        req: &tonic::Request<()>,
+        request_id: Option<Uuid>,
+    ) -> Self {
+        let ip_address = match req.remote_addr() {
+            Some(i) => Some(IpNet::from(i.ip())),
+            None => None,
+        };
+
+        Self {
+            source: Some(service_name),
+            request_id,
+            ip_address,
+        }
+    }
 }
 
 #[derive(Debug, Insertable)]
@@ -42,11 +55,17 @@ pub struct AuthAuditLogCreate {
     pub user_id: Option<Uuid>,
     pub auth_method: super::enums::AuthMethodEnum,
     pub success: bool,
-    pub failure_details: Option<serde_json::Value>
+    pub failure_details: Option<serde_json::Value>,
 }
 
 impl AuthAuditLogCreate {
-    pub fn ok(api_access_audit_log_id: Uuid, service_api_key_id: Option<Uuid>, user_api_key_id: Option<Uuid>, user_id: Option<Uuid>, auth_method: super::enums::AuthMethodEnum) -> Self {
+    pub fn ok(
+        api_access_audit_log_id: Uuid,
+        service_api_key_id: Option<Uuid>,
+        user_api_key_id: Option<Uuid>,
+        user_id: Option<Uuid>,
+        auth_method: super::enums::AuthMethodEnum,
+    ) -> Self {
         Self {
             api_access_audit_log_id,
             service_api_key_id,
@@ -57,8 +76,12 @@ impl AuthAuditLogCreate {
             failure_details: None,
         }
     }
-    
-    pub fn err(api_access_audit_log_id: Uuid, auth_method: super::enums::AuthMethodEnum, failure_details: Option<serde_json::Value>) -> Self {
+
+    pub fn err(
+        api_access_audit_log_id: Uuid,
+        auth_method: super::enums::AuthMethodEnum,
+        failure_details: Option<serde_json::Value>,
+    ) -> Self {
         Self {
             api_access_audit_log_id,
             service_api_key_id: None,
@@ -66,7 +89,7 @@ impl AuthAuditLogCreate {
             user_id: None,
             auth_method,
             success: false,
-            failure_details
+            failure_details,
         }
     }
 }

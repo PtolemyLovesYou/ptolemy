@@ -5,8 +5,8 @@ use argon2::{
 use base64::Engine;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use ring::{
+    digest::{digest, SHA256},
     rand::{SecureRandom, SystemRandom},
-    digest::{digest, SHA256}
 };
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
