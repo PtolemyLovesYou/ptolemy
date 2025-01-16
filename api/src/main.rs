@@ -1,7 +1,9 @@
-use api::crud::auth::admin::ensure_sysadmin;
-use api::error::ApiError;
-use api::run::run_unified;
-use api::state::AppState;
+use api::{
+    crud::auth::admin::ensure_sysadmin,
+    error::ApiError,
+    state::AppState,
+    routes::get_router,
+};
 use std::sync::Arc;
 use tracing::error;
 
@@ -21,5 +23,20 @@ async fn main() -> Result<(), ApiError> {
         }
     };
 
-    run_unified(shared_state.clone()).await
+    let service = get_router(&shared_state)
+        .await
+        .into_make_service_with_connect_info::<std::net::SocketAddr>();
+
+    let server_url = format!("[::]:{}", shared_state.port);
+    let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
+
+    tracing::info!("Ptolemy running on {} <3", server_url);
+
+    match axum::serve(listener, service).await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            tracing::error!("Axum server error: {:?}", e);
+            Err(ApiError::APIError)
+        }
+    }
 }
