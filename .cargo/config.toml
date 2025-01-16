@@ -10,6 +10,5 @@ JWT_SECRET = "pC15dRLduel2TYONYEfyjHZ289j7dIXv1RXL09T/t0o="
 RUST_LOG = "info,api=debug,ptolemy=debug"
 
 API_PORT = "8000"
-OBSERVER_PORT = "50051"
 PTOLEMY_USER = "admin"
 PTOLEMY_PASS = "admin"

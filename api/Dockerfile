@@ -108,7 +108,6 @@ RUN chmod 755 /entrypoint.sh && \
 USER appuser
 
 ENV API_PORT=8000 \
-    OBSERVER_PORT=50051 \
     PTOLEMY_ENV=PROD \
     PTOLEMY_USER=admin \
     PTOLEMY_PASS=admin
