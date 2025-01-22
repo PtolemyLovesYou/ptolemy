@@ -3,7 +3,7 @@ use crate::{
     middleware::{
         auth::api_key_auth_middleware,
         trace_layer_rest,
-        jwt::{workspace_jwt_middleware, user_jwt_middleware},
+        jwt::jwt_middleware,
     },
     state::ApiAppState,
     observer::{authentication_service, observer_service},
@@ -51,7 +51,7 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
             "/graphql",
             graphql_router!(state, state.enable_graphiql).await,
         )
-        .layer(from_fn_with_state(state.clone(), user_jwt_middleware))
+        .layer(from_fn_with_state(state.clone(), jwt_middleware))
         .with_state(state.clone())
 }
 
@@ -69,7 +69,7 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .into_axum_router()
         .layer(from_fn_with_state(
             state.clone(),
-            workspace_jwt_middleware,
+            jwt_middleware,
         ));
 
     Router::new()

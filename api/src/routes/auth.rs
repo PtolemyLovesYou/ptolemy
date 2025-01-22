@@ -1,5 +1,5 @@
 use crate::crud::auth::user::auth_user;
-use crate::crypto::Claims;
+use crate::crypto::{Claims, ClaimType};
 use crate::state::ApiAppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
@@ -30,7 +30,7 @@ pub async fn login(
     .map_err(|e| e.http_status_code())?
     .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let token = Claims::new(user.id, 3600)
+    let token = Claims::new(user.id, ClaimType::UserJWT, 3600)
         .generate_auth_token(state.jwt_secret.as_bytes())
         .map_err(|e| {
             error!("{}", e);

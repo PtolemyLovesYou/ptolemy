@@ -1,5 +1,5 @@
 use crate::{
-    crud::auth::service_api_key as service_api_key_crud, crypto::Claims, error::CRUDError,
+    crud::auth::service_api_key as service_api_key_crud, crypto::{ClaimType, Claims}, error::CRUDError,
     models::{auth::enums::ApiKeyPermissionEnum, middleware::{ApiKey, AuthContext}}, observer::records::EventRecords, state::ApiAppState,
 };
 use ptolemy::generated::observer::{
@@ -21,7 +21,7 @@ impl MyObserverAuthentication {
     }
 
     fn generate_auth_token(&self, api_key_id: Uuid) -> Result<String, Status> {
-        let token = Claims::new(api_key_id, 3600)
+        let token = Claims::new(api_key_id, ClaimType::ServiceAPIKeyJWT, 3600)
             .generate_auth_token(self.state.jwt_secret.as_bytes())
             .map_err(|e| {
                 error!("Failed to generate auth token: {}", e);

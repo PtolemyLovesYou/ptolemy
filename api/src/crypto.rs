@@ -10,6 +10,20 @@ use ring::{
 };
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ClaimType {
+    UserJWT,
+    ServiceAPIKeyJWT,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "id")]
+pub enum AuthClaims {
+    UserJWT(Uuid),
+    ServiceApiKeyJWT(Uuid),
+}
 
 /// Generates a 32 byte api key and encodes it as a base64 string.
 ///
@@ -59,6 +73,7 @@ type ClaimsResult<T> = Result<T, jsonwebtoken::errors::Error>;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims<T> {
     sub: T,
+    claim_type: ClaimType,
     exp: usize,
     iat: usize,
 }
@@ -67,16 +82,21 @@ impl<T: for<'de> Deserialize<'de> + Serialize + Clone> Claims<T>
 where
     T: Clone + for<'de> Deserialize<'de> + Serialize,
 {
-    pub fn new(sub: T, valid_for_secs: usize) -> Self {
+    pub fn new(sub: T, claim_type: ClaimType, valid_for_secs: usize) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as usize;
         Self {
             sub,
+            claim_type,
             exp: now + valid_for_secs,
             iat: now,
         }
+    }
+
+    pub fn claim_type(&self) -> &ClaimType {
+        &self.claim_type
     }
 
     pub fn sub(&self) -> &T {
