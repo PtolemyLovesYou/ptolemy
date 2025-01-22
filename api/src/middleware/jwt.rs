@@ -1,36 +1,23 @@
 use axum::{
     extract::State,
-    http::{HeaderValue, Request, StatusCode},
+    http::{Request, StatusCode},
     middleware::Next,
     response::IntoResponse,
 };
-use uuid::Uuid;
 
-use crate::{crypto::{ClaimType, Claims}, models::auth::prelude::ToModel as _};
-use crate::models::middleware::AuthContext;
+use crate::{crypto::ClaimType, models::auth::prelude::ToModel as _};
+use crate::models::middleware::{AuthContext, JWTHeader};
 use crate::error::AuthError;
-
-fn get_header(header: Option<&HeaderValue>) -> Result<&str, AuthError> {
-    Ok(header
-        .ok_or_else(|| AuthError::MissingHeader)?
-        .to_str()
-        .map_err(|_| AuthError::MalformedHeader)?
-        .strip_prefix("Bearer ")
-        .ok_or(AuthError::MalformedHeader)?)
-}
 
 pub async fn jwt_middleware(
     State(state): State<crate::state::ApiAppState>,
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let token = get_header(req.headers().get("Authorization")).unwrap();
-
-    let token_data: Claims<Uuid> = match Claims::from_token(token, state.jwt_secret.as_bytes()) {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Failed to parse token: {}", e);
-            req.extensions_mut().insert(AuthContext::Unauthorized(AuthError::InvalidToken));
+    let token_data = match req.extensions().get::<JWTHeader>() {
+        Some(JWTHeader::JWT(token)) => token,
+        _ => {
+            req.extensions_mut().insert(AuthContext::Unauthorized(AuthError::MissingHeader));
             return Ok(next.run(req).await);
         }
     };

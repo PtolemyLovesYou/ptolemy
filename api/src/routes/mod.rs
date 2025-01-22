@@ -4,6 +4,7 @@ use crate::{
         auth::api_key_auth_middleware,
         trace_layer_rest,
         jwt::jwt_middleware,
+        headers::headers_middleware,
     },
     state::ApiAppState,
     observer::{authentication_service, observer_service},
@@ -75,6 +76,10 @@ pub async fn get_router(state: &ApiAppState) -> Router {
     Router::new()
         .merge(grpc_router)
         .merge(http_router)
+        .layer(from_fn_with_state(
+            state.clone(),
+            headers_middleware,
+        ))
         .layer(from_fn_with_state(
             state.clone(),
             crate::middleware::request_context::request_context_rest_layer,

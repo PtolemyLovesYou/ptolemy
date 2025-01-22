@@ -1,5 +1,6 @@
 use crate::error::{CRUDError, AuthError};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
+use crate::crypto::Claims;
 use ptolemy::models::auth::User;
 use uuid::Uuid;
 
@@ -87,4 +88,16 @@ impl Into<String> for ApiKey {
     fn into(self) -> String {
         self.0
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum ApiKeyHeader {
+    ApiKey(String),
+    Error(AuthError),
+}
+
+#[derive(Clone, Debug)]
+pub enum JWTHeader {
+    JWT(Claims<Uuid>),
+    Error(AuthError),
 }
