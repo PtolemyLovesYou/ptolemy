@@ -40,6 +40,7 @@ tower = "0.5.2"
 jsonwebtoken = "9.3.0"
 ipnet = {version = "2.10.1", features = ["json", "serde"]}
 heck = "0.5.0"
+pin-project-lite = "0.2.16"
 
 [dependencies.ptolemy]
 path = "../ptolemy"

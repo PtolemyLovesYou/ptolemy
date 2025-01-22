@@ -1,4 +1,4 @@
-create type field_value_type as enum ('str', 'int', 'float', 'bool', 'json');
+create type field_value_type as enum ('string', 'int', 'float', 'bool', 'json');
 create type tier as enum ('system', 'subsystem', 'component', 'subcomponent');
 create type io_type as enum ('input', 'output', 'feedback');
 
