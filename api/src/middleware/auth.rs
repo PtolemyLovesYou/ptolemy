@@ -1,9 +1,9 @@
 use crate::{
     crud::{
         audit::insert_api_auth_audit_log,
-        auth::{user::get_user, user_api_key::get_user_api_key_user},
+        auth::user_api_key::get_user_api_key_user,
     },
-    crypto::{generate_sha256, Claims},
+    crypto::generate_sha256,
     models::{
         audit::{enums::AuthMethodEnum, models::AuthAuditLogCreate},
         auth::User,
@@ -21,8 +21,6 @@ use axum::{
 use hyper::header::AsHeaderName;
 use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
-use tracing::error;
-use uuid::Uuid;
 
 pub fn get_headers<K>(req: &Request<Body>, header: K) -> (String, Option<&str>)
 where
@@ -73,26 +71,6 @@ async fn get_user_from_api_key(
         Ok(user) => Ok((Some(user), None)),
         Err(e) => Ok((None, Some(get_failure_details(api_key, e.to_string())))),
     }
-}
-
-async fn get_user_from_jwt(
-    state: &ApiAppState,
-    token: String,
-) -> Result<(Option<User>, Option<serde_json::Value>), StatusCode> {
-    let token_data: Claims<Uuid> = Claims::from_token(&token, state.jwt_secret.as_bytes())
-        .map_err(|e| {
-            error!("Failed to validate token: {}", e);
-            StatusCode::UNAUTHORIZED
-        })?;
-
-    // Add user to request extensions for later use
-    let mut conn = state.get_conn_http().await?;
-
-    let user = get_user(&mut conn, token_data.sub())
-        .await
-        .map_err(|e| e.http_status_code())?;
-
-    Ok((Some(user), None))
 }
 
 macro_rules! auth_middleware {
@@ -161,5 +139,3 @@ macro_rules! auth_middleware {
 }
 
 auth_middleware!(api_key_auth_middleware, get_user_from_api_key, ApiKey);
-
-auth_middleware!(jwt_auth_middleware, get_user_from_jwt, JWT);

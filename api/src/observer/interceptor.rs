@@ -1,12 +1,10 @@
 use crate::{
-    crypto::Claims,
     state::ApiAppState,
     models::middleware::ApiKey,
 };
 use std::str::FromStr;
 use tonic::{metadata::MetadataKey, service::Interceptor, Request, Status};
 use tracing::error;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct ObserverAuthenticationInterceptor {
@@ -36,34 +34,6 @@ impl Interceptor for ObserverAuthenticationInterceptor {
         let ak = ApiKey(api_key.to_string());
 
         request.extensions_mut().insert(ak);
-
-        Ok(request)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ObserverInterceptor {
-    pub state: ApiAppState,
-}
-
-impl Interceptor for ObserverInterceptor {
-    fn call(&mut self, mut request: Request<()>) -> Result<Request<()>, Status> {
-        let token = request
-            .metadata()
-            .get(MetadataKey::from_str("Authorization").unwrap())
-            .ok_or_else(|| Status::unauthenticated("Missing Authorization header"))?
-            .to_str()
-            .map_err(|_| Status::unauthenticated("Invalid Authorization header"))?
-            .strip_prefix("Bearer ")
-            .ok_or_else(|| Status::unauthenticated("Invalid Authorization header"))?;
-
-        let claims: Claims<Uuid> = Claims::from_token(token, self.state.jwt_secret.as_bytes())
-            .map_err(|e| {
-                error!("Failed to validate token: {}", e);
-                Status::internal("Failed to validate token")
-            })?;
-
-        request.extensions_mut().insert(claims);
 
         Ok(request)
     }

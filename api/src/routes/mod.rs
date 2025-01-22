@@ -1,8 +1,9 @@
 use self::graphql::graphql_handler;
 use crate::{
     middleware::{
-        auth::{api_key_auth_middleware, jwt_auth_middleware},
+        auth::api_key_auth_middleware,
         trace_layer_rest,
+        jwt::{workspace_jwt_middleware, user_jwt_middleware},
     },
     state::ApiAppState,
     observer::{authentication_service, observer_service},
@@ -50,7 +51,7 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
             "/graphql",
             graphql_router!(state, state.enable_graphiql).await,
         )
-        .layer(from_fn_with_state(state.clone(), jwt_auth_middleware))
+        .layer(from_fn_with_state(state.clone(), user_jwt_middleware))
         .with_state(state.clone())
 }
 
@@ -60,12 +61,16 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .nest("/", get_base_router(&state).await)
         .nest("/external", get_external_router(&state).await)
         .with_state(state.clone());
-
+    
     let grpc_router = tonic::service::Routes::builder()
         .routes()
-        .add_service(observer_service(state.clone()).await)
         .add_service(authentication_service(state.clone()).await)
-        .into_axum_router();
+        .add_service(observer_service(state.clone()).await)
+        .into_axum_router()
+        .layer(from_fn_with_state(
+            state.clone(),
+            workspace_jwt_middleware,
+        ));
 
     Router::new()
         .merge(grpc_router)

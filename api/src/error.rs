@@ -2,6 +2,16 @@ use axum::http::StatusCode;
 use juniper::FieldError;
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug)]
+pub enum AuthError {
+    InvalidToken,
+    MissingHeader,
+    MalformedHeader,
+    InternalServerError,
+    NotFoundError,
+    InvalidAuthMethod,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ApiError {
     APIError,

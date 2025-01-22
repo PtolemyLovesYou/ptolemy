@@ -1,5 +1,35 @@
-use crate::error::CRUDError;
+use crate::error::{CRUDError, AuthError};
+use crate::models::auth::enums::ApiKeyPermissionEnum;
+use crate::models::auth::User;
+use std::sync::Arc;
 use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+pub enum AuthContext {
+    ServiceApiKeyJWT {
+        workspace_id: Uuid,
+        service_api_key_id: Uuid,
+        permissions: ApiKeyPermissionEnum,
+    },
+    UserApiKeyJWT {
+        user: Arc<User>,
+    },
+    Unauthorized(AuthError),
+}
+
+impl AuthContext {
+    pub fn user(&self) -> Option<Arc<User>> {
+        match self {
+            AuthContext::UserApiKeyJWT { user } => Some(user.clone()),
+            _ => None,
+    }}
+}
+
+impl From<AuthError> for AuthContext {
+    fn from(e: AuthError) -> Self {
+        AuthContext::Unauthorized(e)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct AccessContext {

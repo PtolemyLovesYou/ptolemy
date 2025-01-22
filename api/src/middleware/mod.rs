@@ -6,6 +6,7 @@ use tracing::Level;
 
 pub mod auth;
 pub mod request_context;
+pub mod jwt;
 
 type HttpTraceLayer = TraceLayer<
     tower_http::classify::SharedClassifier<tower_http::classify::ServerErrorsAsFailures>,

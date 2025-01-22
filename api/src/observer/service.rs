@@ -1,6 +1,6 @@
 use crate::{
     crud::auth::service_api_key as service_api_key_crud, crypto::Claims, error::CRUDError,
-    models::{auth::enums::ApiKeyPermissionEnum, middleware::ApiKey}, observer::records::EventRecords, state::ApiAppState,
+    models::{auth::enums::ApiKeyPermissionEnum, middleware::{ApiKey, AuthContext}}, observer::records::EventRecords, state::ApiAppState,
 };
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
@@ -105,33 +105,24 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
-        let claims = request.extensions().get::<Claims<Uuid>>().ok_or_else(|| {
-            error!("Claims not found in extensions");
-            Status::internal("Claims not found in extensions")
+        let auth_info = request.extensions().get::<AuthContext>().ok_or_else(|| {
+            error!("Workspace context not found in extensions");
+            Status::internal("Workspace context not found in extensions")
         })?;
 
-        let mut conn = match self.state.get_conn().await {
-            Ok(c) => c,
-            Err(e) => {
-                error!("Failed to get database connection: {:?}", e);
-                return Err(Status::internal("Failed to get database connection"));
+        match auth_info {
+            AuthContext::ServiceApiKeyJWT { workspace_id: _, service_api_key_id: _, permissions} => {
+                match permissions {
+                    ApiKeyPermissionEnum::ReadWrite | ApiKeyPermissionEnum::WriteOnly => (),
+                    _ => return Err(Status::permission_denied("Permission denied")),
+                }
+            },
+            AuthContext::Unauthorized(e) => {
+                return Err(Status::unauthenticated(format!("Unauthorized: {:?}", e)));
+            },
+            _ => {
+                return Err(Status::unauthenticated("Incorrect authorization method"));
             }
-        };
-
-        let service_api_key =
-            service_api_key_crud::get_service_api_key_by_id(&mut conn, claims.sub())
-                .await
-                .map_err(|e| match e {
-                    CRUDError::GetError => Status::not_found("Invalid API key."),
-                    _ => {
-                        error!("Failed to get service API key: {:?}", e);
-                        Status::internal("Failed to get service API key.")
-                    }
-                })?;
-
-        match service_api_key.permissions {
-            ApiKeyPermissionEnum::ReadWrite | ApiKeyPermissionEnum::WriteOnly => (),
-            _ => return Err(Status::permission_denied("Permission denied")),
         };
 
         let records = request.into_inner().records;
