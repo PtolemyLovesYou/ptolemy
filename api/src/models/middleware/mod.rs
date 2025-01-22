@@ -6,12 +6,12 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum AuthContext {
-    ServiceApiKeyJWT {
+    WorkspaceJWT {
         workspace_id: Uuid,
         service_api_key_id: Uuid,
         permissions: ApiKeyPermissionEnum,
     },
-    UserApiKeyJWT {
+    UserJWT {
         user: Arc<User>,
     },
     Unauthorized(AuthError),
@@ -20,7 +20,7 @@ pub enum AuthContext {
 impl AuthContext {
     pub fn user(&self) -> Option<Arc<User>> {
         match self {
-            AuthContext::UserApiKeyJWT { user } => Some(user.clone()),
+            AuthContext::UserJWT { user } => Some(user.clone()),
             _ => None,
     }}
 }

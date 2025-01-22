@@ -111,7 +111,7 @@ impl Observer for MyObserver {
         })?;
 
         match auth_info {
-            AuthContext::ServiceApiKeyJWT { workspace_id: _, service_api_key_id: _, permissions} => {
+            AuthContext::WorkspaceJWT { workspace_id: _, service_api_key_id: _, permissions} => {
                 match permissions {
                     ApiKeyPermissionEnum::ReadWrite | ApiKeyPermissionEnum::WriteOnly => (),
                     _ => return Err(Status::permission_denied("Permission denied")),

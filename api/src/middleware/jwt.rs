@@ -65,7 +65,7 @@ pub async fn user_jwt_middleware(
 
     match user {
         Ok(u) => {
-            req.extensions_mut().insert(AuthContext::UserApiKeyJWT {
+            req.extensions_mut().insert(AuthContext::UserJWT {
                 user: std::sync::Arc::new(u),
             });
         },
@@ -89,7 +89,7 @@ pub async fn workspace_jwt_middleware(
 
     match service_api_key {
         Ok(sk) => {
-            req.extensions_mut().insert(AuthContext::ServiceApiKeyJWT {
+            req.extensions_mut().insert(AuthContext::WorkspaceJWT {
                 service_api_key_id: sk.id,
                 workspace_id: sk.workspace_id,
                 permissions: sk.permissions,
