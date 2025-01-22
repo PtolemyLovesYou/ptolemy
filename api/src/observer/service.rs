@@ -1,12 +1,14 @@
+use std::str::FromStr as _;
+
 use crate::{
     crud::auth::service_api_key as service_api_key_crud, crypto::{ClaimType, Claims}, error::CRUDError,
-    models::{auth::enums::ApiKeyPermissionEnum, middleware::{ApiKey, AuthContext}}, observer::records::EventRecords, state::ApiAppState,
+    models::{auth::enums::ApiKeyPermissionEnum, middleware::AuthContext}, observer::records::EventRecords, state::ApiAppState,
 };
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
     AuthenticationRequest, AuthenticationResponse, PublishRequest, PublishResponse, Record,
 };
-use tonic::{Request, Response, Status};
+use tonic::{metadata::MetadataKey, Request, Response, Status};
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -38,10 +40,17 @@ impl ObserverAuthentication for MyObserverAuthentication {
         &self,
         request: Request<AuthenticationRequest>,
     ) -> Result<Response<AuthenticationResponse>, Status> {
-        let ApiKey(api_key) = request.extensions().get::<ApiKey>().ok_or_else(|| {
-            error!("API key not found in extensions");
-            Status::internal("API key not found in extensions")
-        })?;
+        let api_key = request
+            .metadata()
+            .get(MetadataKey::from_str("X-Api-Key").unwrap())
+            .ok_or_else(|| Status::unauthenticated("API key not found in metadata"))?
+            .to_str()
+            .map_err(|e| {
+                error!("Failed to convert API key to string: {}", e);
+                Status::internal("Failed to convert API key to string")
+            })?
+            .strip_prefix("Bearer ")
+            .ok_or_else(|| Status::unauthenticated("Invalid API key"))?;
 
         let mut conn = match self.state.get_conn().await {
             Ok(c) => c,
