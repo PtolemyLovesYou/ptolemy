@@ -4,6 +4,6 @@ create table workspace (
     name varchar(128) unique not null,
     description varchar,
     archived bool default false,
-    created_at timestamp default now() not null,
-    updated_at timestamp default now() not null
+    created_at timestamptz default now() not null,
+    updated_at timestamptz default now() not null
 );

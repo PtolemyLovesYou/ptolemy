@@ -1,6 +1,5 @@
 use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::models::auth::workspace::Workspace;
-use chrono::NaiveDateTime;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
@@ -28,7 +27,7 @@ pub struct ServiceApiKey {
     pub key_hash: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub deletion_reason: Option<String>,
 }
@@ -44,5 +43,5 @@ pub struct ServiceApiKeyCreate {
     pub key_hash: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }

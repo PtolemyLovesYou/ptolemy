@@ -26,7 +26,7 @@ diesel::table! {
         #[max_length = 16]
         key_preview -> Varchar,
         permissions -> ApiKeyPermission,
-        expires_at -> Nullable<Timestamp>,
+        expires_at -> Nullable<Timestamptz>,
         deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
@@ -39,7 +39,7 @@ diesel::table! {
         name -> Varchar,
         key_hash -> Varchar,
         key_preview -> Varchar,
-        expires_at -> Nullable<Timestamp>,
+        expires_at -> Nullable<Timestamptz>,
         deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }
@@ -69,8 +69,8 @@ diesel::table! {
         name -> Varchar,
         description -> Nullable<Varchar>,
         archived -> Bool,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
         deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }

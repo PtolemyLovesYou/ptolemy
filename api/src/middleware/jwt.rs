@@ -6,7 +6,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-use crate::{crypto::Claims, models::auth::ServiceApiKey, state::ApiAppState};
+use crate::{crypto::Claims, models::auth::{prelude::ToModel as _, ServiceApiKey}, state::ApiAppState};
 use crate::models::middleware::AuthContext;
 use crate::error::AuthError;
 use crate::models::auth::User;
@@ -66,7 +66,7 @@ pub async fn user_jwt_middleware(
     match user {
         Ok(u) => {
             req.extensions_mut().insert(AuthContext::UserJWT {
-                user: std::sync::Arc::new(u),
+                user: u.to_model(),
             });
         },
         Err(e) => {

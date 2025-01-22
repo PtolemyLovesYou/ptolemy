@@ -39,7 +39,13 @@ impl Query {
             .map_err(|e| e.juniper_field_error())
     }
 
-    async fn me(ctx: &JuniperAppState) -> FieldResult<std::sync::Arc<User>> {
-        Ok(ctx.user.clone())
+    async fn me(ctx: &JuniperAppState) -> FieldResult<User> {
+        Ok(
+            user_crud::search_users(&mut ctx.state.get_conn_http().await.unwrap(), Some(ctx.user.id.into()), None)
+                .await
+                .map_err(|e| e.juniper_field_error())?
+                .pop()
+                .unwrap()
+        )
     }
 }

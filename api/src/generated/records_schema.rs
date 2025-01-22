@@ -82,8 +82,8 @@ diesel::table! {
         subsystem_event_id -> Nullable<Uuid>,
         component_event_id -> Nullable<Uuid>,
         subcomponent_event_id -> Nullable<Uuid>,
-        start_time -> Timestamp,
-        end_time -> Timestamp,
+        start_time -> Timestamptz,
+        end_time -> Timestamptz,
         error_type -> Nullable<Varchar>,
         error_content -> Nullable<Varchar>,
     }
@@ -135,8 +135,8 @@ diesel::table! {
         name -> Varchar,
         description -> Nullable<Varchar>,
         archived -> Bool,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
         deleted_at -> Nullable<Timestamptz>,
         deletion_reason -> Nullable<Varchar>,
     }

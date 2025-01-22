@@ -45,8 +45,8 @@ create table runtime (
     subsystem_event_id uuid references subsystem_event(id) on delete cascade,
     component_event_id uuid references component_event(id) on delete cascade,
     subcomponent_event_id uuid references subcomponent_event(id) on delete cascade,
-    start_time timestamp(6) not null,
-    end_time timestamp(6) not null,
+    start_time timestamptz(6) not null,
+    end_time timestamptz(6) not null,
     error_type varchar,
     error_content varchar,
     constraint runtime_fk_tier_check check (

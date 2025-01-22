@@ -1,6 +1,7 @@
 use crate::models::auth::enums::UserStatusEnum;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
+use super::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -19,6 +20,19 @@ pub struct User {
     pub is_admin: bool,
     pub deleted_at: Option<DateTime<Utc>>,
     pub deletion_reason: Option<String>,
+}
+
+impl ToModel<ptolemy::models::auth::User> for User {
+    fn to_model(self) -> ptolemy::models::auth::User {
+        ptolemy::models::auth::User {
+            id: self.id.into(),
+            username: self.username,
+            display_name: self.display_name,
+            status: self.status.into(),
+            is_admin: self.is_admin,
+            is_sysadmin: self.is_sysadmin,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]

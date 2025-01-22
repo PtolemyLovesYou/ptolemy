@@ -28,11 +28,11 @@ impl Workspace {
     }
 
     async fn created_at(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.created_at, Utc)
+        self.created_at
     }
 
     async fn updated_at(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.updated_at, Utc)
+        self.updated_at
     }
 
     async fn users(
@@ -153,10 +153,7 @@ impl ServiceApiKey {
     }
 
     async fn expires_at(&self) -> Option<DateTime<Utc>> {
-        match self.expires_at {
-            Some(e) => Some(DateTime::from_naive_utc_and_offset(e, Utc)),
-            None => None,
-        }
+        self.expires_at
     }
 }
 
@@ -180,7 +177,7 @@ impl UserApiKey {
 
     async fn expires_at(&self) -> Option<DateTime<Utc>> {
         match self.expires_at {
-            Some(e) => Some(DateTime::from_naive_utc_and_offset(e, Utc)),
+            Some(e) => Some(e),
             None => None,
         }
     }

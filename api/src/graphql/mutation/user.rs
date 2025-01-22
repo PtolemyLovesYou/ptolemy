@@ -66,6 +66,7 @@ impl UserMutation {
 
         // get user permissions
         let acting_user = ctx.user.clone();
+        let acting_user_id: Uuid = acting_user.id.into();
 
         let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
             Ok(u) => u,
@@ -78,7 +79,7 @@ impl UserMutation {
         }
 
         // cannot delete themselves
-        if acting_user.id == id {
+        if acting_user_id == id {
             return DeletionResult::err("user", "You cannot delete yourself.".to_string());
         }
 
@@ -116,7 +117,7 @@ impl UserMutation {
 
         match user_api_key_crud::create_user_api_key(
             &mut conn,
-            ctx.user.id,
+            ctx.user.id.into(),
             name,
             duration,
             &ctx.state.password_handler,

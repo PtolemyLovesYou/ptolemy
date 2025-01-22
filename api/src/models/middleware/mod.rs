@@ -1,7 +1,6 @@
 use crate::error::{CRUDError, AuthError};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
-use crate::models::auth::User;
-use std::sync::Arc;
+use ptolemy::models::auth::User;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -12,13 +11,13 @@ pub enum AuthContext {
         permissions: ApiKeyPermissionEnum,
     },
     UserJWT {
-        user: Arc<User>,
+        user: User,
     },
     Unauthorized(AuthError),
 }
 
 impl AuthContext {
-    pub fn user(&self) -> Option<Arc<User>> {
+    pub fn user(&self) -> Option<User> {
         match self {
             AuthContext::UserJWT { user } => Some(user.clone()),
             _ => None,

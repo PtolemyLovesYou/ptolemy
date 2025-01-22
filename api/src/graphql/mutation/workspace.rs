@@ -55,7 +55,7 @@ impl WorkspaceMutation {
         let admin_id = match admin_user_id {
             Some(id) => id,
             // if none provided, default to user_id
-            None => ctx.user.id,
+            None => ctx.user.id.into(),
         };
 
         match workspace_user_crud::create_workspace_user(
@@ -125,7 +125,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_user.workspace_id,
-            &ctx.user.id,
+            &ctx.user.id.into(),
         )
         .await
         {
@@ -178,7 +178,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &ctx.user.id,
+            &ctx.user.id.into(),
         )
         .await
         {
@@ -251,7 +251,7 @@ impl WorkspaceMutation {
         let user_permission = match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &ctx.user.id,
+            &ctx.user.id.into(),
         )
         .await
         {
@@ -321,7 +321,7 @@ impl WorkspaceMutation {
         match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &ctx.user.id,
+            &ctx.user.id.into(),
         )
         .await
         {
@@ -388,7 +388,7 @@ impl WorkspaceMutation {
         match workspace_user_crud::get_workspace_user_permission(
             &mut conn,
             &workspace_id,
-            &ctx.user.id,
+            &ctx.user.id.into(),
         )
         .await
         {

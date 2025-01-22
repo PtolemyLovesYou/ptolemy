@@ -1,5 +1,6 @@
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::{user::User, workspace::Workspace};
+use super::prelude::*;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
@@ -18,6 +19,16 @@ pub struct WorkspaceUser {
     pub role: WorkspaceRoleEnum,
     pub deleted_at: Option<DateTime<Utc>>,
     pub deletion_reason: Option<String>,
+}
+
+impl ToModel<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
+    fn to_model(self) -> ptolemy::models::auth::WorkspaceUser {
+        ptolemy::models::auth::WorkspaceUser {
+            user_id: self.user_id.into(),
+            workspace_id: self.workspace_id.into(),
+            role: self.role.into(),
+        }
+    }
 }
 
 #[derive(Debug, Insertable, Deserialize, GraphQLInputObject)]

@@ -59,7 +59,7 @@ pub async fn create_service_api_key(
     let api_key = generate_api_key("pt-sk").await;
     let key_hash = password_handler.hash_password(&api_key);
     let expires_at = match valid_for {
-        Some(duration) => Some(Utc::now().naive_utc() + duration),
+        Some(duration) => Some(Utc::now() + duration),
         None => None,
     };
 
