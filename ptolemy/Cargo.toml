@@ -27,6 +27,7 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 heck = { workspace = true }
 reqwest = { version = "0.12.12", features = ["json"] }
+tracing = { workspace = true }
 paste = "1.0.15"
 
 
