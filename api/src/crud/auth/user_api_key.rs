@@ -1,10 +1,12 @@
-use crate::consts::USER_API_KEY_PREFIX;
-use crate::crypto::{generate_api_key, PasswordHandler};
-use crate::delete_db_obj;
-use crate::error::CRUDError;
-use crate::generated::auth_schema::{user_api_key, users};
-use crate::models::auth::{User, UserApiKey, UserApiKeyCreate};
-use crate::state::DbConnection;
+use crate::{
+    consts::USER_API_KEY_PREFIX,
+    crypto::{generate_api_key, PasswordHandler},
+    delete_db_obj,
+    error::CRUDError,
+    generated::auth_schema::{user_api_key, users},
+    models::auth::{User, UserApiKey, UserApiKeyCreate},
+    state::DbConnection,
+};
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

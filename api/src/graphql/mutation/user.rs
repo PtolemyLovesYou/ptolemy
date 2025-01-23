@@ -1,9 +1,10 @@
-use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
-use crate::graphql::state::JuniperAppState;
-use crate::models::auth::UserCreate;
-
-use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult,
+use crate::{
+    crud::auth::{user as user_crud, user_api_key as user_api_key_crud},
+    graphql::{
+        mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
+        state::JuniperAppState,
+    },
+    models::UserCreate,
 };
 use juniper::graphql_object;
 use uuid::Uuid;

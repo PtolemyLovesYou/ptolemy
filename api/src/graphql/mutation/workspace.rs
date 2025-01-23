@@ -1,13 +1,16 @@
-use crate::crud::auth::{
-    service_api_key as service_api_key_crud, workspace as workspace_crud,
-    workspace_user as workspace_user_crud,
-};
-use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
-};
-use crate::graphql::state::JuniperAppState;
-use crate::models::auth::{
-    ApiKeyPermissionEnum, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUserCreate,
+use crate::{
+    crud::auth::{
+        service_api_key as service_api_key_crud, workspace as workspace_crud,
+        workspace_user as workspace_user_crud,
+    },
+    graphql::{
+        mutation::result::{
+            CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
+            WorkspaceUserResult,
+        },
+        state::JuniperAppState,
+    },
+    models::{ApiKeyPermissionEnum, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUserCreate},
 };
 use juniper::graphql_object;
 use uuid::Uuid;

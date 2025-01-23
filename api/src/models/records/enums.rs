@@ -1,5 +1,7 @@
-use crate::define_enum;
-use crate::generated::records_schema::sql_types::{FieldValueType, IoType, Tier};
+use crate::{
+    define_enum,
+    generated::records_schema::sql_types::{FieldValueType, IoType, Tier},
+};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{

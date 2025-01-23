@@ -1,10 +1,11 @@
-use crate::crypto::PasswordHandler;
-use crate::delete_db_obj;
-use crate::error::CRUDError;
-use crate::generated::auth_schema::users;
-use crate::models::auth::{User, UserCreate, UserStatusEnum};
-use crate::state::DbConnection;
-use chrono::Utc;
+use crate::{
+    crypto::PasswordHandler,
+    delete_db_obj,
+    error::CRUDError,
+    generated::auth_schema::users,
+    models::{User, UserCreate, UserStatusEnum},
+    state::DbConnection,
+};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;

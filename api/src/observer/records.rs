@@ -1,13 +1,15 @@
-use crate::crud::records::insert::{
-    insert_component_event_records, insert_io_records, insert_metadata_records,
-    insert_runtime_records, insert_subcomponent_event_records, insert_subsystem_event_records,
-    insert_system_event_records,
+use crate::{
+    crud::records::insert::{
+        insert_component_event_records, insert_io_records, insert_metadata_records,
+        insert_runtime_records, insert_subcomponent_event_records, insert_subsystem_event_records,
+        insert_system_event_records,
+    },
+    records::{
+        ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
+        SubsystemEventRecord, SystemEventRecord,
+    },
+    state::DbConnection,
 };
-use crate::models::records::{
-    ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
-    SubsystemEventRecord, SystemEventRecord,
-};
-use crate::state::DbConnection;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;

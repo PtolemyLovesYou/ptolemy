@@ -1,10 +1,12 @@
-use crate::error::CRUDError;
-use crate::generated::records_schema;
-use crate::models::records::{
-    ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
-    SubsystemEventRecord, SystemEventRecord,
+use crate::{
+    error::CRUDError,
+    generated::records_schema,
+    models::records::{
+        ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
+        SubsystemEventRecord, SystemEventRecord,
+    },
+    state::DbConnection,
 };
-use crate::state::DbConnection;
 use diesel_async::RunQueryDsl;
 use tracing::{debug, error};
 

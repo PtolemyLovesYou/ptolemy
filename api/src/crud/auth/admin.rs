@@ -1,7 +1,9 @@
-use crate::crud::auth::user::{change_user_password, create_user, get_all_users};
-use crate::error::CRUDError;
-use crate::models::auth::UserCreate;
-use crate::state::ApiAppState;
+use crate::{
+    crud::auth::user::{change_user_password, create_user, get_all_users},
+    error::CRUDError,
+    models::UserCreate,
+    state::ApiAppState,
+};
 use tracing::error;
 
 pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), CRUDError> {

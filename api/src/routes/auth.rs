@@ -1,6 +1,8 @@
-use crate::crud::auth::user::auth_user;
-use crate::crypto::{ClaimType, Claims};
-use crate::state::ApiAppState;
+use crate::{
+    crud::auth::user::auth_user,
+    crypto::{ClaimType, Claims},
+    state::ApiAppState,
+};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use tracing::error;

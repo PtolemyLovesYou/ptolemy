@@ -1,8 +1,10 @@
-use crate::models::records::enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
-use crate::models::records::event::{
-    ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+use crate::models::records::{
+    enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum},
+    event::{
+        ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+    },
+    utils::get_foreign_keys,
 };
-use crate::models::records::utils::get_foreign_keys;
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record};

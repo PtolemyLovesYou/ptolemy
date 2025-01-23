@@ -1,6 +1,7 @@
-use crate::generated::auth_schema::sql_types::{ApiKeyPermission, UserStatus, WorkspaceRole};
-// use crate::generated::audit_schema::sql_types::OperationType;
-use crate::define_enum;
+use crate::{
+    define_enum,
+    generated::auth_schema::sql_types::{ApiKeyPermission, UserStatus, WorkspaceRole},
+};
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
 use diesel::{

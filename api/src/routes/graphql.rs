@@ -1,6 +1,8 @@
-use crate::error::AuthError;
-use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
-use crate::state::ApiAppState;
+use crate::{
+    error::AuthError,
+    graphql::{state::JuniperAppState, Mutation, Query, Schema},
+    state::ApiAppState,
+};
 use axum::{extract::State, Extension};
 use juniper::{graphql_value, EmptySubscription, FieldError, IntoFieldError, ScalarValue};
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};

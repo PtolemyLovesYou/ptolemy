@@ -1,10 +1,13 @@
-use crate::crud::auth::{
-    service_api_key as service_api_key_crud, user as user_crud, user_api_key as user_api_key_crud,
-    workspace as workspace_crud, workspace_user as workspace_user_crud,
+use crate::{
+    crud::auth::{
+        service_api_key as service_api_key_crud, user as user_crud,
+        user_api_key as user_api_key_crud, workspace as workspace_crud,
+        workspace_user as workspace_user_crud,
+    },
+    graphql::state::JuniperAppState,
+    models::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum},
+    models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser},
 };
-use crate::graphql::state::JuniperAppState;
-use crate::models::auth::enums::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum};
-use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;

@@ -1,8 +1,10 @@
-use crate::delete_db_obj;
-use crate::error::CRUDError;
-use crate::generated::auth_schema::workspace;
-use crate::models::auth::{Workspace, WorkspaceCreate};
-use crate::state::DbConnection;
+use crate::{
+    delete_db_obj,
+    error::CRUDError,
+    generated::auth_schema::workspace,
+    models::{Workspace, WorkspaceCreate},
+    state::DbConnection,
+};
 use chrono::Utc;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

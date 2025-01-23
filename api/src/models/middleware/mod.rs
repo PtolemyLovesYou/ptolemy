@@ -1,5 +1,4 @@
-use crate::crypto::Claims;
-use crate::error::AuthError;
+use crate::{crypto::Claims, error::AuthError};
 use uuid::Uuid;
 
 pub type AuthResult<T> = Result<T, AuthError>;

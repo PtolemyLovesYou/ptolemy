@@ -1,5 +1,4 @@
-use crate::models::auth::enums::ApiKeyPermissionEnum;
-use crate::models::auth::workspace::Workspace;
+use crate::models::{ApiKeyPermissionEnum, Workspace};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
