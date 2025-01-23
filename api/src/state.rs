@@ -85,11 +85,25 @@ impl AppState {
         let pg_pool = Pool::builder().build(config).await.unwrap();
         let password_handler = PasswordHandler::new();
 
+        let pool_clone = pg_pool.clone();
+
         let audit_writer = Arc::new(Writer::new(
             move |msg: Vec<AuditLog>| {
-                for m in msg {
-                    tracing::info!("{:#?}", m);
-                }
+                let pool = pool_clone.clone();
+                let fut = async move {
+                    let n_msgs = msg.len();
+                    let mut conn = pool.get().await.unwrap();
+                    match crate::crud::audit::insert_audit_logs(&mut conn, msg).await {
+                        Ok(_) => {
+                            tracing::debug!("Successfully inserted {} audit logs", n_msgs);
+                        },
+                        Err(e) => {
+                            tracing::error!("Failed to insert audit logs: {}", e.to_string());
+                        }
+                    }
+                };
+
+                tokio::spawn(fut);
             },
             128,
             24,

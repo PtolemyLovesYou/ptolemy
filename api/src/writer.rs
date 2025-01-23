@@ -1,3 +1,4 @@
+use serde::Serialize;
 use tokio::sync::mpsc;
 
 #[derive(Debug)]
@@ -15,12 +16,21 @@ impl<T> Message<T> {
     }
 }
 
+impl<T> Serialize for Message<T> where T: Serialize {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+        match self {
+            Message::Write(t) => t.serialize(serializer),
+            Message::Shutdown => serializer.serialize_str("shutdown"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Writer<T> {
     pub tx: mpsc::Sender<Message<T>>,
 }
 
-impl<T> Writer<T> where T: Send + 'static + std::fmt::Debug {
+impl<T> Writer<T> where T: Send + 'static + std::fmt::Debug + Serialize {
     pub fn new<F>(func: F, buffer_size: usize, batch_size: usize) -> Self
     where
         F: Fn(Vec<T>) + Send + 'static, 
@@ -32,7 +42,6 @@ impl<T> Writer<T> where T: Send + 'static + std::fmt::Debug {
 
             let mut buffer = Vec::with_capacity(batch_size);
             while let Some(msg) = rx.recv().await {
-                tracing::debug!("Received message: {:#?}", msg);
                 match &msg {
                     Message::Shutdown => break,
                     _ => (),

@@ -3,9 +3,10 @@ use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
 use std::net::SocketAddr;
+use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Insertable, Serialize)]
 #[diesel(table_name = api_access_audit_logs)]
 pub struct ApiAccessAuditLogCreate {
     pub id: Uuid,
@@ -31,7 +32,7 @@ impl ApiAccessAuditLogCreate {
     }
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Insertable, Serialize)]
 #[diesel(table_name = api_auth_audit_logs)]
 pub struct AuthAuditLogCreate {
     pub id: Uuid,
@@ -82,7 +83,7 @@ impl AuthAuditLogCreate {
     }
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Insertable, Serialize)]
 #[diesel(table_name = iam_audit_logs)]
 pub struct IAMAuditLogCreate {
     pub id: Uuid,
@@ -97,7 +98,7 @@ pub struct IAMAuditLogCreate {
     pub query_metadata: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Insertable, Serialize)]
 #[diesel(table_name = record_audit_logs)]
 pub struct RecordAuditLogCreate {
     pub id: Uuid,
@@ -118,5 +119,15 @@ pub enum AuditLog {
     Auth(AuthAuditLogCreate),
     IAM(IAMAuditLogCreate),
     Record(RecordAuditLogCreate),
-    Shutdown,
+}
+
+impl Serialize for AuditLog {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+        match self {
+            AuditLog::ApiAccess(t) => t.serialize(serializer),
+            AuditLog::Auth(t) => t.serialize(serializer),
+            AuditLog::IAM(t) => t.serialize(serializer),
+            AuditLog::Record(t) => t.serialize(serializer),
+        }
+    }
 }
