@@ -110,7 +110,6 @@ pub async fn master_auth_middleware(
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    tracing::error!("Inserting access audit log");
     let _api_access_audit_log = match insert_api_access_audit_log(
         &mut state.get_conn_http().await?,
         ApiAccessAuditLogCreate::from_axum_request(&req, None),
@@ -124,8 +123,6 @@ pub async fn master_auth_middleware(
     };
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
-
-    tracing::error!("JWT: {:#?}, API Key: {:#?}\n", jwt_header, api_key_header);
 
     match validate_jwt_header(&state, &mut req, jwt_header).await.into() {
         Ok(_) => (),
