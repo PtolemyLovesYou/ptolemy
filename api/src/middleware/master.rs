@@ -2,7 +2,7 @@ use std::str::FromStr as _;
 
 use crate::{
     crud::audit::insert_api_access_audit_log,
-    crypto::{ClaimType, Claims}, error::AuthError,
+    crypto::{ClaimType, UuidClaims}, error::AuthError,
     models::{audit::models::ApiAccessAuditLogCreate, middleware::{ApiKey, AuthResult, JWT}, auth::prelude::ToModel},
     state::ApiAppState,
     consts::{
@@ -17,7 +17,7 @@ use axum::{
     response::IntoResponse,
 };
 
-fn get_header(req: &Request<axum::body::Body>, header: HeaderName, prefix: Option<&str>) -> impl Into<AuthResult<Option<String>>> {
+fn get_header(req: &Request<axum::body::Body>, header: HeaderName, prefix: Option<&str>) -> AuthResult<Option<String>> {
     match req.headers().get(header) {
         Some(h) => {
             let token = h.to_str()
@@ -33,33 +33,22 @@ fn get_header(req: &Request<axum::body::Body>, header: HeaderName, prefix: Optio
 }
 
 fn insert_headers(req: &mut Request<axum::body::Body>, state: &ApiAppState) -> (JWT, ApiKey) {
-    let jwt_header = match get_header(req, HeaderName::from_str("Authorization").unwrap(), Some("Bearer ")).into() {
-        AuthResult::Ok(h) => match h {
-            Some(h) => match Claims::from_token(&h, &state.jwt_secret.as_bytes()) {
-                Ok(c) => JWT::Ok(c),
-                Err(_) => JWT::Err(AuthError::InvalidToken)
-            },
-            None => JWT::Undeclared
-        },
-        AuthResult::Err(e) => JWT::Err(e),
-    };
+    let jwt_header: JWT = get_header(req, HeaderName::from_str("Authorization").unwrap(), Some("Bearer "))
+        .and_then(|header| {
+            UuidClaims::from_token(header, &state.jwt_secret.as_bytes())
+        })
+        .into();
 
     req.extensions_mut().insert(jwt_header.clone());
 
-    let api_key_header = match get_header(req, HeaderName::from_str("X-Api-Key").unwrap(), None).into() {
-        AuthResult::Ok(h) => match h {
-            Some(h) => ApiKey::Ok(h),
-            None => ApiKey::Undeclared,
-        },
-        AuthResult::Err(e) => ApiKey::Err(e),
-    };
+    let api_key_header: ApiKey = get_header(req, HeaderName::from_str("X-Api-Key").unwrap(), None).into();
 
     req.extensions_mut().insert(api_key_header.clone());
 
     (jwt_header, api_key_header)
 }
 
-async fn validate_api_key_header(state: &ApiAppState, req: &mut Request<axum::body::Body>, header: ApiKey) -> impl Into<AuthResult<()>> {
+async fn validate_api_key_header(state: &ApiAppState, req: &mut Request<axum::body::Body>, header: ApiKey) -> AuthResult<()> {
     let api_key = match header {
         ApiKey::Undeclared | ApiKey::Err(_) => return Ok(()),
         ApiKey::Ok(api_key) => api_key
@@ -86,7 +75,7 @@ async fn validate_jwt_header(
     state: &ApiAppState,
     req: &mut Request<axum::body::Body>,
     header: JWT,
-) -> impl Into<AuthResult<()>> {
+) -> AuthResult<()> {
     let mut conn = state.get_conn().await.unwrap();
 
     let claims = match header {
@@ -139,16 +128,16 @@ pub async fn master_auth_middleware(
     tracing::error!("JWT: {:#?}, API Key: {:#?}\n", jwt_header, api_key_header);
 
     match validate_jwt_header(&state, &mut req, jwt_header).await.into() {
-        AuthResult::Ok(_) => (),
-        AuthResult::Err(e) => {
+        Ok(_) => (),
+        Err(e) => {
             tracing::error!("Failed to validate JWT header: {:?}", e);
             ()
         }
     };
 
     match validate_api_key_header(&state, &mut req, api_key_header).await.into() {
-        AuthResult::Ok(_) => (),
-        AuthResult::Err(e) => {
+        Ok(_) => (),
+        Err(e) => {
             tracing::error!("Failed to validate API key header: {:?}", e);
             ()
         }

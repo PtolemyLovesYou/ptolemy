@@ -2,36 +2,28 @@ use crate::error::AuthError;
 use crate::crypto::Claims;
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
-pub enum AuthResult<T> {
-    Ok(T),
-    Err(AuthError),
-}
+pub type AuthResult<T> = Result<T, AuthError>;
 
-impl<T> Into<Result<T, AuthError>> for AuthResult<T> {
-    fn into(self) -> Result<T, AuthError> {
-        match self {
-            AuthResult::Ok(t) => Ok(t),
-            AuthResult::Err(e) => Err(e),
+macro_rules! auth_header {
+    ($name:ident, $ty:ty) => {
+        #[derive(Debug, Clone)]
+        pub enum $name {
+            Ok($ty),
+            Err(AuthError),
+            Undeclared,
+        }
+
+        impl From<AuthResult<Option<$ty>>> for $name {
+            fn from(result: AuthResult<Option<$ty>>) -> Self {
+                match result {
+                    AuthResult::Ok(Some(t)) => $name::Ok(t),
+                    AuthResult::Ok(None) => $name::Undeclared,
+                    AuthResult::Err(e) => $name::Err(e),
+                }
+            }
         }
     }
 }
 
-impl<T> Into<AuthResult<T>> for Result<T, AuthError> {
-    fn into(self) -> AuthResult<T> {
-        match self {
-            Ok(t) => AuthResult::Ok(t),
-            Err(e) => AuthResult::Err(e),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum AuthHeader<T> {
-    Ok(T),
-    Err(AuthError),
-    Undeclared,
-}
-
-pub type ApiKey = AuthHeader<String>;
-pub type JWT = AuthHeader<Claims<Uuid>>;
+auth_header!(ApiKey, String);
+auth_header!(JWT, Claims<Uuid>);

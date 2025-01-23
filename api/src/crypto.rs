@@ -11,6 +11,8 @@ use ring::{
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use crate::error::AuthError;
+use tracing::{error, info};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClaimType {
@@ -68,7 +70,7 @@ impl PasswordHandler {
     }
 }
 
-type ClaimsResult<T> = Result<T, jsonwebtoken::errors::Error>;
+type ClaimsResult<T> = Result<T, AuthError>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims<T> {
@@ -124,19 +126,32 @@ where
             &Header::default(),
             &self,
             &EncodingKey::from_secret(secret),
-        )?)
+        ).map_err(|e| {
+            error!("Failed to generate auth token: {}", e);
+            AuthError::InternalServerError
+        })?)
     }
 
-    pub fn from_token(token: &str, secret: &[u8]) -> ClaimsResult<Self> {
+    pub fn from_token(token: Option<String>, secret: &[u8]) -> ClaimsResult<Option<Self>> {
+        let token = match token {
+            Some(token) => token,
+            None => return Ok(None),
+        };
+
         let claims = decode::<Self>(
-            token,
+            &token,
             &DecodingKey::from_secret(secret),
             &Validation::default(),
-        )?;
+        ).map_err(|e| {
+            info!("Failed to decode auth token: {}", e);
+            AuthError::InvalidToken
+        })?;
 
-        Ok(claims.claims)
+        Ok(Some(claims.claims))
     }
 }
+
+pub type UuidClaims = Claims<Uuid>;
 
 pub fn generate_sha256(data: &str) -> String {
     let digest = digest(&SHA256, data.as_bytes());

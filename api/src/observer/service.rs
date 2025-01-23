@@ -27,7 +27,7 @@ impl MyObserverAuthentication {
         let token = Claims::new(api_key_id, ClaimType::ServiceAPIKeyJWT, 3600)
             .generate_auth_token(self.state.jwt_secret.as_bytes())
             .map_err(|e| {
-                error!("Failed to generate auth token: {}", e);
+                error!("Failed to generate auth token: {:?}", e);
                 Status::internal("Failed to generate auth token")
             })?;
 

@@ -33,7 +33,7 @@ pub async fn login(
     let token = Claims::new(user.id, ClaimType::UserJWT, 3600)
         .generate_auth_token(state.jwt_secret.as_bytes())
         .map_err(|e| {
-            error!("{}", e);
+            error!("{:?}", e);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
