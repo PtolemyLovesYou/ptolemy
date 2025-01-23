@@ -2,7 +2,6 @@ use std::str::FromStr as _;
 
 use crate::{
     crud::auth::service_api_key as service_api_key_crud, crypto::{ClaimType, Claims}, error::CRUDError,
-    // models::{auth::enums::ApiKeyPermissionEnum, middleware::AuthContext},
     observer::records::EventRecords, state::ApiAppState,
 };
 use ptolemy::models::{auth::ServiceApiKey, enums::ApiKeyPermission};
