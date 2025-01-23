@@ -1,5 +1,7 @@
 use crate::crypto::PasswordHandler;
 use crate::error::{ApiError, CRUDError};
+use crate::models::audit::models::AuditLog;
+use crate::writer::Writer;
 use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode};
 use bb8::PooledConnection;
@@ -50,6 +52,7 @@ pub struct AppState {
     pub enable_graphiql: bool,
     pub ptolemy_env: String,
     pub jwt_secret: String,
+    pub audit_writer: Arc<Writer<AuditLog>>,
 }
 
 impl AppState {
@@ -82,6 +85,16 @@ impl AppState {
         let pg_pool = Pool::builder().build(config).await.unwrap();
         let password_handler = PasswordHandler::new();
 
+        let audit_writer = Arc::new(Writer::new(
+            move |msg: Vec<AuditLog>| {
+                for m in msg {
+                    tracing::info!("{:#?}", m);
+                }
+            },
+            128,
+            24,
+        ));
+
         let state = Self {
             port,
             pg_pool,
@@ -90,6 +103,7 @@ impl AppState {
             enable_graphiql,
             ptolemy_env,
             jwt_secret,
+            audit_writer,
         };
 
         Ok(state)

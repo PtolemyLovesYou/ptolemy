@@ -24,7 +24,6 @@ pub async fn graphql_handler(
     State(state): State<ApiAppState>,
     JuniperRequest(request): JuniperRequest,
 ) -> JuniperResponse {
-    tracing::error!("Got here!");
     let schema = Schema::new(Query, Mutation, EmptySubscription::new());
 
     let state_clone = JuniperAppState {

@@ -8,6 +8,7 @@ use uuid::Uuid;
 #[derive(Debug, Insertable)]
 #[diesel(table_name = api_access_audit_logs)]
 pub struct ApiAccessAuditLogCreate {
+    pub id: Uuid,
     pub source: Option<String>,
     pub request_id: Option<Uuid>,
     pub ip_address: Option<IpNet>,
@@ -22,26 +23,10 @@ impl ApiAccessAuditLogCreate {
         };
 
         Self {
+            id: Uuid::new_v4(),
             source,
             ip_address,
             request_id,
-        }
-    }
-
-    pub fn from_tonic_request(
-        service_name: String,
-        req: &tonic::Request<()>,
-        request_id: Option<Uuid>,
-    ) -> Self {
-        let ip_address = match req.remote_addr() {
-            Some(i) => Some(IpNet::from(i.ip())),
-            None => None,
-        };
-
-        Self {
-            source: Some(service_name),
-            request_id,
-            ip_address,
         }
     }
 }
@@ -49,6 +34,7 @@ impl ApiAccessAuditLogCreate {
 #[derive(Debug, Insertable)]
 #[diesel(table_name = api_auth_audit_logs)]
 pub struct AuthAuditLogCreate {
+    pub id: Uuid,
     pub api_access_audit_log_id: Uuid,
     pub service_api_key_id: Option<Uuid>,
     pub user_api_key_id: Option<Uuid>,
@@ -67,6 +53,7 @@ impl AuthAuditLogCreate {
         auth_method: super::enums::AuthMethodEnum,
     ) -> Self {
         Self {
+            id: Uuid::new_v4(),
             api_access_audit_log_id,
             service_api_key_id,
             user_api_key_id,
@@ -83,6 +70,7 @@ impl AuthAuditLogCreate {
         failure_details: Option<serde_json::Value>,
     ) -> Self {
         Self {
+            id: Uuid::new_v4(),
             api_access_audit_log_id,
             service_api_key_id: None,
             user_api_key_id: None,
@@ -97,6 +85,7 @@ impl AuthAuditLogCreate {
 #[derive(Debug, Insertable)]
 #[diesel(table_name = iam_audit_logs)]
 pub struct IAMAuditLogCreate {
+    pub id: Uuid,
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Option<Uuid>,
     pub resource_id: Uuid,
@@ -111,6 +100,7 @@ pub struct IAMAuditLogCreate {
 #[derive(Debug, Insertable)]
 #[diesel(table_name = record_audit_logs)]
 pub struct RecordAuditLogCreate {
+    pub id: Uuid,
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Option<Uuid>,
     pub workspace_id: Uuid,
@@ -120,4 +110,13 @@ pub struct RecordAuditLogCreate {
     pub batch_id: Option<Uuid>,
     pub failure_reason: Option<String>,
     pub query_metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug)]
+pub enum AuditLog {
+    ApiAccess(ApiAccessAuditLogCreate),
+    Auth(AuthAuditLogCreate),
+    IAM(IAMAuditLogCreate),
+    Record(RecordAuditLogCreate),
+    Shutdown,
 }

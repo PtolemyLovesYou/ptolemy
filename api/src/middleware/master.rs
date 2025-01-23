@@ -1,14 +1,8 @@
 use std::str::FromStr as _;
 
 use crate::{
-    crud::audit::insert_api_access_audit_log,
-    crypto::{ClaimType, UuidClaims}, error::AuthError,
-    models::{audit::models::ApiAccessAuditLogCreate, middleware::{ApiKey, AuthResult, JWT}, auth::prelude::ToModel},
-    state::ApiAppState,
-    consts::{
-        // SERVICE_API_KEY_PREFIX,
-        USER_API_KEY_PREFIX
-    },
+    // crud::audit::insert_api_access_audit_log,
+    consts::USER_API_KEY_PREFIX, crypto::{ClaimType, UuidClaims}, error::AuthError, models::{audit::{enums::AuthMethodEnum, models::{ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate}}, auth::prelude::ToModel, middleware::{ApiKey, AuthHeader, AuthResult, JWT}}, state::ApiAppState
 };
 use axum::{
     extract::State,
@@ -16,6 +10,7 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
+use uuid::Uuid;
 
 fn get_header(req: &Request<axum::body::Body>, header: HeaderName, prefix: Option<&str>) -> AuthResult<Option<String>> {
     match req.headers().get(header) {
@@ -110,26 +105,58 @@ pub async fn master_auth_middleware(
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let _api_access_audit_log = match insert_api_access_audit_log(
-        &mut state.get_conn_http().await?,
-        ApiAccessAuditLogCreate::from_axum_request(&req, None),
-    )
-    .await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("Failed to insert access audit log: {:?}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
+    let api_access_audit_log = ApiAccessAuditLogCreate::from_axum_request(&req, None);
+    let api_access_audit_log_id = api_access_audit_log.id.clone();
+    state.audit_writer.write(AuditLog::ApiAccess(api_access_audit_log)).await;
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
 
-    if let Some(e) = validate_jwt_header(&state, &mut req, jwt_header).await.err() {
-        tracing::error!("Failed to validate JWT header: {:?}", e);
+    if !jwt_header.undeclared() {
+        let (success, failure_details) = match validate_jwt_header(&state, &mut req, jwt_header.clone()).await {
+            Ok(_) => (true, None),
+            Err(e) => (false, Some(serde_json::json!({"error": format!("{:?}", e)})))
+        };
+
+        let (user_id, service_api_key_id) = match jwt_header.ok() {
+            None => (None, None),
+            Some(jwt) => match jwt.claim_type() {
+                ClaimType::UserJWT => (Some(jwt.sub().clone()), None),
+                ClaimType::ServiceAPIKeyJWT => (None, Some(jwt.sub().clone()))
+            }
+        };
+
+        let log = AuthAuditLogCreate {
+            id: Uuid::new_v4(),
+            api_access_audit_log_id: api_access_audit_log_id.clone(),
+            user_id,
+            service_api_key_id,
+            user_api_key_id: None,
+            auth_method: AuthMethodEnum::JWT,
+            success,
+            failure_details,
+        };
+
+        state.audit_writer.write(AuditLog::Auth(log)).await;
     }
 
-    if let Some(e) = validate_api_key_header(&state, &mut req, api_key_header).await.err() {
-        tracing::error!("Failed to validate API key header: {:?}", e);
+    if !api_key_header.undeclared() {
+        let (success, failure_details) = match validate_api_key_header(&state, &mut req, api_key_header.clone()).await {
+            Ok(_) => (true, None),
+            Err(e) => (false, Some(serde_json::json!({"error": format!("{:?}", e)})))
+        };
+
+        let log = AuthAuditLogCreate {
+            id: Uuid::new_v4(),
+            api_access_audit_log_id: api_access_audit_log_id.clone(),
+            user_id: None,
+            service_api_key_id: None,
+            user_api_key_id: None,
+            auth_method: AuthMethodEnum::ApiKey,
+            success,
+            failure_details,
+        };
+
+        state.audit_writer.write(AuditLog::Auth(log)).await;
     }
 
     Ok(next.run(req).await)
