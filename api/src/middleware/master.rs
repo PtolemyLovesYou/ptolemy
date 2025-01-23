@@ -124,21 +124,13 @@ pub async fn master_auth_middleware(
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
 
-    match validate_jwt_header(&state, &mut req, jwt_header).await.into() {
-        Ok(_) => (),
-        Err(e) => {
-            tracing::error!("Failed to validate JWT header: {:?}", e);
-            ()
-        }
-    };
+    if let Some(e) = validate_jwt_header(&state, &mut req, jwt_header).await.err() {
+        tracing::error!("Failed to validate JWT header: {:?}", e);
+    }
 
-    match validate_api_key_header(&state, &mut req, api_key_header).await.into() {
-        Ok(_) => (),
-        Err(e) => {
-            tracing::error!("Failed to validate API key header: {:?}", e);
-            ()
-        }
-    };
+    if let Some(e) = validate_api_key_header(&state, &mut req, api_key_header).await.err() {
+        tracing::error!("Failed to validate API key header: {:?}", e);
+    }
 
     Ok(next.run(req).await)
 }
