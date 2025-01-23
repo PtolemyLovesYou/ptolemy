@@ -1,50 +1,5 @@
-use tower_http::{
-    trace::{self, TraceLayer},
-    LatencyUnit,
-};
-use tracing::Level;
+mod auth;
+mod tracing;
 
-pub mod master;
-
-type HttpTraceLayer = TraceLayer<
-    tower_http::classify::SharedClassifier<tower_http::classify::ServerErrorsAsFailures>,
->;
-
-pub fn trace_layer_rest() -> HttpTraceLayer {
-    TraceLayer::new_for_http()
-        .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
-        .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
-        .on_response(
-            trace::DefaultOnResponse::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
-        .on_body_chunk(trace::DefaultOnBodyChunk::new())
-        .on_eos(
-            trace::DefaultOnEos::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
-        .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
-}
-
-type GrpcTraceLayer =
-    TraceLayer<tower_http::classify::SharedClassifier<tower_http::classify::GrpcErrorsAsFailures>>;
-
-pub fn trace_layer_grpc() -> GrpcTraceLayer {
-    TraceLayer::new_for_grpc()
-        .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
-        .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
-        .on_response(
-            trace::DefaultOnResponse::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
-        .on_body_chunk(trace::DefaultOnBodyChunk::new())
-        .on_eos(
-            trace::DefaultOnEos::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
-        .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
-}
+pub use self::tracing::{trace_layer_rest, trace_layer_grpc};
+pub use self::auth::master_auth_middleware;
