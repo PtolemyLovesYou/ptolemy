@@ -14,6 +14,9 @@ pub enum AuthContext {
     UserJWT {
         user: User,
     },
+    UserApiKey {
+        user: User,
+    },
     Unauthorized(AuthError),
 }
 

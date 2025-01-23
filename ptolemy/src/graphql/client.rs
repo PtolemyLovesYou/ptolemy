@@ -29,7 +29,7 @@ impl GraphQLClient {
 
         let mut headers = reqwest::header::HeaderMap::new();
         headers.append(
-            "Authorization",
+            "X-Api-Key",
             reqwest::header::HeaderValue::from_str(format!("Bearer {}", api_key).as_str()).unwrap(),
         );
 

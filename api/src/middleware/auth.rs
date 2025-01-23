@@ -1,141 +1,97 @@
 use crate::{
-    crud::{
-        audit::insert_api_auth_audit_log,
-        auth::user_api_key::get_user_api_key_user,
-    },
-    crypto::generate_sha256,
-    models::{
-        audit::{enums::AuthMethodEnum, models::AuthAuditLogCreate},
-        auth::User,
-        AccessContext,
-    },
+    crud::auth::user_api_key::get_user_api_key_user,
+    error::AuthError,
+    models::{middleware::{JWTHeader, ApiKeyHeader, AuthContext}, auth::prelude::ToModel as _},
     state::ApiAppState,
+    crypto::ClaimType,
 };
 use axum::{
     body::Body,
     extract::State,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode},
     middleware::Next,
     response::IntoResponse,
 };
-use hyper::header::AsHeaderName;
-use serde_json::json;
-use std::{collections::HashMap, sync::Arc};
 
-pub fn get_headers<K>(req: &Request<Body>, header: K) -> (String, Option<&str>)
-where
-    K: AsHeaderName,
-{
-    let header = match req.headers().get(header) {
-        Some(v) => v,
-        None => return (String::new(), Some("MISSING_AUTHORIZATION")),
+pub async fn jwt_middleware(
+    State(state): State<crate::state::ApiAppState>,
+    mut req: Request<axum::body::Body>,
+    next: Next,
+) -> Result<impl IntoResponse, StatusCode> {
+    let token_data = match req.extensions().get::<JWTHeader>() {
+        Some(JWTHeader::JWT(token)) => token,
+        _ => {
+            req.extensions_mut().insert(AuthContext::Unauthorized(AuthError::MissingHeader));
+            return Ok(next.run(req).await);
+        }
     };
 
-    let header_val = match header.to_str() {
-        Ok(h) => h.to_string(),
-        Err(_) => return (String::new(), Some("MALFORMED_HEADER")),
+    let mut conn = match state.get_conn().await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to get database connection: {:?}", e);
+            req.extensions_mut().insert(AuthContext::Unauthorized(AuthError::InternalServerError));
+            return Ok(next.run(req).await);
+        }
     };
 
-    match header_val.strip_prefix("Bearer ") {
-        Some(h) => (h.to_string(), None),
-        None => (header_val, Some("MALFORMED_HEADER")),
-    }
-}
-
-fn get_failure_details(
-    to_hash: String,
-    unauthorized_reason: impl Into<String>,
-) -> serde_json::Value {
-    let mut failure_details: HashMap<&str, String> = HashMap::new();
-    failure_details.insert("failure_reason", unauthorized_reason.into());
-
-    if !to_hash.is_empty() {
-        let sha_key = generate_sha256(&to_hash);
-        failure_details.insert("hashed_api_key", sha_key);
-    };
-
-    json!(failure_details)
-}
-
-async fn get_user_from_api_key(
-    state: &ApiAppState,
-    api_key: String,
-) -> Result<(Option<User>, Option<serde_json::Value>), StatusCode> {
-    let mut conn = state.get_conn_http().await?;
-
-    let user_result = get_user_api_key_user(&mut conn, &api_key, &state.password_handler)
-        .await
-        .map_err(|e| e.http_status_code());
-
-    match user_result {
-        Ok(user) => Ok((Some(user), None)),
-        Err(e) => Ok((None, Some(get_failure_details(api_key, e.to_string())))),
-    }
-}
-
-macro_rules! auth_middleware {
-    ($fn_name:ident, $get_user_fn:tt, $auth_method:ident) => {
-        pub async fn $fn_name(
-            State(state): State<ApiAppState>,
-            mut req: Request<Body>,
-            next: Next,
-        ) -> Result<impl IntoResponse, StatusCode> {
-            let mut access_context = req
-                .extensions_mut()
-                .remove::<AccessContext>()
-                .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-
-            let api_access_audit_log_id = {
-                access_context
-                    .api_access_audit_log_id()
-                    .map_err(|e| e.http_status_code())?
-                    .clone()
-            };
-
-            let (token, unauthorized_reason) = get_headers(&req, header::AUTHORIZATION);
-
-            let (user, failure_details) = match unauthorized_reason {
-                Some(unauthorized_reason) => {
-                    (None, Some(get_failure_details(token, unauthorized_reason)))
-                }
-                None => $get_user_fn(&state, token).await?,
-            };
-
-            let user_id = match &user {
-                Some(u) => Some(u.id),
-                None => None,
-            };
-
-            let mut conn = state.get_conn_http().await?;
-
-            let data = AuthAuditLogCreate {
-                api_access_audit_log_id,
-                service_api_key_id: None,
-                user_api_key_id: None,
-                user_id,
-                auth_method: AuthMethodEnum::$auth_method,
-                success: user_id.is_some(),
-                failure_details,
-            };
-
-            let api_auth_audit_log_id = insert_api_auth_audit_log(&mut conn, &data)
-                .await
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-            // Update access context with new audit log id
-            access_context.auth_audit_log_id = Some(api_auth_audit_log_id);
-
-            match user {
-                Some(u) => {
-                    req.extensions_mut().insert(Arc::new(u));
-                    req.extensions_mut().insert(access_context);
-
-                    Ok(next.run(req).await)
-                }
-                None => Err(StatusCode::UNAUTHORIZED),
+    let ext = match token_data.claim_type() {
+        ClaimType::UserJWT => {
+            match crate::crud::auth::user::get_user(
+                &mut conn,
+                &token_data.sub(),
+            ).await {
+                Ok(u) => AuthContext::UserJWT { user: u.to_model() },
+                Err(_) => AuthContext::Unauthorized(AuthError::NotFoundError)
+            }
+        },
+        ClaimType::ServiceAPIKeyJWT => {
+            match crate::crud::auth::service_api_key::get_service_api_key_by_id(
+                &mut conn,
+                &token_data.sub(),
+            ).await {
+                Ok(sk) => AuthContext::WorkspaceJWT {
+                    service_api_key_id: sk.id,
+                    workspace_id: sk.workspace_id,
+                    permissions: sk.permissions,
+                },
+                Err(_) => AuthContext::Unauthorized(AuthError::NotFoundError)
             }
         }
     };
+
+    req.extensions_mut().insert(ext);
+
+    Ok(next.run(req).await)
 }
 
-auth_middleware!(api_key_auth_middleware, get_user_from_api_key, ApiKey);
+pub async fn api_key_auth_middleware(
+    State(state): State<ApiAppState>,
+    mut req: Request<Body>,
+    next: Next,
+) -> Result<impl IntoResponse, StatusCode> {
+    let api_key = match req.extensions().get::<ApiKeyHeader>() {
+        Some(ApiKeyHeader::ApiKey(api_key)) => api_key,
+        _ => {
+            req.extensions_mut().insert(AuthContext::Unauthorized(AuthError::MissingHeader));
+            return Ok(next.run(req).await);
+        }
+    };
+
+    let mut conn = state.get_conn_http().await?;
+
+    match get_user_api_key_user(
+        &mut conn,
+        &api_key,
+        &state.password_handler
+    ).await {
+        Ok(user) => {
+            req.extensions_mut().insert(AuthContext::UserApiKey {user: user.to_model()});
+        },
+        Err(_) => {
+            req.extensions_mut().insert(AuthContext::Unauthorized(AuthError::InvalidToken));
+        }
+    }
+
+    Ok(next.run(req).await)
+}

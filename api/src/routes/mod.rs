@@ -1,9 +1,8 @@
 use self::graphql::graphql_handler;
 use crate::{
     middleware::{
-        auth::api_key_auth_middleware,
+        auth::{api_key_auth_middleware, jwt_middleware},
         trace_layer_rest,
-        jwt::jwt_middleware,
         headers::headers_middleware,
     },
     state::ApiAppState,

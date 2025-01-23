@@ -28,6 +28,7 @@ pub async fn graphql_handler(
     let schema = Schema::new(Query, Mutation, EmptySubscription::new());
 
     let user = match auth {
+        AuthContext::UserApiKey { user } => user,
         AuthContext::UserJWT { user } => user,
         AuthContext::Unauthorized(e) => {
             let error = e.into_field_error();
