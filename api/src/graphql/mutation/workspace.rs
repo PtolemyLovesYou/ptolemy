@@ -6,9 +6,8 @@ use crate::graphql::mutation::result::{
     CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
 };
 use crate::graphql::state::JuniperAppState;
-use crate::{
-    models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
-    models::auth::{WorkspaceCreate, WorkspaceUserCreate},
+use crate::models::auth::{
+    ApiKeyPermissionEnum, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUserCreate,
 };
 use juniper::graphql_object;
 use uuid::Uuid;

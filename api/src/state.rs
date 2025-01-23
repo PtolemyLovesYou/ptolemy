@@ -1,16 +1,19 @@
 use crate::{
     crypto::PasswordHandler,
     error::{ApiError, CRUDError},
-    models::audit::models::AuditLog,
+    models::AuditLog,
 };
-use ptolemy::writer::Writer;
-use axum::{extract::ConnectInfo, http::{Request, StatusCode}};
+use axum::{
+    extract::ConnectInfo,
+    http::{Request, StatusCode},
+};
 use bb8::PooledConnection;
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection,
 };
 use ipnet::IpNet;
+use ptolemy::writer::Writer;
 use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use tracing::error;
 

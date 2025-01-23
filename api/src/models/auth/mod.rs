@@ -1,11 +1,13 @@
-pub mod enums;
 pub mod graphql;
-pub mod service_api_key;
-pub mod user;
-pub mod user_api_key;
-pub mod workspace;
-pub mod workspace_user;
 
+mod enums;
+mod service_api_key;
+mod user;
+mod user_api_key;
+mod workspace;
+mod workspace_user;
+
+pub use self::enums::*;
 pub use self::service_api_key::*;
 pub use self::user::*;
 pub use self::user_api_key::*;

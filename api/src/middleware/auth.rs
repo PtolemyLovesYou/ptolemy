@@ -6,12 +6,9 @@ use crate::{
     crypto::{ClaimType, UuidClaims},
     error::AuthError,
     models::{
-        audit::{
-            enums::AuthMethodEnum,
-            models::{ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate},
-        },
         auth::prelude::ToModel,
         middleware::{ApiKey, AuthHeader, AuthResult, JWT},
+        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
     },
     state::ApiAppState,
 };

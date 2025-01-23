@@ -2,7 +2,7 @@ use crate::{
     generated::audit_schema::{
         api_access_audit_logs, api_auth_audit_logs, iam_audit_logs, record_audit_logs,
     },
-    models::audit::models::AuditLog,
+    models::AuditLog,
     state::DbConnection,
 };
 use diesel_async::RunQueryDsl;

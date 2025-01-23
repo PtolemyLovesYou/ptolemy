@@ -23,7 +23,7 @@ pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthR
 
     fn undeclared(&self) -> bool {
         match self.as_result() {
-            Ok(None) => true,
+            Ok(o) => o.is_none(),
             _ => false,
         }
     }

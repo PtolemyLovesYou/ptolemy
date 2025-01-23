@@ -1,10 +1,7 @@
 use crate::delete_db_obj;
 use crate::error::CRUDError;
-use crate::generated::auth_schema::users;
-use crate::generated::auth_schema::workspace;
-use crate::generated::auth_schema::workspace_user;
-use crate::models::auth::enums::WorkspaceRoleEnum;
-use crate::models::auth::{User, Workspace, WorkspaceUser, WorkspaceUserCreate};
+use crate::generated::auth_schema::{users, workspace, workspace_user};
+use crate::models::auth::{User, Workspace, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate};
 use crate::state::DbConnection;
 use chrono::Utc;
 use diesel::prelude::*;
