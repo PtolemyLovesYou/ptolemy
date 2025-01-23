@@ -1,6 +1,6 @@
+use crate::consts::USER_API_KEY_PREFIX;
 use crate::crypto::{generate_api_key, PasswordHandler};
 use crate::delete_db_obj;
-use crate::consts::USER_API_KEY_PREFIX;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{user_api_key, users};
 use crate::models::auth::{User, UserApiKey, UserApiKeyCreate};

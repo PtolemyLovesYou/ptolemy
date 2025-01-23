@@ -1,14 +1,17 @@
 use std::str::FromStr as _;
 
 use crate::{
-    crud::auth::service_api_key as service_api_key_crud, crypto::{ClaimType, Claims}, error::CRUDError,
-    observer::records::EventRecords, state::ApiAppState,
+    crud::auth::service_api_key as service_api_key_crud,
+    crypto::{ClaimType, Claims},
+    error::CRUDError,
+    observer::records::EventRecords,
+    state::ApiAppState,
 };
-use ptolemy::models::{auth::ServiceApiKey, enums::ApiKeyPermission};
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
     AuthenticationRequest, AuthenticationResponse, PublishRequest, PublishResponse, Record,
 };
+use ptolemy::models::{auth::ServiceApiKey, enums::ApiKeyPermission};
 use tonic::{metadata::MetadataKey, Request, Response, Status};
 use tracing::{debug, error};
 use uuid::Uuid;
@@ -120,7 +123,11 @@ impl Observer for MyObserver {
 
         match sak.permissions {
             ApiKeyPermission::ReadWrite | ApiKeyPermission::WriteOnly => (),
-            _ => return Err(Status::permission_denied("Insufficient permissions to write")),
+            _ => {
+                return Err(Status::permission_denied(
+                    "Insufficient permissions to write",
+                ))
+            }
         };
 
         let records = request.into_inner().records;

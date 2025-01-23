@@ -1,9 +1,9 @@
+use tower_http::classify::{GrpcErrorsAsFailures, ServerErrorsAsFailures};
 use tower_http::{
     trace::{self, TraceLayer},
     LatencyUnit,
 };
 use tracing::Level;
-use tower_http::classify::{ServerErrorsAsFailures, GrpcErrorsAsFailures};
 
 type TraceMiddleware<T> = TraceLayer<tower_http::classify::SharedClassifier<T>>;
 

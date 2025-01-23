@@ -1,11 +1,8 @@
 use self::graphql::graphql_handler;
 use crate::{
-    middleware::{
-        master_auth_middleware,
-        trace_layer_rest,
-    },
-    state::ApiAppState,
+    middleware::{master_auth_middleware, trace_layer_rest},
     observer::{authentication_service, observer_service},
+    state::ApiAppState,
 };
 use axum::{
     middleware::from_fn_with_state,
@@ -59,7 +56,7 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .nest("/", get_base_router(&state).await)
         .nest("/external", get_external_router(&state).await)
         .with_state(state.clone());
-    
+
     let grpc_router = tonic::service::Routes::builder()
         .routes()
         .add_service(authentication_service(state.clone()).await)
@@ -69,9 +66,6 @@ pub async fn get_router(state: &ApiAppState) -> Router {
     Router::new()
         .merge(grpc_router)
         .merge(http_router)
-        .layer(from_fn_with_state(
-            state.clone(),
-            master_auth_middleware,
-        ))
+        .layer(from_fn_with_state(state.clone(), master_auth_middleware))
         .layer(trace_layer_rest())
 }

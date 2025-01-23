@@ -10,7 +10,7 @@ pub enum AuthError {
     InternalServerError,
     NotFoundError,
     InvalidAuthMethod,
-    MultipleAuthMethods
+    MultipleAuthMethods,
 }
 
 impl Into<StatusCode> for AuthError {
@@ -22,7 +22,7 @@ impl Into<StatusCode> for AuthError {
             AuthError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             AuthError::NotFoundError => StatusCode::NOT_FOUND,
             AuthError::InvalidAuthMethod => StatusCode::BAD_REQUEST,
-            AuthError::MultipleAuthMethods => StatusCode::BAD_REQUEST
+            AuthError::MultipleAuthMethods => StatusCode::BAD_REQUEST,
         }
     }
 }

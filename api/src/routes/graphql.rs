@@ -1,11 +1,8 @@
+use crate::error::AuthError;
 use crate::graphql::{state::JuniperAppState, Mutation, Query, Schema};
 use crate::state::ApiAppState;
-use crate::error::AuthError;
-use axum::{
-    extract::State,
-    Extension,
-};
-use juniper::{EmptySubscription, IntoFieldError, ScalarValue, graphql_value, FieldError};
+use axum::{extract::State, Extension};
+use juniper::{graphql_value, EmptySubscription, FieldError, IntoFieldError, ScalarValue};
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use ptolemy::models::auth::User;
 
@@ -15,7 +12,7 @@ impl<S: ScalarValue> IntoFieldError<S> for AuthError {
             "Authentication Error",
             graphql_value!({
                 "type": format!("{:?}", self),
-            })
+            }),
         )
     }
 }

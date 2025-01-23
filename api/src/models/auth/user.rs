@@ -1,7 +1,7 @@
+use super::prelude::*;
 use crate::models::auth::enums::UserStatusEnum;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use super::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

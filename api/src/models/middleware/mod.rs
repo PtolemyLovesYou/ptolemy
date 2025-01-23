@@ -1,5 +1,5 @@
-use crate::error::AuthError;
 use crate::crypto::Claims;
+use crate::error::AuthError;
 use uuid::Uuid;
 
 pub type AuthResult<T> = Result<T, AuthError>;
@@ -9,7 +9,7 @@ pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthR
 
     fn ok(&self) -> Option<&T> {
         match self.as_result() {
-            Ok(Some(t))  => Some(t),
+            Ok(Some(t)) => Some(t),
             _ => None,
         }
     }
@@ -73,7 +73,7 @@ macro_rules! auth_header {
                 }
             }
         }
-    }
+    };
 }
 
 auth_header!(ApiKey, String);

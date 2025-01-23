@@ -1,6 +1,6 @@
+use crate::consts::SERVICE_API_KEY_PREFIX;
 use crate::crypto::{generate_api_key, PasswordHandler};
 use crate::delete_db_obj;
-use crate::consts::SERVICE_API_KEY_PREFIX;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;

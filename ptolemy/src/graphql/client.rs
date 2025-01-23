@@ -35,13 +35,13 @@ impl GraphQLClient {
                     "X-Api-Key",
                     reqwest::header::HeaderValue::from_str(api_key).unwrap(),
                 );
-            },
+            }
             "jwt" => {
                 headers.append(
                     "Authorization",
                     reqwest::header::HeaderValue::from_str(&format!("Bearer {}", api_key)).unwrap(),
                 );
-            },
+            }
             _ => panic!("Unknown auth method: {}", auth_method),
         };
 

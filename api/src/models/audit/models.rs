@@ -2,8 +2,8 @@ use crate::generated::audit_schema::*;
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
-use std::net::SocketAddr;
 use serde::Serialize;
+use std::net::SocketAddr;
 use uuid::Uuid;
 
 #[derive(Debug, Insertable, Serialize)]
@@ -122,7 +122,10 @@ pub enum AuditLog {
 }
 
 impl Serialize for AuditLog {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
         match self {
             AuditLog::ApiAccess(t) => t.serialize(serializer),
             AuditLog::Auth(t) => t.serialize(serializer),

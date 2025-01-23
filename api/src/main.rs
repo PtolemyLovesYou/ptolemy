@@ -1,8 +1,5 @@
 use api::{
-    crud::auth::admin::ensure_sysadmin,
-    error::ApiError,
-    state::AppState,
-    routes::get_router,
+    crud::auth::admin::ensure_sysadmin, error::ApiError, routes::get_router, state::AppState,
 };
 use tracing::error;
 

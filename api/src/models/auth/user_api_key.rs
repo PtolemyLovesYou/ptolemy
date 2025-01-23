@@ -1,5 +1,5 @@
-use crate::models::auth::user::User;
 use super::prelude::*;
+use crate::models::auth::user::User;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;

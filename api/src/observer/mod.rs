@@ -13,7 +13,9 @@ pub async fn observer_service(state: ApiAppState) -> ObserverServer<MyObserver> 
     ObserverServer::new(service)
 }
 
-pub async fn authentication_service(state: ApiAppState) -> ObserverAuthenticationServer<MyObserverAuthentication> {
+pub async fn authentication_service(
+    state: ApiAppState,
+) -> ObserverAuthenticationServer<MyObserverAuthentication> {
     let service = self::service::MyObserverAuthentication::new(state.clone()).await;
 
     ObserverAuthenticationServer::new(service)

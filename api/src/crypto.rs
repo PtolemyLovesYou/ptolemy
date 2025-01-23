@@ -1,3 +1,4 @@
+use crate::error::AuthError;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -10,9 +11,8 @@ use ring::{
 };
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
-use uuid::Uuid;
-use crate::error::AuthError;
 use tracing::{error, info};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClaimType {
@@ -122,14 +122,12 @@ where
     }
 
     pub fn generate_auth_token(&self, secret: &[u8]) -> ClaimsResult<String> {
-        Ok(encode(
-            &Header::default(),
-            &self,
-            &EncodingKey::from_secret(secret),
-        ).map_err(|e| {
-            error!("Failed to generate auth token: {}", e);
-            AuthError::InternalServerError
-        })?)
+        Ok(
+            encode(&Header::default(), &self, &EncodingKey::from_secret(secret)).map_err(|e| {
+                error!("Failed to generate auth token: {}", e);
+                AuthError::InternalServerError
+            })?,
+        )
     }
 
     pub fn from_token(token: Option<String>, secret: &[u8]) -> ClaimsResult<Option<Self>> {
@@ -142,7 +140,8 @@ where
             &token,
             &DecodingKey::from_secret(secret),
             &Validation::default(),
-        ).map_err(|e| {
+        )
+        .map_err(|e| {
             info!("Failed to decode auth token: {}", e);
             AuthError::InvalidToken
         })?;

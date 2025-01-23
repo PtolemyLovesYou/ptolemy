@@ -96,7 +96,7 @@ impl AppState {
                     match crate::crud::audit::insert_audit_logs(&mut conn, msg).await {
                         Ok(_) => {
                             tracing::debug!("Successfully inserted {} audit logs", n_msgs);
-                        },
+                        }
                         Err(e) => {
                             tracing::error!("Failed to insert audit logs: {}", e.to_string());
                         }

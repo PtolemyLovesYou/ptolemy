@@ -1,6 +1,6 @@
+use super::prelude::*;
 use crate::models::auth::enums::WorkspaceRoleEnum;
 use crate::models::auth::{user::User, workspace::Workspace};
-use super::prelude::*;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
