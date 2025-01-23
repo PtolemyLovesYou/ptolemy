@@ -1,6 +1,6 @@
 use crate::state::ApiAppState;
 use crate::error::AuthError;
-use crate::models::middleware::{ApiKeyHeader, JWTHeader};
+use crate::models::middleware::AuthHeader;
 use crate::crypto::Claims;
 use axum::{
     extract::State,
@@ -23,31 +23,44 @@ pub async fn headers_middleware(
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    // get Authorization header
-    let api_key = match req.headers().get("X-Api-Key") {
-        Some(header) => match get_header(Some(header)) {
-            Ok(token) => ApiKeyHeader::ApiKey(token.to_string()),
-            Err(e) => ApiKeyHeader::Error(e),
-        },
-        None => ApiKeyHeader::Error(AuthError::MissingHeader),
-    };
+    let api_key_header = req.headers().get("X-Api-Key");
+    let jwt_header = req.headers().get("Authorization");
 
-    req.extensions_mut().insert(api_key);
+    if api_key_header.is_some() && jwt_header.is_some() {
+        return Ok((StatusCode::BAD_REQUEST, "Please only provide one authentication method").into_response());
+    }
 
-    let jwt = match req.headers().get("Authorization") {
-        Some(header) => match get_header(Some(header)) {
-            Ok(token) => {
-                match Claims::from_token(token, state.jwt_secret.as_bytes()) {
-                    Ok(t) => JWTHeader::JWT(t),
-                    Err(_) => JWTHeader::Error(AuthError::InvalidToken),
-                }
+    if api_key_header.is_some() {
+        // get Authorization header
+        let api_key = match api_key_header {
+            Some(header) => match get_header(Some(header)) {
+                Ok(token) => AuthHeader::ApiKey(token.to_string()),
+                Err(e) => AuthHeader::Error(e),
             },
-            Err(e) => JWTHeader::Error(e),
-        },
-        None => JWTHeader::Error(AuthError::MissingHeader),
-    };
+            None => AuthHeader::Undeclared,
+        };
 
-    req.extensions_mut().insert(jwt);
+        req.extensions_mut().insert(api_key);
+        return Ok(next.run(req).await);
+    }
+
+    if jwt_header.is_some() {
+        let jwt = match jwt_header {
+            Some(header) => match get_header(Some(header)) {
+                Ok(token) => {
+                    match Claims::from_token(token, state.jwt_secret.as_bytes()) {
+                        Ok(t) => AuthHeader::JWT(t),
+                        Err(_) => AuthHeader::Error(AuthError::InvalidToken),
+                    }
+                },
+                Err(e) => AuthHeader::Error(e),
+            },
+            None => AuthHeader::Undeclared,
+        };
+
+        req.extensions_mut().insert(jwt);
+        return Ok(next.run(req).await);
+    }
 
     Ok(next.run(req).await)
 }

@@ -11,8 +11,9 @@ pub struct PyGraphQLClient(GraphQLClient);
 #[pymethods]
 impl PyGraphQLClient {
     #[new]
-    pub fn new(url: String, api_key: &str) -> Self {
-        Self(GraphQLClient::new(url, api_key, None))
+    #[pyo3(signature = (url, api_key, auth_method="api_key"))]
+    pub fn new(url: String, api_key: &str, auth_method: &str) -> Self {
+        Self(GraphQLClient::new(url, api_key, None, auth_method))
     }
 
     pub fn me(&self) -> PyResult<User> {

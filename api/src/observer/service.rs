@@ -2,8 +2,10 @@ use std::str::FromStr as _;
 
 use crate::{
     crud::auth::service_api_key as service_api_key_crud, crypto::{ClaimType, Claims}, error::CRUDError,
-    models::{auth::enums::ApiKeyPermissionEnum, middleware::AuthContext}, observer::records::EventRecords, state::ApiAppState,
+    // models::{auth::enums::ApiKeyPermissionEnum, middleware::AuthContext},
+    observer::records::EventRecords, state::ApiAppState,
 };
+use ptolemy::models::{auth::ServiceApiKey, enums::ApiKeyPermission};
 use ptolemy::generated::observer::{
     observer_authentication_server::ObserverAuthentication, observer_server::Observer,
     AuthenticationRequest, AuthenticationResponse, PublishRequest, PublishResponse, Record,
@@ -48,9 +50,7 @@ impl ObserverAuthentication for MyObserverAuthentication {
             .map_err(|e| {
                 error!("Failed to convert API key to string: {}", e);
                 Status::internal("Failed to convert API key to string")
-            })?
-            .strip_prefix("Bearer ")
-            .ok_or_else(|| Status::unauthenticated("Invalid API key"))?;
+            })?;
 
         let mut conn = match self.state.get_conn().await {
             Ok(c) => c,
@@ -114,24 +114,14 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
-        let auth_info = request.extensions().get::<AuthContext>().ok_or_else(|| {
-            error!("Workspace context not found in extensions");
-            Status::internal("Workspace context not found in extensions")
+        let sak = request.extensions().get::<ServiceApiKey>().ok_or_else(|| {
+            error!("Service API key not found in extensions");
+            Status::internal("Service API key not found in extensions")
         })?;
 
-        match auth_info {
-            AuthContext::WorkspaceJWT { workspace_id: _, service_api_key_id: _, permissions} => {
-                match permissions {
-                    ApiKeyPermissionEnum::ReadWrite | ApiKeyPermissionEnum::WriteOnly => (),
-                    _ => return Err(Status::permission_denied("Permission denied")),
-                }
-            },
-            AuthContext::Unauthorized(e) => {
-                return Err(Status::unauthenticated(format!("Unauthorized: {:?}", e)));
-            },
-            _ => {
-                return Err(Status::unauthenticated("Incorrect authorization method"));
-            }
+        match sak.permissions {
+            ApiKeyPermission::ReadWrite | ApiKeyPermission::WriteOnly => (),
+            _ => return Err(Status::permission_denied("Insufficient permissions to write")),
         };
 
         let records = request.into_inner().records;

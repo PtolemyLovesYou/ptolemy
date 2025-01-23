@@ -1,29 +1,20 @@
 use crate::error::{CRUDError, AuthError};
-use crate::models::auth::enums::ApiKeyPermissionEnum;
 use crate::crypto::Claims;
-use ptolemy::models::auth::User;
+use ptolemy::models::auth::{ServiceApiKey, User};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum AuthContext {
-    WorkspaceJWT {
-        workspace_id: Uuid,
-        service_api_key_id: Uuid,
-        permissions: ApiKeyPermissionEnum,
-    },
-    UserJWT {
-        user: User,
-    },
-    UserApiKey {
-        user: User,
-    },
+    WorkspaceJWT(ServiceApiKey),
+    UserJWT(User),
+    UserApiKey(User),
     Unauthorized(AuthError),
 }
 
 impl AuthContext {
     pub fn user(&self) -> Option<User> {
         match self {
-            AuthContext::UserJWT { user } => Some(user.clone()),
+            AuthContext::UserJWT(u) | AuthContext::UserApiKey(u) => Some(u.clone()),
             _ => None,
     }}
 }
@@ -85,22 +76,80 @@ impl AccessContext {
 }
 
 #[derive(Debug, Clone)]
-pub struct ApiKey(pub String);
+pub enum AuthResult<T> {
+    Ok(T),
+    Err(AuthError),
+}
 
-impl Into<String> for ApiKey {
-    fn into(self) -> String {
-        self.0
+impl<T> Into<Result<T, AuthError>> for AuthResult<T> {
+    fn into(self) -> Result<T, AuthError> {
+        match self {
+            AuthResult::Ok(t) => Ok(t),
+            AuthResult::Err(e) => Err(e),
+        }
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum ApiKeyHeader {
-    ApiKey(String),
-    Error(AuthError),
+impl<T> Into<AuthResult<T>> for Result<T, AuthError> {
+    fn into(self) -> AuthResult<T> {
+        match self {
+            Ok(t) => AuthResult::Ok(t),
+            Err(e) => AuthResult::Err(e),
+        }
+    }
 }
 
+// impl<T> AuthResult<T> {
+//     pub async fn log_error(self, app_state: &ApiAppState, api_access_audit_log_id: Uuid) -> AuthResult<T> {
+//         let err = match &self.0 {
+//             Err(e) => e,
+//             Ok(_) => return self,
+//         };
+//         let audit_log = AuthAuditLogCreate {
+//             api_access_audit_log_id,
+//             service_api_key_id: None,
+//             user_api_key_id: None,
+//             user_id: None,
+//             auth_method: AuthMethodEnum::ApiKey,
+//             success: false,
+//             failure_details: None,
+//         };
+
+//         self
+//     }
+// }
+
+#[derive(Debug, Clone)]
+pub enum AuthHeaderEnum<T> {
+    Ok(T),
+    Err(AuthError),
+    Undeclared,
+}
+
+pub type ApiKey = AuthHeaderEnum<String>;
+pub type JWT = AuthHeaderEnum<Claims<Uuid>>;
+
 #[derive(Clone, Debug)]
-pub enum JWTHeader {
+pub enum AuthHeader {
+    ApiKey(String),
     JWT(Claims<Uuid>),
     Error(AuthError),
+    Undeclared,
+}
+
+impl AuthHeader {
+    pub fn is_valid(&self) -> bool {
+        match self {
+            AuthHeader::ApiKey(_) => true,
+            AuthHeader::JWT(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_provided(&self) -> bool {
+        match self {
+            AuthHeader::Undeclared => false,
+            _ => true
+        }
+    }
 }

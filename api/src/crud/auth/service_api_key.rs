@@ -1,5 +1,6 @@
 use crate::crypto::{generate_api_key, PasswordHandler};
 use crate::delete_db_obj;
+use crate::consts::SERVICE_API_KEY_PREFIX;
 use crate::error::CRUDError;
 use crate::generated::auth_schema::{service_api_key, workspace};
 use crate::models::auth::enums::ApiKeyPermissionEnum;
@@ -56,7 +57,7 @@ pub async fn create_service_api_key(
     valid_for: Option<Duration>,
     password_handler: &PasswordHandler,
 ) -> Result<(Uuid, String), CRUDError> {
-    let api_key = generate_api_key("pt-sk").await;
+    let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
     let key_hash = password_handler.hash_password(&api_key);
     let expires_at = match valid_for {
         Some(duration) => Some(Utc::now() + duration),

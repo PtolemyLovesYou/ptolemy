@@ -10,6 +10,21 @@ pub enum AuthError {
     InternalServerError,
     NotFoundError,
     InvalidAuthMethod,
+    MultipleAuthMethods
+}
+
+impl Into<StatusCode> for AuthError {
+    fn into(self) -> StatusCode {
+        match self {
+            AuthError::InvalidToken => StatusCode::UNAUTHORIZED,
+            AuthError::MissingHeader => StatusCode::UNAUTHORIZED,
+            AuthError::MalformedHeader => StatusCode::UNAUTHORIZED,
+            AuthError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::NotFoundError => StatusCode::NOT_FOUND,
+            AuthError::InvalidAuthMethod => StatusCode::BAD_REQUEST,
+            AuthError::MultipleAuthMethods => StatusCode::BAD_REQUEST
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

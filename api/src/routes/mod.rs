@@ -1,9 +1,10 @@
 use self::graphql::graphql_handler;
 use crate::{
     middleware::{
-        auth::{api_key_auth_middleware, jwt_middleware},
+        // auth::{api_key_auth_middleware, jwt_middleware},
+        master::master_auth_middleware,
         trace_layer_rest,
-        headers::headers_middleware,
+        // headers::headers_middleware,
     },
     state::ApiAppState,
     observer::{authentication_service, observer_service},
@@ -41,7 +42,7 @@ pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
             "/graphql",
             graphql_router!(state, state.enable_graphiql).await,
         )
-        .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
+        // .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
         .with_state(state.clone())
 }
 
@@ -51,7 +52,6 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
             "/graphql",
             graphql_router!(state, state.enable_graphiql).await,
         )
-        .layer(from_fn_with_state(state.clone(), jwt_middleware))
         .with_state(state.clone())
 }
 
@@ -66,22 +66,14 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .routes()
         .add_service(authentication_service(state.clone()).await)
         .add_service(observer_service(state.clone()).await)
-        .into_axum_router()
-        .layer(from_fn_with_state(
-            state.clone(),
-            jwt_middleware,
-        ));
+        .into_axum_router();
 
     Router::new()
         .merge(grpc_router)
         .merge(http_router)
         .layer(from_fn_with_state(
             state.clone(),
-            headers_middleware,
-        ))
-        .layer(from_fn_with_state(
-            state.clone(),
-            crate::middleware::request_context::request_context_rest_layer,
+            master_auth_middleware,
         ))
         .layer(trace_layer_rest())
 }
