@@ -111,10 +111,7 @@ impl UserMutation {
             }
         };
 
-        let duration = match duration_days {
-            None => None,
-            Some(days) => Some(days as i64).map(chrono::Duration::days),
-        };
+        let duration = duration_days.map(|days| chrono::Duration::days(days as i64));
 
         match user_api_key_crud::create_user_api_key(
             &mut conn,

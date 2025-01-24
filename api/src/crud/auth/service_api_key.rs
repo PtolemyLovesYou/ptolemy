@@ -60,10 +60,7 @@ pub async fn create_service_api_key(
 ) -> Result<(Uuid, String), CRUDError> {
     let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
     let key_hash = password_handler.hash_password(&api_key);
-    let expires_at = match valid_for {
-        Some(duration) => Some(Utc::now() + duration),
-        None => None,
-    };
+    let expires_at = valid_for.map(|d| Utc::now() + d);
 
     let create_model = ServiceApiKeyCreate {
         id: None,

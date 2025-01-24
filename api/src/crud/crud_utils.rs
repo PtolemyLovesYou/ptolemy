@@ -13,7 +13,7 @@ macro_rules! delete_db_obj {
                         .and($table_name::deleted_at.is_null()),
                 )
                 .set((
-                    $table_name::deleted_at.eq(Utc::now()),
+                    $table_name::deleted_at.eq(chrono::Utc::now()),
                     $table_name::deletion_reason.eq(deletion_reason),
                 ))
                 .returning($table_name::id)

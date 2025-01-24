@@ -5,7 +5,6 @@ use crate::{
     models::{Workspace, WorkspaceCreate},
     state::DbConnection,
 };
-use chrono::Utc;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
