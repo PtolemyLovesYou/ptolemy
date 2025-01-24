@@ -18,7 +18,10 @@ pub struct ApiAccessAuditLogCreate {
 impl ApiAccessAuditLogCreate {
     pub fn from_axum_request(req: &Request<Body>, request_id: Option<Uuid>) -> Self {
         let source = Some(req.uri().path().to_string());
-        let ip_address = req.extensions().get::<ConnectInfo<SocketAddr>>().map(|i| IpNet::from(i.ip()));
+        let ip_address = req
+            .extensions()
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|i| IpNet::from(i.ip()));
 
         Self {
             id: Uuid::new_v4(),

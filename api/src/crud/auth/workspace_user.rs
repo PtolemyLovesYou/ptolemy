@@ -2,9 +2,9 @@ use crate::{
     delete_db_obj,
     error::CRUDError,
     generated::auth_schema::{users, workspace, workspace_user},
+    insert_obj_traits,
     models::{User, Workspace, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
     state::DbConnection,
-    insert_obj_traits,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

@@ -79,7 +79,8 @@ async fn validate_api_key_header(
         .await
         {
             Ok(u) => {
-                req.extensions_mut().insert::<ptolemy::models::auth::User>(u.into());
+                req.extensions_mut()
+                    .insert::<ptolemy::models::auth::User>(u.into());
                 return Ok(());
             }
             Err(_) => return Err(AuthError::NotFoundError),
@@ -105,7 +106,8 @@ async fn validate_jwt_header(
         ClaimType::UserJWT => {
             match crate::crud::auth::user::get_user(&mut conn, claims.sub()).await {
                 Ok(u) => {
-                    req.extensions_mut().insert::<ptolemy::models::auth::User>(u.into());
+                    req.extensions_mut()
+                        .insert::<ptolemy::models::auth::User>(u.into());
                     Ok(())
                 }
                 Err(_) => Err(AuthError::NotFoundError),
@@ -119,7 +121,8 @@ async fn validate_jwt_header(
             .await
             {
                 Ok(sak) => {
-                    req.extensions_mut().insert::<ptolemy::models::auth::ServiceApiKey>(sak.into());
+                    req.extensions_mut()
+                        .insert::<ptolemy::models::auth::ServiceApiKey>(sak.into());
                     Ok(())
                 }
                 Err(_) => Err(AuthError::NotFoundError),

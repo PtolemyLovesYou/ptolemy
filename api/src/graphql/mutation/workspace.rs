@@ -44,15 +44,16 @@ impl WorkspaceMutation {
             );
         }
 
-        let workspace = match WorkspaceCreate::insert_one_returning_obj(&mut conn, &workspace_data).await {
-            Ok(w) => w,
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "workspace",
-                    format!("Failed to create workspace: {:?}", e),
-                )
-            }
-        };
+        let workspace =
+            match WorkspaceCreate::insert_one_returning_obj(&mut conn, &workspace_data).await {
+                Ok(w) => w,
+                Err(e) => {
+                    return WorkspaceResult::err(
+                        "workspace",
+                        format!("Failed to create workspace: {:?}", e),
+                    )
+                }
+            };
 
         // add workspace admin
         let admin_id = match admin_user_id {

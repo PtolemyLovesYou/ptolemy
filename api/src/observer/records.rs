@@ -1,8 +1,4 @@
-use crate::{
-    crud::prelude::*,
-    models::records::*,
-    state::DbConnection,
-};
+use crate::{crud::prelude::*, models::records::*, state::DbConnection};
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;
@@ -115,7 +111,9 @@ impl EventRecords {
         RuntimeRecord::insert_many_returning_id(conn, &self.runtime_records)
             .await
             .ok();
-        IORecord::insert_many_returning_id(conn, &self.io_records).await.ok();
+        IORecord::insert_many_returning_id(conn, &self.io_records)
+            .await
+            .ok();
         MetadataRecord::insert_many_returning_id(conn, &self.metadata_records)
             .await
             .ok();

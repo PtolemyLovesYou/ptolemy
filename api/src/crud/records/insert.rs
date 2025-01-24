@@ -1,8 +1,4 @@
-use crate::{
-    models::records::*,
-    generated::records_schema::*,
-    insert_obj_traits,
-};
+use crate::{generated::records_schema::*, insert_obj_traits, models::records::*};
 use diesel_async::RunQueryDsl;
 
 insert_obj_traits!(SystemEventRecord, system_event);

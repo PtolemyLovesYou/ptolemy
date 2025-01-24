@@ -38,7 +38,8 @@ pub struct RequestContext {
 impl RequestContext {
     pub fn from_axum_request(req: &Request<axum::body::Body>) -> Self {
         let source = Some(req.uri().path().to_string());
-        let ip_address = req.extensions()
+        let ip_address = req
+            .extensions()
             .get::<ConnectInfo<SocketAddr>>()
             .map(|i| IpNet::from_str(&i.to_string()).unwrap());
 
