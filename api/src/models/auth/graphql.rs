@@ -5,8 +5,7 @@ use crate::{
         workspace_user as workspace_user_crud,
     },
     graphql::state::JuniperAppState,
-    models::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum},
-    models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser},
+    models::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum, ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser, IAMAuditLogCreate},
 };
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, FieldResult};
@@ -46,20 +45,72 @@ impl Workspace {
     ) -> FieldResult<Vec<WorkspaceUser>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
-        let users = workspace_user_crud::search_workspace_users(
+        let users_raw = workspace_user_crud::search_workspace_users(
             &mut conn,
             &Some(self.id),
             &None,
             &user_id,
             &username,
         )
-        .await
-        .map_err(|e| e.juniper_field_error())?
-        .into_iter()
-        .map(|(wk_usr, _wk, _usr)| wk_usr)
-        .collect();
+        .await;
 
-        Ok(users)
+        match users_raw {
+            Ok(us) => {
+                let (wu_ids, wk_ids, usr_ids, users) = us.into_iter().fold(
+                    (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+                    |(mut wu_ids, mut wk_ids, mut usr_ids, mut wk_usrs), (wk_usr, _wk, _usr)| {
+                        wu_ids.push(wk_usr.id);
+                        wk_ids.push(wk_usr.workspace_id);
+                        usr_ids.push(wk_usr.user_id);
+                        wk_usrs.push(wk_usr);
+                        (wu_ids, wk_ids, usr_ids, wk_usrs)
+                    }
+                );
+
+                let audit_records: Vec<IAMAuditLogCreate> = [
+                    ("workspace_user", &wu_ids),
+                    ("workspace", &wk_ids), 
+                    ("users", &usr_ids),
+                ]
+                .into_iter()
+                .flat_map(|(entity_type, ids)| {
+                    ids.into_iter().map(move |id| {
+                        IAMAuditLogCreate::new_read(
+                            ctx.auth_context.api_access_audit_log_id.clone(),
+                            Some(ctx.auth_context.api_auth_audit_log_id.clone()),
+                            Some(*id),
+                            entity_type.to_string(),
+                            None,
+                            ctx.query_metadata.clone(),
+                        )
+                    })
+                })
+                .collect();
+
+                ctx.state.audit_writer.write_many(audit_records.into_iter().map(|r| r.into())).await;
+
+                Ok(users)
+            },
+            Err(e) => {
+                let audit_records = vec![
+                    "workspace",
+                    "workspace_user",
+                    "users",
+                ].into_iter().map(|entity_type| {
+                    IAMAuditLogCreate::new_read(
+                        ctx.auth_context.api_access_audit_log_id.clone(),
+                        Some(ctx.auth_context.api_auth_audit_log_id.clone()),
+                        None,
+                        entity_type.to_string(),
+                        Some(e.to_string()),
+                        ctx.query_metadata.clone(),
+                    )
+                }).collect::<Vec<IAMAuditLogCreate>>();
+
+                ctx.state.audit_writer.write_many(audit_records.into_iter().map(|r| r.into())).await;
+                Err(e.juniper_field_error())
+            }
+        }
     }
 
     async fn service_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<ServiceApiKey>> {

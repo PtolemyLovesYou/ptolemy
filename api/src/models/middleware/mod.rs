@@ -3,6 +3,12 @@ use uuid::Uuid;
 
 pub type AuthResult<T> = Result<T, AuthError>;
 
+#[derive(Clone, Debug)]
+pub struct AuthContext {
+    pub api_access_audit_log_id: Uuid,
+    pub api_auth_audit_log_id: Uuid,
+}
+
 pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthResult<T>>> {
     fn as_result(&self) -> Result<Option<&T>, AuthError>;
 

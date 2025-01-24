@@ -77,6 +77,12 @@ where
         }
     }
 
+    pub async fn write_many(&self, t: impl IntoIterator<Item = T>) {
+        for t in t {
+            self.write(t).await;
+        }
+    }
+
     pub async fn shutdown(&self) -> Result<(), mpsc::error::SendError<Message<T>>> {
         self.tx.send(Message::Shutdown).await
     }

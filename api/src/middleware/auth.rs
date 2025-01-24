@@ -5,7 +5,7 @@ use crate::{
     crypto::{ClaimType, UuidClaims},
     error::AuthError,
     models::{
-        middleware::{ApiKey, AuthHeader, AuthResult, JWT},
+        middleware::{ApiKey, AuthHeader, AuthResult, JWT, AuthContext},
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
     },
     state::ApiAppState,
@@ -174,7 +174,10 @@ pub async fn master_auth_middleware(
             failure_details,
         };
 
+        let api_auth_audit_log_id = log.id.clone();
+
         state.audit_writer.write(AuditLog::Auth(log)).await;
+        req.extensions_mut().insert(AuthContext { api_access_audit_log_id, api_auth_audit_log_id });
     }
 
     if !api_key_header.undeclared() {
@@ -198,7 +201,10 @@ pub async fn master_auth_middleware(
             failure_details,
         };
 
+        let api_auth_audit_log_id = log.id.clone();
+
         state.audit_writer.write(AuditLog::Auth(log)).await;
+        req.extensions_mut().insert(AuthContext { api_access_audit_log_id, api_auth_audit_log_id });
     }
 
     Ok(next.run(req).await)

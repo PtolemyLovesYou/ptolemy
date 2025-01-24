@@ -1,10 +1,15 @@
-use crate::generated::audit_schema::*;
+use crate::{
+    generated::audit_schema::*,
+    crypto::generate_sha256,
+};
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
 use serde::Serialize;
 use std::net::SocketAddr;
 use uuid::Uuid;
+
+use super::OperationTypeEnum;
 
 #[derive(Debug, Insertable, Serialize)]
 #[diesel(table_name = api_access_audit_logs)]
@@ -89,13 +94,37 @@ pub struct IAMAuditLogCreate {
     pub id: Uuid,
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Option<Uuid>,
-    pub resource_id: Uuid,
+    pub resource_id: Option<Uuid>,
     pub table_name: String,
     pub operation_type: super::enums::OperationTypeEnum,
     pub old_state: Option<serde_json::Value>,
     pub new_state: Option<serde_json::Value>,
     pub failure_reason: Option<String>,
     pub query_metadata: Option<serde_json::Value>,
+}
+
+impl IAMAuditLogCreate {
+    pub fn new_read(
+        api_access_audit_log_id: Uuid,
+        api_auth_audit_log_id: Option<Uuid>,
+        resource_id: Option<Uuid>,
+        table_name: String,
+        failure_reason: Option<String>,
+        query_metadata: Option<serde_json::Value>
+    ) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            api_access_audit_log_id,
+            api_auth_audit_log_id,
+            resource_id,
+            table_name,
+            operation_type: super::enums::OperationTypeEnum::Read,
+            old_state: None,
+            new_state: None,
+            failure_reason,
+            query_metadata,
+        }
+    }
 }
 
 #[derive(Debug, Insertable, Serialize)]
@@ -106,11 +135,36 @@ pub struct RecordAuditLogCreate {
     pub api_auth_audit_log_id: Option<Uuid>,
     pub workspace_id: Uuid,
     pub table_name: String,
-    pub hashed_id: Vec<Option<String>>,
+    pub hashed_id: Vec<String>,
     pub operation_type: super::enums::OperationTypeEnum,
     pub batch_id: Option<Uuid>,
     pub failure_reason: Option<String>,
     pub query_metadata: Option<serde_json::Value>,
+}
+
+impl RecordAuditLogCreate {
+    pub fn new_read(
+        table_name: String,
+        api_access_audit_log_id: Uuid,
+        api_auth_audit_log_id: Option<Uuid>,
+        workspace_id: Uuid,
+        hashed_id: Vec<Uuid>,
+        failure_reason: Option<String>,
+        query_metadata: Option<serde_json::Value>
+    ) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            api_access_audit_log_id,
+            api_auth_audit_log_id,
+            workspace_id,
+            table_name,
+            hashed_id: hashed_id.into_iter().map(|i| generate_sha256(&i.to_string())).collect(),
+            operation_type: OperationTypeEnum::Read,
+            batch_id: None,
+            failure_reason,
+            query_metadata
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -132,5 +186,29 @@ impl Serialize for AuditLog {
             AuditLog::IAM(t) => t.serialize(serializer),
             AuditLog::Record(t) => t.serialize(serializer),
         }
+    }
+}
+
+impl Into<AuditLog> for ApiAccessAuditLogCreate {
+    fn into(self) -> AuditLog {
+        AuditLog::ApiAccess(self)
+    }
+}
+
+impl Into<AuditLog> for AuthAuditLogCreate {
+    fn into(self) -> AuditLog {
+        AuditLog::Auth(self)
+    }
+}
+
+impl Into<AuditLog> for IAMAuditLogCreate {
+    fn into(self) -> AuditLog {
+        AuditLog::IAM(self)
+    }
+}
+
+impl Into<AuditLog> for RecordAuditLogCreate {
+    fn into(self) -> AuditLog {
+        AuditLog::Record(self)
     }
 }

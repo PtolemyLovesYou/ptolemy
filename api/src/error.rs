@@ -47,6 +47,12 @@ pub enum CRUDError {
     InternalError,
 }
 
+impl std::fmt::Display for CRUDError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl CRUDError {
     pub fn http_status_code(&self) -> StatusCode {
         match self {

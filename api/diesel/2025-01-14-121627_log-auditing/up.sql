@@ -42,20 +42,23 @@ create table record_audit_logs (
     api_auth_audit_log_id uuid references api_auth_audit_logs(id),
     workspace_id uuid not null references workspace(id),
     table_name varchar not null,
-    hashed_id varchar[] not null,
+    hashed_id varchar[],
 
     operation_type operation_type not null,
     -- Optional - for batch operation correlation
     batch_id uuid,
     failure_reason varchar,
-    query_metadata jsonb
+    query_metadata jsonb,
+    constraint check_resource_or_failure check (
+        hashed_id is not null or failure_reason is not null
+    )
 );
 
 create table iam_audit_logs (
     id uuid primary key default gen_random_uuid(),
     api_access_audit_log_id uuid not null references api_access_audit_logs(id),
     api_auth_audit_log_id uuid references api_auth_audit_logs(id),
-    resource_id uuid not null,
+    resource_id uuid,
     table_name varchar not null,
 
     operation_type operation_type not null,
@@ -64,7 +67,10 @@ create table iam_audit_logs (
     new_state jsonb,
 
     failure_reason varchar,
-    query_metadata jsonb
+    query_metadata jsonb,
+    constraint check_resource_or_failure check (
+        resource_id is not null or failure_reason is not null
+    )
 );
 
 -- Soft deletion for iam tables

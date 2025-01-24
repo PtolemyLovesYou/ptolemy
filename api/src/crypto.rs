@@ -154,5 +154,5 @@ pub type UuidClaims = Claims<Uuid>;
 
 pub fn generate_sha256(data: &str) -> String {
     let digest = digest(&SHA256, data.as_bytes());
-    String::from_utf8_lossy(digest.as_ref()).to_string()
+    hex::encode(digest.as_ref())
 }
