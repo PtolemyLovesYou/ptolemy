@@ -110,25 +110,47 @@ pub struct IAMAuditLogCreate {
 crate::impl_has_id!(IAMAuditLogCreate);
 
 impl IAMAuditLogCreate {
-    pub fn new_read(
+    pub fn new_reads(
         api_access_audit_log_id: Uuid,
         api_auth_audit_log_id: Option<Uuid>,
-        resource_id: Option<Uuid>,
+        resource_ids: Option<Vec<Uuid>>,
         table_name: String,
         failure_reason: Option<String>,
         query_metadata: Option<serde_json::Value>
-    ) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            api_access_audit_log_id,
-            api_auth_audit_log_id,
-            resource_id,
-            table_name,
-            operation_type: super::enums::OperationTypeEnum::Read,
-            old_state: None,
-            new_state: None,
-            failure_reason,
-            query_metadata,
+    ) -> Vec<Self> {
+        match resource_ids {
+            None => {
+                vec![
+                    Self {
+                        id: Uuid::new_v4(),
+                        api_access_audit_log_id,
+                        api_auth_audit_log_id,
+                        resource_id: None,
+                        table_name: table_name.clone(),
+                        operation_type: super::enums::OperationTypeEnum::Read,
+                        old_state: None,
+                        new_state: None,
+                        failure_reason,
+                        query_metadata,
+                    }
+                ]
+            },
+            Some(ids) => {
+                ids.into_iter()
+                    .map(|id| Self {
+                        id: Uuid::new_v4(),
+                        api_access_audit_log_id,
+                        api_auth_audit_log_id,
+                        resource_id: Some(id),
+                        table_name: table_name.clone(),
+                        operation_type: super::enums::OperationTypeEnum::Read,
+                        old_state: None,
+                        new_state: None,
+                        failure_reason: failure_reason.clone(),
+                        query_metadata: query_metadata.clone(),
+                    })
+                    .collect()
+            }
         }
     }
 }

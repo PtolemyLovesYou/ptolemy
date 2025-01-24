@@ -58,32 +58,32 @@ impl Workspace {
             Ok(us) => {
                 let users: Vec<WorkspaceUser> = us.into_iter().map(|(wk_user, _, _)| wk_user).collect();
 
-                let audit_records: Vec<IAMAuditLogCreate> = users.iter().map(|u| {
-                    IAMAuditLogCreate::new_read(
-                        ctx.auth_context.api_access_audit_log_id.clone(),
-                        Some(ctx.auth_context.api_auth_audit_log_id.clone()),
-                        Some(u.id),
-                        "workspace_user".to_string(),
-                        None,
-                        ctx.query_metadata.clone(),
-                    )
-                }).collect();
+                let user_ids: Vec<Uuid> = users.iter().map(|u| u.id.clone()).collect();
 
-                ctx.state.audit_writer.write_many(audit_records.into_iter().map(|r| r.into())).await;
+                let audit_records = IAMAuditLogCreate::new_reads(
+                    ctx.auth_context.api_access_audit_log_id.clone(),
+                    Some(ctx.auth_context.api_auth_audit_log_id.clone()),
+                    Some(user_ids),
+                    "workspace_user".to_string(),
+                    None,
+                    ctx.query_metadata.clone(),
+                ).into_iter().map(|r| r.into());
+
+                ctx.state.audit_writer.write_many(audit_records).await;
 
                 Ok(users)
             },
             Err(e) => {
-                ctx.state.audit_writer.write(
-                    IAMAuditLogCreate::new_read(
-                        ctx.auth_context.api_access_audit_log_id.clone(),
-                        Some(ctx.auth_context.api_auth_audit_log_id.clone()),
-                        None,
-                        "workspace_user".to_string(),
-                        Some(e.to_string()),
-                        ctx.query_metadata.clone(),
-                    ).into()
-                ).await;
+                let audit_record = IAMAuditLogCreate::new_reads(
+                    ctx.auth_context.api_access_audit_log_id.clone(),
+                    Some(ctx.auth_context.api_auth_audit_log_id.clone()),
+                    None,
+                    "workspace_user".to_string(),
+                    Some(e.to_string()),
+                    ctx.query_metadata.clone(),
+                ).into_iter().map(|r| r.into());
+
+                ctx.state.audit_writer.write_many(audit_record).await;
 
                 Err(e.juniper_field_error())
             }
