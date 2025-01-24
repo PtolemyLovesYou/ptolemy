@@ -1,10 +1,9 @@
 use crate::{
-    crud::auth::user::{change_user_password, create_user, get_all_users},
+    crud::{auth::user::{change_user_password, get_all_users}, prelude::*},
     error::CRUDError,
     models::UserCreate,
     state::ApiAppState,
 };
-use tracing::error;
 
 pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), CRUDError> {
     let mut conn = state.get_conn().await?;
@@ -30,23 +29,13 @@ pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), CRUDError> {
         }
     }
 
-    match create_user(
-        &mut conn,
-        &UserCreate {
-            username: user,
-            display_name: Some("SYSADMIN".to_string()),
-            is_sysadmin: true,
-            is_admin: false,
-            password: pass,
-        },
-        &state.password_handler,
-    )
-    .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to create sysadmin: {:?}", e);
-            Err(CRUDError::InsertError)
-        }
-    }
+    UserCreate::insert_one_returning_id(&mut conn, &UserCreate {
+        username: user,
+        display_name: Some("SYSADMIN".to_string()),
+        is_sysadmin: true,
+        is_admin: false,
+        password_hash: state.password_handler.hash_password(&pass),
+    }).await?;
+
+    Ok(())
 }

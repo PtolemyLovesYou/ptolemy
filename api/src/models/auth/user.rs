@@ -1,7 +1,6 @@
 use crate::models::auth::enums::UserStatusEnum;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -34,10 +33,11 @@ impl Into<ptolemy::models::auth::User> for User {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
+#[derive(Debug, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = crate::generated::auth_schema::users)]
 pub struct UserCreate {
     pub username: String,
-    pub password: String,
+    pub password_hash: String,
     pub display_name: Option<String>,
     pub is_sysadmin: bool,
     pub is_admin: bool,

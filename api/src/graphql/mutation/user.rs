@@ -1,20 +1,30 @@
 use crate::{
-    crud::auth::{user as user_crud, user_api_key as user_api_key_crud},
+    crud::{auth::{user as user_crud, user_api_key as user_api_key_crud}, prelude::*},
     graphql::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
     },
     models::UserCreate,
 };
-use juniper::graphql_object;
+use juniper::{graphql_object, GraphQLInputObject};
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
+pub struct UserInput {
+    pub username: String,
+    pub password: String,
+    pub display_name: Option<String>,
+    pub is_sysadmin: bool,
+    pub is_admin: bool,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct UserMutation;
 
 #[graphql_object]
 impl UserMutation {
-    async fn create(&self, ctx: &JuniperAppState, user_data: UserCreate) -> UserResult {
+    async fn create(&self, ctx: &JuniperAppState, user_data: UserInput) -> UserResult {
         let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
@@ -48,7 +58,15 @@ impl UserMutation {
             );
         }
 
-        match user_crud::create_user(&mut conn, &user_data, &ctx.state.password_handler).await {
+        let user_create = UserCreate {
+            username: user_data.username,
+            password_hash: ctx.state.password_handler.hash_password(&user_data.password),
+            display_name: user_data.display_name,
+            is_sysadmin: user_data.is_sysadmin,
+            is_admin: user_data.is_admin,
+        };
+
+        match UserCreate::insert_one_returning_obj(&mut conn, &user_create).await {
             Ok(result) => UserResult(Ok(result)),
             Err(e) => UserResult::err("user", format!("Failed to create user: {:?}", e)),
         }

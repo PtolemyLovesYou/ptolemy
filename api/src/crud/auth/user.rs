@@ -5,52 +5,14 @@ use crate::{
     generated::auth_schema::users,
     models::{User, UserCreate, UserStatusEnum},
     state::DbConnection,
+    insert_obj_traits,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
-/// Creates a new user in the database.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `user` - The `UserCreate` object containing the new user's information.
-///
-/// # Returns
-///
-/// Returns a `Result` containing the UUID of the newly created user.
-/// Returns `CRUDError::InsertError` if there is an error creating the user.
-pub async fn create_user(
-    conn: &mut DbConnection<'_>,
-    user: &UserCreate,
-    password_handler: &PasswordHandler,
-) -> Result<User, CRUDError> {
-    let hashed_password = password_handler.hash_password(&user.password);
-
-    match diesel::insert_into(users::table)
-        .values((
-            users::username.eq(&user.username),
-            users::display_name.eq(&user.display_name),
-            users::is_sysadmin.eq(&user.is_sysadmin),
-            users::is_admin.eq(&user.is_admin),
-            users::password_hash.eq(&hashed_password),
-        ))
-        .returning(User::as_returning())
-        .get_result(conn)
-        .await
-    {
-        Ok(user) => Ok(user),
-        Err(e) => {
-            error!("Failed to create user: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::InsertError),
-            }
-        }
-    }
-}
+insert_obj_traits!(UserCreate, users, User);
 
 pub async fn search_users(
     conn: &mut DbConnection<'_>,
