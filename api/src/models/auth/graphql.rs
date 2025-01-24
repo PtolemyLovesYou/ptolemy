@@ -56,58 +56,35 @@ impl Workspace {
 
         match users_raw {
             Ok(us) => {
-                let (wu_ids, wk_ids, usr_ids, users) = us.into_iter().fold(
-                    (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-                    |(mut wu_ids, mut wk_ids, mut usr_ids, mut wk_usrs), (wk_usr, _wk, _usr)| {
-                        wu_ids.push(wk_usr.id);
-                        wk_ids.push(wk_usr.workspace_id);
-                        usr_ids.push(wk_usr.user_id);
-                        wk_usrs.push(wk_usr);
-                        (wu_ids, wk_ids, usr_ids, wk_usrs)
-                    }
-                );
+                let users: Vec<WorkspaceUser> = us.into_iter().map(|(wk_user, _, _)| wk_user).collect();
 
-                let audit_records: Vec<IAMAuditLogCreate> = [
-                    ("workspace_user", &wu_ids),
-                    ("workspace", &wk_ids), 
-                    ("users", &usr_ids),
-                ]
-                .into_iter()
-                .flat_map(|(entity_type, ids)| {
-                    ids.into_iter().map(move |id| {
-                        IAMAuditLogCreate::new_read(
-                            ctx.auth_context.api_access_audit_log_id.clone(),
-                            Some(ctx.auth_context.api_auth_audit_log_id.clone()),
-                            Some(*id),
-                            entity_type.to_string(),
-                            None,
-                            ctx.query_metadata.clone(),
-                        )
-                    })
-                })
-                .collect();
+                let audit_records: Vec<IAMAuditLogCreate> = users.iter().map(|u| {
+                    IAMAuditLogCreate::new_read(
+                        ctx.auth_context.api_access_audit_log_id.clone(),
+                        Some(ctx.auth_context.api_auth_audit_log_id.clone()),
+                        Some(u.id),
+                        "workspace_user".to_string(),
+                        None,
+                        ctx.query_metadata.clone(),
+                    )
+                }).collect();
 
                 ctx.state.audit_writer.write_many(audit_records.into_iter().map(|r| r.into())).await;
 
                 Ok(users)
             },
             Err(e) => {
-                let audit_records = vec![
-                    "workspace",
-                    "workspace_user",
-                    "users",
-                ].into_iter().map(|entity_type| {
+                ctx.state.audit_writer.write(
                     IAMAuditLogCreate::new_read(
                         ctx.auth_context.api_access_audit_log_id.clone(),
                         Some(ctx.auth_context.api_auth_audit_log_id.clone()),
                         None,
-                        entity_type.to_string(),
+                        "workspace_user".to_string(),
                         Some(e.to_string()),
                         ctx.query_metadata.clone(),
-                    )
-                }).collect::<Vec<IAMAuditLogCreate>>();
+                    ).into()
+                ).await;
 
-                ctx.state.audit_writer.write_many(audit_records.into_iter().map(|r| r.into())).await;
                 Err(e.juniper_field_error())
             }
         }
