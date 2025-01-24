@@ -1,7 +1,4 @@
-use crate::{
-    state::ApiAppState,
-    models::middleware::AuthContext,
-};
+use crate::{models::middleware::AuthContext, state::ApiAppState};
 
 // Define an AppState struct to hold both schema and context
 #[derive(Clone)]

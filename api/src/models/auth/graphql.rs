@@ -5,7 +5,10 @@ use crate::{
         workspace_user as workspace_user_crud,
     },
     graphql::state::JuniperAppState,
-    models::{ApiKeyPermissionEnum, UserStatusEnum, WorkspaceRoleEnum, ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser, IAMAuditLogCreate},
+    models::{
+        ApiKeyPermissionEnum, IAMAuditLogCreate, ServiceApiKey, User, UserApiKey, UserStatusEnum,
+        Workspace, WorkspaceRoleEnum, WorkspaceUser,
+    },
 };
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, FieldResult};
@@ -56,7 +59,8 @@ impl Workspace {
 
         match users_raw {
             Ok(us) => {
-                let users: Vec<WorkspaceUser> = us.into_iter().map(|(wk_user, _, _)| wk_user).collect();
+                let users: Vec<WorkspaceUser> =
+                    us.into_iter().map(|(wk_user, _, _)| wk_user).collect();
 
                 let user_ids: Vec<Uuid> = users.iter().map(|u| u.id.clone()).collect();
 
@@ -67,12 +71,14 @@ impl Workspace {
                     "workspace_user".to_string(),
                     None,
                     ctx.query_metadata.clone(),
-                ).into_iter().map(|r| r.into());
+                )
+                .into_iter()
+                .map(|r| r.into());
 
                 ctx.state.audit_writer.write_many(audit_records).await;
 
                 Ok(users)
-            },
+            }
             Err(e) => {
                 let audit_record = IAMAuditLogCreate::new_reads(
                     ctx.auth_context.api_access_audit_log_id.clone(),
@@ -81,7 +87,9 @@ impl Workspace {
                     "workspace_user".to_string(),
                     Some(e.to_string()),
                     ctx.query_metadata.clone(),
-                ).into_iter().map(|r| r.into());
+                )
+                .into_iter()
+                .map(|r| r.into());
 
                 ctx.state.audit_writer.write_many(audit_record).await;
 

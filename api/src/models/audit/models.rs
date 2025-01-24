@@ -1,7 +1,4 @@
-use crate::{
-    generated::audit_schema::*,
-    crypto::generate_sha256,
-};
+use crate::{crypto::generate_sha256, generated::audit_schema::*};
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
@@ -116,41 +113,38 @@ impl IAMAuditLogCreate {
         resource_ids: Option<Vec<Uuid>>,
         table_name: String,
         failure_reason: Option<String>,
-        query_metadata: Option<serde_json::Value>
+        query_metadata: Option<serde_json::Value>,
     ) -> Vec<Self> {
         match resource_ids {
             None => {
-                vec![
-                    Self {
-                        id: Uuid::new_v4(),
-                        api_access_audit_log_id,
-                        api_auth_audit_log_id,
-                        resource_id: None,
-                        table_name: table_name.clone(),
-                        operation_type: super::enums::OperationTypeEnum::Read,
-                        old_state: None,
-                        new_state: None,
-                        failure_reason,
-                        query_metadata,
-                    }
-                ]
-            },
-            Some(ids) => {
-                ids.into_iter()
-                    .map(|id| Self {
-                        id: Uuid::new_v4(),
-                        api_access_audit_log_id,
-                        api_auth_audit_log_id,
-                        resource_id: Some(id),
-                        table_name: table_name.clone(),
-                        operation_type: super::enums::OperationTypeEnum::Read,
-                        old_state: None,
-                        new_state: None,
-                        failure_reason: failure_reason.clone(),
-                        query_metadata: query_metadata.clone(),
-                    })
-                    .collect()
+                vec![Self {
+                    id: Uuid::new_v4(),
+                    api_access_audit_log_id,
+                    api_auth_audit_log_id,
+                    resource_id: None,
+                    table_name: table_name.clone(),
+                    operation_type: super::enums::OperationTypeEnum::Read,
+                    old_state: None,
+                    new_state: None,
+                    failure_reason,
+                    query_metadata,
+                }]
             }
+            Some(ids) => ids
+                .into_iter()
+                .map(|id| Self {
+                    id: Uuid::new_v4(),
+                    api_access_audit_log_id,
+                    api_auth_audit_log_id,
+                    resource_id: Some(id),
+                    table_name: table_name.clone(),
+                    operation_type: super::enums::OperationTypeEnum::Read,
+                    old_state: None,
+                    new_state: None,
+                    failure_reason: failure_reason.clone(),
+                    query_metadata: query_metadata.clone(),
+                })
+                .collect(),
         }
     }
 }
@@ -180,7 +174,7 @@ impl RecordAuditLogCreate {
         workspace_id: Uuid,
         hashed_id: Vec<Uuid>,
         failure_reason: Option<String>,
-        query_metadata: Option<serde_json::Value>
+        query_metadata: Option<serde_json::Value>,
     ) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -188,11 +182,14 @@ impl RecordAuditLogCreate {
             api_auth_audit_log_id,
             workspace_id,
             table_name,
-            hashed_id: hashed_id.into_iter().map(|i| generate_sha256(&i.to_string())).collect(),
+            hashed_id: hashed_id
+                .into_iter()
+                .map(|i| generate_sha256(&i.to_string()))
+                .collect(),
             operation_type: OperationTypeEnum::Read,
             batch_id: None,
             failure_reason,
-            query_metadata
+            query_metadata,
         }
     }
 }

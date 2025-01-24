@@ -27,7 +27,7 @@ macro_rules! insert_audit_logs {
                 $failed_logs.extend($records.into_iter().map(|l| serde_json::json!(l)));
             }
         }
-    }
+    };
 }
 
 impl AuditLog {

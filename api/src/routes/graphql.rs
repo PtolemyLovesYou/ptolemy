@@ -1,11 +1,14 @@
 use crate::{
     error::AuthError,
     graphql::{state::JuniperAppState, Mutation, Query, Schema},
-    state::ApiAppState,
     models::middleware::AuthContext,
+    state::ApiAppState,
 };
 use axum::{extract::State, Extension};
-use juniper::{graphql_value, http::GraphQLBatchRequest, EmptySubscription, FieldError, IntoFieldError, ScalarValue};
+use juniper::{
+    graphql_value, http::GraphQLBatchRequest, EmptySubscription, FieldError, IntoFieldError,
+    ScalarValue,
+};
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use ptolemy::models::auth::User;
 
@@ -42,7 +45,7 @@ pub async fn graphql_handler(
         state: state.clone(),
         user,
         query_metadata,
-        auth_context
+        auth_context,
     };
 
     let result = request.execute(&schema, &state_clone).await;
