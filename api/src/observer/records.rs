@@ -1,9 +1,6 @@
 use crate::{
     crud::prelude::*,
-    models::records::{
-        ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
-        SubsystemEventRecord, SystemEventRecord,
-    },
+    models::records::*,
     state::DbConnection,
 };
 use ptolemy::error::ParseError;

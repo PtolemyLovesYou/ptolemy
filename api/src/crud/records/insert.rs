@@ -1,11 +1,6 @@
 use crate::{
-    models::records::{
-        ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
-        SubsystemEventRecord, SystemEventRecord,
-    },
-    generated::records_schema::{
-        system_event, subsystem_event, component_event, subcomponent_event, io, metadata, runtime,
-    },
+    models::records::*,
+    generated::records_schema::*,
     insert_obj_traits,
 };
 use diesel_async::RunQueryDsl;
