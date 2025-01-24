@@ -3,6 +3,7 @@ use crate::{
         service_api_key as service_api_key_crud, workspace as workspace_crud,
         workspace_user as workspace_user_crud,
     },
+    crud::prelude::*,
     graphql::{
         mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
@@ -43,7 +44,7 @@ impl WorkspaceMutation {
             );
         }
 
-        let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
+        let workspace = match WorkspaceCreate::insert_one_returning_obj(&mut conn, &workspace_data).await {
             Ok(w) => w,
             Err(e) => {
                 return WorkspaceResult::err(
@@ -60,7 +61,7 @@ impl WorkspaceMutation {
             None => ctx.user.id.into(),
         };
 
-        match workspace_user_crud::create_workspace_user(
+        match WorkspaceUserCreate::insert_one_returning_id(
             &mut conn,
             &WorkspaceUserCreate {
                 workspace_id: workspace.id,
@@ -151,7 +152,7 @@ impl WorkspaceMutation {
             }
         }
 
-        match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
+        match WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &workspace_user).await {
             Ok(result) => WorkspaceUserResult(Ok(result)),
             Err(e) => WorkspaceUserResult::err(
                 "workspace_user",

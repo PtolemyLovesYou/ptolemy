@@ -4,42 +4,14 @@ use crate::{
     generated::auth_schema::{users, workspace, workspace_user},
     models::{User, Workspace, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
     state::DbConnection,
+    insert_obj_traits,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
-/// Creates a new entry in the workspace_user table.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `wk_user` - The WorkspaceUser to be inserted.
-///
-/// # Errors
-///
-/// This function will return `CRUDError::InsertError` if there is an error inserting the user into the database.
-pub async fn create_workspace_user(
-    conn: &mut DbConnection<'_>,
-    wk_user: &WorkspaceUserCreate,
-) -> Result<WorkspaceUser, CRUDError> {
-    match diesel::insert_into(workspace_user::table)
-        .values(wk_user)
-        .returning(WorkspaceUser::as_returning())
-        .get_result(conn)
-        .await
-    {
-        Ok(w) => Ok(w),
-        Err(e) => {
-            error!("Unable to add workspace_user: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::InsertError),
-            }
-        }
-    }
-}
+insert_obj_traits!(WorkspaceUserCreate, workspace_user, WorkspaceUser);
 
 pub async fn get_workspace_user_permission(
     conn: &mut DbConnection<'_>,

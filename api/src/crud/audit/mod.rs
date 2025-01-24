@@ -2,11 +2,18 @@ use crate::{
     generated::audit_schema::{
         api_access_audit_logs, api_auth_audit_logs, iam_audit_logs, record_audit_logs,
     },
-    models::AuditLog,
+    models::{AuditLog, ApiAccessAuditLogCreate, AuthAuditLogCreate, IAMAuditLogCreate, RecordAuditLogCreate},
     state::DbConnection,
+    insert_obj_traits,
 };
+use super::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
+
+insert_obj_traits!(ApiAccessAuditLogCreate, api_access_audit_logs);
+insert_obj_traits!(AuthAuditLogCreate, api_auth_audit_logs);
+insert_obj_traits!(IAMAuditLogCreate, iam_audit_logs);
+insert_obj_traits!(RecordAuditLogCreate, record_audit_logs);
 
 impl AuditLog {
     pub async fn insert_many(conn: &mut DbConnection<'_>, records: Vec<AuditLog>) -> Result<(), serde_json::Value> {
@@ -26,50 +33,38 @@ impl AuditLog {
 
         let mut failed_logs = Vec::new();
 
-        match diesel::insert_into(api_access_audit_logs::table)
-            .values(&api_access_logs)
-            .execute(conn)
-            .await
+        match ApiAccessAuditLogCreate::insert_many_returning_id(conn, &api_access_logs).await
         {
             Ok(_) => (),
             Err(e) => {
-                error!("Failed to insert api access audit logs: {}", e);
+                error!("Failed to insert api access audit logs: {:?}", e);
                 failed_logs.extend(api_access_logs.into_iter().map(|l| serde_json::json!(l)));
             }
         };
 
-        match diesel::insert_into(api_auth_audit_logs::table)
-            .values(&api_auth_logs)
-            .execute(conn)
-            .await
+        match AuthAuditLogCreate::insert_many_returning_id(conn, &api_auth_logs).await
         {
             Ok(_) => (),
             Err(e) => {
-                error!("Failed to insert api auth audit logs: {}", e);
+                error!("Failed to insert api auth audit logs: {:?}", e);
                 failed_logs.extend(api_auth_logs.into_iter().map(|l| serde_json::json!(l)));
             }
         };
 
-        match diesel::insert_into(iam_audit_logs::table)
-            .values(&iam_logs)
-            .execute(conn)
-            .await
+        match IAMAuditLogCreate::insert_many_returning_id(conn, &iam_logs).await
         {
             Ok(_) => (),
             Err(e) => {
-                error!("Failed to insert iam audit logs: {}", e);
+                error!("Failed to insert iam audit logs: {:?}", e);
                 failed_logs.extend(iam_logs.into_iter().map(|l| serde_json::json!(l)));
             }
         };
 
-        match diesel::insert_into(record_audit_logs::table)
-            .values(&record_logs)
-            .execute(conn)
-            .await
+        match RecordAuditLogCreate::insert_many_returning_id(conn, &record_logs).await
         {
             Ok(_) => (),
             Err(e) => {
-                error!("Failed to insert record audit logs: {}", e);
+                error!("Failed to insert record audit logs: {:?}", e);
                 failed_logs.extend(record_logs.into_iter().map(|l| serde_json::json!(l)));
             }
         };

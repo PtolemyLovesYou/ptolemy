@@ -4,42 +4,14 @@ use crate::{
     generated::auth_schema::workspace,
     models::{Workspace, WorkspaceCreate},
     state::DbConnection,
+    insert_obj_traits,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
-/// Creates a new workspace in the database.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `wk` - The `WorkspaceCreate` object containing the name and description of the workspace to be created.
-///
-/// # Errors
-///
-/// This function will return `CRUDError::InsertError` if there is an error inserting the workspace into the database.
-pub async fn create_workspace(
-    conn: &mut DbConnection<'_>,
-    wk: &WorkspaceCreate,
-) -> Result<Workspace, CRUDError> {
-    match diesel::insert_into(workspace::table)
-        .values(wk)
-        .returning(Workspace::as_returning())
-        .get_result(conn)
-        .await
-    {
-        Ok(result) => Ok(result),
-        Err(e) => {
-            error!("Failed to create workspace: {}", e);
-            return match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::InsertError),
-            };
-        }
-    }
-}
+insert_obj_traits!(WorkspaceCreate, workspace, Workspace);
 
 pub async fn search_workspaces(
     conn: &mut DbConnection<'_>,
