@@ -98,7 +98,7 @@ impl AppState {
                 let fut = async move {
                     let n_msgs = msg.len();
                     let mut conn = pool.get().await.unwrap();
-                    match crate::crud::audit::insert_audit_logs(&mut conn, msg).await {
+                    match AuditLog::insert_many(&mut conn, msg).await {
                         Ok(_) => {
                             tracing::debug!("Successfully inserted {} audit logs", n_msgs);
                         }
