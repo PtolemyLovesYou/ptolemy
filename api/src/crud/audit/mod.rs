@@ -18,6 +18,18 @@ insert_obj_traits!(AuthAuditLogCreate, api_auth_audit_logs);
 insert_obj_traits!(IAMAuditLogCreate, iam_audit_logs);
 insert_obj_traits!(RecordAuditLogCreate, record_audit_logs);
 
+macro_rules! insert_audit_logs {
+    ($type:ident, $records:ident, $failed_logs:ident, $conn:ident) => {
+        match $type::insert_many_returning_id($conn, &$records).await {
+            Ok(_) => (),
+            Err(e) => {
+                error!("Failed to insert audit logs: {:?}", e);
+                $failed_logs.extend($records.into_iter().map(|l| serde_json::json!(l)));
+            }
+        }
+    }
+}
+
 impl AuditLog {
     pub async fn insert_many(
         conn: &mut DbConnection<'_>,
@@ -39,37 +51,10 @@ impl AuditLog {
 
         let mut failed_logs = Vec::new();
 
-        match ApiAccessAuditLogCreate::insert_many_returning_id(conn, &api_access_logs).await {
-            Ok(_) => (),
-            Err(e) => {
-                error!("Failed to insert api access audit logs: {:?}", e);
-                failed_logs.extend(api_access_logs.into_iter().map(|l| serde_json::json!(l)));
-            }
-        };
-
-        match AuthAuditLogCreate::insert_many_returning_id(conn, &api_auth_logs).await {
-            Ok(_) => (),
-            Err(e) => {
-                error!("Failed to insert api auth audit logs: {:?}", e);
-                failed_logs.extend(api_auth_logs.into_iter().map(|l| serde_json::json!(l)));
-            }
-        };
-
-        match IAMAuditLogCreate::insert_many_returning_id(conn, &iam_logs).await {
-            Ok(_) => (),
-            Err(e) => {
-                error!("Failed to insert iam audit logs: {:?}", e);
-                failed_logs.extend(iam_logs.into_iter().map(|l| serde_json::json!(l)));
-            }
-        };
-
-        match RecordAuditLogCreate::insert_many_returning_id(conn, &record_logs).await {
-            Ok(_) => (),
-            Err(e) => {
-                error!("Failed to insert record audit logs: {:?}", e);
-                failed_logs.extend(record_logs.into_iter().map(|l| serde_json::json!(l)));
-            }
-        };
+        insert_audit_logs!(ApiAccessAuditLogCreate, api_access_logs, failed_logs, conn);
+        insert_audit_logs!(AuthAuditLogCreate, api_auth_logs, failed_logs, conn);
+        insert_audit_logs!(IAMAuditLogCreate, iam_logs, failed_logs, conn);
+        insert_audit_logs!(RecordAuditLogCreate, record_logs, failed_logs, conn);
 
         match failed_logs.len() {
             0 => Ok(()),
