@@ -1,9 +1,5 @@
 use crate::{
-    crud::records::insert::{
-        insert_component_event_records, insert_io_records, insert_metadata_records,
-        insert_runtime_records, insert_subcomponent_event_records, insert_subsystem_event_records,
-        insert_system_event_records,
-    },
+    crud::prelude::*,
     models::records::{
         ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
         SubsystemEventRecord, SystemEventRecord,
@@ -107,23 +103,23 @@ impl EventRecords {
     }
 
     pub async fn push(self, conn: &mut DbConnection<'_>) -> bool {
-        insert_system_event_records(conn, self.system_event_records)
+        SystemEventRecord::insert_many_returning_id(conn, &self.system_event_records)
             .await
             .ok();
-        insert_subsystem_event_records(conn, self.subsystem_event_records)
+        SubsystemEventRecord::insert_many_returning_id(conn, &self.subsystem_event_records)
             .await
             .ok();
-        insert_component_event_records(conn, self.component_event_records)
+        ComponentEventRecord::insert_many_returning_id(conn, &self.component_event_records)
             .await
             .ok();
-        insert_subcomponent_event_records(conn, self.subcomponent_event_records)
+        SubcomponentEventRecord::insert_many_returning_id(conn, &self.subcomponent_event_records)
             .await
             .ok();
-        insert_runtime_records(conn, self.runtime_records)
+        RuntimeRecord::insert_many_returning_id(conn, &self.runtime_records)
             .await
             .ok();
-        insert_io_records(conn, self.io_records).await.ok();
-        insert_metadata_records(conn, self.metadata_records)
+        IORecord::insert_many_returning_id(conn, &self.io_records).await.ok();
+        MetadataRecord::insert_many_returning_id(conn, &self.metadata_records)
             .await
             .ok();
 

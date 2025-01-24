@@ -29,7 +29,7 @@ macro_rules! insert_obj_traits {
                     .await {
                         Ok(obj) => Ok(obj),
                         Err(e) => {
-                            error!("Failed to insert audit log: {}", e);
+                            tracing::error!("Failed to insert audit log: {}", e);
                             Err(crate::error::CRUDError::DatabaseError)
                         }
                     }
@@ -43,7 +43,7 @@ macro_rules! insert_obj_traits {
                     .await {
                         Ok(objs) => Ok(objs),
                         Err(e) => {
-                            error!("Failed to insert audit log: {}", e);
+                            tracing::error!("Failed to insert audit log: {}", e);
                             Err(crate::error::CRUDError::DatabaseError)
                         }
                     }
@@ -61,7 +61,7 @@ macro_rules! insert_obj_traits {
                     .await {
                         Ok(id) => Ok(id),
                         Err(e) => {
-                            error!("Failed to insert audit log: {}", e);
+                            tracing::error!("Failed to insert audit log: {}", e);
                             Err(crate::error::CRUDError::DatabaseError)
                         }
                     }
@@ -75,7 +75,7 @@ macro_rules! insert_obj_traits {
                     .await {
                         Ok(ids) => Ok(ids),
                         Err(e) => {
-                            error!("Failed to insert audit logs: {}", e);
+                            tracing::error!("Failed to insert audit logs: {}", e);
                             Err(crate::error::CRUDError::DatabaseError)
                         }
                     }
