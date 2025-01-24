@@ -1,5 +1,8 @@
 use crate::{
-    crud::{auth::{user as user_crud, user_api_key as user_api_key_crud}, prelude::*},
+    crud::{
+        auth::{user as user_crud, user_api_key as user_api_key_crud},
+        prelude::*,
+    },
     graphql::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
@@ -7,8 +10,8 @@ use crate::{
     models::UserCreate,
 };
 use juniper::{graphql_object, GraphQLInputObject};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
 pub struct UserInput {
@@ -60,7 +63,10 @@ impl UserMutation {
 
         let user_create = UserCreate {
             username: user_data.username,
-            password_hash: ctx.state.password_handler.hash_password(&user_data.password),
+            password_hash: ctx
+                .state
+                .password_handler
+                .hash_password(&user_data.password),
             display_name: user_data.display_name,
             is_sysadmin: user_data.is_sysadmin,
             is_admin: user_data.is_admin,

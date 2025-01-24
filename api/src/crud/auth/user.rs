@@ -3,9 +3,9 @@ use crate::{
     delete_db_obj,
     error::CRUDError,
     generated::auth_schema::users,
+    insert_obj_traits,
     models::{User, UserCreate, UserStatusEnum},
     state::DbConnection,
-    insert_obj_traits,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
