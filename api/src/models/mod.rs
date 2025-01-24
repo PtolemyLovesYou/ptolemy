@@ -6,3 +6,20 @@ pub mod records;
 
 pub use self::audit::*;
 pub use self::auth::*;
+
+pub mod prelude {
+    pub trait HasId {
+        fn id(&self) -> uuid::Uuid;
+    }
+
+    #[macro_export]
+    macro_rules! impl_has_id {
+        ($t:ty) => {
+            impl crate::models::prelude::HasId for $t {
+                fn id(&self) -> uuid::Uuid {
+                    self.id.clone()
+                }
+            }
+        };
+    }
+}

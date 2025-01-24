@@ -1,4 +1,4 @@
-use crate::models::auth::Workspace;
+use crate::models::Workspace;
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::Record;
@@ -19,6 +19,8 @@ macro_rules! event_table {
             pub version: Option<String>,
             pub environment: Option<String>,
         }
+
+        crate::impl_has_id!($name);
 
         impl TryFrom<Record> for $name {
             type Error = ParseError;

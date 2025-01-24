@@ -20,6 +20,8 @@ pub struct ApiAccessAuditLogCreate {
     pub ip_address: Option<IpNet>,
 }
 
+crate::impl_has_id!(ApiAccessAuditLogCreate);
+
 impl ApiAccessAuditLogCreate {
     pub fn from_axum_request(req: &Request<Body>, request_id: Option<Uuid>) -> Self {
         let source = Some(req.uri().path().to_string());
@@ -49,6 +51,8 @@ pub struct AuthAuditLogCreate {
     pub success: bool,
     pub failure_details: Option<serde_json::Value>,
 }
+
+crate::impl_has_id!(AuthAuditLogCreate);
 
 impl AuthAuditLogCreate {
     pub fn ok(
@@ -103,6 +107,8 @@ pub struct IAMAuditLogCreate {
     pub query_metadata: Option<serde_json::Value>,
 }
 
+crate::impl_has_id!(IAMAuditLogCreate);
+
 impl IAMAuditLogCreate {
     pub fn new_read(
         api_access_audit_log_id: Uuid,
@@ -141,6 +147,8 @@ pub struct RecordAuditLogCreate {
     pub failure_reason: Option<String>,
     pub query_metadata: Option<serde_json::Value>,
 }
+
+crate::impl_has_id!(RecordAuditLogCreate);
 
 impl RecordAuditLogCreate {
     pub fn new_read(

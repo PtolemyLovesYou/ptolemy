@@ -37,6 +37,8 @@ pub struct IORecord {
     pub field_value_type: FieldValueTypeEnum,
 }
 
+crate::impl_has_id!(IORecord);
+
 impl TryFrom<Record> for IORecord {
     type Error = ParseError;
 

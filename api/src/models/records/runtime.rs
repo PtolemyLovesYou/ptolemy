@@ -34,6 +34,8 @@ pub struct RuntimeRecord {
     pub error_content: Option<String>,
 }
 
+crate::impl_has_id!(RuntimeRecord);
+
 impl TryFrom<Record> for RuntimeRecord {
     type Error = ParseError;
 

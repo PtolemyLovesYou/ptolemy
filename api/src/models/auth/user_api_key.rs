@@ -30,6 +30,8 @@ pub struct UserApiKey {
     pub deletion_reason: Option<String>,
 }
 
+crate::impl_has_id!(UserApiKey);
+
 impl Into<ptolemy::models::auth::UserApiKey> for UserApiKey {
     fn into(self) -> ptolemy::models::auth::UserApiKey {
         ptolemy::models::auth::UserApiKey {

@@ -27,6 +27,8 @@ pub struct MetadataRecord {
     pub field_value: String,
 }
 
+crate::impl_has_id!(MetadataRecord);
+
 impl TryFrom<Record> for MetadataRecord {
     type Error = ParseError;
 

@@ -20,6 +20,8 @@ pub struct User {
     pub deletion_reason: Option<String>,
 }
 
+crate::impl_has_id!(User);
+
 impl Into<ptolemy::models::auth::User> for User {
     fn into(self) -> ptolemy::models::auth::User {
         ptolemy::models::auth::User {

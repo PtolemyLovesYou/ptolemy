@@ -19,6 +19,8 @@ pub struct WorkspaceUser {
     pub deletion_reason: Option<String>,
 }
 
+crate::impl_has_id!(WorkspaceUser);
+
 impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
     fn into(self) -> ptolemy::models::auth::WorkspaceUser {
         ptolemy::models::auth::WorkspaceUser {
