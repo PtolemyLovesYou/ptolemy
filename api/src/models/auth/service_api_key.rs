@@ -31,13 +31,13 @@ pub struct ServiceApiKey {
     pub deletion_reason: Option<String>,
 }
 
-impl super::prelude::ToModel<ptolemy::models::auth::ServiceApiKey> for ServiceApiKey {
-    fn to_model(self) -> ptolemy::models::auth::ServiceApiKey {
+impl Into<ptolemy::models::auth::ServiceApiKey> for ServiceApiKey {
+    fn into(self) -> ptolemy::models::auth::ServiceApiKey {
         ptolemy::models::auth::ServiceApiKey {
             id: self.id.into(),
             workspace_id: self.workspace_id.into(),
-            name: self.name.clone(),
-            key_preview: self.key_preview.clone(),
+            name: self.name,
+            key_preview: self.key_preview,
             permissions: self.permissions.into(),
             expires_at: self.expires_at,
         }

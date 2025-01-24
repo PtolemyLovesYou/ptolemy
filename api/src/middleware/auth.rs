@@ -1,12 +1,10 @@
 use std::str::FromStr as _;
 
 use crate::{
-    // crud::audit::insert_api_access_audit_log,
     consts::USER_API_KEY_PREFIX,
     crypto::{ClaimType, UuidClaims},
     error::AuthError,
     models::{
-        auth::prelude::ToModel,
         middleware::{ApiKey, AuthHeader, AuthResult, JWT},
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
     },
@@ -81,7 +79,7 @@ async fn validate_api_key_header(
         .await
         {
             Ok(u) => {
-                req.extensions_mut().insert(u.to_model());
+                req.extensions_mut().insert::<ptolemy::models::auth::User>(u.into());
                 return Ok(());
             }
             Err(_) => return Err(AuthError::NotFoundError),
@@ -107,7 +105,7 @@ async fn validate_jwt_header(
         ClaimType::UserJWT => {
             match crate::crud::auth::user::get_user(&mut conn, claims.sub()).await {
                 Ok(u) => {
-                    req.extensions_mut().insert(u.to_model());
+                    req.extensions_mut().insert::<ptolemy::models::auth::User>(u.into());
                     Ok(())
                 }
                 Err(_) => Err(AuthError::NotFoundError),
@@ -121,7 +119,7 @@ async fn validate_jwt_header(
             .await
             {
                 Ok(sak) => {
-                    req.extensions_mut().insert(sak.to_model());
+                    req.extensions_mut().insert::<ptolemy::models::auth::ServiceApiKey>(sak.into());
                     Ok(())
                 }
                 Err(_) => Err(AuthError::NotFoundError),

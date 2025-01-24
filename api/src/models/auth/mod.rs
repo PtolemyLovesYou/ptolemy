@@ -13,9 +13,3 @@ pub use self::user::*;
 pub use self::user_api_key::*;
 pub use self::workspace::*;
 pub use self::workspace_user::*;
-
-pub mod prelude {
-    pub trait ToModel<T> {
-        fn to_model(self) -> T;
-    }
-}

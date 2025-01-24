@@ -1,4 +1,3 @@
-use super::prelude::*;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
@@ -19,8 +18,8 @@ pub struct Workspace {
     pub deletion_reason: Option<String>,
 }
 
-impl ToModel<ptolemy::models::auth::Workspace> for Workspace {
-    fn to_model(self) -> ptolemy::models::auth::Workspace {
+impl Into<ptolemy::models::auth::Workspace> for Workspace {
+    fn into(self) -> ptolemy::models::auth::Workspace {
         ptolemy::models::auth::Workspace {
             id: self.id.into(),
             name: self.name,

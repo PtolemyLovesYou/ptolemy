@@ -1,4 +1,3 @@
-use super::prelude::*;
 use crate::models::auth::user::User;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -31,8 +30,8 @@ pub struct UserApiKey {
     pub deletion_reason: Option<String>,
 }
 
-impl ToModel<ptolemy::models::auth::UserApiKey> for UserApiKey {
-    fn to_model(self) -> ptolemy::models::auth::UserApiKey {
+impl Into<ptolemy::models::auth::UserApiKey> for UserApiKey {
+    fn into(self) -> ptolemy::models::auth::UserApiKey {
         ptolemy::models::auth::UserApiKey {
             id: self.id.into(),
             user_id: self.user_id.into(),

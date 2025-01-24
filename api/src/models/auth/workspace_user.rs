@@ -1,4 +1,3 @@
-use super::prelude::*;
 use crate::models::{User, Workspace, WorkspaceRoleEnum};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -20,8 +19,8 @@ pub struct WorkspaceUser {
     pub deletion_reason: Option<String>,
 }
 
-impl ToModel<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
-    fn to_model(self) -> ptolemy::models::auth::WorkspaceUser {
+impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
+    fn into(self) -> ptolemy::models::auth::WorkspaceUser {
         ptolemy::models::auth::WorkspaceUser {
             user_id: self.user_id.into(),
             workspace_id: self.workspace_id.into(),

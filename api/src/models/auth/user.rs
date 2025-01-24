@@ -1,4 +1,3 @@
-use super::prelude::*;
 use crate::models::auth::enums::UserStatusEnum;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -22,8 +21,8 @@ pub struct User {
     pub deletion_reason: Option<String>,
 }
 
-impl ToModel<ptolemy::models::auth::User> for User {
-    fn to_model(self) -> ptolemy::models::auth::User {
+impl Into<ptolemy::models::auth::User> for User {
+    fn into(self) -> ptolemy::models::auth::User {
         ptolemy::models::auth::User {
             id: self.id.into(),
             username: self.username,
