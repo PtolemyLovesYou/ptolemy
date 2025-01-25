@@ -80,15 +80,19 @@ COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/
 COPY --from=builder /app/target/release/api /usr/local/bin/
 COPY api/entrypoint.sh /
 
+RUN mkdir -p /ptolemy/data
+
 RUN chmod 755 /entrypoint.sh /usr/local/bin/api && \
-    chown appuser:appuser /entrypoint.sh /usr/local/bin/api
+    chown appuser:appuser /entrypoint.sh /usr/local/bin/api && \
+    chown appuser:appuser /ptolemy/data
 
 USER appuser
 
 ENV API_PORT=8000 \
     PTOLEMY_ENV=PROD \
     PTOLEMY_USER=admin \
-    PTOLEMY_PASS=admin
+    PTOLEMY_PASS=admin \
+    PTOLEME_DATA=/ptolemy/data
 
 WORKDIR /app
 

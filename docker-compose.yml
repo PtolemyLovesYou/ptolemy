@@ -20,6 +20,7 @@ services:
       - "50051:50051"
     volumes:
       - ./api:/app
+      - ptolemy_data:/ptolemy/data
     networks:
       - ptolemy
     depends_on:
@@ -58,6 +59,8 @@ volumes:
   postgres:
     driver: local
   grafana_data:
+    driver: local
+  ptolemy_data:
     driver: local
 
 networks:
