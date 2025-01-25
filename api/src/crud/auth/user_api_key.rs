@@ -7,6 +7,7 @@ use crate::{
     models::auth::{User, UserApiKey, UserApiKeyCreate},
     state::DbConnection,
 };
+use super::super::prelude::*;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -77,11 +78,7 @@ pub async fn get_user_api_keys(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
 ) -> Result<Vec<UserApiKey>, CRUDError> {
-    let us: User = users::table
-        .filter(users::id.eq(user_id))
-        .get_result(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", User))?;
+    let us: User = User::get_by_id(conn, user_id).await?;
 
     let api_keys: Vec<UserApiKey> = UserApiKey::belonging_to(&us)
         .select(UserApiKey::as_select())

@@ -8,6 +8,7 @@ use crate::{
     models::{ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace},
     state::DbConnection,
 };
+use super::super::prelude::*;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -83,11 +84,7 @@ pub async fn get_workspace_service_api_keys(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
 ) -> Result<Vec<ServiceApiKey>, CRUDError> {
-    let wk: Workspace = workspace::table
-        .filter(workspace::id.eq(workspace_id))
-        .get_result(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", Workspace))?;
+    let wk: Workspace = Workspace::get_by_id(conn, workspace_id).await?;
 
     let api_keys: Vec<ServiceApiKey> = ServiceApiKey::belonging_to(&wk)
         .select(ServiceApiKey::as_select())
