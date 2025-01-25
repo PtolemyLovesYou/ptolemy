@@ -2,7 +2,7 @@ use crate::{
     delete_db_obj,
     error::CRUDError,
     generated::auth_schema::workspace,
-    insert_obj_traits,
+    insert_obj_traits, get_by_id_trait,
     models::{Workspace, WorkspaceCreate},
     state::DbConnection,
 };
@@ -12,6 +12,7 @@ use tracing::error;
 use uuid::Uuid;
 
 insert_obj_traits!(WorkspaceCreate, workspace, Workspace);
+get_by_id_trait!(Workspace, workspace);
 
 pub async fn search_workspaces(
     conn: &mut DbConnection<'_>,

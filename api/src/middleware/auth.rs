@@ -9,6 +9,7 @@ use crate::{
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
     },
     state::ApiAppState,
+    crud::prelude::*,
 };
 use axum::{
     extract::State,
@@ -114,10 +115,7 @@ async fn validate_jwt_header(
             }
         }
         ClaimType::ServiceAPIKeyJWT => {
-            match crate::crud::auth::service_api_key::get_service_api_key_by_id(
-                &mut conn,
-                claims.sub(),
-            )
+            match crate::models::ServiceApiKey::get_by_id(&mut conn, claims.sub())
             .await
             {
                 Ok(sak) => {

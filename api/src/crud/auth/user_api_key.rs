@@ -1,7 +1,7 @@
 use crate::{
     consts::USER_API_KEY_PREFIX,
     crypto::{generate_api_key, PasswordHandler},
-    delete_db_obj,
+    delete_db_obj, get_by_id_trait, map_diesel_err,
     error::CRUDError,
     generated::auth_schema::{user_api_key, users},
     models::auth::{User, UserApiKey, UserApiKeyCreate},
@@ -29,24 +29,15 @@ pub async fn get_user_api_key_user(
         )
         .get_results(conn)
         .await
-        .map_err(|e| {
-            error!("Unable to get service_api_key: {}", e);
-            CRUDError::GetError
-        })?;
+        .map_err(map_diesel_err!(GetError, "get", UserApiKey))?;
 
     for ak in api_keys {
         if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
-            match users::table
+            return users::table
                 .filter(users::id.eq(&ak.user_id).and(users::deleted_at.is_null()))
                 .get_result(conn)
                 .await
-            {
-                Ok(user) => return Ok(user),
-                Err(e) => {
-                    error!("Failed to get user: {}", e);
-                    return Err(CRUDError::GetError);
-                }
-            }
+                .map_err(map_diesel_err!(GetError, "get", User));
         }
     }
 
@@ -73,18 +64,13 @@ pub async fn create_user_api_key(
         expires_at,
     };
 
-    match diesel::insert_into(user_api_key::table)
+    diesel::insert_into(user_api_key::table)
         .values(&create_model)
         .returning(user_api_key::id)
         .get_result(conn)
         .await
-    {
-        Ok(id) => Ok((id, api_key)),
-        Err(e) => {
-            error!("Unable to create user_api_key: {}", e);
-            Err(CRUDError::InsertError)
-        }
-    }
+        .map_err(map_diesel_err!(InsertError, "insert", UserApiKey))
+        .map(|id| (id, api_key))
 }
 
 pub async fn get_user_api_key(
@@ -92,7 +78,7 @@ pub async fn get_user_api_key(
     id: &Uuid,
     user_id: &Uuid,
 ) -> Result<UserApiKey, CRUDError> {
-    match user_api_key::table
+    user_api_key::table
         .filter(
             user_api_key::id
                 .eq(id)
@@ -101,39 +87,28 @@ pub async fn get_user_api_key(
         )
         .get_result(conn)
         .await
-    {
-        Ok(key) => Ok(key),
-        Err(e) => {
-            error!("Unable to get user_api_key: {}", e);
-            Err(CRUDError::GetError)
-        }
-    }
+        .map_err(map_diesel_err!(GetError, "get", UserApiKey))
 }
 
 pub async fn get_user_api_keys(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
 ) -> Result<Vec<UserApiKey>, CRUDError> {
-    let us: User = match users::table
+    let us: User = users::table
         .filter(users::id.eq(user_id))
         .get_result(conn)
         .await
-    {
-        Ok(us) => us,
-        Err(_) => return Err(CRUDError::GetError),
-    };
+        .map_err(map_diesel_err!(GetError, "get", User))?;
 
     let api_keys: Vec<UserApiKey> = UserApiKey::belonging_to(&us)
         .select(UserApiKey::as_select())
         .filter(user_api_key::deleted_at.is_null())
         .get_results(conn)
         .await
-        .map_err(|e| {
-            error!("Unable to get user_api_keys: {}", e);
-            CRUDError::GetError
-        })?;
+        .map_err(map_diesel_err!(GetError, "get", UserApiKey))?;
 
     Ok(api_keys)
 }
 
 delete_db_obj!(delete_user_api_key, user_api_key);
+get_by_id_trait!(UserApiKey, user_api_key);

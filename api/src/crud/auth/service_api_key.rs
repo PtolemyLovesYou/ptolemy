@@ -1,7 +1,8 @@
 use crate::{
     consts::SERVICE_API_KEY_PREFIX,
     crypto::{generate_api_key, PasswordHandler},
-    delete_db_obj,
+    delete_db_obj, get_by_id_trait,
+    map_diesel_err,
     error::CRUDError,
     generated::auth_schema::{service_api_key, workspace},
     models::{ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace},
@@ -36,10 +37,7 @@ pub async fn verify_service_api_key_by_workspace(
         .select((ServiceApiKey::as_select(), Workspace::as_select()))
         .get_results(conn)
         .await
-        .map_err(|e| {
-            error!("Failed to get workspace: {}", e);
-            CRUDError::GetError
-        })?;
+        .map_err(map_diesel_err!(GetError, "get", ServiceApiKey))?;
 
     for (ak, workspace) in results {
         if password_handler.verify_password(&api_key, ak.key_hash.as_str()) {
@@ -72,39 +70,13 @@ pub async fn create_service_api_key(
         expires_at,
     };
 
-    match diesel::insert_into(service_api_key::table)
+    diesel::insert_into(service_api_key::table)
         .values(&create_model)
         .returning(service_api_key::id)
         .get_result(conn)
         .await
-    {
-        Ok(id) => Ok((id, api_key)),
-        Err(e) => {
-            error!("Unable to create service_api_key: {}", e);
-            Err(CRUDError::InsertError)
-        }
-    }
-}
-
-pub async fn get_service_api_key_by_id(
-    conn: &mut DbConnection<'_>,
-    id: &Uuid,
-) -> Result<ServiceApiKey, CRUDError> {
-    match service_api_key::table
-        .filter(
-            service_api_key::id
-                .eq(id)
-                .and(service_api_key::deleted_at.is_null()),
-        )
-        .get_result(conn)
-        .await
-    {
-        Ok(key) => Ok(key),
-        Err(e) => {
-            error!("Unable to get service_api_key: {}", e);
-            Err(CRUDError::GetError)
-        }
-    }
+        .map_err(map_diesel_err!(InsertError, "insert", ServiceApiKey))
+        .map(|id| (id, api_key))
 }
 
 pub async fn get_service_api_key(
@@ -112,47 +84,37 @@ pub async fn get_service_api_key(
     id: &Uuid,
     workspace_id: &Uuid,
 ) -> Result<ServiceApiKey, CRUDError> {
-    match service_api_key::table
+    service_api_key::table
         .filter(
             service_api_key::id
                 .eq(id)
                 .and(service_api_key::workspace_id.eq(workspace_id))
                 .and(service_api_key::deleted_at.is_null()),
         )
+        .select(ServiceApiKey::as_select())
         .get_result(conn)
         .await
-    {
-        Ok(key) => Ok(key),
-        Err(e) => {
-            error!("Unable to get service_api_key: {}", e);
-            Err(CRUDError::GetError)
-        }
-    }
+        .map_err(map_diesel_err!(GetError, "get", ServiceApiKey))
 }
 
 pub async fn get_workspace_service_api_keys(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
 ) -> Result<Vec<ServiceApiKey>, CRUDError> {
-    let wk: Workspace = match workspace::table
+    let wk: Workspace = workspace::table
         .filter(workspace::id.eq(workspace_id))
         .get_result(conn)
         .await
-    {
-        Ok(wk) => wk,
-        Err(_) => return Err(CRUDError::GetError),
-    };
+        .map_err(map_diesel_err!(GetError, "get", Workspace))?;
 
     let api_keys: Vec<ServiceApiKey> = ServiceApiKey::belonging_to(&wk)
         .select(ServiceApiKey::as_select())
         .get_results(conn)
         .await
-        .map_err(|e| {
-            error!("Unable to get service_api_keys: {}", e);
-            CRUDError::GetError
-        })?;
+        .map_err(map_diesel_err!(GetError, "get", ServiceApiKey))?;
 
     Ok(api_keys)
 }
 
 delete_db_obj!(delete_service_api_key, service_api_key);
+get_by_id_trait!(ServiceApiKey, service_api_key);

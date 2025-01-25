@@ -2,7 +2,7 @@ use crate::{
     delete_db_obj,
     error::CRUDError,
     generated::auth_schema::{users, workspace, workspace_user},
-    insert_obj_traits,
+    insert_obj_traits, get_by_id_trait, map_diesel_err,
     models::{User, Workspace, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
     state::DbConnection,
 };
@@ -12,13 +12,14 @@ use tracing::error;
 use uuid::Uuid;
 
 insert_obj_traits!(WorkspaceUserCreate, workspace_user, WorkspaceUser);
+get_by_id_trait!(WorkspaceUser, workspace_user);
 
 pub async fn get_workspace_user_permission(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,
     user_id: &Uuid,
 ) -> Result<WorkspaceRoleEnum, CRUDError> {
-    match workspace_user::table
+    workspace_user::table
         .filter(
             workspace_user::workspace_id
                 .eq(workspace_id)
@@ -28,17 +29,7 @@ pub async fn get_workspace_user_permission(
         .select(workspace_user::role)
         .get_result(conn)
         .await
-    {
-        Ok(role) => Ok(role),
-        Err(e) => {
-            error!("Unable to get workspace_user permission: {}", e);
-            match e {
-                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::GetError),
-            }
-        }
-    }
+        .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
 }
 
 /// Updates the role of a user in a workspace.
@@ -60,7 +51,7 @@ pub async fn set_workspace_user_role(
     us_id: &Uuid,
     role: &WorkspaceRoleEnum,
 ) -> Result<WorkspaceUser, CRUDError> {
-    match diesel::update(workspace_user::table)
+    diesel::update(workspace_user::table)
         .filter(
             workspace_user::workspace_id
                 .eq(wk_id)
@@ -71,16 +62,7 @@ pub async fn set_workspace_user_role(
         .returning(WorkspaceUser::as_returning())
         .get_result(conn)
         .await
-    {
-        Ok(w) => Ok(w),
-        Err(e) => {
-            error!("Unable to update workspace_user role: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::UpdateError),
-            }
-        }
-    }
+        .map_err(map_diesel_err!(UpdateError, "update", WorkspaceUser))
 }
 
 delete_db_obj!(delete_workspace_user, workspace_user);
@@ -90,7 +72,7 @@ pub async fn get_workspace_user(
     workspace_id: &Uuid,
     user_id: &Uuid,
 ) -> Result<WorkspaceUser, CRUDError> {
-    match workspace_user::table
+    workspace_user::table
         .filter(
             workspace_user::workspace_id
                 .eq(workspace_id)
@@ -99,17 +81,7 @@ pub async fn get_workspace_user(
         )
         .get_result(conn)
         .await
-    {
-        Ok(user) => Ok(user),
-        Err(e) => {
-            error!("Unable to get workspace_user: {}", e);
-            match e {
-                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::GetError),
-            }
-        }
-    }
+        .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
 }
 
 pub async fn search_workspace_users(
@@ -158,23 +130,14 @@ pub async fn search_workspace_users(
         query = query.filter(users::username.eq(username));
     }
 
-    match query.get_results(conn).await {
-        Ok(users) => Ok(users),
-        Err(e) => {
-            error!("Unable to get workspace_users: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::GetError),
-            }
-        }
-    }
+    query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
 }
 
 pub async fn get_workspaces_of_user(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,
 ) -> Result<Vec<WorkspaceUser>, CRUDError> {
-    match workspace_user::table
+    workspace_user::table
         .filter(
             workspace_user::user_id
                 .eq(user_id)
@@ -182,14 +145,5 @@ pub async fn get_workspaces_of_user(
         )
         .get_results(conn)
         .await
-    {
-        Ok(users) => Ok(users),
-        Err(e) => {
-            error!("Unable to get workspaces of user: {}", e);
-            match e {
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::GetError),
-            }
-        }
-    }
+        .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
 }
