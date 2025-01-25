@@ -105,7 +105,7 @@ async fn validate_jwt_header(
 
     match claims.claim_type() {
         ClaimType::UserJWT => {
-            match crate::crud::auth::user::get_user(&mut conn, claims.sub()).await {
+            match crate::models::User::get_by_id(&mut conn, claims.sub()).await {
                 Ok(u) => {
                     req.extensions_mut()
                         .insert::<ptolemy::models::auth::User>(u.into());

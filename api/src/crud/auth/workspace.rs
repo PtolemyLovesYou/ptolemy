@@ -48,39 +48,4 @@ pub async fn search_workspaces(
     }
 }
 
-/// Retrieves a workspace by its UUID.
-///
-/// # Arguments
-///
-/// * `conn` - A mutable reference to the database connection.
-/// * `workspace_id` - The UUID of the workspace to be retrieved.
-///
-/// # Errors
-///
-/// This function will return `CRUDError::GetError` if there is an error retrieving the workspace from the database.
-pub async fn get_workspace(
-    conn: &mut DbConnection<'_>,
-    workspace_id: &Uuid,
-) -> Result<Workspace, CRUDError> {
-    match workspace::table
-        .filter(
-            workspace::id
-                .eq(workspace_id)
-                .and(workspace::deleted_at.is_null()),
-        )
-        .get_result::<Workspace>(conn)
-        .await
-    {
-        Ok(result) => Ok(result),
-        Err(e) => {
-            error!("Failed to get workspace: {}", e);
-            match e {
-                diesel::result::Error::NotFound => Err(CRUDError::NotFoundError),
-                diesel::result::Error::DatabaseError(..) => Err(CRUDError::DatabaseError),
-                _ => Err(CRUDError::GetError),
-            }
-        }
-    }
-}
-
 delete_db_obj!(delete_workspace, workspace);

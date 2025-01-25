@@ -79,24 +79,6 @@ pub async fn create_service_api_key(
         .map(|id| (id, api_key))
 }
 
-pub async fn get_service_api_key(
-    conn: &mut DbConnection<'_>,
-    id: &Uuid,
-    workspace_id: &Uuid,
-) -> Result<ServiceApiKey, CRUDError> {
-    service_api_key::table
-        .filter(
-            service_api_key::id
-                .eq(id)
-                .and(service_api_key::workspace_id.eq(workspace_id))
-                .and(service_api_key::deleted_at.is_null()),
-        )
-        .select(ServiceApiKey::as_select())
-        .get_result(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", ServiceApiKey))
-}
-
 pub async fn get_workspace_service_api_keys(
     conn: &mut DbConnection<'_>,
     workspace_id: &Uuid,

@@ -73,23 +73,6 @@ pub async fn create_user_api_key(
         .map(|id| (id, api_key))
 }
 
-pub async fn get_user_api_key(
-    conn: &mut DbConnection<'_>,
-    id: &Uuid,
-    user_id: &Uuid,
-) -> Result<UserApiKey, CRUDError> {
-    user_api_key::table
-        .filter(
-            user_api_key::id
-                .eq(id)
-                .and(user_api_key::user_id.eq(user_id))
-                .and(user_api_key::deleted_at.is_null()),
-        )
-        .get_result(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", UserApiKey))
-}
-
 pub async fn get_user_api_keys(
     conn: &mut DbConnection<'_>,
     user_id: &Uuid,

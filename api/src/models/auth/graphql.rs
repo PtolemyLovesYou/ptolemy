@@ -1,9 +1,10 @@
 use crate::{
     crud::auth::{
-        service_api_key as service_api_key_crud, user as user_crud,
-        user_api_key as user_api_key_crud, workspace as workspace_crud,
+        service_api_key as service_api_key_crud,
+        user_api_key as user_api_key_crud,
         workspace_user as workspace_user_crud,
     },
+    crud::prelude::*,
     graphql::state::JuniperAppState,
     models::{
         ApiKeyPermissionEnum, IAMAuditLogCreate, ServiceApiKey, User, UserApiKey, UserStatusEnum,
@@ -232,7 +233,7 @@ impl WorkspaceUser {
             .await
             .map_err(|e| e.juniper_field_error())?;
 
-        user_crud::get_user(&mut conn, &self.user_id)
+        User::get_by_id(&mut conn, &self.user_id)
             .await
             .map_err(|e| e.juniper_field_error())
     }
@@ -244,7 +245,7 @@ impl WorkspaceUser {
             .await
             .map_err(|e| e.juniper_field_error())?;
 
-        workspace_crud::get_workspace(&mut conn, &self.workspace_id)
+        Workspace::get_by_id(&mut conn, &self.workspace_id)
             .await
             .map_err(|e| e.juniper_field_error())
     }

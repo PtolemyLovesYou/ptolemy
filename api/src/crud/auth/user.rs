@@ -51,17 +51,6 @@ pub async fn change_user_status(
         .map(|_| ())
 }
 
-pub async fn get_user(
-    conn: &mut DbConnection<'_>,
-    user_id: &Uuid,
-) -> Result<crate::models::auth::User, CRUDError> {
-    users::table
-        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
-        .get_result(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", User))
-}
-
 pub async fn get_all_users(
     conn: &mut DbConnection<'_>,
 ) -> Result<Vec<crate::models::auth::User>, CRUDError> {

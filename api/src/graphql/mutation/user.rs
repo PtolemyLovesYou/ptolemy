@@ -7,7 +7,7 @@ use crate::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
     },
-    models::UserCreate,
+    models::{UserCreate, User},
 };
 use juniper::{graphql_object, GraphQLInputObject};
 use serde::{Deserialize, Serialize};
@@ -93,7 +93,7 @@ impl UserMutation {
         let acting_user = ctx.user.clone();
         let acting_user_id: Uuid = acting_user.id.into();
 
-        let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
+        let user_to_delete = match User::get_by_id(&mut conn, &id).await {
             Ok(u) => u,
             Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
         };
