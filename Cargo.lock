@@ -649,6 +649,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "dummy"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bb8",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "env_logger",
+ "heck 0.5.0",
+ "hyper",
+ "juniper",
+ "juniper_axum",
+ "log",
+ "prost",
+ "prost-types",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "time",
+ "tokio",
+ "tonic",
+ "tonic-types",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
