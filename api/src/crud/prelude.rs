@@ -132,7 +132,7 @@ macro_rules! get_by_id_trait {
 #[macro_export]
 macro_rules! insert_obj_traits {
     ($ty:ty, $table:ident, $target:ident) => {
-        insert_obj_traits!($ty, $table);
+        crate::insert_obj_traits!($ty, $table);
 
         impl crate::crud::prelude::InsertObjReturningObj for $ty {
             type Target = $target;

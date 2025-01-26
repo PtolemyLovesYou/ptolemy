@@ -1,9 +1,8 @@
 use crate::{
-    delete_db_obj,
     error::CRUDError,
     generated::auth_schema::workspace_user,
     models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
-    state::DbConnection,
+    state::DbConnection, map_diesel_err,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
