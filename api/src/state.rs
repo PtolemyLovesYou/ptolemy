@@ -48,6 +48,7 @@ impl RequestContext {
 }
 
 pub type ApiAppState = Arc<AppState>;
+pub type AuditWriter = Arc<Writer<AuditLog>>;
 
 #[derive(Debug, Clone)]
 pub struct AppState {

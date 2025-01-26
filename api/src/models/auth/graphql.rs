@@ -1,8 +1,8 @@
 use crate::{
-    crud::prelude::*,
+    crud::{prelude::*, audit::log_iam_access},
     graphql::state::JuniperAppState,
     models::{
-        ApiKeyPermissionEnum, IAMAuditLogCreate, ServiceApiKey, User, UserApiKey, UserStatusEnum,
+        ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum,
         Workspace, WorkspaceRoleEnum, WorkspaceUser,
     },
 };
@@ -46,48 +46,28 @@ impl Workspace {
 
         let users = self.get_workspace_users(&mut conn, user_id, username).await;
 
-        match users {
-            Ok(users) => {
-                let user_ids: Vec<Uuid> = users.iter().map(|u| u.id.clone()).collect();
-
-                let audit_records = IAMAuditLogCreate::new_reads(
-                    ctx.auth_context.api_access_audit_log_id.clone(),
-                    Some(ctx.auth_context.api_auth_audit_log_id.clone()),
-                    Some(user_ids),
-                    "workspace_user".to_string(),
-                    None,
-                    ctx.query_metadata.clone(),
-                )
-                .into_iter()
-                .map(|r| r.into());
-
-                ctx.state.audit_writer.write_many(audit_records).await;
-
-                Ok(users)
-            }
-            Err(e) => {
-                let audit_record = IAMAuditLogCreate::new_reads(
-                    ctx.auth_context.api_access_audit_log_id.clone(),
-                    Some(ctx.auth_context.api_auth_audit_log_id.clone()),
-                    None,
-                    "workspace_user".to_string(),
-                    Some(e.to_string()),
-                    ctx.query_metadata.clone(),
-                )
-                .into_iter()
-                .map(|r| r.into());
-
-                ctx.state.audit_writer.write_many(audit_record).await;
-
-                Err(e.juniper_field_error())
-            }
-        }
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            users,
+            "workspace_user",
+            &ctx.query_metadata,
+        ).await
+        .map_err(|e| e.juniper_field_error())
     }
 
     async fn service_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<ServiceApiKey>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
-        Ok(self.get_service_api_keys(&mut conn).await?)
+        let service_api_keys = self.get_service_api_keys(&mut conn).await;
+
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            service_api_keys,
+            "service_api_key",
+            &ctx.query_metadata,
+        ).await.map_err(|e| e.juniper_field_error())
     }
 }
 
@@ -125,22 +105,30 @@ impl User {
     ) -> FieldResult<Vec<Workspace>> {
         let mut conn = &mut ctx.state.get_conn_http().await.unwrap();
         let workspaces = self.get_workspaces(&mut conn, workspace_id, workspace_name)
-        .await
-        .map_err(|e| e.juniper_field_error())?
-        .into_iter()
-        .collect();
+        .await;
 
-        Ok(workspaces)
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            workspaces,
+            "workspace",
+            &ctx.query_metadata,
+        ).await.map_err(|e| e.juniper_field_error())
     }
 
     async fn user_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<UserApiKey>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
         let api_keys = self.get_user_api_keys(&mut conn)
-            .await
-            .map_err(|e| e.juniper_field_error())?;
+            .await;
 
-        Ok(api_keys)
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            api_keys,
+            "user_api_key",
+            &ctx.query_metadata,
+        ).await.map_err(|e| e.juniper_field_error())
     }
 }
 
@@ -207,9 +195,17 @@ impl WorkspaceUser {
             .await
             .map_err(|e| e.juniper_field_error())?;
 
-        User::get_by_id(&mut conn, &self.user_id)
+        let user = User::get_by_id(&mut conn, &self.user_id)
             .await
-            .map_err(|e| e.juniper_field_error())
+            .map(|u| vec![u]);
+
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            user,
+            "user",
+            &ctx.query_metadata,
+        ).await.map_err(|e| e.juniper_field_error()).map(|mut u| u.pop().unwrap())
     }
 
     async fn workspace(&self, ctx: &JuniperAppState) -> FieldResult<Workspace> {
@@ -219,8 +215,16 @@ impl WorkspaceUser {
             .await
             .map_err(|e| e.juniper_field_error())?;
 
-        Workspace::get_by_id(&mut conn, &self.workspace_id)
+        let workspace = Workspace::get_by_id(&mut conn, &self.workspace_id)
             .await
-            .map_err(|e| e.juniper_field_error())
+            .map(|w| vec![w]);
+        
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            workspace,
+            "workspace",
+            &ctx.query_metadata,
+        ).await.map_err(|e| e.juniper_field_error()).map(|mut w| w.pop().unwrap())
     }
 }

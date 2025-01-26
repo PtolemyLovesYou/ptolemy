@@ -1,5 +1,5 @@
 use crate::{
-    crud::auth::{user as user_crud, workspace as workspace_crud},
+    crud::{auth::{user as user_crud, workspace as workspace_crud}, audit::log_iam_access},
     graphql::state::JuniperAppState,
     models::{User, Workspace},
 };
@@ -23,9 +23,17 @@ impl Query {
     ) -> FieldResult<Vec<User>> {
         let conn = &mut ctx.state.get_conn_http().await.unwrap();
 
-        user_crud::search_users(conn, id, username, None)
-            .await
-            .map_err(|e| e.juniper_field_error())
+        let users = user_crud::search_users(conn, id, username, None)
+            .await;
+
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            users,
+            "user",
+            &ctx.query_metadata,
+        ).await
+        .map_err(|e| e.juniper_field_error())
     }
 
     async fn workspace(
@@ -36,21 +44,36 @@ impl Query {
     ) -> FieldResult<Vec<Workspace>> {
         let conn = &mut ctx.state.get_conn_http().await.unwrap();
 
-        workspace_crud::search_workspaces(conn, id, name, archived)
-            .await
-            .map_err(|e| e.juniper_field_error())
+        let wk = workspace_crud::search_workspaces(conn, id, name, archived)
+            .await;
+
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            wk,
+            "workspace",
+            &ctx.query_metadata,
+        ).await
+        .map_err(|e| e.juniper_field_error())
     }
 
     async fn me(ctx: &JuniperAppState) -> FieldResult<User> {
-        Ok(user_crud::search_users(
+        let me = user_crud::search_users(
             &mut ctx.state.get_conn_http().await.unwrap(),
             Some(ctx.user.id.into()),
             None,
             None,
         )
-        .await
-        .map_err(|e| e.juniper_field_error())?
-        .pop()
-        .unwrap())
+        .await;
+
+        log_iam_access(
+            &ctx.state.audit_writer,
+            &ctx.auth_context,
+            me,
+            "user",
+            &ctx.query_metadata,
+        ).await
+        .map_err(|e| e.juniper_field_error())
+        .map(|mut u| u.pop().unwrap())
     }
 }

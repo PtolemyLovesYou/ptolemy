@@ -1,17 +1,14 @@
 use super::prelude::*;
 use crate::{
-    generated::audit_schema::{
+    error::CRUDError, generated::audit_schema::{
         api_access_audit_logs, api_auth_audit_logs, iam_audit_logs, record_audit_logs,
-    },
-    insert_obj_traits,
-    models::{
-        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, IAMAuditLogCreate,
-        RecordAuditLogCreate,
-    },
-    state::DbConnection,
+    }, insert_obj_traits, models::{
+        middleware::AuthContext, prelude::HasId, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, IAMAuditLogCreate, RecordAuditLogCreate
+    }, state::{AuditWriter, DbConnection}
 };
 use diesel_async::RunQueryDsl;
 use tracing::error;
+use uuid::Uuid;
 
 insert_obj_traits!(ApiAccessAuditLogCreate, api_access_audit_logs);
 insert_obj_traits!(AuthAuditLogCreate, api_auth_audit_logs);
@@ -59,6 +56,45 @@ impl AuditLog {
         match failed_logs.len() {
             0 => Ok(()),
             _ => Err(serde_json::json!(failed_logs)),
+        }
+    }
+}
+
+pub async fn log_iam_access<T: HasId>(
+    writer: &AuditWriter,
+    auth_context: &AuthContext,
+    records: Result<Vec<T>, CRUDError>,
+    table_name: &str,
+    query_metadata: &Option<serde_json::Value>,
+) -> Result<Vec<T>, CRUDError> {
+    match records {
+        Ok(r) => {
+            let ids: Vec<Uuid> = r.iter().map(|r| r.id()).collect();
+
+            let audit_records = IAMAuditLogCreate::new_reads(
+                auth_context.api_access_audit_log_id.clone(),
+                Some(auth_context.api_auth_audit_log_id.clone()),
+                Some(ids),
+                table_name.to_string(),
+                None,
+                query_metadata.clone(),
+            ).into_iter().map(|r| r.into());
+
+            writer.write_many(audit_records).await;
+            Ok(r)
+        },
+        Err(e) => {
+            let audit_record = IAMAuditLogCreate::new_reads(
+                auth_context.api_access_audit_log_id.clone(),
+                Some(auth_context.api_auth_audit_log_id.clone()),
+                None,
+                table_name.to_string(),
+                Some(e.to_string()),
+                query_metadata.clone(),
+            ).into_iter().map(|r| r.into());
+
+            writer.write_many(audit_record).await;
+            Err(e)
         }
     }
 }
