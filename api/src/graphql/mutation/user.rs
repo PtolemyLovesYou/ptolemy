@@ -7,8 +7,11 @@ use crate::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
     },
-    models::{UserCreate, User},
+    models::{UserCreate, User, UserApiKeyCreate},
+    consts::USER_API_KEY_PREFIX,
+    crypto::generate_api_key,
 };
+use chrono::{Duration, Utc};
 use juniper::{graphql_object, GraphQLInputObject};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -135,18 +138,26 @@ impl UserMutation {
             }
         };
 
-        let duration = duration_days.map(|days| chrono::Duration::days(days as i64));
+        let api_key = generate_api_key(USER_API_KEY_PREFIX).await;
+        let key_hash = ctx.state.password_handler.hash_password(&api_key);
+        let expires_at = duration_days.map(|d| Utc::now() + Duration::days(d as i64));
 
-        match user_api_key_crud::create_user_api_key(
-            &mut conn,
-            ctx.user.id.into(),
+        let create_model = UserApiKeyCreate {
+            id: None,
+            user_id: ctx.user.id.into(),
             name,
-            duration,
-            &ctx.state.password_handler,
+            key_hash,
+            key_preview: api_key.chars().take(12).collect(),
+            expires_at,
+        };
+
+        match UserApiKeyCreate::insert_one_returning_id(
+            &mut conn,
+            &create_model,
         )
         .await
         {
-            Ok((api_key_id, api_key)) => CreateApiKeyResult::ok(CreateApiKeyResponse {
+            Ok(api_key_id) => CreateApiKeyResult::ok(CreateApiKeyResponse {
                 id: api_key_id,
                 api_key,
             }),

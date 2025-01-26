@@ -1,7 +1,7 @@
 use std::str::FromStr as _;
 
 use crate::{
-    crud::auth::service_api_key as service_api_key_crud,
+    models::Workspace,
     crypto::{ClaimType, Claims},
     error::CRUDError,
     observer::records::EventRecords,
@@ -64,7 +64,7 @@ impl ObserverAuthentication for MyObserverAuthentication {
 
         let data = request.get_ref();
 
-        let (api_key, workspace) = service_api_key_crud::verify_service_api_key_by_workspace(
+        let (api_key, workspace) = Workspace::from_service_api_key(
             &mut conn,
             &data.workspace_name,
             api_key,

@@ -1,16 +1,14 @@
 use crate::{
-    crud::{auth::{
+    consts::SERVICE_API_KEY_PREFIX, crud::{auth::{
         service_api_key as service_api_key_crud, workspace as workspace_crud,
         workspace_user as workspace_user_crud,
-    }, prelude::*},
-    graphql::{
+    }, prelude::*}, crypto::generate_api_key, graphql::{
         mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
             WorkspaceUserResult,
         },
         state::JuniperAppState,
-    },
-    models::{ApiKeyPermissionEnum, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
+    }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
 };
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -345,19 +343,24 @@ impl WorkspaceMutation {
             }
         };
 
-        let duration = duration_days.map(|days| chrono::Duration::days(days as i64));
+        let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
+        let key_hash = ctx.state.password_handler.hash_password(&api_key);
+        let expires_at = duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64));
 
-        match service_api_key_crud::create_service_api_key(
-            &mut conn,
+        let create_model = ServiceApiKeyCreate {
+            id: None,
             workspace_id,
             name,
-            permission,
-            duration,
-            &ctx.state.password_handler,
-        )
+            permissions: permission.into(),
+            key_hash,
+            key_preview: api_key.chars().take(12).collect(),
+            expires_at,
+        };
+
+        match ServiceApiKeyCreate::insert_one_returning_id(&mut conn, &create_model)
         .await
         {
-            Ok((api_key_id, api_key)) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
+            Ok(api_key_id) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
                 id: api_key_id,
                 api_key,
             })),

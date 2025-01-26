@@ -3,11 +3,11 @@ use crate::{
     generated::auth_schema::{workspace, users, workspace_user, service_api_key},
     models::{Workspace, WorkspaceCreate, User, WorkspaceUser, ServiceApiKey},
     state::DbConnection,
+    crypto::PasswordHandler
 };
 use diesel::prelude::*;
 use diesel::BelongingToDsl;
 use diesel_async::RunQueryDsl;
-use tracing::error;
 use uuid::Uuid;
 
 impl Workspace {
@@ -51,6 +51,40 @@ impl Workspace {
             .map_err(crate::map_diesel_err!(GetError, "get", ServiceApiKey))?;
 
         Ok(api_keys)
+    }
+
+    pub async fn from_service_api_key(
+        conn: &mut DbConnection<'_>,
+        workspace_name: &str,
+        api_key: &str,
+        password_handler: &PasswordHandler,
+    ) -> Result<(ServiceApiKey, Self), CRUDError> {
+        let key_preview = api_key.chars().take(12).collect::<String>();
+    
+        let results: Vec<(ServiceApiKey, Workspace)> = workspace::table
+            .filter(
+                workspace::name
+                    .eq(workspace_name)
+                    .and(workspace::deleted_at.is_null()),
+            )
+            .inner_join(service_api_key::table.on(service_api_key::workspace_id.eq(workspace::id)))
+            .filter(
+                service_api_key::key_preview
+                    .eq(key_preview)
+                    .and(service_api_key::deleted_at.is_null()),
+            )
+            .select((ServiceApiKey::as_select(), Workspace::as_select()))
+            .get_results(conn)
+            .await
+            .map_err(crate::map_diesel_err!(GetError, "get", ServiceApiKey))?;
+    
+        for (ak, workspace) in results {
+            if password_handler.verify_password(&api_key, ak.key_hash.as_str()) {
+                return Ok((ak, workspace));
+            }
+        }
+    
+        Err(CRUDError::NotFoundError)
     }
 }
 

@@ -6,7 +6,6 @@ use crate::{
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use tracing::error;
 use uuid::Uuid;
 
 impl WorkspaceUser {
