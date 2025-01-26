@@ -1,9 +1,8 @@
 use crate::{
-    crud::auth::{
+    crud::{auth::{
         service_api_key as service_api_key_crud, workspace as workspace_crud,
         workspace_user as workspace_user_crud,
-    },
-    crud::prelude::*,
+    }, prelude::*},
     graphql::{
         mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
@@ -11,7 +10,7 @@ use crate::{
         },
         state::JuniperAppState,
     },
-    models::{ApiKeyPermissionEnum, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUserCreate},
+    models::{ApiKeyPermissionEnum, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
 };
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -126,7 +125,7 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        let user_permission = match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_user.workspace_id,
             &ctx.user.id.into(),
@@ -179,7 +178,7 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        let user_permission = match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_id,
             &ctx.user.id.into(),
@@ -199,7 +198,7 @@ impl WorkspaceMutation {
         match user_permission {
             WorkspaceRoleEnum::Admin => (),
             WorkspaceRoleEnum::Manager => {
-                let target_permission = match workspace_user_crud::get_workspace_user_permission(
+                let target_permission = match WorkspaceUser::get_workspace_role(
                     &mut conn,
                     &workspace_id,
                     &user_id,
@@ -252,7 +251,7 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        let user_permission = match workspace_user_crud::get_workspace_user_permission(
+        let user_permission = match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_id,
             &ctx.user.id.into(),
@@ -322,7 +321,7 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        match workspace_user_crud::get_workspace_user_permission(
+        match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_id,
             &ctx.user.id.into(),
@@ -386,7 +385,7 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        match workspace_user_crud::get_workspace_user_permission(
+        match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_id,
             &ctx.user.id.into(),
