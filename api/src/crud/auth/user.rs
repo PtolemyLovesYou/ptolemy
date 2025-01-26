@@ -2,11 +2,11 @@ use crate::{
     crypto::PasswordHandler,
     delete_db_obj,
     error::CRUDError,
-    generated::auth_schema::{users, workspace_user, workspace},
+    generated::auth_schema::{users, workspace_user, workspace, user_api_key},
     insert_obj_traits,
     get_by_id_trait,
     map_diesel_err,
-    models::{User, UserCreate, UserStatusEnum, Workspace, WorkspaceUser},
+    models::{User, UserCreate, UserStatusEnum, Workspace, WorkspaceUser, UserApiKey},
     state::DbConnection,
 };
 use diesel::prelude::*;
@@ -49,6 +49,51 @@ impl User {
         }
 
         query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", Workspace))
+    }
+
+    pub async fn get_user_api_keys(
+        &self,
+        conn: &mut DbConnection<'_>,
+    ) -> Result<Vec<UserApiKey>, CRUDError> {
+        let api_keys: Vec<UserApiKey> = UserApiKey::belonging_to(&self)
+            .select(UserApiKey::as_select())
+            .filter(user_api_key::deleted_at.is_null())
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", UserApiKey))?;
+
+        Ok(api_keys)
+    }
+
+    pub async fn from_user_api_key(
+        conn: &mut DbConnection<'_>,
+        api_key: &str,
+        password_handler: &PasswordHandler,
+    ) -> Result<Self, CRUDError> {
+        let chars = api_key.chars().take(12).collect::<String>();
+    
+        let api_keys: Vec<UserApiKey> = user_api_key::table
+            .select(UserApiKey::as_select())
+            .filter(
+                user_api_key::key_preview
+                    .eq(chars)
+                    .and(user_api_key::deleted_at.is_null()),
+            )
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", UserApiKey))?;
+    
+        for ak in api_keys {
+            if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
+                return users::table
+                    .filter(users::id.eq(&ak.user_id).and(users::deleted_at.is_null()))
+                    .get_result(conn)
+                    .await
+                    .map_err(map_diesel_err!(GetError, "get", User));
+            }
+        }
+    
+        Err(CRUDError::NotFoundError)
     }
 }
 

@@ -5,6 +5,7 @@ use crate::{
     crypto::{ClaimType, UuidClaims},
     error::AuthError,
     models::{
+        User,
         middleware::{ApiKey, AuthContext, AuthHeader, AuthResult, JWT},
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
     },
@@ -72,7 +73,7 @@ async fn validate_api_key_header(
     };
 
     if api_key.starts_with(USER_API_KEY_PREFIX) {
-        match crate::crud::auth::user_api_key::get_user_api_key_user(
+        match User::from_user_api_key(
             &mut state.get_conn().await.unwrap(),
             &api_key,
             &state.password_handler,

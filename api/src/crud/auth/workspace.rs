@@ -1,9 +1,9 @@
 use crate::{
     delete_db_obj,
     error::CRUDError,
-    generated::auth_schema::{workspace, users, workspace_user},
+    generated::auth_schema::{workspace, users, workspace_user, service_api_key},
     insert_obj_traits, get_by_id_trait,
-    models::{Workspace, WorkspaceCreate, User, WorkspaceUser},
+    models::{Workspace, WorkspaceCreate, User, WorkspaceUser, ServiceApiKey},
     state::DbConnection,
 };
 use diesel::prelude::*;
@@ -42,6 +42,17 @@ impl Workspace {
         }
 
         query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", WorkspaceUser))
+    }
+
+    pub async fn get_service_api_keys(&self, conn: &mut DbConnection<'_>) -> Result<Vec<ServiceApiKey>, CRUDError> {
+        let api_keys: Vec<ServiceApiKey> = ServiceApiKey::belonging_to(&self)
+            .select(ServiceApiKey::as_select())
+            .filter(service_api_key::deleted_at.is_null())
+            .get_results(conn)
+            .await
+            .map_err(crate::map_diesel_err!(GetError, "get", ServiceApiKey))?;
+
+        Ok(api_keys)
     }
 }
 

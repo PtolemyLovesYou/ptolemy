@@ -1,8 +1,4 @@
 use crate::{
-    crud::auth::{
-        service_api_key as service_api_key_crud,
-        user_api_key as user_api_key_crud,
-    },
     crud::prelude::*,
     graphql::state::JuniperAppState,
     models::{
@@ -91,17 +87,7 @@ impl Workspace {
     async fn service_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<ServiceApiKey>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
-        let api_keys = service_api_key_crud::search_service_api_keys(
-            &mut conn,
-            Some(self.id.clone()),
-            None,
-            None,
-            None
-        )
-            .await
-            .map_err(|e| e.juniper_field_error())?;
-
-        Ok(api_keys)
+        Ok(self.get_service_api_keys(&mut conn).await?)
     }
 }
 
@@ -150,7 +136,7 @@ impl User {
     async fn user_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<UserApiKey>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
-        let api_keys = user_api_key_crud::get_user_api_keys(&mut conn, &self.id)
+        let api_keys = self.get_user_api_keys(&mut conn)
             .await
             .map_err(|e| e.juniper_field_error())?;
 
