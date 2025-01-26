@@ -39,21 +39,19 @@ ENV BUILD_PROTOBUFS=0 \
     UV_LINK_MODE=copy
 
 RUN uv venv .venv && \
-    uv pip install cffi==${CFFI_VERSION} && \
-    mkdir -p /app/ptolemy/src
+    uv pip install cffi==${CFFI_VERSION}
 
 # Optimized copy and build steps
 COPY ./pyproject.toml ./uv.lock ./Cargo.toml ./Cargo.lock ./
-COPY ./ptolemy/Cargo.toml ./ptolemy/
+COPY ./ptolemy ./ptolemy
 COPY ./api ./api
+COPY ./dummy ./dummy
 
 # Initial build with cached dependencies
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
-    echo "fn main() {}" > /app/ptolemy/src/lib.rs && \
-    cargo build -p ptolemy
-
-COPY ./ptolemy ./ptolemy
+    --mount=type=cache,target=./target \
+    cargo build -p dummy
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \

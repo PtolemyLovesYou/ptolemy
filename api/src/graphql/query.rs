@@ -1,7 +1,7 @@
 use crate::{
-    crud::{auth::{user as user_crud, workspace as workspace_crud}, audit::log_iam_access},
+    crud::auth::{user as user_crud, workspace as workspace_crud},
     graphql::state::JuniperAppState,
-    models::{User, Workspace},
+    models::{User, Workspace, audit::OperationTypeEnum},
 };
 use juniper::{graphql_object, FieldResult};
 use uuid::Uuid;
@@ -26,14 +26,9 @@ impl Query {
         let users = user_crud::search_users(conn, id, username, None)
             .await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            users,
-            "user",
-            &ctx.query_metadata,
-        ).await
-        .map_err(|e| e.juniper_field_error())
+        ctx.log_iam_access(users,"user",OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 
     async fn workspace(
@@ -47,14 +42,9 @@ impl Query {
         let wk = workspace_crud::search_workspaces(conn, id, name, archived)
             .await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            wk,
-            "workspace",
-            &ctx.query_metadata,
-        ).await
-        .map_err(|e| e.juniper_field_error())
+        ctx.log_iam_access(wk,"workspace",OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 
     async fn me(ctx: &JuniperAppState) -> FieldResult<User> {
@@ -66,14 +56,9 @@ impl Query {
         )
         .await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            me,
-            "user",
-            &ctx.query_metadata,
-        ).await
-        .map_err(|e| e.juniper_field_error())
-        .map(|mut u| u.pop().unwrap())
+        ctx.log_iam_access(me,"user",OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
+            .map(|mut u| u.pop().unwrap())
     }
 }

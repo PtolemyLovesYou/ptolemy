@@ -1,9 +1,10 @@
 use crate::{
-    crud::{prelude::*, audit::log_iam_access},
+    crud::prelude::*,
     graphql::state::JuniperAppState,
     models::{
         ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum,
         Workspace, WorkspaceRoleEnum, WorkspaceUser,
+        audit::OperationTypeEnum,
     },
 };
 use chrono::{DateTime, Utc};
@@ -46,14 +47,9 @@ impl Workspace {
 
         let users = self.get_workspace_users(&mut conn, user_id, username).await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            users,
-            "workspace_user",
-            &ctx.query_metadata,
-        ).await
-        .map_err(|e| e.juniper_field_error())
+        ctx.log_iam_access(users, "workspace_user", OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 
     async fn service_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<ServiceApiKey>> {
@@ -61,13 +57,9 @@ impl Workspace {
 
         let service_api_keys = self.get_service_api_keys(&mut conn).await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            service_api_keys,
-            "service_api_key",
-            &ctx.query_metadata,
-        ).await.map_err(|e| e.juniper_field_error())
+        ctx.log_iam_access(service_api_keys, "service_api_key", OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 }
 
@@ -107,13 +99,9 @@ impl User {
         let workspaces = self.get_workspaces(&mut conn, workspace_id, workspace_name)
         .await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            workspaces,
-            "workspace",
-            &ctx.query_metadata,
-        ).await.map_err(|e| e.juniper_field_error())
+        ctx.log_iam_access(workspaces, "workspace", OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 
     async fn user_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<UserApiKey>> {
@@ -122,13 +110,9 @@ impl User {
         let api_keys = self.get_user_api_keys(&mut conn)
             .await;
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            api_keys,
-            "user_api_key",
-            &ctx.query_metadata,
-        ).await.map_err(|e| e.juniper_field_error())
+        ctx.log_iam_access(api_keys, "user_api_key", OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
     }
 }
 
@@ -199,13 +183,10 @@ impl WorkspaceUser {
             .await
             .map(|u| vec![u]);
 
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            user,
-            "user",
-            &ctx.query_metadata,
-        ).await.map_err(|e| e.juniper_field_error()).map(|mut u| u.pop().unwrap())
+        ctx.log_iam_access(user,"user",OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
+            .map(|mut u| u.pop().unwrap())
     }
 
     async fn workspace(&self, ctx: &JuniperAppState) -> FieldResult<Workspace> {
@@ -219,12 +200,9 @@ impl WorkspaceUser {
             .await
             .map(|w| vec![w]);
         
-        log_iam_access(
-            &ctx.state.audit_writer,
-            &ctx.auth_context,
-            workspace,
-            "workspace",
-            &ctx.query_metadata,
-        ).await.map_err(|e| e.juniper_field_error()).map(|mut w| w.pop().unwrap())
+        ctx.log_iam_access(workspace,"workspace",OperationTypeEnum::Read)
+            .await
+            .map_err(|e| e.juniper_field_error())
+            .map(|mut w| w.pop().unwrap())
     }
 }

@@ -107,13 +107,14 @@ pub struct IAMAuditLogCreate {
 crate::impl_has_id!(IAMAuditLogCreate);
 
 impl IAMAuditLogCreate {
-    pub fn new_reads(
+    pub fn new_wrds(
         api_access_audit_log_id: Uuid,
         api_auth_audit_log_id: Option<Uuid>,
         resource_ids: Option<Vec<Uuid>>,
         table_name: String,
         failure_reason: Option<String>,
         query_metadata: Option<serde_json::Value>,
+        operation_type: super::enums::OperationTypeEnum,
     ) -> Vec<Self> {
         match resource_ids {
             None => {
@@ -123,7 +124,7 @@ impl IAMAuditLogCreate {
                     api_auth_audit_log_id,
                     resource_id: None,
                     table_name: table_name.clone(),
-                    operation_type: super::enums::OperationTypeEnum::Read,
+                    operation_type,
                     old_state: None,
                     new_state: None,
                     failure_reason,
@@ -138,7 +139,7 @@ impl IAMAuditLogCreate {
                     api_auth_audit_log_id,
                     resource_id: Some(id),
                     table_name: table_name.clone(),
-                    operation_type: super::enums::OperationTypeEnum::Read,
+                    operation_type: operation_type.clone(),
                     old_state: None,
                     new_state: None,
                     failure_reason: failure_reason.clone(),

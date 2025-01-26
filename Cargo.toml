@@ -35,3 +35,13 @@ time = "0.3.37"
 tracing = "0.1.41"
 tracing-subscriber = {version = "0.3.19", features = ["fmt", "env-filter"] }
 heck = "0.5.0"
+ring = "0.17.8"
+base64 = "0.22.1"
+tower-http = { version = "0.6.2", features = ["trace"] }
+argon2 = "0.5.3"
+tower = "0.5.2"
+jsonwebtoken = "9.3.0"
+ipnet = {version = "2.10.1", features = ["json", "serde"]}
+pin-project-lite = "0.2.16"
+hex = "0.4.3"
+reqwest = { version = "0.12.12", features = ["json"] }
