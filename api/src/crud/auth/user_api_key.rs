@@ -1,7 +1,7 @@
 use crate::{
     consts::USER_API_KEY_PREFIX,
     crypto::{generate_api_key, PasswordHandler},
-    delete_db_obj, get_by_id_trait, map_diesel_err,
+    map_diesel_err,
     error::CRUDError,
     generated::auth_schema::user_api_key,
     models::auth::{UserApiKey, UserApiKeyCreate},
@@ -42,5 +42,5 @@ pub async fn create_user_api_key(
         .map(|id| (id, api_key))
 }
 
-delete_db_obj!(delete_user_api_key, user_api_key);
-get_by_id_trait!(UserApiKey, user_api_key);
+crate::delete_db_obj!(delete_user_api_key, user_api_key);
+crate::get_by_id_trait!(UserApiKey, user_api_key);

@@ -1,8 +1,6 @@
 use crate::{
-    delete_db_obj,
     error::CRUDError,
     generated::auth_schema::{workspace, users, workspace_user, service_api_key},
-    insert_obj_traits, get_by_id_trait,
     models::{Workspace, WorkspaceCreate, User, WorkspaceUser, ServiceApiKey},
     state::DbConnection,
 };
@@ -56,9 +54,9 @@ impl Workspace {
     }
 }
 
-insert_obj_traits!(WorkspaceCreate, workspace, Workspace);
-get_by_id_trait!(Workspace, workspace);
-delete_db_obj!(delete_workspace, workspace);
+crate::insert_obj_traits!(WorkspaceCreate, workspace, Workspace);
+crate::get_by_id_trait!(Workspace, workspace);
+crate::delete_db_obj!(delete_workspace, workspace);
 
 crate::search_db_obj!(
     search_workspaces,

@@ -1,10 +1,7 @@
 use crate::{
     crypto::PasswordHandler,
-    delete_db_obj,
     error::CRUDError,
     generated::auth_schema::{users, workspace_user, workspace, user_api_key},
-    insert_obj_traits,
-    get_by_id_trait,
     map_diesel_err,
     models::{User, UserCreate, UserStatusEnum, Workspace, WorkspaceUser, UserApiKey},
     state::DbConnection,
@@ -97,9 +94,9 @@ impl User {
     }
 }
 
-insert_obj_traits!(UserCreate, users, User);
-get_by_id_trait!(User, users);
-
+crate::insert_obj_traits!(UserCreate, users, User);
+crate::get_by_id_trait!(User, users);
+crate::delete_db_obj!(delete_user, users);
 crate::search_db_obj!(
     search_users,
     User,
@@ -160,8 +157,6 @@ pub async fn change_user_password(
         .map_err(map_diesel_err!(UpdateError, "update", User))
         .map(|_| ())
 }
-
-delete_db_obj!(delete_user, users);
 
 pub async fn auth_user(
     conn: &mut DbConnection<'_>,

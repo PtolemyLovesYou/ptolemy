@@ -2,7 +2,6 @@ use crate::{
     delete_db_obj,
     error::CRUDError,
     generated::auth_schema::workspace_user,
-    insert_obj_traits, get_by_id_trait, map_diesel_err,
     models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
     state::DbConnection,
 };
@@ -10,9 +9,6 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
-
-insert_obj_traits!(WorkspaceUserCreate, workspace_user, WorkspaceUser);
-get_by_id_trait!(WorkspaceUser, workspace_user);
 
 impl WorkspaceUser {
     pub async fn get_workspace_role(
@@ -67,4 +63,6 @@ pub async fn set_workspace_user_role(
         .map_err(map_diesel_err!(UpdateError, "update", WorkspaceUser))
 }
 
-delete_db_obj!(delete_workspace_user, workspace_user);
+crate::insert_obj_traits!(WorkspaceUserCreate, workspace_user, WorkspaceUser);
+crate::get_by_id_trait!(WorkspaceUser, workspace_user);
+crate::delete_db_obj!(delete_workspace_user, workspace_user);
