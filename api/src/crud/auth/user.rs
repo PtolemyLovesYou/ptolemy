@@ -2,11 +2,11 @@ use crate::{
     crypto::PasswordHandler,
     delete_db_obj,
     error::CRUDError,
-    generated::auth_schema::users,
+    generated::auth_schema::{users, workspace_user, workspace},
     insert_obj_traits,
     get_by_id_trait,
     map_diesel_err,
-    models::{User, UserCreate, UserStatusEnum},
+    models::{User, UserCreate, UserStatusEnum, Workspace, WorkspaceUser},
     state::DbConnection,
 };
 use diesel::prelude::*;
@@ -14,28 +14,52 @@ use diesel_async::RunQueryDsl;
 use tracing::error;
 use uuid::Uuid;
 
+impl User {
+    pub async fn get_workspace_users(&self, conn: &mut DbConnection<'_>, workspace_id: Option<Uuid>, workspace_name: Option<String>) -> Result<Vec<WorkspaceUser>, CRUDError> {
+        let mut query = WorkspaceUser::belonging_to(self)
+            .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
+            .filter(workspace_user::deleted_at.is_null())
+            .select(WorkspaceUser::as_select())
+            .into_boxed();
+
+        if let Some(workspace_id) = workspace_id {
+            query = query.filter(workspace_user::workspace_id.eq(workspace_id));
+        }
+
+        if let Some(workspace_name) = workspace_name {
+            query = query.filter(workspace::name.eq(workspace_name));
+        }
+
+        query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
+    }
+
+    pub async fn get_workspaces(&self, conn: &mut DbConnection<'_>, workspace_id: Option<Uuid>, workspace_name: Option<String>) -> Result<Vec<Workspace>, CRUDError> {
+        let mut query = WorkspaceUser::belonging_to(self)
+            .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
+            .filter(workspace_user::deleted_at.is_null())
+            .select(Workspace::as_select())
+            .into_boxed();
+
+        if let Some(workspace_id) = workspace_id {
+            query = query.filter(workspace::id.eq(workspace_id));
+        }
+
+        if let Some(workspace_name) = workspace_name {
+            query = query.filter(workspace::name.eq(workspace_name));
+        }
+
+        query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", Workspace))
+    }
+}
+
 insert_obj_traits!(UserCreate, users, User);
 get_by_id_trait!(User, users);
 
-pub async fn search_users(
-    conn: &mut DbConnection<'_>,
-    id: Option<Uuid>,
-    username: Option<String>,
-) -> Result<Vec<User>, CRUDError> {
-    let mut query = users::table.into_boxed();
-
-    query = query.filter(users::deleted_at.is_null());
-
-    if let Some(id_) = id {
-        query = query.filter(users::id.eq(id_));
-    }
-
-    if let Some(username_) = username {
-        query = query.filter(users::username.eq(username_));
-    }
-
-    query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", User))
-}
+crate::search_db_obj!(
+    search_users,
+    User,
+users,
+    [(id, Uuid), (username, String), (status, UserStatusEnum)]);
 
 pub async fn change_user_status(
     conn: &mut DbConnection<'_>,

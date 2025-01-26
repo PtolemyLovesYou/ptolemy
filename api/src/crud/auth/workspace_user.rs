@@ -1,9 +1,9 @@
 use crate::{
     delete_db_obj,
     error::CRUDError,
-    generated::auth_schema::{users, workspace, workspace_user},
+    generated::auth_schema::workspace_user,
     insert_obj_traits, get_by_id_trait, map_diesel_err,
-    models::{User, Workspace, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
+    models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
     state::DbConnection,
 };
 use diesel::prelude::*;
@@ -80,70 +80,6 @@ pub async fn get_workspace_user(
                 .and(workspace_user::deleted_at.is_null()),
         )
         .get_result(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
-}
-
-pub async fn search_workspace_users(
-    conn: &mut DbConnection<'_>,
-    workspace_id: &Option<Uuid>,
-    workspace_name: &Option<String>,
-    user_id: &Option<Uuid>,
-    username: &Option<String>,
-) -> Result<Vec<(WorkspaceUser, Workspace, User)>, CRUDError> {
-    use diesel::ExpressionMethods;
-    use diesel::JoinOnDsl;
-    use diesel::QueryDsl;
-
-    let mut query = workspace_user::table
-        .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
-        .inner_join(users::table.on(users::id.eq(workspace_user::user_id)))
-        .filter(
-            workspace_user::deleted_at
-                .is_null()
-                .and(users::deleted_at.is_null()),
-        )
-        .select((
-            // WorkspaceUser columns
-            workspace_user::all_columns,
-            // Workspace columns
-            workspace::all_columns,
-            // User columns
-            users::all_columns,
-        ))
-        .into_boxed();
-
-    // Apply filters
-    if let Some(user_id) = user_id {
-        query = query.filter(workspace_user::user_id.eq(user_id));
-    }
-
-    if let Some(workspace_id) = workspace_id {
-        query = query.filter(workspace_user::workspace_id.eq(workspace_id));
-    }
-
-    if let Some(workspace_name) = workspace_name {
-        query = query.filter(workspace::name.eq(workspace_name));
-    }
-
-    if let Some(username) = username {
-        query = query.filter(users::username.eq(username));
-    }
-
-    query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
-}
-
-pub async fn get_workspaces_of_user(
-    conn: &mut DbConnection<'_>,
-    user_id: &Uuid,
-) -> Result<Vec<WorkspaceUser>, CRUDError> {
-    workspace_user::table
-        .filter(
-            workspace_user::user_id
-                .eq(user_id)
-                .and(workspace_user::deleted_at.is_null()),
-        )
-        .get_results(conn)
         .await
         .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
 }

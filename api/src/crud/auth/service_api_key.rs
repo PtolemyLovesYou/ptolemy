@@ -1,14 +1,12 @@
 use crate::{
     consts::SERVICE_API_KEY_PREFIX,
     crypto::{generate_api_key, PasswordHandler},
-    delete_db_obj, get_by_id_trait,
     map_diesel_err,
     error::CRUDError,
     generated::auth_schema::{service_api_key, workspace},
     models::{ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace},
     state::DbConnection,
 };
-use super::super::prelude::*;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -80,20 +78,12 @@ pub async fn create_service_api_key(
         .map(|id| (id, api_key))
 }
 
-pub async fn get_workspace_service_api_keys(
-    conn: &mut DbConnection<'_>,
-    workspace_id: &Uuid,
-) -> Result<Vec<ServiceApiKey>, CRUDError> {
-    let wk: Workspace = Workspace::get_by_id(conn, workspace_id).await?;
+crate::search_db_obj!(
+    search_service_api_keys,
+    ServiceApiKey,
+    service_api_key,
+    [(id, Uuid), (workspace_id, Uuid), (name, String), (permissions, ApiKeyPermissionEnum)]
+);
 
-    let api_keys: Vec<ServiceApiKey> = ServiceApiKey::belonging_to(&wk)
-        .select(ServiceApiKey::as_select())
-        .get_results(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", ServiceApiKey))?;
-
-    Ok(api_keys)
-}
-
-delete_db_obj!(delete_service_api_key, service_api_key);
-get_by_id_trait!(ServiceApiKey, service_api_key);
+crate::delete_db_obj!(delete_service_api_key, service_api_key);
+crate::get_by_id_trait!(ServiceApiKey, service_api_key);

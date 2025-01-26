@@ -5,7 +5,7 @@ use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations)]
+#[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations, Identifiable)]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::workspace_user)]

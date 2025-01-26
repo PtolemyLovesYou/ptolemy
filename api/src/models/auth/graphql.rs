@@ -2,7 +2,6 @@ use crate::{
     crud::auth::{
         service_api_key as service_api_key_crud,
         user_api_key as user_api_key_crud,
-        workspace_user as workspace_user_crud,
     },
     crud::prelude::*,
     graphql::state::JuniperAppState,
@@ -49,20 +48,10 @@ impl Workspace {
     ) -> FieldResult<Vec<WorkspaceUser>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
-        let users_raw = workspace_user_crud::search_workspace_users(
-            &mut conn,
-            &Some(self.id),
-            &None,
-            &user_id,
-            &username,
-        )
-        .await;
+        let users = self.get_workspace_users(&mut conn, user_id, username).await;
 
-        match users_raw {
-            Ok(us) => {
-                let users: Vec<WorkspaceUser> =
-                    us.into_iter().map(|(wk_user, _, _)| wk_user).collect();
-
+        match users {
+            Ok(users) => {
                 let user_ids: Vec<Uuid> = users.iter().map(|u| u.id.clone()).collect();
 
                 let audit_records = IAMAuditLogCreate::new_reads(
@@ -102,7 +91,13 @@ impl Workspace {
     async fn service_api_keys(&self, ctx: &JuniperAppState) -> FieldResult<Vec<ServiceApiKey>> {
         let mut conn = ctx.state.get_conn_http().await.unwrap();
 
-        let api_keys = service_api_key_crud::get_workspace_service_api_keys(&mut conn, &self.id)
+        let api_keys = service_api_key_crud::search_service_api_keys(
+            &mut conn,
+            Some(self.id.clone()),
+            None,
+            None,
+            None
+        )
             .await
             .map_err(|e| e.juniper_field_error())?;
 
@@ -143,17 +138,10 @@ impl User {
         workspace_name: Option<String>,
     ) -> FieldResult<Vec<Workspace>> {
         let mut conn = &mut ctx.state.get_conn_http().await.unwrap();
-        let workspaces = workspace_user_crud::search_workspace_users(
-            &mut conn,
-            &workspace_id,
-            &workspace_name,
-            &Some(self.id),
-            &None,
-        )
+        let workspaces = self.get_workspaces(&mut conn, workspace_id, workspace_name)
         .await
         .map_err(|e| e.juniper_field_error())?
         .into_iter()
-        .map(|(_wk_usr, wk, _usr)| wk)
         .collect();
 
         Ok(workspaces)

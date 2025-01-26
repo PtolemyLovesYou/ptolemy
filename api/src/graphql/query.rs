@@ -23,7 +23,7 @@ impl Query {
     ) -> FieldResult<Vec<User>> {
         let conn = &mut ctx.state.get_conn_http().await.unwrap();
 
-        user_crud::search_users(conn, id, username)
+        user_crud::search_users(conn, id, username, None)
             .await
             .map_err(|e| e.juniper_field_error())
     }
@@ -45,6 +45,7 @@ impl Query {
         Ok(user_crud::search_users(
             &mut ctx.state.get_conn_http().await.unwrap(),
             Some(ctx.user.id.into()),
+            None,
             None,
         )
         .await

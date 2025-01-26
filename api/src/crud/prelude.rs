@@ -4,6 +4,57 @@ use uuid::Uuid;
 pub type DieselResult<T> = Result<T, diesel::result::Error>;
 
 #[macro_export]
+macro_rules! search_db_obj {
+    ($fn_name:ident, $ty:ty, $table:ident, [$(($req_field:ident, $req_type:ty)),+ $(,)?]) => {
+        pub async fn $fn_name(
+            conn: &mut DbConnection<'_>,
+            $($req_field: Option<$req_type>),+
+        ) -> Result<Vec<$ty>, CRUDError> {
+            let mut query = $table::table.into_boxed();
+            $(
+                if let Some($req_field) = $req_field {
+                    query = query.filter($table::$req_field.eq($req_field));
+                }
+            )+
+            query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", $ty))
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! delete_db_obj {
+    ($name:ident, $table_name:ident) => {
+        pub async fn $name(
+            conn: &mut DbConnection<'_>,
+            id: &Uuid,
+            deletion_reason: Option<String>,
+        ) -> Result<Vec<Uuid>, CRUDError> {
+            Ok(diesel::update($table_name::table)
+                .filter(
+                    $table_name::id
+                        .eq(id)
+                        .and($table_name::deleted_at.is_null()),
+                )
+                .set((
+                    $table_name::deleted_at.eq(chrono::Utc::now()),
+                    $table_name::deletion_reason.eq(deletion_reason),
+                ))
+                .returning($table_name::id)
+                .get_results(conn)
+                .await
+                .map_err(|_| {
+                    error!(
+                        "Unable to delete {} object with id {}",
+                        stringify!($table_name),
+                        id
+                    );
+                    CRUDError::DeleteError
+                })?)
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! map_diesel_err {
     ($catchall:ident, $action:literal, $name:tt) => {
         |e| {
