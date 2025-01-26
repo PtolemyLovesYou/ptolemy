@@ -53,7 +53,6 @@ diesel::table! {
     iam_audit_logs (id) {
         id -> Uuid,
         api_access_audit_log_id -> Uuid,
-        api_auth_audit_log_id -> Nullable<Uuid>,
         resource_id -> Nullable<Uuid>,
         table_name -> Varchar,
         operation_type -> OperationType,
@@ -71,7 +70,6 @@ diesel::table! {
     record_audit_logs (id) {
         id -> Uuid,
         api_access_audit_log_id -> Uuid,
-        api_auth_audit_log_id -> Nullable<Uuid>,
         workspace_id -> Uuid,
         table_name -> Varchar,
         hashed_id -> Nullable<Array<Nullable<Varchar>>>,
@@ -84,9 +82,7 @@ diesel::table! {
 
 diesel::joinable!(api_auth_audit_logs -> api_access_audit_logs (api_access_audit_log_id));
 diesel::joinable!(iam_audit_logs -> api_access_audit_logs (api_access_audit_log_id));
-diesel::joinable!(iam_audit_logs -> api_auth_audit_logs (api_auth_audit_log_id));
 diesel::joinable!(record_audit_logs -> api_access_audit_logs (api_access_audit_log_id));
-diesel::joinable!(record_audit_logs -> api_auth_audit_logs (api_auth_audit_log_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     api_access_audit_logs,

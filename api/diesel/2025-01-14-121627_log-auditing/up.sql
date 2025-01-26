@@ -39,7 +39,6 @@ create table api_auth_audit_logs (
 create table record_audit_logs (
     id uuid primary key default gen_random_uuid(),
     api_access_audit_log_id uuid not null references api_access_audit_logs(id),
-    api_auth_audit_log_id uuid references api_auth_audit_logs(id),
     workspace_id uuid not null references workspace(id),
     table_name varchar not null,
     hashed_id varchar[],
@@ -57,7 +56,6 @@ create table record_audit_logs (
 create table iam_audit_logs (
     id uuid primary key default gen_random_uuid(),
     api_access_audit_log_id uuid not null references api_access_audit_logs(id),
-    api_auth_audit_log_id uuid references api_auth_audit_logs(id),
     resource_id uuid,
     table_name varchar not null,
 

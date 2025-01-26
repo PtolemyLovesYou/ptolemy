@@ -94,7 +94,6 @@ impl AuthAuditLogCreate {
 pub struct IAMAuditLogCreate {
     pub id: Uuid,
     pub api_access_audit_log_id: Uuid,
-    pub api_auth_audit_log_id: Option<Uuid>,
     pub resource_id: Option<Uuid>,
     pub table_name: String,
     pub operation_type: super::enums::OperationTypeEnum,
@@ -107,9 +106,29 @@ pub struct IAMAuditLogCreate {
 crate::impl_has_id!(IAMAuditLogCreate);
 
 impl IAMAuditLogCreate {
+    pub fn new_update(
+        api_access_audit_log_id: Uuid,
+        resource_id: Option<Uuid>,
+        table_name: String,
+        old_state: Option<serde_json::Value>,
+        new_state: Option<serde_json::Value>,
+        failure_reason: Option<String>,
+        query_metadata: Option<serde_json::Value>,
+    ) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            api_access_audit_log_id,
+            resource_id,
+            table_name,
+            operation_type: OperationTypeEnum::Update,
+            old_state,
+            new_state,
+            failure_reason,
+            query_metadata,
+        }
+    }
     pub fn new_wrds(
         api_access_audit_log_id: Uuid,
-        api_auth_audit_log_id: Option<Uuid>,
         resource_ids: Option<Vec<Uuid>>,
         table_name: String,
         failure_reason: Option<String>,
@@ -121,7 +140,6 @@ impl IAMAuditLogCreate {
                 vec![Self {
                     id: Uuid::new_v4(),
                     api_access_audit_log_id,
-                    api_auth_audit_log_id,
                     resource_id: None,
                     table_name: table_name.clone(),
                     operation_type,
@@ -136,7 +154,6 @@ impl IAMAuditLogCreate {
                 .map(|id| Self {
                     id: Uuid::new_v4(),
                     api_access_audit_log_id,
-                    api_auth_audit_log_id,
                     resource_id: Some(id),
                     table_name: table_name.clone(),
                     operation_type: operation_type.clone(),
@@ -155,7 +172,6 @@ impl IAMAuditLogCreate {
 pub struct RecordAuditLogCreate {
     pub id: Uuid,
     pub api_access_audit_log_id: Uuid,
-    pub api_auth_audit_log_id: Option<Uuid>,
     pub workspace_id: Uuid,
     pub table_name: String,
     pub hashed_id: Vec<String>,
@@ -171,7 +187,6 @@ impl RecordAuditLogCreate {
     pub fn new_read(
         table_name: String,
         api_access_audit_log_id: Uuid,
-        api_auth_audit_log_id: Option<Uuid>,
         workspace_id: Uuid,
         hashed_id: Vec<Uuid>,
         failure_reason: Option<String>,
@@ -180,7 +195,6 @@ impl RecordAuditLogCreate {
         Self {
             id: Uuid::new_v4(),
             api_access_audit_log_id,
-            api_auth_audit_log_id,
             workspace_id,
             table_name,
             hashed_id: hashed_id

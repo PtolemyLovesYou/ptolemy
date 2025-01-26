@@ -31,13 +31,11 @@ pub struct UserMutation;
 #[graphql_object]
 impl UserMutation {
     async fn create(&self, ctx: &JuniperAppState, user_data: UserInput) -> UserResult {
+        let r = async move {
         let mut conn = match ctx.state.get_conn_http().await {
             Ok(conn) => conn,
             Err(e) => {
-                return UserResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
+                return Err(format!("Failed to get database connection: {}", e))
             }
         };
 
@@ -45,23 +43,17 @@ impl UserMutation {
 
         // if user is not admin or sysadmin, return forbidden
         if !user.is_admin && !user.is_sysadmin {
-            return UserResult::err(
-                "user",
-                "You must be an admin or sysadmin to create a user".to_string(),
-            );
+            return Err("You must be an admin or sysadmin to create a user".to_string());
         }
 
         // sysadmin cannot be created via REST API
         if user_data.is_sysadmin {
-            return UserResult::err("user", "Sysadmin cannot be created via API".to_string());
+            return Err("Sysadmin cannot be created via API".to_string());
         }
 
         // if user is admin and they're trying to make another admin, return forbidden
         if user.is_admin && user_data.is_admin {
-            return UserResult::err(
-                "user",
-                "You cannot create another admin. Contact your sysadmin.".to_string(),
-            );
+            return Err("You cannot create another admin. Contact your sysadmin.".to_string());
         }
 
         let user_create = UserCreate {
@@ -76,9 +68,15 @@ impl UserMutation {
         };
 
         match UserCreate::insert_one_returning_obj(&mut conn, &user_create).await {
-            Ok(result) => UserResult(Ok(result)),
-            Err(e) => UserResult::err("user", format!("Failed to create user: {:?}", e)),
+            Ok(result) => Ok(result),
+            Err(e) => Err(format!("Failed to create user: {:?}", e)),
         }
+    }.await;
+
+    match ctx.log_iam_update(r, "user", serde_json::json!({})).await {
+        Ok(r) => UserResult(Ok(r)),
+        Err(e) => UserResult::err("user", e),
+    }
     }
 
     async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
