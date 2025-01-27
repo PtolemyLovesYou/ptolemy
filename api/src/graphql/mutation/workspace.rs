@@ -10,6 +10,7 @@ use crate::{
         state::JuniperAppState,
     }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
 };
+use ptolemy::models::enums::WorkspaceRole;
 use juniper::graphql_object;
 use uuid::Uuid;
 
@@ -123,14 +124,14 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        let user_permission = match WorkspaceUser::get_workspace_role(
+        let user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_user.workspace_id,
             &ctx.user.id.into(),
         )
         .await
         {
-            Ok(role) => role,
+            Ok(role) => role.into(),
             Err(e) => {
                 return WorkspaceUserResult::err(
                     "permission",
@@ -139,15 +140,11 @@ impl WorkspaceMutation {
             }
         };
 
-        // Verify user has admin or manager role
-        match user_permission {
-            WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-            _ => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    "Insufficient permissions".to_string(),
-                )
-            }
+        if !user_permission.can_add_user_to_workspace() {
+            return WorkspaceUserResult::err(
+                "permission",
+                "Insufficient permissions".to_string(),
+            );
         }
 
         match WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &workspace_user).await {
@@ -176,14 +173,14 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        let user_permission = match WorkspaceUser::get_workspace_role(
+        let user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_id,
             &ctx.user.id.into(),
         )
         .await
         {
-            Ok(role) => role,
+            Ok(role) => role.into(),
             Err(e) => {
                 return DeletionResult::err(
                     "permission",
@@ -192,34 +189,27 @@ impl WorkspaceMutation {
             }
         };
 
-        // Verify permissions - admin can delete anyone, manager cannot delete admin
-        match user_permission {
-            WorkspaceRoleEnum::Admin => (),
-            WorkspaceRoleEnum::Manager => {
-                let target_permission = match WorkspaceUser::get_workspace_role(
-                    &mut conn,
-                    &workspace_id,
-                    &user_id,
+        let target_user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
+            &mut conn,
+            &workspace_id,
+            &user_id,
+        )
+        .await
+        {
+            Ok(role) => role.into(),
+            Err(e) => {
+                return DeletionResult::err(
+                    "permission",
+                    format!("Failed to get target user permission: {:?}", e),
                 )
-                .await
-                {
-                    Ok(role) => role,
-                    Err(e) => {
-                        return DeletionResult::err(
-                            "permission",
-                            format!("Failed to get target user permission: {:?}", e),
-                        )
-                    }
-                };
-
-                if target_permission == WorkspaceRoleEnum::Admin {
-                    return DeletionResult::err(
-                        "permission",
-                        "Managers cannot delete admin users".to_string(),
-                    );
-                }
             }
-            _ => return DeletionResult::err("permission", "Insufficient permissions".to_string()),
+        };
+
+        if !user_permission.can_remove_user_from_workspace(&target_user_permission) {
+            return DeletionResult::err(
+                "permission",
+                "Insufficient permissions".to_string(),
+            );
         }
 
         match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, None).await {
@@ -249,14 +239,14 @@ impl WorkspaceMutation {
         };
 
         // Check user permissions
-        let user_permission = match WorkspaceUser::get_workspace_role(
+        let user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
             &mut conn,
             &workspace_id,
             &ctx.user.id.into(),
         )
         .await
         {
-            Ok(role) => role,
+            Ok(role) => role.into(),
             Err(e) => {
                 return WorkspaceUserResult::err(
                     "permission",
@@ -265,23 +255,11 @@ impl WorkspaceMutation {
             }
         };
 
-        // Verify permissions - admin can set any role, manager cannot set admin role
-        match user_permission {
-            WorkspaceRoleEnum::Admin => (),
-            WorkspaceRoleEnum::Manager => {
-                if new_role == WorkspaceRoleEnum::Admin {
-                    return WorkspaceUserResult::err(
-                        "permission",
-                        "Managers cannot assign admin role".to_string(),
-                    );
-                }
-            }
-            _ => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    "Insufficient permissions".to_string(),
-                )
-            }
+        if !user_permission.can_update_user_role() {
+            return WorkspaceUserResult::err(
+                "permission",
+                "Insufficient permissions".to_string(),
+            );
         }
 
         match workspace_user_crud::set_workspace_user_role(
@@ -326,13 +304,13 @@ impl WorkspaceMutation {
         )
         .await
         {
-            Ok(role) => match role {
-                WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => {
+            Ok(role) => {
+                let role: WorkspaceRole = role.into();
+                if !role.can_create_delete_service_api_key() {
                     return CreateApiKeyResult::err(
                         "permission",
                         "Insufficient permissions".to_string(),
-                    )
+                    );
                 }
             },
             Err(e) => {
@@ -395,13 +373,13 @@ impl WorkspaceMutation {
         )
         .await
         {
-            Ok(role) => match role {
-                WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => {
+            Ok(role) => {
+                let role: WorkspaceRole = role.into();
+                if !role.can_create_delete_service_api_key() {
                     return DeletionResult::err(
                         "permission",
                         "Insufficient permissions".to_string(),
-                    )
+                    );
                 }
             },
             Err(e) => {

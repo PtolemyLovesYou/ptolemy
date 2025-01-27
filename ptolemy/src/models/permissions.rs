@@ -38,6 +38,13 @@ impl WorkspaceRole {
         }
     }
 
+    pub fn can_update_user_role(&self) -> bool {
+        match self {
+            WorkspaceRole::Admin => true,
+            _ => false
+        }
+    }
+
     pub fn can_create_delete_service_api_key(&self) -> bool {
         match self {
             WorkspaceRole::Admin | WorkspaceRole::User => true,
