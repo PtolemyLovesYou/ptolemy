@@ -34,7 +34,7 @@ impl WorkspaceMutation {
             }
         };
 
-        if !ctx.user.is_admin {
+        if !ctx.user.can_create_delete_workspace() {
             return WorkspaceResult::err(
                 "user",
                 "You must be an admin to create a workspace".to_string(),
@@ -92,7 +92,7 @@ impl WorkspaceMutation {
             }
         };
 
-        if !ctx.user.is_admin {
+        if !ctx.user.can_create_delete_workspace() {
             return DeletionResult::err(
                 "user",
                 "You must be an admin to delete a workspace".to_string(),

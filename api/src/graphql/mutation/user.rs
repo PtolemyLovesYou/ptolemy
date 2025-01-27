@@ -41,19 +41,8 @@ impl UserMutation {
 
         let user = ctx.user.clone();
 
-        // if user is not admin or sysadmin, return forbidden
-        if !user.is_admin && !user.is_sysadmin {
-            return Err("You must be an admin or sysadmin to create a user".to_string());
-        }
-
-        // sysadmin cannot be created via REST API
-        if user_data.is_sysadmin {
-            return Err("Sysadmin cannot be created via API".to_string());
-        }
-
-        // if user is admin and they're trying to make another admin, return forbidden
-        if user.is_admin && user_data.is_admin {
-            return Err("You cannot create another admin. Contact your sysadmin.".to_string());
+        if !user.can_create_delete_user(user_data.is_admin, user_data.is_sysadmin) {
+            return Err("You do not have permission to create a user".to_string());
         }
 
         let user_create = UserCreate {
@@ -92,26 +81,17 @@ impl UserMutation {
 
         // get user permissions
         let acting_user = ctx.user.clone();
-        let acting_user_id: Uuid = acting_user.id.into();
 
         let user_to_delete = match User::get_by_id(&mut conn, &id).await {
             Ok(u) => u,
             Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
         };
 
-        // if acting user is admin and they're trying to delete another admin, forbidden
-        if acting_user.is_admin && user_to_delete.is_admin {
-            return DeletionResult::err("user", "You cannot delete another admin.".to_string());
-        }
-
-        // cannot delete themselves
-        if acting_user_id == id {
-            return DeletionResult::err("user", "You cannot delete yourself.".to_string());
-        }
-
-        // sysadmin cannot be deleted via API
-        if user_to_delete.is_sysadmin {
-            return DeletionResult::err("user", "Sysadmin cannot be deleted via API".to_string());
+        if !acting_user.can_create_delete_user(user_to_delete.is_admin, user_to_delete.is_sysadmin) {
+            return DeletionResult::err(
+                "user",
+                format!("You do not have permission to delete this user"),
+            );
         }
 
         match user_crud::delete_user(&mut conn, &id, None).await {
