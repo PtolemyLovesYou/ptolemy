@@ -1,4 +1,4 @@
-use crate::error::AuthError;
+use crate::error::ApiError;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -70,7 +70,7 @@ impl PasswordHandler {
     }
 }
 
-type ClaimsResult<T> = Result<T, AuthError>;
+type ClaimsResult<T> = Result<T, ApiError>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims<T> {
@@ -125,7 +125,7 @@ where
         Ok(
             encode(&Header::default(), &self, &EncodingKey::from_secret(secret)).map_err(|e| {
                 error!("Failed to generate auth token: {}", e);
-                AuthError::InternalServerError
+                ApiError::InternalError
             })?,
         )
     }
@@ -143,7 +143,7 @@ where
         )
         .map_err(|e| {
             info!("Failed to decode auth token: {}", e);
-            AuthError::InvalidToken
+            ApiError::AuthError("Invalid token".to_string())
         })?;
 
         Ok(Some(claims.claims))

@@ -3,7 +3,7 @@ use std::str::FromStr as _;
 use crate::{
     consts::USER_API_KEY_PREFIX,
     crypto::{ClaimType, UuidClaims},
-    error::AuthError,
+    error::ApiError,
     models::{
         User,
         middleware::{ApiKey, AuthContext, AuthHeader, AuthResult, JWT},
@@ -27,13 +27,13 @@ fn get_header(
 ) -> AuthResult<Option<String>> {
     match req.headers().get(header) {
         Some(h) => {
-            let token = h.to_str().map_err(|_| AuthError::MalformedHeader)?;
+            let token = h.to_str().map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
 
             match prefix {
                 Some(p) => Ok(Some(
                     token
                         .strip_prefix(p)
-                        .ok_or(AuthError::MalformedHeader)?
+                        .ok_or(ApiError::AuthError("Malformed header".to_string()))?
                         .to_string(),
                 )),
                 None => Ok(Some(token.to_string())),
@@ -85,11 +85,11 @@ async fn validate_api_key_header(
                     .insert::<ptolemy::models::auth::User>(u.into());
                 return Ok(());
             }
-            Err(_) => return Err(AuthError::NotFoundError),
+            Err(_) => return Err(ApiError::NotFoundError),
         }
     }
 
-    Err(AuthError::NotFoundError)
+    Err(ApiError::NotFoundError)
 }
 
 async fn validate_jwt_header(
@@ -112,7 +112,7 @@ async fn validate_jwt_header(
                         .insert::<ptolemy::models::auth::User>(u.into());
                     Ok(())
                 }
-                Err(_) => Err(AuthError::NotFoundError),
+                Err(_) => Err(ApiError::NotFoundError),
             }
         }
         ClaimType::ServiceAPIKeyJWT => {
@@ -124,7 +124,7 @@ async fn validate_jwt_header(
                         .insert::<ptolemy::models::auth::ServiceApiKey>(sak.into());
                     Ok(())
                 }
-                Err(_) => Err(AuthError::NotFoundError),
+                Err(_) => Err(ApiError::NotFoundError),
             }
         }
     }

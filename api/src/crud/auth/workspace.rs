@@ -1,5 +1,5 @@
 use crate::{
-    error::CRUDError,
+    error::ApiError,
     generated::auth_schema::{workspace, users, workspace_user, service_api_key},
     models::{Workspace, WorkspaceCreate, User, WorkspaceUser, ServiceApiKey},
     state::DbConnection,
@@ -14,7 +14,7 @@ impl Workspace {
     pub async fn get_users(
         &self,
         conn: &mut DbConnection<'_>
-    ) -> Result<Vec<User>, CRUDError> {
+    ) -> Result<Vec<User>, ApiError> {
         WorkspaceUser::belonging_to(&self)
             .inner_join(users::table.on(users::id.eq(workspace_user::user_id)))
             .filter(workspace_user::deleted_at.is_null())
@@ -24,7 +24,7 @@ impl Workspace {
             .map_err(crate::map_diesel_err!(GetError, "get", User))
     }
 
-    pub async fn get_workspace_users(&self, conn: &mut DbConnection<'_>, user_id: Option<Uuid>, username: Option<String>) -> Result<Vec<WorkspaceUser>, CRUDError> {
+    pub async fn get_workspace_users(&self, conn: &mut DbConnection<'_>, user_id: Option<Uuid>, username: Option<String>) -> Result<Vec<WorkspaceUser>, ApiError> {
         let mut query = workspace_user::table
             .inner_join(users::table.on(users::id.eq(workspace_user::user_id)))
             .filter(workspace_user::deleted_at.is_null())
@@ -42,7 +42,7 @@ impl Workspace {
         query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", WorkspaceUser))
     }
 
-    pub async fn get_service_api_keys(&self, conn: &mut DbConnection<'_>) -> Result<Vec<ServiceApiKey>, CRUDError> {
+    pub async fn get_service_api_keys(&self, conn: &mut DbConnection<'_>) -> Result<Vec<ServiceApiKey>, ApiError> {
         let api_keys: Vec<ServiceApiKey> = ServiceApiKey::belonging_to(&self)
             .select(ServiceApiKey::as_select())
             .filter(service_api_key::deleted_at.is_null())
@@ -58,7 +58,7 @@ impl Workspace {
         workspace_name: &str,
         api_key: &str,
         password_handler: &PasswordHandler,
-    ) -> Result<(ServiceApiKey, Self), CRUDError> {
+    ) -> Result<(ServiceApiKey, Self), ApiError> {
         let key_preview = api_key.chars().take(12).collect::<String>();
     
         let results: Vec<(ServiceApiKey, Workspace)> = workspace::table
@@ -84,7 +84,7 @@ impl Workspace {
             }
         }
     
-        Err(CRUDError::NotFoundError)
+        Err(ApiError::NotFoundError)
     }
 }
 

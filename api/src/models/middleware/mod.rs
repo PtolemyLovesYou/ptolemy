@@ -1,7 +1,7 @@
-use crate::{crypto::Claims, error::AuthError};
+use crate::{crypto::Claims, error::ApiError};
 use uuid::Uuid;
 
-pub type AuthResult<T> = Result<T, AuthError>;
+pub type AuthResult<T> = Result<T, ApiError>;
 
 #[derive(Clone, Debug)]
 pub struct AuthContext {
@@ -10,7 +10,7 @@ pub struct AuthContext {
 }
 
 pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthResult<T>>> {
-    fn as_result(&self) -> Result<Option<&T>, AuthError>;
+    fn as_result(&self) -> Result<Option<&T>, ApiError>;
 
     fn ok(&self) -> Option<&T> {
         match self.as_result() {
@@ -19,7 +19,7 @@ pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthR
         }
     }
 
-    fn err(&self) -> Option<AuthError> {
+    fn err(&self) -> Option<ApiError> {
         match self.as_result() {
             Err(e) => Some(e),
             _ => None,
@@ -39,7 +39,7 @@ macro_rules! auth_header {
         #[derive(Debug, Clone)]
         pub enum $name {
             Ok($ty),
-            Err(AuthError),
+            Err(ApiError),
             Undeclared,
         }
 
@@ -70,7 +70,7 @@ macro_rules! auth_header {
         }
 
         impl AuthHeader<$ty> for $name {
-            fn as_result(&self) -> Result<Option<&$ty>, AuthError> {
+            fn as_result(&self) -> Result<Option<&$ty>, ApiError> {
                 match &self {
                     $name::Ok(t) => Ok(Some(t)),
                     $name::Undeclared => Ok(None),

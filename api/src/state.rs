@@ -1,6 +1,6 @@
 use crate::{
     crypto::PasswordHandler,
-    error::{ApiError, CRUDError},
+    error::{ServerError, ApiError},
     models::AuditLog,
 };
 use axum::{
@@ -19,12 +19,12 @@ use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
-fn get_env_var(name: &str) -> Result<String, ApiError> {
+fn get_env_var(name: &str) -> Result<String, ServerError> {
     match std::env::var(name) {
         Ok(val) => Ok(val),
         Err(_) => {
             tracing::error!("{} must be set.", name);
-            Err(ApiError::ConfigError)
+            Err(ServerError::ConfigError)
         }
     }
 }
@@ -63,7 +63,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new() -> Result<Self, ApiError> {
+    pub async fn new() -> Result<Self, ServerError> {
         let port = get_env_var("API_PORT")?;
         let postgres_host = get_env_var("POSTGRES_HOST")?;
         let postgres_port = get_env_var("POSTGRES_PORT")?;
@@ -130,16 +130,16 @@ impl AppState {
         Ok(state)
     }
 
-    pub async fn new_with_arc() -> Result<Arc<Self>, ApiError> {
+    pub async fn new_with_arc() -> Result<Arc<Self>, ServerError> {
         Ok(Arc::new(Self::new().await?))
     }
 
-    pub async fn get_conn(&self) -> Result<DbConnection<'_>, CRUDError> {
+    pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
         match self.pg_pool.get().await {
             Ok(c) => Ok(c),
             Err(e) => {
                 error!("Failed to get connection: {}", e);
-                Err(CRUDError::ConnectionError)
+                Err(ApiError::ConnectionError)
             }
         }
     }

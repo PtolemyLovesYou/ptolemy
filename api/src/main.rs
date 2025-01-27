@@ -1,10 +1,10 @@
 use api::{
-    crud::auth::admin::ensure_sysadmin, error::ApiError, routes::get_router, state::AppState,
+    crud::auth::admin::ensure_sysadmin, error::ServerError, routes::get_router, state::AppState,
 };
 use tracing::error;
 
 #[tokio::main]
-async fn main() -> Result<(), ApiError> {
+async fn main() -> Result<(), ServerError> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
@@ -32,7 +32,7 @@ async fn main() -> Result<(), ApiError> {
         Ok(_) => Ok(()),
         Err(e) => {
             tracing::error!("Axum server error: {:?}", e);
-            Err(ApiError::APIError)
+            Err(ServerError::ServerError)
         }
     }
 }

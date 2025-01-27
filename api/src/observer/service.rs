@@ -3,7 +3,7 @@ use std::str::FromStr as _;
 use crate::{
     models::Workspace,
     crypto::{ClaimType, Claims},
-    error::CRUDError,
+    error::ApiError,
     observer::records::EventRecords,
     state::ApiAppState,
 };
@@ -72,7 +72,7 @@ impl ObserverAuthentication for MyObserverAuthentication {
         )
         .await
         .map_err(|e| match e {
-            CRUDError::NotFoundError => Status::not_found("Invalid API key."),
+            ApiError::NotFoundError => Status::not_found("Invalid API key."),
             _ => {
                 error!("Failed to verify API key: {:?}", e);
                 Status::internal("Failed to verify API key.")

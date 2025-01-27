@@ -2,40 +2,15 @@ use axum::http::StatusCode;
 use juniper::FieldError;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug)]
-pub enum AuthError {
-    InvalidToken,
-    MissingHeader,
-    MalformedHeader,
-    InternalServerError,
-    NotFoundError,
-    InvalidAuthMethod,
-    MultipleAuthMethods,
-}
-
-impl Into<StatusCode> for AuthError {
-    fn into(self) -> StatusCode {
-        match self {
-            AuthError::InvalidToken => StatusCode::UNAUTHORIZED,
-            AuthError::MissingHeader => StatusCode::UNAUTHORIZED,
-            AuthError::MalformedHeader => StatusCode::UNAUTHORIZED,
-            AuthError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-            AuthError::NotFoundError => StatusCode::NOT_FOUND,
-            AuthError::InvalidAuthMethod => StatusCode::BAD_REQUEST,
-            AuthError::MultipleAuthMethods => StatusCode::BAD_REQUEST,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum ApiError {
-    APIError,
+pub enum ServerError {
+    ServerError,
     GRPCError,
     ConfigError,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum CRUDError {
+pub enum ApiError {
     DatabaseError,
     NotFoundError,
     InsertError,
@@ -45,26 +20,28 @@ pub enum CRUDError {
     UpdateError,
     BadQuery,
     InternalError,
+    AuthError(String),
 }
 
-impl std::fmt::Display for CRUDError {
+impl std::fmt::Display for ApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
-impl CRUDError {
+impl ApiError {
     pub fn http_status_code(&self) -> StatusCode {
         match self {
-            CRUDError::DatabaseError => StatusCode::CONFLICT,
-            CRUDError::NotFoundError => StatusCode::NOT_FOUND,
-            CRUDError::BadQuery => StatusCode::BAD_REQUEST,
-            CRUDError::InsertError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::GetError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::DeleteError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::ConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::UpdateError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::DatabaseError => StatusCode::CONFLICT,
+            ApiError::NotFoundError => StatusCode::NOT_FOUND,
+            ApiError::BadQuery => StatusCode::BAD_REQUEST,
+            ApiError::InsertError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::GetError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::DeleteError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::ConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::UpdateError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::AuthError(_) => StatusCode::UNAUTHORIZED,
         }
     }
 

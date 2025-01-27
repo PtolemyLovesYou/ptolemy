@@ -1,5 +1,5 @@
 use crate::{
-    error::CRUDError,
+    error::ApiError,
     generated::auth_schema::workspace_user,
     models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
     state::DbConnection, map_diesel_err,
@@ -13,7 +13,7 @@ impl WorkspaceUser {
         conn: &mut DbConnection<'_>,
         workspace_id: &Uuid,
         user_id: &Uuid,
-    ) -> Result<WorkspaceRoleEnum, CRUDError> {
+    ) -> Result<WorkspaceRoleEnum, ApiError> {
         workspace_user::table
             .filter(
                 workspace_user::workspace_id
@@ -39,14 +39,14 @@ impl WorkspaceUser {
 ///
 /// # Errors
 ///
-/// This function will return `CRUDError::UpdateError` if there is an error updating the user's role in the database.
+/// This function will return `ApiError::UpdateError` if there is an error updating the user's role in the database.
 
 pub async fn set_workspace_user_role(
     conn: &mut DbConnection<'_>,
     wk_id: &Uuid,
     us_id: &Uuid,
     role: &WorkspaceRoleEnum,
-) -> Result<WorkspaceUser, CRUDError> {
+) -> Result<WorkspaceUser, ApiError> {
     diesel::update(workspace_user::table)
         .filter(
             workspace_user::workspace_id
