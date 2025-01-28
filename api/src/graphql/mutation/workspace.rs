@@ -1,15 +1,15 @@
 use crate::{
-    consts::SERVICE_API_KEY_PREFIX, crud::{auth::{
+    consts::SERVICE_API_KEY_PREFIX, crud::auth::{
         service_api_key as service_api_key_crud, workspace as workspace_crud,
         workspace_user as workspace_user_crud,
-    }, prelude::*}, crypto::generate_api_key, graphql::{
+    }, crypto::generate_api_key, graphql::{
         mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
             WorkspaceUserResult,
         },
         state::JuniperAppState,
-        executor::CRUDExecutor,
-    }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
+        executor::{CRUDExecutor, CreateExecutor},
+    }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate, prelude::HasId}
 };
 use ptolemy::models::enums::WorkspaceRole;
 use juniper::graphql_object;
@@ -26,22 +26,31 @@ impl WorkspaceMutation {
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        CRUDExecutor::new(
+        let workspace = CreateExecutor::new(
             ctx,
             "create",
             |ctx| async move { Ok(ctx.user.can_create_delete_workspace()) },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-                let wk = WorkspaceCreate::insert_one_returning_obj(&mut conn, &workspace_data).await?;
-                WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &WorkspaceUserCreate {
-                    workspace_id: wk.id,
-                    user_id: admin_user_id.unwrap_or(ctx.user.id.into()),
-                    role: WorkspaceRoleEnum::Admin,
-                }).await?;
+            &workspace_data,
+        ).execute().await;
 
-                Ok(wk)
-            }
-        ).create().await.into()
+        if workspace.is_err() {
+            return workspace.into();
+        }
+
+        let workspace = workspace.unwrap();
+
+        let workspace_user = WorkspaceUserCreate {
+            workspace_id: workspace.id,
+            user_id: admin_user_id.unwrap_or(ctx.user.id.into()),
+            role: WorkspaceRoleEnum::Admin,
+        };
+
+        CreateExecutor::new(
+            ctx,
+            "create",
+            |_| async move { Ok(true) },
+            &workspace_user
+        ).execute().await.map(|_| workspace ).into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
@@ -63,9 +72,9 @@ impl WorkspaceMutation {
         workspace_user: WorkspaceUserCreate,
     ) -> WorkspaceUserResult {
         let workspace_id = workspace_user.workspace_id.clone();
-        CRUDExecutor::new(
-            ctx,
-            "add_user",
+
+        CreateExecutor::new(
+            ctx, "add_user",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
                 let user_permission: WorkspaceRole = WorkspaceUser::get_workspace_role(
@@ -76,11 +85,8 @@ impl WorkspaceMutation {
 
                 Ok(user_permission.can_add_user_to_workspace())
             },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-                WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &workspace_user).await
-            }
-        ).create().await.into()
+            &workspace_user
+        ).execute().await.into()
     }
 
     async fn remove_user(
@@ -214,10 +220,18 @@ impl WorkspaceMutation {
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
         let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
-        let key_preview: String = api_key.chars().take(12).collect();
-        let key_hash = ctx.state.password_handler.hash_password(&api_key);
 
-        let result = CRUDExecutor::new(
+        let create_model = ServiceApiKeyCreate {
+            id: None,
+            workspace_id,
+            name,
+            permissions: permission.into(),
+            key_hash: ctx.state.password_handler.hash_password(&api_key),
+            key_preview: api_key.chars().take(12).collect(),
+            expires_at: duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64)),
+        };
+
+        CreateExecutor::new(
             ctx,
             "create_service_api_key",
             |ctx| async move {
@@ -230,27 +244,10 @@ impl WorkspaceMutation {
 
                 Ok(role.can_create_delete_service_api_key())
             },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-
-                let create_model = ServiceApiKeyCreate {
-                    id: None,
-                    workspace_id,
-                    name,
-                    permissions: permission.into(),
-                    key_hash,
-                    key_preview: key_preview.clone(),
-                    expires_at: duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64)),
-                };
-
-                ServiceApiKeyCreate::insert_one_returning_id(&mut conn, &create_model).await
-            }
-        ).create().await;
-
-        match result {
-            Ok(api_key_id) => CreateApiKeyResult(Ok(CreateApiKeyResponse { id: api_key_id, api_key })),
-            Err(e) => CreateApiKeyResult::err("service_api_key", format!("Failed to create service api key: {}", e)),
-        }
+            &create_model
+        ).execute()
+            .await
+            .map(|ak| CreateApiKeyResponse { id: ak.id(), api_key }).into()
     }
 
     async fn delete_service_api_key(
