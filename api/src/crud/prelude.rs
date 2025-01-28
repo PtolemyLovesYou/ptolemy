@@ -100,6 +100,7 @@ where
 
 pub trait GetObjById where Self: Sized + HasId {
     fn get_by_id(conn: &mut DbConnection<'_>, id: &Uuid) -> impl std::future::Future<Output = Result<Self, crate::error::ApiError>> + Send;
+    fn delete_by_id(&self, conn: &mut DbConnection<'_>) -> impl std::future::Future<Output = Result<Self, crate::error::ApiError>> + Send;
 }
 
 #[macro_export]
@@ -122,6 +123,26 @@ macro_rules! get_by_id_trait {
                             diesel::result::Error::NotFound => Err(crate::error::ApiError::NotFoundError),
                             diesel::result::Error::DatabaseError(..) => Err(crate::error::ApiError::DatabaseError),
                             _ => Err(crate::error::ApiError::GetError),
+                        }
+                    }
+                }
+            }
+
+            async fn delete_by_id(&self, conn: &mut crate::state::DbConnection<'_>) -> Result<Self, crate::error::ApiError> {
+                match diesel::update($table::table)
+                    .filter($table::id.eq(self.id))
+                    .set($table::deleted_at.eq(chrono::Utc::now()))
+                    .returning(Self::as_returning())
+                    .get_result(conn)
+                    .await
+                {
+                    Ok(obj) => Ok(obj),
+                    Err(e) => {
+                        tracing::error!("Unable to delete {} by id: {}", stringify!($ty), e);
+                        match e {
+                            diesel::result::Error::NotFound => Err(crate::error::ApiError::NotFoundError),
+                            diesel::result::Error::DatabaseError(..) => Err(crate::error::ApiError::DatabaseError),
+                            _ => Err(crate::error::ApiError::DeleteError),
                         }
                     }
                 }

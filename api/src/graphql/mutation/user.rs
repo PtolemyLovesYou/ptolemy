@@ -1,14 +1,11 @@
 use crate::{
-    crud::{
-        auth::{user as user_crud, user_api_key as user_api_key_crud},
-        prelude::*,
-    },
+    crud::prelude::*,
     graphql::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
-        executor::{CRUDExecutor, CreateExecutor},
+        executor::{CreateExecutor, DeleteExecutor},
     },
-    models::{UserCreate, User, UserApiKeyCreate, prelude::HasId},
+    models::{UserCreate, User, UserApiKeyCreate, prelude::HasId, UserApiKey},
     consts::USER_API_KEY_PREFIX,
     crypto::generate_api_key,
 };
@@ -53,7 +50,7 @@ impl UserMutation {
     }
 
     async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
-        CRUDExecutor::new(
+        DeleteExecutor::new(
             ctx, "delete",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -61,11 +58,8 @@ impl UserMutation {
                 let user_to_delete = User::get_by_id(&mut conn, &id).await?;
                 Ok(acting_user.can_create_delete_user(user_to_delete.is_admin, user_to_delete.is_sysadmin))
             },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-                user_crud::delete_user(&mut conn, &id, None).await
-            }
-        ).delete().await.into()
+            &id
+        ).execute::<User>().await.into()
     }
 
     async fn create_user_api_key(
@@ -99,13 +93,10 @@ impl UserMutation {
     }
 
     async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
-        CRUDExecutor::new(
+        DeleteExecutor::new(
             ctx, "delete_user_api_key",
             |_ctx| async move { Ok(true) },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-                user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, None).await
-            }
-        ).delete().await.into()
+            &api_key_id
+        ).execute::<UserApiKey>().await.into()
     }
 }

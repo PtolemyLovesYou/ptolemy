@@ -1,15 +1,11 @@
 use crate::{
-    consts::SERVICE_API_KEY_PREFIX, crud::auth::{
-        service_api_key as service_api_key_crud, workspace as workspace_crud,
-        workspace_user as workspace_user_crud,
-    }, crypto::generate_api_key, graphql::{
-        mutation::result::{
+    consts::SERVICE_API_KEY_PREFIX, crud::auth::workspace_user as workspace_user_crud,
+    crypto::generate_api_key, graphql::{
+        executor::{CreateExecutor, DeleteExecutor}, mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
             WorkspaceUserResult,
-        },
-        state::JuniperAppState,
-        executor::{CRUDExecutor, CreateExecutor},
-    }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate, prelude::HasId}
+        }, state::JuniperAppState
+    }, models::{prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
 };
 use ptolemy::models::enums::WorkspaceRole;
 use juniper::graphql_object;
@@ -54,16 +50,13 @@ impl WorkspaceMutation {
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
-        CRUDExecutor::new(
+        DeleteExecutor::new(
             ctx, "delete",
             |ctx| async move {
                 Ok(ctx.user.can_create_delete_workspace())
             },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-                workspace_crud::delete_workspace(&mut conn, &workspace_id, None).await
-            }
-        ).delete().await.into()
+            &workspace_id
+        ).execute::<Workspace>().await.into()
     }
 
     async fn add_user(
@@ -256,7 +249,7 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        CRUDExecutor::new(
+        DeleteExecutor::new(
             ctx, "delete_service_api_key",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -268,10 +261,7 @@ impl WorkspaceMutation {
 
                 Ok(role.can_create_delete_service_api_key())
             },
-            |ctx| async move {
-                let mut conn = ctx.state.get_conn().await?;
-                service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, None).await
-            }
-        ).delete().await.into()
+            &api_key_id,
+        ).execute::<ServiceApiKey>().await.into()
     }
 }
