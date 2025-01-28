@@ -1,6 +1,7 @@
 use crate::{
     graphql::state::JuniperAppState,
     models::{ServiceApiKey, User, Workspace, WorkspaceUser},
+    error::ApiError,
 };
 use juniper::{graphql_interface, graphql_object, GraphQLObject};
 use uuid::Uuid;
@@ -54,6 +55,20 @@ macro_rules! result_model {
 
             pub fn ok(value: $result_type) -> Self {
                 $name(Ok(value))
+            }
+        }
+
+        impl From<Result<$result_type, ApiError>> for $name {
+            fn from(result: Result<$result_type, ApiError>) -> Self {
+                match result {
+                    Ok(t) => $name::ok(t),
+                    Err(e) => {
+                        $name::err(
+                            stringify!($name),
+                            e.to_string(),
+                        )
+                    }
+                }
             }
         }
     };

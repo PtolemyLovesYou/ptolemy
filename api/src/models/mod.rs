@@ -12,6 +12,12 @@ pub mod prelude {
         fn id(&self) -> uuid::Uuid;
     }
 
+    impl HasId for uuid::Uuid {
+        fn id(&self) -> uuid::Uuid {
+            self.clone()
+        }
+    }
+
     #[macro_export]
     macro_rules! impl_has_id {
         ($t:ty) => {

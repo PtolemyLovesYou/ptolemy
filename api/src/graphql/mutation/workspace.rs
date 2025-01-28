@@ -8,6 +8,7 @@ use crate::{
             WorkspaceUserResult,
         },
         state::JuniperAppState,
+        result::CreateExecutor,
     }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
 };
 use ptolemy::models::enums::WorkspaceRole;
@@ -25,44 +26,22 @@ impl WorkspaceMutation {
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
-
-        if !ctx.user.can_create_delete_workspace() {
-            return WorkspaceResult::err(
-                "user",
-                "You must be an admin to create a workspace".to_string(),
-            );
-        }
-
-        let workspace =
-            match WorkspaceCreate::insert_one_returning_obj(&mut conn, &workspace_data).await {
-                Ok(w) => w,
-                Err(e) => {
-                    return WorkspaceResult::err(
-                        "workspace",
-                        format!("Failed to create workspace: {:?}", e),
-                    )
-                }
-            };
-
-        let _wk_user = self.add_user(
+        CreateExecutor::new(
             ctx,
-            WorkspaceUserCreate {
-                workspace_id: workspace.id,
-                user_id: admin_user_id.unwrap_or(ctx.user.id.into()),
-                role: WorkspaceRoleEnum::Admin,
-            }
-        ).await;
+            "create",
+            |ctx| async move { Ok(ctx.user.can_create_delete_workspace()) },
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let wk = WorkspaceCreate::insert_one_returning_obj(&mut conn, &workspace_data).await?;
+                WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &WorkspaceUserCreate {
+                    workspace_id: wk.id,
+                    user_id: admin_user_id.unwrap_or(ctx.user.id.into()),
+                    role: WorkspaceRoleEnum::Admin,
+                }).await?;
 
-        WorkspaceResult(Ok(workspace))
+                Ok(wk)
+            }
+        ).execute().await.into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
@@ -96,47 +75,25 @@ impl WorkspaceMutation {
         ctx: &JuniperAppState,
         workspace_user: WorkspaceUserCreate,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
+        let workspace_id = workspace_user.workspace_id.clone();
+        CreateExecutor::new(
+            ctx,
+            "add_user",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let user_permission: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
+
+                Ok(user_permission.can_add_user_to_workspace())
+            },
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &workspace_user).await
             }
-        };
-
-        // Check user permissions
-        let user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
-            &mut conn,
-            &workspace_user.workspace_id,
-            &ctx.user.id.into(),
-        )
-        .await
-        {
-            Ok(role) => role.into(),
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
-            }
-        };
-
-        if !user_permission.can_add_user_to_workspace() {
-            return WorkspaceUserResult::err(
-                "permission",
-                "Insufficient permissions".to_string(),
-            );
-        }
-
-        match WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &workspace_user).await {
-            Ok(result) => WorkspaceUserResult(Ok(result)),
-            Err(e) => WorkspaceUserResult::err(
-                "workspace_user",
-                format!("Failed to add user to workspace: {:?}", e),
-            ),
-        }
+        ).execute().await.into()
     }
 
     async fn remove_user(
@@ -269,66 +226,43 @@ impl WorkspaceMutation {
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return CreateApiKeyResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
-
-        // Check user permissions
-        match WorkspaceUser::get_workspace_role(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id.into(),
-        )
-        .await
-        {
-            Ok(role) => {
-                let role: WorkspaceRole = role.into();
-                if !role.can_create_delete_service_api_key() {
-                    return CreateApiKeyResult::err(
-                        "permission",
-                        "Insufficient permissions".to_string(),
-                    );
-                }
-            },
-            Err(e) => {
-                return CreateApiKeyResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
-            }
-        };
-
         let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
+        let key_preview: String = api_key.chars().take(12).collect();
         let key_hash = ctx.state.password_handler.hash_password(&api_key);
-        let expires_at = duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64));
 
-        let create_model = ServiceApiKeyCreate {
-            id: None,
-            workspace_id,
-            name,
-            permissions: permission.into(),
-            key_hash,
-            key_preview: api_key.chars().take(12).collect(),
-            expires_at,
-        };
+        let result = CreateExecutor::new(
+            ctx,
+            "create_service_api_key",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        match ServiceApiKeyCreate::insert_one_returning_id(&mut conn, &create_model)
-        .await
-        {
-            Ok(api_key_id) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
-                id: api_key_id,
-                api_key,
-            })),
-            Err(e) => CreateApiKeyResult::err(
-                "service_api_key",
-                format!("Failed to create service API key: {:?}", e),
-            ),
+                Ok(role.can_create_delete_service_api_key())
+            },
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+
+                let create_model = ServiceApiKeyCreate {
+                    id: None,
+                    workspace_id,
+                    name,
+                    permissions: permission.into(),
+                    key_hash,
+                    key_preview: key_preview.clone(),
+                    expires_at: duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64)),
+                };
+
+                ServiceApiKeyCreate::insert_one_returning_id(&mut conn, &create_model).await
+            }
+        ).execute().await;
+
+        match result {
+            Ok(api_key_id) => CreateApiKeyResult(Ok(CreateApiKeyResponse { id: api_key_id, api_key })),
+            Err(e) => CreateApiKeyResult::err("service_api_key", format!("Failed to create service api key: {}", e)),
         }
     }
 
