@@ -1,5 +1,4 @@
 use axum::http::StatusCode;
-use juniper::FieldError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -30,6 +29,21 @@ impl std::fmt::Display for ApiError {
 }
 
 impl ApiError {
+    pub fn category(&self) -> &str {
+        match self {
+            ApiError::DatabaseError => "database_error",
+            ApiError::NotFoundError => "not_found",
+            ApiError::InsertError => "insert_error",
+            ApiError::GetError => "get_error",
+            ApiError::DeleteError => "delete_error",
+            ApiError::ConnectionError => "connection_error",
+            ApiError::UpdateError => "update_error",
+            ApiError::BadQuery => "bad_query",
+            ApiError::InternalError => "internal_error",
+            ApiError::AuthError(_) => "auth_error",
+        }
+    }
+
     pub fn http_status_code(&self) -> StatusCode {
         match self {
             ApiError::DatabaseError => StatusCode::CONFLICT,
@@ -43,10 +57,5 @@ impl ApiError {
             ApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::AuthError(_) => StatusCode::UNAUTHORIZED,
         }
-    }
-
-    pub fn juniper_field_error(&self) -> FieldError {
-        // TODO: Make this more descriptive
-        FieldError::from(format!("CRUD Error: {:?}", self))
     }
 }

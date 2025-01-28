@@ -100,6 +100,43 @@ pub async fn log_iam_update<T: HasId + Serialize, E: std::fmt::Debug>(
     }
 }
 
+pub async fn log_iam_read<T: HasId, E: std::fmt::Debug>(
+    writer: &AuditWriter,
+    auth_context: &AuthContext,
+    records: &Result<Vec<T>, E>,
+    table_name: &str,
+    query_metadata: &Option<serde_json::Value>,
+) {
+    match records {
+        Ok(r) => {
+            let ids: Vec<Uuid> = r.iter().map(|r| r.id()).collect();
+
+            let audit_records = IAMAuditLogCreate::new_wrds(
+                auth_context.api_access_audit_log_id.clone(),
+                Some(ids),
+                table_name.to_string(),
+                None,
+                query_metadata.clone(),
+                OperationTypeEnum::Read,
+            ).into_iter().map(|r| r.into());
+
+            writer.write_many(audit_records).await;
+        },
+        Err(e) => {
+            let audit_record = IAMAuditLogCreate::new_wrds(
+                auth_context.api_access_audit_log_id.clone(),
+                None,
+                table_name.to_string(),
+                Some(format!("{:?}", e)),
+                query_metadata.clone(),
+                OperationTypeEnum::Read,
+            ).into_iter().map(|r| r.into());
+
+            writer.write_many(audit_record).await;
+        }
+    }
+}
+
 pub async fn log_iam_access<T: HasId, E: std::fmt::Debug>(
     writer: &AuditWriter,
     auth_context: &AuthContext,
