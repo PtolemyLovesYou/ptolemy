@@ -1,5 +1,3 @@
-pub mod graphql;
-
 mod enums;
 mod service_api_key;
 mod user;

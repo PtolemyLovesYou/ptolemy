@@ -10,6 +10,8 @@ use super::{
 use juniper::graphql_object;
 use uuid::Uuid;
 
+pub mod objects;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Query;
 

@@ -53,31 +53,14 @@ impl WorkspaceMutation {
                 }
             };
 
-        // add workspace admin
-        let admin_id = match admin_user_id {
-            Some(id) => id,
-            // if none provided, default to user_id
-            None => ctx.user.id.into(),
-        };
-
-        match WorkspaceUserCreate::insert_one_returning_id(
-            &mut conn,
-            &WorkspaceUserCreate {
+        let _wk_user = self.add_user(
+            ctx,
+            WorkspaceUserCreate {
                 workspace_id: workspace.id,
-                user_id: admin_id,
+                user_id: admin_user_id.unwrap_or(ctx.user.id.into()),
                 role: WorkspaceRoleEnum::Admin,
-            },
-        )
-        .await
-        {
-            Ok(_) => (),
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "workspace_user",
-                    format!("Failed to create workspace user: {:?}", e),
-                )
             }
-        };
+        ).await;
 
         WorkspaceResult(Ok(workspace))
     }
