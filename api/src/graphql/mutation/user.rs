@@ -3,7 +3,7 @@ use crate::{
     graphql::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
-        executor::{CreateExecutor, DeleteExecutor},
+        executor::Executor,
     },
     models::{UserCreate, User, UserApiKeyCreate, prelude::HasId, UserApiKey},
     consts::USER_API_KEY_PREFIX,
@@ -40,26 +40,24 @@ impl UserMutation {
             is_admin: user_data.is_admin,
         };
 
-        CreateExecutor::new(
+        Executor::new(
             ctx, "create",
             |ctx| async move {
                 Ok(ctx.user.can_create_delete_user(user_data.is_admin, user_data.is_sysadmin))
             },
-            &user_create,
-        ).execute().await.into()
+        ).create(&user_create).await.into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
-        DeleteExecutor::new(
+    Executor::new(
             ctx, "delete",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
                 let acting_user = ctx.user.clone();
                 let user_to_delete = User::get_by_id(&mut conn, &id).await?;
                 Ok(acting_user.can_create_delete_user(user_to_delete.is_admin, user_to_delete.is_sysadmin))
-            },
-            &id
-        ).execute::<User>().await.into()
+            }
+        ).delete::<User>(&id).await.map(|_| true).into()
     }
 
     async fn create_user_api_key(
@@ -81,22 +79,20 @@ impl UserMutation {
             expires_at: duration_days.map(|d| Utc::now() + Duration::days(d as i64)),
         };
 
-        CreateExecutor::new(
+        Executor::new(
             ctx, "create_user_api_key",
             |_ctx| async move { Ok(true) },
-            &user_api_key_create
             )
-            .execute()
+            .create(&user_api_key_create)
             .await
             .map(|ak| CreateApiKeyResponse { id: ak.id(), api_key })
             .into()
     }
 
     async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
-        DeleteExecutor::new(
+        Executor::new(
             ctx, "delete_user_api_key",
             |_ctx| async move { Ok(true) },
-            &api_key_id
-        ).execute::<UserApiKey>().await.into()
+        ).delete::<UserApiKey>(&api_key_id).await.map(|_| true).into()
     }
 }

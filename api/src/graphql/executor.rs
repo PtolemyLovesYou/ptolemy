@@ -7,7 +7,7 @@ use super::state::JuniperAppState;
 use serde::Serialize;
 use uuid::Uuid;
 
-pub struct DeleteExecutor<'a, V, VFut>
+pub struct Executor<'a, V, VFut>
 where
     V: FnOnce(&'a JuniperAppState) -> VFut,
     VFut: std::future::Future<Output = Result<bool, ApiError>>,
@@ -15,29 +15,22 @@ where
     pub ctx: &'a JuniperAppState,
     pub validate_permissions: V,
     pub name: &'a str,
-    pub id: &'a Uuid,
 }
 
-impl<'a, V, VFut> DeleteExecutor<'a, V, VFut>
+impl<'a, V, VFut> Executor<'a, V, VFut>
 where
     V: FnOnce(&'a JuniperAppState) -> VFut,
     VFut: std::future::Future<Output = Result<bool, ApiError>>,
 {
-    pub fn new(
-        ctx: &'a JuniperAppState,
-        name: &'a str,
-        validate_permissions: V,
-        id: &'a Uuid,
-    ) -> Self {
+    pub fn new(ctx: &'a JuniperAppState, name: &'a str, validate_permissions: V) -> Self {
         Self {
             ctx,
             validate_permissions,
             name,
-            id,
         }
     }
 
-    pub async fn execute<T: GetObjById + Serialize>(self) -> Result<bool, ApiError> {
+    pub async fn delete<T: GetObjById + Serialize>(self, id: &Uuid) -> Result<T, ApiError> {
         let result = async move {
             match (self.validate_permissions)(self.ctx).await? {
                 true => (),
@@ -46,7 +39,7 @@ where
 
             let mut conn = self.ctx.state.get_conn().await?;
 
-            let obj = T::get_by_id(&mut conn, self.id).await?;
+            let obj = T::get_by_id(&mut conn, id).await?;
 
             Ok(obj.delete_by_id(&mut conn).await?)
         }.await;
@@ -69,7 +62,7 @@ where
                 IAMAuditLogCreate {
                     id: Uuid::new_v4(),
                     api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: Some(self.id.clone()),
+                    resource_id: Some(id.clone()),
                     table_name: self.name.to_string(),
                     operation_type: OperationTypeEnum::Delete,
                     old_state: None,
@@ -82,45 +75,14 @@ where
 
         self.ctx.state.audit_writer.write(log.into()).await;
 
-        Ok(true)
-    }
-}
-
-pub struct CreateExecutor<'a, V, VFut, C>
-where
-    V: FnOnce(&'a JuniperAppState) -> VFut,
-    VFut: std::future::Future<Output = Result<bool, ApiError>>,
-    C: InsertObjReturningObj,
-    C::Target: Serialize
-{
-    pub ctx: &'a JuniperAppState,
-    pub validate_permissions: V,
-    pub name: &'a str,
-    pub obj: &'a C,
-}
-
-impl<'a, V, VFut, C> CreateExecutor<'a, V, VFut, C>
-where
-    V: FnOnce(&'a JuniperAppState) -> VFut,
-    VFut: std::future::Future<Output = Result<bool, ApiError>>,
-    C: InsertObjReturningObj,
-    C::Target: Serialize
-{
-    pub fn new(
-        ctx: &'a JuniperAppState,
-        name: &'a str,
-        validate_permissions: V,
-        obj: &'a C
-    ) -> Self {
-        Self {
-            ctx,
-            validate_permissions,
-            name,
-            obj,
-        }
+        result
     }
 
-    pub async fn execute(self) -> Result<C::Target, ApiError> {
+    pub async fn create<T>(self, obj: &T) -> Result<T::Target, ApiError>
+    where
+        T: InsertObjReturningObj,
+        T::Target: Serialize
+    {
         let result = async move {
             match (self.validate_permissions)(self.ctx).await? {
                 true => (),
@@ -129,7 +91,7 @@ where
 
             let mut conn = self.ctx.state.get_conn().await?;
 
-            C::insert_one_returning_obj(&mut conn, self.obj).await
+            T::insert_one_returning_obj(&mut conn, obj).await
         }.await;
 
         let log = match &result {
