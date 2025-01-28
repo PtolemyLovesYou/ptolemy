@@ -91,7 +91,7 @@ where
     V: FnOnce(&'a JuniperAppState) -> VFut,
     VFut: std::future::Future<Output = Result<bool, ApiError>>,
     C: InsertObjReturningObj,
-    C::Target: HasId + Serialize
+    C::Target: Serialize
 {
     pub ctx: &'a JuniperAppState,
     pub validate_permissions: V,
@@ -104,7 +104,7 @@ where
     V: FnOnce(&'a JuniperAppState) -> VFut,
     VFut: std::future::Future<Output = Result<bool, ApiError>>,
     C: InsertObjReturningObj,
-    C::Target: HasId + Serialize
+    C::Target: Serialize
 {
     pub fn new(
         ctx: &'a JuniperAppState,
