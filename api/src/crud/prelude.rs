@@ -1,3 +1,4 @@
+use crate::models::prelude::HasId;
 pub use crate::state::DbConnection;
 use uuid::Uuid;
 
@@ -86,7 +87,7 @@ pub trait InsertObjReturningObj
 where
     Self: Sized,
 {
-    type Target: diesel::Selectable<diesel::pg::Pg>;
+    type Target: diesel::Selectable<diesel::pg::Pg> + HasId;
     fn insert_one_returning_obj(
         conn: &mut DbConnection<'_>,
         records: &Self,
@@ -97,7 +98,7 @@ where
     ) -> impl std::future::Future<Output = Result<Vec<Self::Target>, crate::error::ApiError>> + Send;
 }
 
-pub trait GetObjById where Self: Sized {
+pub trait GetObjById where Self: Sized + HasId {
     fn get_by_id(conn: &mut DbConnection<'_>, id: &Uuid) -> impl std::future::Future<Output = Result<Self, crate::error::ApiError>> + Send;
 }
 
