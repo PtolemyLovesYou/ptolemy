@@ -88,6 +88,18 @@ pub struct ValidationError {
 
 result_model!(DeletionResult, bool, deleted);
 
+impl From<Result<Uuid, ApiError>> for DeletionResult {
+    fn from(result: Result<Uuid, ApiError>) -> Self {
+        match result {
+            Ok(_) => DeletionResult::ok(true),
+            Err(e) => DeletionResult::err(
+                "database",
+                e.to_string(),
+            ),
+        }
+    }
+}
+
 result_model!(UserResult, User, user);
 
 result_model!(WorkspaceUserResult, WorkspaceUser, workspace_user);

@@ -28,7 +28,7 @@ macro_rules! delete_db_obj {
             conn: &mut crate::state::DbConnection<'_>,
             id: &uuid::Uuid,
             deletion_reason: Option<String>,
-        ) -> Result<Vec<uuid::Uuid>, crate::error::ApiError> {
+        ) -> Result<uuid::Uuid, crate::error::ApiError> {
             Ok(diesel::update($table_name::table)
                 .filter(
                     $table_name::id
@@ -40,7 +40,7 @@ macro_rules! delete_db_obj {
                     $table_name::deletion_reason.eq(deletion_reason),
                 ))
                 .returning($table_name::id)
-                .get_results(conn)
+                .get_result(conn)
                 .await
                 .map_err(|_| {
                     tracing::error!(

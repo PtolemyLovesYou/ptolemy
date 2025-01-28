@@ -8,7 +8,7 @@ use crate::{
             WorkspaceUserResult,
         },
         state::JuniperAppState,
-        result::CreateExecutor,
+        executor::CRUDExecutor,
     }, models::{ApiKeyPermissionEnum, ServiceApiKeyCreate, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
 };
 use ptolemy::models::enums::WorkspaceRole;
@@ -26,7 +26,7 @@ impl WorkspaceMutation {
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        CreateExecutor::new(
+        CRUDExecutor::new(
             ctx,
             "create",
             |ctx| async move { Ok(ctx.user.can_create_delete_workspace()) },
@@ -41,33 +41,20 @@ impl WorkspaceMutation {
 
                 Ok(wk)
             }
-        ).execute().await.into()
+        ).create().await.into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
+        CRUDExecutor::new(
+            ctx, "delete",
+            |ctx| async move {
+                Ok(ctx.user.can_create_delete_workspace())
+            },
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                workspace_crud::delete_workspace(&mut conn, &workspace_id, None).await
             }
-        };
-
-        if !ctx.user.can_create_delete_workspace() {
-            return DeletionResult::err(
-                "user",
-                "You must be an admin to delete a workspace".to_string(),
-            );
-        }
-
-        match workspace_crud::delete_workspace(&mut conn, &workspace_id, None).await {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => {
-                DeletionResult::err("workspace", format!("Failed to delete workspace: {:?}", e))
-            }
-        }
+        ).delete().await.into()
     }
 
     async fn add_user(
@@ -76,7 +63,7 @@ impl WorkspaceMutation {
         workspace_user: WorkspaceUserCreate,
     ) -> WorkspaceUserResult {
         let workspace_id = workspace_user.workspace_id.clone();
-        CreateExecutor::new(
+        CRUDExecutor::new(
             ctx,
             "add_user",
             |ctx| async move {
@@ -93,7 +80,7 @@ impl WorkspaceMutation {
                 let mut conn = ctx.state.get_conn().await?;
                 WorkspaceUserCreate::insert_one_returning_obj(&mut conn, &workspace_user).await
             }
-        ).execute().await.into()
+        ).create().await.into()
     }
 
     async fn remove_user(
@@ -230,7 +217,7 @@ impl WorkspaceMutation {
         let key_preview: String = api_key.chars().take(12).collect();
         let key_hash = ctx.state.password_handler.hash_password(&api_key);
 
-        let result = CreateExecutor::new(
+        let result = CRUDExecutor::new(
             ctx,
             "create_service_api_key",
             |ctx| async move {
@@ -258,7 +245,7 @@ impl WorkspaceMutation {
 
                 ServiceApiKeyCreate::insert_one_returning_id(&mut conn, &create_model).await
             }
-        ).execute().await;
+        ).create().await;
 
         match result {
             Ok(api_key_id) => CreateApiKeyResult(Ok(CreateApiKeyResponse { id: api_key_id, api_key })),
@@ -272,47 +259,22 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        CRUDExecutor::new(
+            ctx, "delete_service_api_key",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        // Check user permissions
-        match WorkspaceUser::get_workspace_role(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id.into(),
-        )
-        .await
-        {
-            Ok(role) => {
-                let role: WorkspaceRole = role.into();
-                if !role.can_create_delete_service_api_key() {
-                    return DeletionResult::err(
-                        "permission",
-                        "Insufficient permissions".to_string(),
-                    );
-                }
+                Ok(role.can_create_delete_service_api_key())
             },
-            Err(e) => {
-                return DeletionResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, None).await
             }
-        };
-
-        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, None).await {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => DeletionResult::err(
-                "service_api_key",
-                format!("Failed to delete service API key: {:?}", e),
-            ),
-        }
+        ).delete().await.into()
     }
 }
