@@ -8,7 +8,6 @@ use crate::{
     }, state::{AuditWriter, DbConnection}
 };
 use diesel_async::RunQueryDsl;
-use serde::Serialize;
 use tracing::error;
 use uuid::Uuid;
 
@@ -58,44 +57,6 @@ impl AuditLog {
         match failed_logs.len() {
             0 => Ok(()),
             _ => Err(serde_json::json!(failed_logs)),
-        }
-    }
-}
-
-pub async fn log_iam_update<T: HasId + Serialize, E: std::fmt::Debug>(
-    writer: &AuditWriter,
-    auth_context: &AuthContext,
-    record: Result<T, E>,
-    table_name: &str,
-    query_metadata: &Option<serde_json::Value>,
-    old_state: impl serde::Serialize,
-) -> Result<T, E> {
-    match record {
-        Ok(r) => {
-            let audit_record = IAMAuditLogCreate::new_update(
-                auth_context.api_access_audit_log_id.clone(),
-                Some(r.id()),
-                table_name.to_string(),
-                Some(serde_json::to_value(old_state).unwrap()),
-                Some(serde_json::json!(r)),
-                None,
-                query_metadata.clone(),
-            ).into();
-            writer.write(audit_record).await;
-            Ok(r)
-        },
-        Err(e) => {
-            let audit_record = IAMAuditLogCreate::new_update(
-                auth_context.api_access_audit_log_id.clone(),
-                None,
-                table_name.to_string(),
-                None,
-                None,
-                Some(format!("{:?}", e)),
-                query_metadata.clone(),
-            ).into();
-            writer.write(audit_record).await;
-            Err(e)
         }
     }
 }
