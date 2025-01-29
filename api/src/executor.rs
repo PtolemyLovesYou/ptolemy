@@ -37,6 +37,53 @@ where
         }
     }
 
+    pub async fn read<T, F>(self, read_fut: F) -> Result<T, ApiError>
+    where
+        T: HasId,
+        F: std::future::Future<Output = Result<T, ApiError>>
+    {
+        let new_fut = async move { read_fut.await.map(|v| vec![v]) };
+        self.read_many(new_fut)
+            .await
+            .map(|mut v| v.pop().unwrap())
+    }
+
+    pub async fn read_many<T, F>(self, read_fut: F) -> Result<Vec<T>, ApiError>
+    where
+        T: HasId,
+        F: std::future::Future<Output = Result<Vec<T>, ApiError>>
+    {
+        match (self.validate_permissions)(self.ctx).await? {
+            true => (),
+            false => return Err(ApiError::AuthError("Insufficient permissions to perform this operation".to_string())),
+        };
+
+        let result = read_fut.await;
+
+        let logs = match &result {
+            Ok(t) => IAMAuditLogCreate::new_reads(
+                self.auth_context.api_access_audit_log_id.clone(),
+                Some(t.iter().map(|r| r.id()).collect()),
+                self.name.to_string(),
+                None,
+                self.query_metadata.clone(),
+            ),
+            Err(e) => IAMAuditLogCreate::new_reads(
+                self.auth_context.api_access_audit_log_id.clone(),
+                None,
+                self.name.to_string(),
+                Some(e.category().to_string()),
+                self.query_metadata.clone(),
+            )
+        }.into_iter().map(|r| r.into());
+
+        let state = self.ctx.state();
+
+        state.audit_writer.write_many(logs).await;
+
+        result
+    }
+
     pub async fn update<T>(self, id: &Uuid, changeset: &T::InsertTarget) -> Result<T, ApiError>
     where 
         T: GetObjById + Serialize + UpdateObjById {

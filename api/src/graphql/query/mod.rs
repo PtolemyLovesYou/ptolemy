@@ -1,10 +1,9 @@
 use crate::{
-    models::{User, Workspace},
-    error::ApiError,
+    crud::prelude::GetObjById as _, error::ApiError, models::{User, Workspace}
 };
 use super::{
     state::JuniperAppState,
-    result::ReadResultAudit,
+    executor::JuniperExecutor,
 };
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -26,12 +25,11 @@ impl Query {
         id: Option<Uuid>,
         username: Option<String>,
     ) -> Result<Vec<User>, ApiError> {
-        let mut conn = ctx.state.get_conn().await?;
-
-        User::search_users(&mut conn, id, username, None)
-            .await
-            .audit_read(ctx, "user")
-            .await
+        JuniperExecutor::from_juniper_app_state(ctx, "user", |_| async move { Ok(true)})
+            .read_many(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                User::search_users(&mut conn, id, username, None).await
+            }).await
     }
 
     async fn workspace(
@@ -40,24 +38,18 @@ impl Query {
         name: Option<String>,
         archived: Option<bool>,
     ) -> Result<Vec<Workspace>, ApiError> {
-        let conn = &mut ctx.state.get_conn_http().await.unwrap();
-
-        Workspace::search_workspaces(conn, id, name, archived)
-            .await
-            .audit_read(ctx, "workspace")
-            .await
+        JuniperExecutor::from_juniper_app_state(ctx, "workspace", |_| async move { Ok(true)})
+            .read_many(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                Workspace::search_workspaces(&mut conn, id, name, archived).await
+            }).await
     }
 
     async fn me(ctx: &JuniperAppState) -> Result<User, ApiError> {
-        User::search_users(
-            &mut ctx.state.get_conn_http().await.unwrap(),
-            Some(ctx.user.id.into()),
-            None,
-            None,
-        )
-        .await
-        .audit_read(ctx, "user")
-        .await
-        .map(|mut u| u.pop().unwrap())
+        JuniperExecutor::from_juniper_app_state(ctx, "me", |_| async move { Ok(true)})
+            .read(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                User::get_by_id(&mut conn, &ctx.user.id.into()).await
+            }).await
     }
 }
