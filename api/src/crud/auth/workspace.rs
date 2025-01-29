@@ -62,16 +62,13 @@ impl Workspace {
         let key_preview = api_key.chars().take(12).collect::<String>();
     
         let results: Vec<(ServiceApiKey, Workspace)> = workspace::table
-            .filter(
-                workspace::name
-                    .eq(workspace_name)
-                    .and(workspace::deleted_at.is_null()),
-            )
             .inner_join(service_api_key::table.on(service_api_key::workspace_id.eq(workspace::id)))
             .filter(
                 service_api_key::key_preview
                     .eq(key_preview)
-                    .and(service_api_key::deleted_at.is_null()),
+                    .and(service_api_key::deleted_at.is_null())
+                    .and(workspace::name.eq(workspace_name))
+                    .and(workspace::deleted_at.is_null()),
             )
             .select((ServiceApiKey::as_select(), Workspace::as_select()))
             .get_results(conn)
