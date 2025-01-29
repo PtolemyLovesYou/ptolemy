@@ -89,7 +89,7 @@ impl User {
             }
         }
     
-        Err(ApiError::NotFoundError)
+        Err(ApiError::AuthError("Invalid API key".to_string()))
     }
 
     pub async fn all(
