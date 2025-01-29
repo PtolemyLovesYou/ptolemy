@@ -1,7 +1,7 @@
 use crate::{
     consts::SERVICE_API_KEY_PREFIX,
     crypto::generate_api_key, graphql::{
-        executor::Executor, mutation::result::{
+        executor::JuniperExecutor, mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
             WorkspaceUserResult,
         }, state::JuniperAppState
@@ -34,7 +34,7 @@ impl WorkspaceMutation {
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        let workspace = Executor::new(
+        let workspace = JuniperExecutor::from_juniper_app_state(
             ctx,
             "create",
             |ctx| async move { Ok(ctx.user.can_create_delete_workspace()) },
@@ -52,7 +52,7 @@ impl WorkspaceMutation {
             WorkspaceRoleEnum::Admin,
         );
 
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx,
             "create",
             |_| async move { Ok(true) },
@@ -60,7 +60,7 @@ impl WorkspaceMutation {
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "delete",
             |ctx| async move {
                 Ok(ctx.user.can_create_delete_workspace())
@@ -75,7 +75,7 @@ impl WorkspaceMutation {
     ) -> WorkspaceUserResult {
         let workspace_id = workspace_user.workspace_id.clone();
 
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "add_user",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -100,7 +100,7 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         user_id: Uuid,
     ) -> DeletionResult {
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "remove_user",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -131,7 +131,7 @@ impl WorkspaceMutation {
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
     ) -> WorkspaceUserResult {
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "change_workspace_user_role",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -171,7 +171,7 @@ impl WorkspaceMutation {
             expires_at: duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64)),
         };
 
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx,
             "create_service_api_key",
             |ctx| async move {
@@ -195,7 +195,7 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "delete_service_api_key",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;

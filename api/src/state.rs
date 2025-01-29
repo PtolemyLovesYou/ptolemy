@@ -150,3 +150,13 @@ impl AppState {
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
     }
 }
+
+pub trait State {
+    fn state(&self) -> ApiAppState;
+}
+
+impl State for Arc<AppState> {
+    fn state(&self) -> ApiAppState {
+        self.clone()
+    }
+}

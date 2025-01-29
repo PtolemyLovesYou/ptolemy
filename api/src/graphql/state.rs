@@ -1,6 +1,6 @@
 use crate::{
     models::middleware::AuthContext,
-    state::ApiAppState
+    state::{ApiAppState, State}
 };
 
 // Define an AppState struct to hold both schema and context
@@ -13,3 +13,7 @@ pub struct JuniperAppState {
 }
 
 impl juniper::Context for JuniperAppState {}
+
+impl State for JuniperAppState {
+    fn state(&self) -> ApiAppState { self.state.clone() }
+}

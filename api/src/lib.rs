@@ -8,6 +8,7 @@ pub mod models;
 pub mod observer;
 pub mod routes;
 pub mod state;
+pub mod executor;
 
 pub mod consts {
     pub const SERVICE_API_KEY_PREFIX: &'static str = "pt-sk";

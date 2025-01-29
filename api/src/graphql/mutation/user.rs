@@ -3,7 +3,7 @@ use crate::{
     graphql::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::JuniperAppState,
-        executor::Executor,
+        executor::JuniperExecutor,
     },
     models::{UserCreate, User, UserApiKeyCreate, prelude::HasId, UserApiKey},
     consts::USER_API_KEY_PREFIX,
@@ -40,7 +40,7 @@ impl UserMutation {
             is_admin: user_data.is_admin,
         };
 
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "create",
             |ctx| async move {
                 Ok(ctx.user.can_create_delete_user(user_data.is_admin, user_data.is_sysadmin))
@@ -49,7 +49,7 @@ impl UserMutation {
     }
 
     async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
-    Executor::new(
+    JuniperExecutor::from_juniper_app_state(
             ctx, "delete",
             |ctx| async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -79,7 +79,7 @@ impl UserMutation {
             expires_at: duration_days.map(|d| Utc::now() + Duration::days(d as i64)),
         };
 
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "create_user_api_key",
             |_ctx| async move { Ok(true) },
             )
@@ -90,7 +90,7 @@ impl UserMutation {
     }
 
     async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
-        Executor::new(
+        JuniperExecutor::from_juniper_app_state(
             ctx, "delete_user_api_key",
             |_ctx| async move { Ok(true) },
         ).delete::<UserApiKey>(&api_key_id).await.map(|_| true).into()
