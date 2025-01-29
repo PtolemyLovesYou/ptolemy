@@ -1,7 +1,6 @@
 use crate::models::{User, Workspace, WorkspaceRoleEnum};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

@@ -118,7 +118,10 @@ impl WorkspaceMutation {
 
                 Ok(src_user_role.can_remove_user_from_workspace(&target_user_role))
             }
-        ).delete::<WorkspaceUser>(&user_id).await.map(|_| true).into()
+        ).delete::<WorkspaceUser>(&WorkspaceUser::compute_id(&user_id, &workspace_id))
+            .await
+            .map(|_| true)
+            .into()
     }
 
     async fn change_workspace_user_role(
