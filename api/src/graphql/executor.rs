@@ -1,5 +1,7 @@
 use crate::{
-    crud::prelude::{GetObjById, InsertObjReturningObj, UpdateObjById}, error::ApiError, models::{prelude::HasId, IAMAuditLogCreate, OperationTypeEnum}
+    crud::prelude::{GetObjById, InsertObjReturningObj, UpdateObjById},
+    error::ApiError,
+    models::{prelude::HasId, IAMAuditLogCreate, OperationTypeEnum}
 };
 use super::state::JuniperAppState;
 use serde::Serialize;
@@ -48,30 +50,25 @@ where
 
         let log = match &result {
             Ok((old, new)) => {
-                IAMAuditLogCreate {
-                    id: Uuid::new_v4(),
-                    api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: Some(id.clone()),
-                    table_name: self.name.to_string(),
-                    operation_type: OperationTypeEnum::Update,
-                    old_state: Some(serde_json::json!(old)),
-                    new_state: Some(serde_json::json!(new)),
-                    failure_reason: None,
-                    query_metadata: self.ctx.query_metadata.clone(),
-                }
+                IAMAuditLogCreate::ok(
+                    self.ctx.auth_context.api_access_audit_log_id.clone(),
+                    id.clone(),
+                    self.name.to_string(),
+                    OperationTypeEnum::Update,
+                    Some(serde_json::json!(old)),
+                    Some(serde_json::json!(new)),
+                    self.ctx.query_metadata.clone(),
+                )
             },
             Err(e) => {
-                IAMAuditLogCreate {
-                    id: Uuid::new_v4(),
-                    api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: Some(id.clone()),
-                    table_name: self.name.to_string(),
-                    operation_type: OperationTypeEnum::Update,
-                    old_state: None,
-                    new_state: None,
-                    failure_reason: Some(e.to_string()),
-                    query_metadata: self.ctx.query_metadata.clone(),
-                }
+                IAMAuditLogCreate::err(
+                    self.ctx.auth_context.api_access_audit_log_id.clone(),
+                    Some(id.clone()),
+                    self.name.to_string(),
+                    OperationTypeEnum::Update,
+                    Some(e.to_string()),
+                    self.ctx.query_metadata.clone(),
+                )
             }
         };
 
@@ -96,30 +93,25 @@ where
 
         let log = match &result {
             Ok(t) => {
-                IAMAuditLogCreate {
-                    id: Uuid::new_v4(),
-                    api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: Some(t.id()),
-                    table_name: self.name.to_string(),
-                    operation_type: OperationTypeEnum::Delete,
-                    old_state: Some(serde_json::json!(t)),
-                    new_state: None,
-                    failure_reason: None,
-                    query_metadata: self.ctx.query_metadata.clone(),
-                }
+                IAMAuditLogCreate::ok(
+                    self.ctx.auth_context.api_access_audit_log_id.clone(),
+                    t.id(),
+                    self.name.to_string(),
+                    OperationTypeEnum::Delete,
+                    Some(serde_json::json!(t)),
+                    None,
+                    self.ctx.query_metadata.clone(),
+                )
             },
             Err(e) => {
-                IAMAuditLogCreate {
-                    id: Uuid::new_v4(),
-                    api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: Some(id.clone()),
-                    table_name: self.name.to_string(),
-                    operation_type: OperationTypeEnum::Delete,
-                    old_state: None,
-                    new_state: None,
-                    failure_reason: Some(e.to_string()),
-                    query_metadata: self.ctx.query_metadata.clone(),
-                }
+                IAMAuditLogCreate::err(
+                    self.ctx.auth_context.api_access_audit_log_id.clone(),
+                    Some(id.clone()),
+                    self.name.to_string(),
+                    OperationTypeEnum::Delete,
+                    Some(e.to_string()),
+                    self.ctx.query_metadata.clone(),
+                )
             }
         };
 
@@ -146,30 +138,25 @@ where
 
         let log = match &result {
             Ok(t) => {
-                IAMAuditLogCreate {
-                    id: uuid::Uuid::new_v4(),
-                    api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: Some(t.id()),
-                    table_name: self.name.to_string(),
-                    operation_type: OperationTypeEnum::Create,
-                    old_state: None,
-                    new_state: Some(serde_json::json!(t)),
-                    failure_reason: None,
-                    query_metadata: self.ctx.query_metadata.clone(),
-                }
+                IAMAuditLogCreate::ok(
+                    self.ctx.auth_context.api_access_audit_log_id.clone(),
+                    t.id(),
+                    self.name.to_string(),
+                    OperationTypeEnum::Create,
+                    None,
+                    Some(serde_json::json!(t)),
+                    self.ctx.query_metadata.clone(),
+                )
             },
             Err(e) => {
-                IAMAuditLogCreate {
-                    id: uuid::Uuid::new_v4(),
-                    api_access_audit_log_id: self.ctx.auth_context.api_access_audit_log_id.clone(),
-                    resource_id: None,
-                    table_name: self.name.to_string(),
-                    operation_type: OperationTypeEnum::Create,
-                    old_state: None,
-                    new_state: None,
-                    failure_reason: Some(e.to_string()),
-                    query_metadata: self.ctx.query_metadata.clone(),
-                }
+                IAMAuditLogCreate::err(
+                    self.ctx.auth_context.api_access_audit_log_id.clone(),
+                    None,
+                    self.name.to_string(),
+                    OperationTypeEnum::Create,
+                    Some(e.to_string()),
+                    self.ctx.query_metadata.clone(),
+                )
             }
         };
 

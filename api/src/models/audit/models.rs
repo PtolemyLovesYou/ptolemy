@@ -106,12 +106,33 @@ pub struct IAMAuditLogCreate {
 crate::impl_has_id!(IAMAuditLogCreate);
 
 impl IAMAuditLogCreate {
-    pub fn new_update(
+    pub fn ok(
+        api_access_audit_log_id: Uuid,
+        resource_id: Uuid,
+        table_name: String,
+        operation_type: super::enums::OperationTypeEnum,
+        old_value: Option<serde_json::Value>,
+        new_value: Option<serde_json::Value>,
+        query_metadata: Option<serde_json::Value>,
+    ) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            api_access_audit_log_id,
+            resource_id: Some(resource_id),
+            table_name,
+            operation_type,
+            old_state: old_value,
+            new_state: new_value,
+            failure_reason: None,
+            query_metadata,
+        }
+    }
+
+    pub fn err(
         api_access_audit_log_id: Uuid,
         resource_id: Option<Uuid>,
         table_name: String,
-        old_state: Option<serde_json::Value>,
-        new_state: Option<serde_json::Value>,
+        operation_type: super::enums::OperationTypeEnum,
         failure_reason: Option<String>,
         query_metadata: Option<serde_json::Value>,
     ) -> Self {
@@ -120,20 +141,20 @@ impl IAMAuditLogCreate {
             api_access_audit_log_id,
             resource_id,
             table_name,
-            operation_type: OperationTypeEnum::Update,
-            old_state,
-            new_state,
+            operation_type,
+            old_state: None,
+            new_state: None,
             failure_reason,
             query_metadata,
         }
     }
-    pub fn new_wrds(
+
+    pub fn new_reads(
         api_access_audit_log_id: Uuid,
         resource_ids: Option<Vec<Uuid>>,
         table_name: String,
         failure_reason: Option<String>,
         query_metadata: Option<serde_json::Value>,
-        operation_type: super::enums::OperationTypeEnum,
     ) -> Vec<Self> {
         match resource_ids {
             None => {
@@ -142,7 +163,7 @@ impl IAMAuditLogCreate {
                     api_access_audit_log_id,
                     resource_id: None,
                     table_name: table_name.clone(),
-                    operation_type,
+                    operation_type: super::enums::OperationTypeEnum::Read,
                     old_state: None,
                     new_state: None,
                     failure_reason,
@@ -156,7 +177,7 @@ impl IAMAuditLogCreate {
                     api_access_audit_log_id,
                     resource_id: Some(id),
                     table_name: table_name.clone(),
-                    operation_type: operation_type.clone(),
+                    operation_type: super::enums::OperationTypeEnum::Read,
                     old_state: None,
                     new_state: None,
                     failure_reason: failure_reason.clone(),
