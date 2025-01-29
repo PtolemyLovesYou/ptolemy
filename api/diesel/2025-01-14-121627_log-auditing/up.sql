@@ -127,3 +127,19 @@ create rule soft_delete_users as on delete to users do instead (
 create rule soft_delete_workspace_user as on delete to workspace_user do instead (
     update workspace_user set deleted_at = now(), deletion_reason = 'soft delete' where id = old.id and deleted_at is null
 );
+
+create rule workspace_user_upsert as on insert to workspace_user
+do instead
+    insert into workspace_user (
+        id,
+        user_id,
+        workspace_id,
+        role
+    ) values (
+        coalesce(new.id, gen_random_uuid()),
+        new.user_id,
+        new.workspace_id,
+        new.role
+    )
+    on conflict (user_id, workspace_id) 
+    do update set role = excluded.role;

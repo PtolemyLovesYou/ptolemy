@@ -95,7 +95,6 @@ impl User {
 
 crate::insert_obj_traits!(UserCreate, users, User);
 crate::get_by_id_trait!(User, users);
-crate::delete_db_obj!(delete_user, users);
 crate::search_db_obj!(
     search_users,
     User,

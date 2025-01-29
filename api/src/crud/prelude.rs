@@ -23,39 +23,6 @@ macro_rules! search_db_obj {
 }
 
 #[macro_export]
-macro_rules! delete_db_obj {
-    ($name:ident, $table_name:ident) => {
-        pub async fn $name(
-            conn: &mut crate::state::DbConnection<'_>,
-            id: &uuid::Uuid,
-            deletion_reason: Option<String>,
-        ) -> Result<uuid::Uuid, crate::error::ApiError> {
-            Ok(diesel::update($table_name::table)
-                .filter(
-                    $table_name::id
-                        .eq(id)
-                        .and($table_name::deleted_at.is_null()),
-                )
-                .set((
-                    $table_name::deleted_at.eq(chrono::Utc::now()),
-                    $table_name::deletion_reason.eq(deletion_reason),
-                ))
-                .returning($table_name::id)
-                .get_result(conn)
-                .await
-                .map_err(|_| {
-                    tracing::error!(
-                        "Unable to delete {} object with id {}",
-                        stringify!($table_name),
-                        id
-                    );
-                    crate::error::ApiError::DeleteError
-                })?)
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! map_diesel_err {
     ($catchall:ident, $action:literal, $name:tt) => {
         |e| {
@@ -129,9 +96,8 @@ macro_rules! get_by_id_trait {
             }
 
             async fn delete_by_id(&self, conn: &mut crate::state::DbConnection<'_>) -> Result<Self, crate::error::ApiError> {
-                match diesel::update($table::table)
+                match diesel::delete($table::table)
                     .filter($table::id.eq(self.id))
-                    .set($table::deleted_at.eq(chrono::Utc::now()))
                     .returning(Self::as_returning())
                     .get_result(conn)
                     .await

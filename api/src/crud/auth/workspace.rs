@@ -90,7 +90,6 @@ impl Workspace {
 
 crate::insert_obj_traits!(WorkspaceCreate, workspace, Workspace);
 crate::get_by_id_trait!(Workspace, workspace);
-crate::delete_db_obj!(delete_workspace, workspace);
 
 crate::search_db_obj!(
     search_workspaces,

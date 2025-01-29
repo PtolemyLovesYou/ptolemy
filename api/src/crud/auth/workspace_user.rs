@@ -63,4 +63,3 @@ pub async fn set_workspace_user_role(
 
 crate::insert_obj_traits!(WorkspaceUserCreate, workspace_user, WorkspaceUser);
 crate::get_by_id_trait!(WorkspaceUser, workspace_user);
-crate::delete_db_obj!(delete_workspace_user, workspace_user);
