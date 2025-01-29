@@ -51,4 +51,5 @@ pub struct UserUpdate {
     pub display_name: Option<String>,
     pub status: Option<UserStatusEnum>,
     pub is_admin: Option<bool>,
+    pub password_hash: Option<String>,
 }

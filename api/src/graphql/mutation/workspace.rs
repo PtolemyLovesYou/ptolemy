@@ -1,5 +1,5 @@
 use crate::{
-    consts::SERVICE_API_KEY_PREFIX, crud::auth::workspace_user as workspace_user_crud,
+    consts::SERVICE_API_KEY_PREFIX,
     crypto::generate_api_key, graphql::{
         executor::Executor, mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
@@ -8,7 +8,7 @@ use crate::{
     },
     models::{
         prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate,
-        Workspace, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser
+        Workspace, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate
     }
 };
 use ptolemy::models::enums::WorkspaceRole;
@@ -131,54 +131,24 @@ impl WorkspaceMutation {
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
+        Executor::new(
+            ctx, "change_workspace_user_role",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let src_user_role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
+
+                Ok(src_user_role.can_update_user_role())
             }
-        };
-
-        // Check user permissions
-        let user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id.into(),
-        )
-        .await
-        {
-            Ok(role) => role.into(),
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
-            }
-        };
-
-        if !user_permission.can_update_user_role() {
-            return WorkspaceUserResult::err(
-                "permission",
-                "Insufficient permissions".to_string(),
-            );
-        }
-
-        match workspace_user_crud::set_workspace_user_role(
-            &mut conn,
-            &workspace_id,
-            &user_id,
-            &new_role,
-        )
-        .await
-        {
-            Ok(result) => WorkspaceUserResult(Ok(result)),
-            Err(e) => WorkspaceUserResult::err(
-                "workspace_user",
-                format!("Failed to change user role: {:?}", e),
-            ),
-        }
+        ).update(
+            &WorkspaceUser::compute_id(&user_id, &workspace_id),
+            &WorkspaceUserUpdate {
+                role: Some(new_role),
+            },
+        ).await.into()
     }
 
     async fn create_service_api_key(

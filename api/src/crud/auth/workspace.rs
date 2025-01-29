@@ -1,7 +1,7 @@
 use crate::{
     error::ApiError,
     generated::auth_schema::{workspace, users, workspace_user, service_api_key},
-    models::{Workspace, WorkspaceCreate, User, WorkspaceUser, ServiceApiKey},
+    models::{Workspace, WorkspaceCreate, WorkspaceUpdate, User, WorkspaceUser, ServiceApiKey},
     state::DbConnection,
     crypto::PasswordHandler
 };
@@ -97,3 +97,5 @@ crate::search_db_obj!(
     workspace,
     [(id, Uuid), (name, String), (archived, bool)]
 );
+
+crate::update_by_id_trait!(Workspace, workspace, WorkspaceUpdate);

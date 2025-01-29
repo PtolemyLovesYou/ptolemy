@@ -3,7 +3,7 @@ use crate::{
     error::ApiError,
     generated::auth_schema::{users, workspace_user, workspace, user_api_key},
     map_diesel_err,
-    models::{User, UserCreate, UserStatusEnum, Workspace, WorkspaceUser, UserApiKey},
+    models::{User, UserCreate, UserUpdate, UserStatusEnum, Workspace, WorkspaceUser, UserApiKey},
     state::DbConnection,
 };
 use diesel::prelude::*;
@@ -91,6 +91,40 @@ impl User {
     
         Err(ApiError::NotFoundError)
     }
+
+    pub async fn all(
+        conn: &mut DbConnection<'_>,
+    ) -> Result<Vec<crate::models::auth::User>, ApiError> {
+        users::table
+            .filter(users::deleted_at.is_null())
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", User))
+    }
+
+    pub async fn auth_user(
+        conn: &mut DbConnection<'_>,
+        uname: &String,
+        password: &String,
+        password_handler: &PasswordHandler,
+    ) -> Result<Option<User>, ApiError> {
+        let user = users::table
+            .filter(users::username.eq(&uname))
+            .get_result::<User>(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", User))?;
+    
+        if user.status != UserStatusEnum::Active {
+            return Ok(None);
+        }
+    
+        let pass_correct = password_handler.verify_password(&password, &user.password_hash);
+    
+        match pass_correct {
+            true => Ok(Some(user)),
+            false => Ok(None),
+        }
+    }
 }
 
 crate::insert_obj_traits!(UserCreate, users, User);
@@ -100,82 +134,4 @@ crate::search_db_obj!(
     User,
 users,
     [(id, Uuid), (username, String), (status, UserStatusEnum)]);
-
-pub async fn change_user_status(
-    conn: &mut DbConnection<'_>,
-    user_id: &Uuid,
-    user_status: &UserStatusEnum,
-) -> Result<(), ApiError> {
-    diesel::update(users::table)
-        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
-        .set(users::status.eq(user_status))
-        .execute(conn)
-        .await
-        .map_err(map_diesel_err!(UpdateError, "update", User))
-        .map(|_| ())
-}
-
-pub async fn get_all_users(
-    conn: &mut DbConnection<'_>,
-) -> Result<Vec<crate::models::auth::User>, ApiError> {
-    users::table
-        .filter(users::deleted_at.is_null())
-        .get_results(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", User))
-}
-
-pub async fn change_user_display_name(
-    conn: &mut DbConnection<'_>,
-    user_id: &Uuid,
-    user_display_name: &String,
-) -> Result<(), ApiError> {
-    diesel::update(users::table)
-        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
-        .set(users::display_name.eq(user_display_name))
-        .execute(conn)
-        .await
-        .map_err(map_diesel_err!(UpdateError, "update", User))
-        .map(|_| ())
-}
-
-pub async fn change_user_password(
-    conn: &mut DbConnection<'_>,
-    user_id: &Uuid,
-    user_password: &String,
-    password_handler: &PasswordHandler,
-) -> Result<(), ApiError> {
-    let hashed_password = password_handler.hash_password(&user_password);
-
-    diesel::update(users::table)
-        .filter(users::id.eq(user_id).and(users::deleted_at.is_null()))
-        .set(users::password_hash.eq(hashed_password))
-        .execute(conn)
-        .await
-        .map_err(map_diesel_err!(UpdateError, "update", User))
-        .map(|_| ())
-}
-
-pub async fn auth_user(
-    conn: &mut DbConnection<'_>,
-    uname: &String,
-    password: &String,
-    password_handler: &PasswordHandler,
-) -> Result<Option<User>, ApiError> {
-    let user = users::table
-        .filter(users::username.eq(&uname))
-        .get_result::<User>(conn)
-        .await
-        .map_err(map_diesel_err!(GetError, "get", User))?;
-
-    if user.status != UserStatusEnum::Active {
-        return Ok(None);
-    }
-
-    let pass_correct = password_handler.verify_password(&password, &user.password_hash);
-
-    match pass_correct {
-        true => Ok(Some(user)),
-        false => Ok(None),
-    }
-}
+crate::update_by_id_trait!(User, users, UserUpdate);

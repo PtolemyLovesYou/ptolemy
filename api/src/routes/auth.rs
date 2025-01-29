@@ -1,7 +1,7 @@
 use crate::{
-    crud::auth::user::auth_user,
     crypto::{ClaimType, Claims},
     state::ApiAppState,
+    models::User,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub async fn login(
     State(state): State<ApiAppState>,
     Json(payload): Json<AuthPayload>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let user = auth_user(
+    let user = User::auth_user(
         &mut state.get_conn_http().await.unwrap(),
         &payload.username,
         &payload.password,

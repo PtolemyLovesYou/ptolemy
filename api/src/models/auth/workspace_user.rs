@@ -54,5 +54,5 @@ impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
 #[derive(Debug, AsChangeset)]
 #[diesel(table_name = crate::generated::auth_schema::workspace_user)]
 pub struct WorkspaceUserUpdate {
-    role: Option<WorkspaceRoleEnum>,
+    pub role: Option<WorkspaceRoleEnum>,
 }

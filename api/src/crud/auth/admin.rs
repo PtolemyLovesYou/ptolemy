@@ -1,10 +1,7 @@
 use crate::{
-    crud::{
-        auth::user::{change_user_password, get_all_users},
-        prelude::*,
-    },
+    crud::prelude::*,
     error::ApiError,
-    models::UserCreate,
+    models::{UserCreate, UserUpdate, User},
     state::ApiAppState,
 };
 
@@ -14,7 +11,7 @@ pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), ApiError> {
     let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
     let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
 
-    let users_list = get_all_users(&mut conn).await?;
+    let users_list = User::all(&mut conn).await?;
 
     for user in users_list {
         if user.is_sysadmin {
@@ -24,10 +21,15 @@ pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), ApiError> {
             {
                 return Ok(());
             }
-            // update password
             else {
-                change_user_password(&mut conn, &user.id, &pass, &state.password_handler).await?;
-                return Ok(());
+                let new_pass = state.password_handler.hash_password(&pass);
+                let changeset = UserUpdate {
+                    password_hash: Some(new_pass),
+                    status: None,
+                    is_admin: None,
+                    display_name: None,
+                };
+                user.update_by_id(&mut conn, &changeset).await?;
             }
         }
     }

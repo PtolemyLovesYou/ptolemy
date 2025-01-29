@@ -72,6 +72,41 @@ pub trait GetObjById where Self: Sized + HasId {
     fn delete_by_id(&self, conn: &mut DbConnection<'_>) -> impl std::future::Future<Output = Result<Self, crate::error::ApiError>> + Send;
 }
 
+pub trait UpdateObjById where Self: Sized + HasId {
+    type InsertTarget: diesel::AsChangeset;
+
+    fn update_by_id(&self, conn: &mut DbConnection<'_>, obj: &Self::InsertTarget) -> impl std::future::Future<Output = Result<Self, crate::error::ApiError>> + Send;
+}
+
+#[macro_export]
+macro_rules! update_by_id_trait {
+    ($ty:ident, $table:ident, $changeset_ty:ident) => {
+        impl crate::crud::prelude::UpdateObjById for $ty {
+            type InsertTarget = $changeset_ty;
+
+            async fn update_by_id(&self, conn: &mut crate::state::DbConnection<'_>, obj: &Self::InsertTarget) -> Result<Self, crate::error::ApiError> {
+                match diesel::update($table::table)
+                    .filter($table::id.eq(self.id))
+                    .set(obj)
+                    .returning(Self::as_returning())
+                    .get_result(conn)
+                    .await
+                {
+                    Ok(obj) => Ok(obj),
+                    Err(e) => {
+                        tracing::error!("Unable to update {} by id: {}", stringify!($ty), e);
+                        match e {
+                            diesel::result::Error::NotFound => Err(crate::error::ApiError::NotFoundError),
+                            diesel::result::Error::DatabaseError(..) => Err(crate::error::ApiError::DatabaseError),
+                            _ => Err(crate::error::ApiError::UpdateError),
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! get_by_id_trait {
     ($ty:ident, $table:ident) => {
