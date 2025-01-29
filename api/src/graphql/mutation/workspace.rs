@@ -84,65 +84,25 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         user_id: Uuid,
     ) -> DeletionResult {
-        // let mut conn = match ctx.state.get_conn_http().await {
-        //     Ok(conn) => conn,
-        //     Err(e) => {
-        //         return DeletionResult::err(
-        //             "database",
-        //             format!("Failed to get database connection: {}", e),
-        //         )
-        //     }
-        // };
+        Executor::new(
+            ctx, "remove_user",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let src_user_role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        // // Check user permissions
-        // let user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
-        //     &mut conn,
-        //     &workspace_id,
-        //     &ctx.user.id.into(),
-        // )
-        // .await
-        // {
-        //     Ok(role) => role.into(),
-        //     Err(e) => {
-        //         return DeletionResult::err(
-        //             "permission",
-        //             format!("Failed to get workspace user permission: {:?}", e),
-        //         )
-        //     }
-        // };
+                let target_user_role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &user_id,
+                ).await?.into();
 
-        // let target_user_permission: WorkspaceRole = match WorkspaceUser::get_workspace_role(
-        //     &mut conn,
-        //     &workspace_id,
-        //     &user_id,
-        // )
-        // .await
-        // {
-        //     Ok(role) => role.into(),
-        //     Err(e) => {
-        //         return DeletionResult::err(
-        //             "permission",
-        //             format!("Failed to get target user permission: {:?}", e),
-        //         )
-        //     }
-        // };
-
-        // if !user_permission.can_remove_user_from_workspace(&target_user_permission) {
-        //     return DeletionResult::err(
-        //         "permission",
-        //         "Insufficient permissions".to_string(),
-        //     );
-        // }
-
-        // match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, None).await {
-        //     Ok(_) => DeletionResult(Ok(true)),
-        //     Err(e) => DeletionResult::err(
-        //         "workspace_user",
-        //         format!("Failed to delete user from workspace: {:?}", e),
-        //     ),
-        // }
-
-        DeletionResult(Ok(true))
+                Ok(src_user_role.can_remove_user_from_workspace(&target_user_role))
+            }
+        ).delete::<WorkspaceUser>(&user_id).await.map(|_| true).into()
     }
 
     async fn change_workspace_user_role(
