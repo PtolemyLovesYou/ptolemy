@@ -5,11 +5,23 @@ use crate::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
             WorkspaceUserResult,
         }, state::JuniperAppState
-    }, models::{prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate}
+    },
+    models::{
+        prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate,
+        Workspace, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser
+    }
 };
 use ptolemy::models::enums::WorkspaceRole;
-use juniper::graphql_object;
+use juniper::{graphql_object, GraphQLInputObject};
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
+pub struct WorkspaceUserCreateInput {
+    pub workspace_id: Uuid,
+    pub user_id: Uuid,
+    pub role: WorkspaceRoleEnum,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct WorkspaceMutation;
@@ -34,11 +46,11 @@ impl WorkspaceMutation {
 
         let workspace = workspace.unwrap();
 
-        let workspace_user = WorkspaceUserCreate {
-            workspace_id: workspace.id,
-            user_id: admin_user_id.unwrap_or(ctx.user.id.into()),
-            role: WorkspaceRoleEnum::Admin,
-        };
+        let workspace_user = WorkspaceUser::new(
+            admin_user_id.unwrap_or(ctx.user.id.into()),
+            workspace.id,
+            WorkspaceRoleEnum::Admin,
+        );
 
         Executor::new(
             ctx,
@@ -59,7 +71,7 @@ impl WorkspaceMutation {
     async fn add_user(
         &self,
         ctx: &JuniperAppState,
-        workspace_user: WorkspaceUserCreate,
+        workspace_user: WorkspaceUserCreateInput,
     ) -> WorkspaceUserResult {
         let workspace_id = workspace_user.workspace_id.clone();
 
@@ -75,7 +87,11 @@ impl WorkspaceMutation {
 
                 Ok(user_permission.can_add_user_to_workspace())
             },
-        ).create(&workspace_user).await.into()
+        ).create(&WorkspaceUser::new(
+            workspace_user.user_id,
+            workspace_id,
+            workspace_user.role,
+        )).await.into()
     }
 
     async fn remove_user(

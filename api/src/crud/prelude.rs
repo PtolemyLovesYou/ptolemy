@@ -7,17 +7,19 @@ pub type DieselResult<T> = Result<T, diesel::result::Error>;
 #[macro_export]
 macro_rules! search_db_obj {
     ($fn_name:ident, $ty:ident, $table:ident, [$(($req_field:ident, $req_type:ty)),+ $(,)?]) => {
-        pub async fn $fn_name(
-            conn: &mut crate::state::DbConnection<'_>,
-            $($req_field: Option<$req_type>),+
-        ) -> Result<Vec<$ty>, crate::error::ApiError> {
-            let mut query = $table::table.into_boxed();
-            $(
-                if let Some($req_field) = $req_field {
-                    query = query.filter($table::$req_field.eq($req_field));
-                }
-            )+
-            query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", $ty))
+        impl $ty {
+            pub async fn $fn_name(
+                conn: &mut crate::state::DbConnection<'_>,
+                $($req_field: Option<$req_type>),+
+            ) -> Result<Vec<$ty>, crate::error::ApiError> {
+                let mut query = $table::table.into_boxed();
+                $(
+                    if let Some($req_field) = $req_field {
+                        query = query.filter($table::$req_field.eq($req_field));
+                    }
+                )+
+                query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", $ty))
+            }
         }
     }
 }

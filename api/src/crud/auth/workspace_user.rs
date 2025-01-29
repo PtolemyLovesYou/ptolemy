@@ -1,7 +1,7 @@
 use crate::{
     error::ApiError,
     generated::auth_schema::workspace_user,
-    models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserCreate},
+    models::{WorkspaceRoleEnum, WorkspaceUser},
     state::DbConnection, map_diesel_err,
 };
 use diesel::prelude::*;
@@ -49,9 +49,8 @@ pub async fn set_workspace_user_role(
 ) -> Result<WorkspaceUser, ApiError> {
     diesel::update(workspace_user::table)
         .filter(
-            workspace_user::workspace_id
-                .eq(wk_id)
-                .and(workspace_user::user_id.eq(us_id))
+            workspace_user::id
+                .eq(WorkspaceUser::compute_id(wk_id, us_id))
                 .and(workspace_user::deleted_at.is_null()),
         )
         .set(workspace_user::role.eq(role))
@@ -61,5 +60,5 @@ pub async fn set_workspace_user_role(
         .map_err(map_diesel_err!(UpdateError, "update", WorkspaceUser))
 }
 
-crate::insert_obj_traits!(WorkspaceUserCreate, workspace_user, WorkspaceUser);
+crate::insert_obj_traits!(WorkspaceUser, workspace_user, WorkspaceUser);
 crate::get_by_id_trait!(WorkspaceUser, workspace_user);

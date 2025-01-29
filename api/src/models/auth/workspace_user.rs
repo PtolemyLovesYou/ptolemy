@@ -19,6 +19,27 @@ pub struct WorkspaceUser {
     pub deletion_reason: Option<String>,
 }
 
+impl WorkspaceUser {
+    pub fn new(user_id: Uuid, workspace_id: Uuid, role: WorkspaceRoleEnum) -> Self {
+        WorkspaceUser {
+            id: Self::compute_id(&user_id, &workspace_id),
+            user_id,
+            workspace_id,
+            role,
+            deleted_at: None,
+            deletion_reason: None,
+        }
+    }
+
+    pub fn compute_id(workspace_id: &Uuid, user_id: &Uuid) -> Uuid {
+        let mut combined = Vec::new();
+        combined.extend_from_slice(workspace_id.as_bytes());
+        combined.extend_from_slice(user_id.as_bytes());
+
+        Uuid::new_v5(&Uuid::NAMESPACE_OID, combined.as_slice())
+    }
+}
+
 crate::impl_has_id!(WorkspaceUser);
 
 impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
@@ -29,14 +50,6 @@ impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
             role: self.role.into(),
         }
     }
-}
-
-#[derive(Debug, Insertable, Deserialize, GraphQLInputObject)]
-#[diesel(table_name = crate::generated::auth_schema::workspace_user)]
-pub struct WorkspaceUserCreate {
-    pub user_id: Uuid,
-    pub workspace_id: Uuid,
-    pub role: WorkspaceRoleEnum,
 }
 
 #[derive(Debug, AsChangeset)]

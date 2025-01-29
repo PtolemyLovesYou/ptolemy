@@ -1,5 +1,4 @@
 use crate::{
-    crud::auth::{user as user_crud, workspace as workspace_crud},
     models::{User, Workspace},
     error::ApiError,
 };
@@ -29,7 +28,7 @@ impl Query {
     ) -> Result<Vec<User>, ApiError> {
         let mut conn = ctx.state.get_conn().await?;
 
-        user_crud::search_users(&mut conn, id, username, None)
+        User::search_users(&mut conn, id, username, None)
             .await
             .audit_read(ctx, "user")
             .await
@@ -43,14 +42,14 @@ impl Query {
     ) -> Result<Vec<Workspace>, ApiError> {
         let conn = &mut ctx.state.get_conn_http().await.unwrap();
 
-        workspace_crud::search_workspaces(conn, id, name, archived)
+        Workspace::search_workspaces(conn, id, name, archived)
             .await
             .audit_read(ctx, "workspace")
             .await
     }
 
     async fn me(ctx: &JuniperAppState) -> Result<User, ApiError> {
-        user_crud::search_users(
+        User::search_users(
             &mut ctx.state.get_conn_http().await.unwrap(),
             Some(ctx.user.id.into()),
             None,
