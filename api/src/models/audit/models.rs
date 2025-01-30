@@ -45,6 +45,7 @@ pub struct AuthAuditLogCreate {
     pub user_api_key_id: Option<Uuid>,
     pub user_id: Option<Uuid>,
     pub auth_method: super::enums::AuthMethodEnum,
+    pub auth_payload_hash: Option<Vec<u8>>,
     pub success: bool,
     pub failure_details: Option<serde_json::Value>,
 }
@@ -58,6 +59,7 @@ impl AuthAuditLogCreate {
         user_api_key_id: Option<Uuid>,
         user_id: Option<Uuid>,
         auth_method: super::enums::AuthMethodEnum,
+        auth_payload_hash: Option<Vec<u8>>,
     ) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -66,6 +68,7 @@ impl AuthAuditLogCreate {
             user_api_key_id,
             user_id,
             auth_method,
+            auth_payload_hash,
             success: true,
             failure_details: None,
         }
@@ -74,6 +77,7 @@ impl AuthAuditLogCreate {
     pub fn err(
         api_access_audit_log_id: Uuid,
         auth_method: super::enums::AuthMethodEnum,
+        auth_payload_hash: Option<Vec<u8>>,
         failure_details: Option<serde_json::Value>,
     ) -> Self {
         Self {
@@ -83,6 +87,7 @@ impl AuthAuditLogCreate {
             user_api_key_id: None,
             user_id: None,
             auth_method,
+            auth_payload_hash,
             success: false,
             failure_details,
         }

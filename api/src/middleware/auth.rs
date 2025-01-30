@@ -1,16 +1,9 @@
 use std::str::FromStr as _;
 
 use crate::{
-    consts::USER_API_KEY_PREFIX,
-    crypto::{ClaimType, UuidClaims},
-    error::ApiError,
-    models::{
-        User,
-        middleware::{ApiKey, AuthContext, AuthHeader, AuthResult, JWT, AccessAuditId},
-        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
-    },
-    state::ApiAppState,
-    crud::prelude::*,
+    consts::USER_API_KEY_PREFIX, crud::prelude::*, crypto::{ClaimType, GenerateSha256, UuidClaims}, error::ApiError, models::{
+        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT}, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User
+    }, state::ApiAppState
 };
 use axum::{
     extract::State,
@@ -19,6 +12,13 @@ use axum::{
     response::IntoResponse,
 };
 use uuid::Uuid;
+
+fn get_header_raw(
+    req: &Request<axum::body::Body>,
+    header: HeaderName
+) -> Option<&[u8]> {
+    req.headers().get(header).map(|h| h.as_bytes())
+}
 
 fn get_header(
     req: &Request<axum::body::Body>,
@@ -162,6 +162,9 @@ pub async fn master_auth_middleware(
             },
         };
 
+        let auth_payload_hash = get_header_raw(&req, HeaderName::from_str("Authorization").unwrap())
+            .map(|h| h.sha256());
+
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
             api_access_audit_log_id: api_access_audit_log_id.clone(),
@@ -169,6 +172,7 @@ pub async fn master_auth_middleware(
             service_api_key_id,
             user_api_key_id: None,
             auth_method: AuthMethodEnum::JWT,
+            auth_payload_hash,
             success,
             failure_details,
         };
@@ -191,6 +195,9 @@ pub async fn master_auth_middleware(
                     Some(serde_json::json!({"error": format!("{:?}", e)})),
                 ),
             };
+        
+        let auth_payload_hash = get_header_raw(&req, HeaderName::from_str("X-Api-Key").unwrap())
+            .map(|h| h.sha256());
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
@@ -199,6 +206,7 @@ pub async fn master_auth_middleware(
             service_api_key_id: None,
             user_api_key_id: None,
             auth_method: AuthMethodEnum::ApiKey,
+            auth_payload_hash,
             success,
             failure_details,
         };

@@ -39,6 +39,7 @@ diesel::table! {
         user_api_key_id -> Nullable<Uuid>,
         user_id -> Nullable<Uuid>,
         auth_method -> AuthMethod,
+        auth_payload_hash -> Nullable<Bytea>,
         success -> Bool,
         failure_details -> Nullable<Jsonb>,
         is_emergency_access -> Nullable<Bool>,

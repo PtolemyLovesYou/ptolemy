@@ -22,6 +22,7 @@ create table api_auth_audit_logs (
     user_api_key_id uuid references user_api_key(id),
     user_id uuid references users(id),
     auth_method auth_method not null,
+    auth_payload_hash bytea,
     success boolean not null,
     failure_details jsonb,
     is_emergency_access boolean default false,

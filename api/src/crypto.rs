@@ -156,6 +156,12 @@ pub trait GenerateSha256 {
     fn sha256(&self) -> Vec<u8>;
 }
 
+impl<'a> GenerateSha256 for &'a [u8] {
+    fn sha256(&self) -> Vec<u8> {
+        generate_sha256(self)
+    }
+}
+
 impl GenerateSha256 for Uuid {
     fn sha256(&self) -> Vec<u8> {
         generate_sha256(self.as_bytes())

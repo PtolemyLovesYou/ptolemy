@@ -49,6 +49,10 @@ pub async fn login(
                 None,
                 Some(user.id.clone()),
                 AuthMethodEnum::UsernamePassword,
+                Some(json!({
+                    "username": payload.username,
+                    "password": payload.password,
+                }).sha256()),
             )
         }
         Err(e) => {
@@ -56,10 +60,12 @@ pub async fn login(
                 access_audit_id.0.clone(),
                 AuthMethodEnum::UsernamePassword,
                 Some(json!({
+                    "username": payload.username.sha256(),
+                    "password": payload.password.sha256(),
+                }).sha256()),
+                Some(json!({
                     "error": format!("{:?}", e),
-                    "hashed_username": payload.username.sha256(),
-                    "hashed_password": payload.password.sha256(),
-                })),
+                }))
             )
         }
     };
