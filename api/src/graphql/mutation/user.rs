@@ -8,6 +8,7 @@ use crate::{
     models::{UserCreate, User, UserApiKeyCreate, prelude::HasId, UserApiKey},
     consts::USER_API_KEY_PREFIX,
     crypto::generate_api_key,
+    unchecked_executor,
 };
 use chrono::{Duration, Utc};
 use juniper::{graphql_object, GraphQLInputObject};
@@ -79,10 +80,7 @@ impl UserMutation {
             expires_at: duration_days.map(|d| Utc::now() + Duration::days(d as i64)),
         };
 
-        JuniperExecutor::from_juniper_app_state(
-            ctx, "create_user_api_key",
-            |_ctx| async move { Ok(true) },
-            )
+        unchecked_executor!(ctx, "create_user_api_key")
             .create(&user_api_key_create)
             .await
             .map(|ak| CreateApiKeyResponse { id: ak.id(), api_key })
@@ -90,9 +88,10 @@ impl UserMutation {
     }
 
     async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
-        JuniperExecutor::from_juniper_app_state(
-            ctx, "delete_user_api_key",
-            |_ctx| async move { Ok(true) },
-        ).delete::<UserApiKey>(&api_key_id).await.map(|_| true).into()
+        unchecked_executor!(ctx, "delete_user_api_key")
+            .delete::<UserApiKey>(&api_key_id)
+            .await
+            .map(|_| true)
+            .into()
     }
 }

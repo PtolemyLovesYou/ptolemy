@@ -4,6 +4,7 @@ use tokio::sync::mpsc;
 #[derive(Debug)]
 pub enum Message<T> {
     Write(T),
+    Flush,
     Shutdown,
 }
 
@@ -27,6 +28,7 @@ where
         match self {
             Message::Write(t) => t.serialize(serializer),
             Message::Shutdown => serializer.serialize_str("shutdown"),
+            Message::Flush => serializer.serialize_str("flush"),
         }
     }
 }
@@ -53,16 +55,25 @@ where
             while let Some(msg) = rx.recv().await {
                 match &msg {
                     Message::Shutdown => break,
-                    _ => (),
+                    Message::Flush => {
+                        func(buffer.drain(..).map(|m: Message<T>| m.unwrap()).collect());
+                    },
+                    Message::Write(_) => {
+                        buffer.push(msg);
+                        if buffer.len() == batch_size {
+                            func(buffer.drain(..).map(|msg| msg.unwrap()).collect());
+                        }
+                    }
                 };
-
-                buffer.push(msg);
-                if buffer.len() == batch_size {
-                    func(buffer.drain(..).map(|msg| msg.unwrap()).collect());
-                }
             }
 
-            tracing::info!("Shutting down writer");
+            tracing::debug!("Shutting down writer");
+
+            if !buffer.is_empty() {
+                func(buffer.drain(..).map(|msg| msg.unwrap()).collect());
+            }
+
+            tracing::debug!("Writer shutdown");
         });
 
         Self { tx }
@@ -83,7 +94,21 @@ where
         }
     }
 
-    pub async fn shutdown(&self) -> Result<(), mpsc::error::SendError<Message<T>>> {
-        self.tx.send(Message::Shutdown).await
+    pub async fn shutdown(&self)  {
+        match self.tx.send(Message::Shutdown).await {
+            Ok(_) => (),
+            Err(e) => {
+                tracing::error!("Failed to shutdown: {}", e);
+            }
+        };
+    }
+
+    pub async fn flush(&self) {
+        match self.tx.send(Message::Flush).await {
+            Ok(_) => (),
+            Err(e) => {
+                tracing::error!("Failed to flush: {}", e);
+            }
+        };
     }
 }

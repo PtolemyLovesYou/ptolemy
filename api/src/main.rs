@@ -1,5 +1,9 @@
 use api::{
-    crud::auth::admin::ensure_sysadmin, error::ServerError, routes::get_router, state::AppState,
+    crud::auth::admin::ensure_sysadmin,
+    error::ServerError,
+    routes::get_router,
+    state::AppState,
+    middleware::shutdown_signal,
 };
 use tracing::error;
 
@@ -28,7 +32,9 @@ async fn main() -> Result<(), ServerError> {
 
     tracing::info!("Ptolemy running on {} <3", server_url);
 
-    match axum::serve(listener, service).await {
+    match axum::serve(listener, service)
+        .with_graceful_shutdown(shutdown_signal(shared_state.clone()))
+        .await {
         Ok(_) => Ok(()),
         Err(e) => {
             tracing::error!("Axum server error: {:?}", e);

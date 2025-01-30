@@ -18,3 +18,10 @@ where
         }
     }
 }
+
+#[macro_export]
+macro_rules! unchecked_executor {
+    ($ctx:expr, $name:expr) => {
+        { JuniperExecutor::from_juniper_app_state($ctx, $name, |_| async move { Ok(true) }) }
+    }
+}

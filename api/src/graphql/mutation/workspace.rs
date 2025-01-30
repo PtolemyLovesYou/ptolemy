@@ -52,11 +52,11 @@ impl WorkspaceMutation {
             WorkspaceRoleEnum::Admin,
         );
 
-        JuniperExecutor::from_juniper_app_state(
-            ctx,
-            "create",
-            |_| async move { Ok(true) },
-        ).create(&workspace_user).await.map(|_| workspace ).into()
+        crate::unchecked_executor!(ctx, "create")
+            .create(&workspace_user)
+            .await
+            .map(|_| workspace )
+            .into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {

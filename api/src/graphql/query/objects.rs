@@ -1,7 +1,8 @@
 use crate::{
     crud::prelude::GetObjById as _, error::ApiError, graphql::{state::JuniperAppState, executor::JuniperExecutor}, models::{
         ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum, Workspace, WorkspaceRoleEnum, WorkspaceUser
-    }
+    },
+    unchecked_executor,
 };
 use chrono::{DateTime, Utc};
 use juniper::graphql_object;
@@ -39,25 +40,21 @@ impl Workspace {
         user_id: Option<Uuid>,
         username: Option<String>,
     ) -> Result<Vec<WorkspaceUser>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(
-            ctx,
-            "workspace_user",
-            |_| async move { Ok(true) },
-        ).read_many(async move {
-            let mut conn = ctx.state.get_conn().await?;
-            self.get_workspace_users(&mut conn, user_id, username).await
-        }).await
+        unchecked_executor!(ctx, "workspace_user")
+            .read_many(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                self.get_workspace_users(&mut conn, user_id, username).await
+            })
+            .await
     }
 
     async fn service_api_keys(&self, ctx: &JuniperAppState) -> Result<Vec<ServiceApiKey>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(
-            ctx,
-            "service_api_key",
-            |_| async move { Ok(true) },
-        ).read_many(async move {
-            let mut conn = ctx.state.get_conn().await?;
-            self.get_service_api_keys(&mut conn).await
-        }).await
+        unchecked_executor!(ctx, "service_api_key")
+            .read_many(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                self.get_service_api_keys(&mut conn).await
+            })
+            .await
     }
 }
 
@@ -93,7 +90,7 @@ impl User {
         workspace_id: Option<Uuid>,
         workspace_name: Option<String>,
     ) -> Result<Vec<Workspace>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "workspace", |_| async move { Ok(true) })
+        unchecked_executor!(ctx, "workspace")
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
                 self.get_workspaces(&mut conn, workspace_id, workspace_name).await
@@ -101,7 +98,7 @@ impl User {
     }
 
     async fn user_api_keys(&self, ctx: &JuniperAppState) -> Result<Vec<UserApiKey>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "user_api_key", |_| async move { Ok(true) })
+        unchecked_executor!(ctx, "user_api_key")
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
                 self.get_user_api_keys(&mut conn).await
@@ -166,24 +163,20 @@ impl WorkspaceUser {
     }
 
     async fn user(&self, ctx: &JuniperAppState) -> Result<User, ApiError> {
-        JuniperExecutor::from_juniper_app_state(
-            ctx,
-            "user",
-            |_| async move { Ok(true) },
-        ).read(async move {
-            let mut conn = ctx.state.get_conn().await?;
-            User::get_by_id(&mut conn, &self.user_id).await
-        }).await
+        unchecked_executor!(ctx, "user")
+            .read(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                User::get_by_id(&mut conn, &self.user_id).await
+            })
+            .await
     }
 
     async fn workspace(&self, ctx: &JuniperAppState) -> Result<Workspace, ApiError> {
-        JuniperExecutor::from_juniper_app_state(
-            ctx,
-            "workspace",
-            |_| async move { Ok(true) },
-        ).read(async move {
-            let mut conn = ctx.state.get_conn().await?;
-            Workspace::get_by_id(&mut conn, &self.workspace_id).await
-        }).await
+        unchecked_executor!(ctx, "workspace")
+            .read(async move {
+                let mut conn = ctx.state.get_conn().await?;
+                Workspace::get_by_id(&mut conn, &self.workspace_id).await
+            })
+            .await
     }
 }

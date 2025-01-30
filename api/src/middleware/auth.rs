@@ -212,5 +212,7 @@ pub async fn master_auth_middleware(
         });
     }
 
-    Ok(next.run(req).await)
+    let resp = next.run(req).await;
+
+    Ok(resp)
 }
