@@ -168,6 +168,12 @@ impl GenerateSha256 for serde_json::Value {
     }
 }
 
+impl GenerateSha256 for String {
+    fn sha256(&self) -> Vec<u8> {
+        generate_sha256(self.as_bytes())
+    }
+}
+
 pub fn generate_sha256(data: &[u8]) -> Vec<u8> {
     let digest = digest(&SHA256, data);
     digest.as_ref().to_vec()

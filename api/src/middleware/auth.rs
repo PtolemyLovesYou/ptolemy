@@ -6,7 +6,7 @@ use crate::{
     error::ApiError,
     models::{
         User,
-        middleware::{ApiKey, AuthContext, AuthHeader, AuthResult, JWT},
+        middleware::{ApiKey, AuthContext, AuthHeader, AuthResult, JWT, AccessAuditId},
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum,
     },
     state::ApiAppState,
@@ -211,6 +211,8 @@ pub async fn master_auth_middleware(
             api_auth_audit_log_id,
         });
     }
+
+    req.extensions_mut().insert(AccessAuditId(api_access_audit_log_id));
 
     let resp = next.run(req).await;
 

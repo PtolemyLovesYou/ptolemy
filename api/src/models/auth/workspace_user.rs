@@ -56,3 +56,21 @@ impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
 pub struct WorkspaceUserUpdate {
     pub role: Option<WorkspaceRoleEnum>,
 }
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = crate::generated::auth_schema::workspace_user)]
+pub struct WorkspaceUserUpsert {
+    pub role: WorkspaceRoleEnum,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
+}
+
+impl WorkspaceUserUpsert {
+    pub fn new(role: impl Into<WorkspaceRoleEnum>) -> Self {
+        WorkspaceUserUpsert {
+            role: role.into(),
+            deleted_at: None,
+            deletion_reason: None,
+        }
+    }
+}

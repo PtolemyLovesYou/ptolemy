@@ -4,6 +4,9 @@ use uuid::Uuid;
 pub type AuthResult<T> = Result<T, ApiError>;
 
 #[derive(Clone, Debug)]
+pub struct AccessAuditId(pub Uuid);
+
+#[derive(Clone, Debug)]
 pub struct AuthContext {
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Uuid,

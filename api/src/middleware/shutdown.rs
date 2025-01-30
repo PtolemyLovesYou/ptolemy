@@ -2,7 +2,6 @@ use tokio::signal;
 use crate::state::ApiAppState;
 
 pub async fn shutdown_signal(state: ApiAppState) {
-    state.audit_writer.shutdown().await;
 
     let ctrl_c = async {
         signal::ctrl_c().await.unwrap();
@@ -20,7 +19,13 @@ pub async fn shutdown_signal(state: ApiAppState) {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        _ = ctrl_c => {
+            tracing::error!("Shutting down");
+            state.audit_writer.shutdown().await;
+        },
+        _ = terminate => {
+            tracing::error!("Shutting down");
+            state.audit_writer.shutdown().await;
+        },
     }
 }

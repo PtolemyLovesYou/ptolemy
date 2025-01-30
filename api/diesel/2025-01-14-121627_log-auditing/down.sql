@@ -1,30 +1,44 @@
--- This file should undo anything in `up.sql`
-drop index idx_iam_audit_resource_time;
-drop index idx_api_key_active;
-drop index idx_audit_record_lookup;
-drop index idx_audit_workspace_time;
+-- Drop rules
+drop rule soft_delete_workspace_user on workspace_user;
+drop rule soft_delete_users on users;
+drop rule soft_delete_workspace on workspace;
+drop rule soft_delete_user_api_key on user_api_key;
+drop rule soft_delete_service_api_key on service_api_key;
 
-alter table service_api_key
-    drop column deleted_at,
-    drop column deletion_reason;
+-- Drop indices
+drop index idx_iam_audit_access_id;
+drop index idx_record_audit_access_id;
+drop index idx_api_auth_audit_access_id;
+drop index idx_api_access_audit_archive;
 
-alter table user_api_key
-    drop column deleted_at,
-    drop column deletion_reason;
-
-alter table workspace
-    drop column deleted_at,
-    drop column deletion_reason;
+-- Remove soft deletion columns
+alter table workspace_user 
+    drop column deletion_reason,
+    drop column deleted_at;
 
 alter table users
-    drop column deleted_at,
-    drop column deletion_reason;
+    drop column deletion_reason,
+    drop column deleted_at;
 
-alter table workspace_user
-    drop column deleted_at,
-    drop column deletion_reason;
+alter table workspace
+    drop column deletion_reason,
+    drop column deleted_at;
 
+alter table user_api_key
+    drop column deletion_reason,
+    drop column deleted_at;
+
+alter table service_api_key
+    drop column deletion_reason,
+    drop column deleted_at;
+
+-- Drop audit tables (in correct order due to foreign key constraints)
 drop table iam_audit_logs;
 drop table record_audit_logs;
+drop table api_auth_audit_logs;
+drop table api_access_audit_logs;
 
+-- Drop custom types
 drop type operation_type;
+drop type archive_status;
+drop type auth_method;

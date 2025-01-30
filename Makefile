@@ -38,4 +38,4 @@ docs:
 
 .PHONY: run-prototype-app
 run-prototype-app:
-	cd ptolemy && uv run -m streamlit run app.py
+	cd prototype && uv run -m streamlit run app.py
