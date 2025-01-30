@@ -41,7 +41,6 @@ jsonwebtoken = { workspace = true }
 ipnet = { workspace = true }
 heck = { workspace = true }
 pin-project-lite = { workspace = true }
-hex = { workspace = true }
 
 [dependencies.ptolemy]
 path = "../ptolemy"

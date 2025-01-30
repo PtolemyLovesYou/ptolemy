@@ -18,4 +18,3 @@ define_enum!(
     ApiKeyPermission,
     [ReadOnly, WriteOnly, ReadWrite]
 );
-// define_enum!(OperationTypeEnum, OperationType, [Create, Read, Update, Delete, Grant, Revoke]);

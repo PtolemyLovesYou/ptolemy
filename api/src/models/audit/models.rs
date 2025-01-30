@@ -1,4 +1,4 @@
-use crate::{crypto::generate_sha256, generated::audit_schema::*};
+use crate::{generated::audit_schema::*, crypto::GenerateSha256};
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
@@ -97,8 +97,8 @@ pub struct IAMAuditLogCreate {
     pub resource_id: Option<Uuid>,
     pub table_name: String,
     pub operation_type: super::enums::OperationTypeEnum,
-    pub old_state: Option<serde_json::Value>,
-    pub new_state: Option<serde_json::Value>,
+    pub old_state: Option<Vec<u8>>,
+    pub new_state: Option<Vec<u8>>,
     pub failure_reason: Option<String>,
     pub query_metadata: Option<serde_json::Value>,
 }
@@ -111,8 +111,8 @@ impl IAMAuditLogCreate {
         resource_id: Uuid,
         table_name: String,
         operation_type: super::enums::OperationTypeEnum,
-        old_value: Option<serde_json::Value>,
-        new_value: Option<serde_json::Value>,
+        old_state: Option<Vec<u8>>,
+        new_state: Option<Vec<u8>>,
         query_metadata: Option<serde_json::Value>,
     ) -> Self {
         Self {
@@ -121,8 +121,8 @@ impl IAMAuditLogCreate {
             resource_id: Some(resource_id),
             table_name,
             operation_type,
-            old_state: old_value,
-            new_state: new_value,
+            old_state,
+            new_state,
             failure_reason: None,
             query_metadata,
         }
@@ -195,7 +195,7 @@ pub struct RecordAuditLogCreate {
     pub api_access_audit_log_id: Uuid,
     pub workspace_id: Uuid,
     pub table_name: String,
-    pub hashed_id: Vec<String>,
+    pub hashed_id: Vec<Vec<u8>>,
     pub operation_type: super::enums::OperationTypeEnum,
     pub batch_id: Option<Uuid>,
     pub failure_reason: Option<String>,
@@ -220,7 +220,7 @@ impl RecordAuditLogCreate {
             table_name,
             hashed_id: hashed_id
                 .into_iter()
-                .map(|i| generate_sha256(&i.to_string()))
+                .map(|i| i.sha256())
                 .collect(),
             operation_type: OperationTypeEnum::Read,
             batch_id: None,

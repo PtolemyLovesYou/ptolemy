@@ -152,7 +152,23 @@ where
 
 pub type UuidClaims = Claims<Uuid>;
 
-pub fn generate_sha256(data: &str) -> String {
-    let digest = digest(&SHA256, data.as_bytes());
-    hex::encode(digest.as_ref())
+pub trait GenerateSha256 {
+    fn sha256(&self) -> Vec<u8>;
+}
+
+impl GenerateSha256 for Uuid {
+    fn sha256(&self) -> Vec<u8> {
+        generate_sha256(self.as_bytes())
+    }
+}
+
+impl GenerateSha256 for serde_json::Value {
+    fn sha256(&self) -> Vec<u8> {
+        generate_sha256(self.to_string().as_bytes())
+    }
+}
+
+pub fn generate_sha256(data: &[u8]) -> Vec<u8> {
+    let digest = digest(&SHA256, data);
+    digest.as_ref().to_vec()
 }

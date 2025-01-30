@@ -3,6 +3,7 @@ use crate::{
     error::ApiError,
     models::{middleware::AuthContext, prelude::HasId, IAMAuditLogCreate, OperationTypeEnum},
     state::State,
+    crypto::GenerateSha256 as _,
 };
 use serde::Serialize;
 use uuid::Uuid;
@@ -111,8 +112,8 @@ where
                     id.clone(),
                     self.name.to_string(),
                     OperationTypeEnum::Update,
-                    Some(serde_json::json!(old)),
-                    Some(serde_json::json!(new)),
+                    Some(serde_json::json!(old).sha256()),
+                    Some(serde_json::json!(new).sha256()),
                     self.query_metadata.clone(),
                 )
             },
@@ -156,7 +157,7 @@ where
                     t.id(),
                     self.name.to_string(),
                     OperationTypeEnum::Delete,
-                    Some(serde_json::json!(t)),
+                    Some(serde_json::json!(t).sha256()),
                     None,
                     self.query_metadata.clone(),
                 )
@@ -204,7 +205,7 @@ where
                     self.name.to_string(),
                     OperationTypeEnum::Create,
                     None,
-                    Some(serde_json::json!(t)),
+                    Some(serde_json::json!(t).sha256()),
                     self.query_metadata.clone(),
                 )
             },

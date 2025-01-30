@@ -35,4 +35,3 @@ tower = { workspace = true }
 jsonwebtoken = { workspace = true }
 ipnet = { workspace = true }
 pin-project-lite = { workspace = true }
-hex = { workspace = true }

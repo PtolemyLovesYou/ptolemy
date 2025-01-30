@@ -41,7 +41,7 @@ create table record_audit_logs (
     api_access_audit_log_id uuid not null references api_access_audit_logs(id),
     workspace_id uuid not null references workspace(id),
     table_name varchar not null,
-    hashed_id varchar[],
+    hashed_id bytea[],
 
     operation_type operation_type not null,
     -- Optional - for batch operation correlation
@@ -61,8 +61,8 @@ create table iam_audit_logs (
 
     operation_type operation_type not null,
 
-    old_state jsonb,
-    new_state jsonb,
+    old_state bytea,
+    new_state bytea,
 
     failure_reason varchar,
     query_metadata jsonb,
