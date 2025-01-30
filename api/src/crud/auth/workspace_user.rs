@@ -1,7 +1,7 @@
 use crate::{
     error::ApiError,
     generated::auth_schema::workspace_user,
-    models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate, WorkspaceUserUpsert},
+    models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate},
     state::DbConnection, map_diesel_err,
     crud::prelude::*,
 };
@@ -40,9 +40,13 @@ impl InsertObjReturningId for WorkspaceUser {
     ) -> Result<Uuid, ApiError> {
         diesel::insert_into(workspace_user::table)
             .values(record)
-            .on_conflict((workspace_user::workspace_id, workspace_user::user_id))
+            .on_conflict(workspace_user::id)
             .do_update()
-            .set(&WorkspaceUserUpsert::new(record.role.clone()))
+            .set((
+                workspace_user::role.eq(record.role.clone()),
+                workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
+                workspace_user::deletion_reason.eq(None::<String>),
+            ))
             .returning(workspace_user::id)
             .get_result(conn)
             .await
@@ -53,21 +57,25 @@ impl InsertObjReturningId for WorkspaceUser {
         conn: &mut DbConnection<'_>,
         records: &Vec<Self>,
     ) -> Result<Vec<Uuid>, ApiError> {
-        let mut ids = Vec::new();
+        let mut objs = Vec::new();
         for record in records {
-            let id = diesel::insert_into(workspace_user::table)
+            let obj = diesel::insert_into(workspace_user::table)
             .values(record)
-            .on_conflict((workspace_user::workspace_id, workspace_user::user_id))
+            .on_conflict(workspace_user::id)
             .do_update()
-            .set(&WorkspaceUserUpsert::new(record.role.clone()))
+            .set((
+                workspace_user::role.eq(record.role.clone()),
+                workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
+                workspace_user::deletion_reason.eq(None::<String>),
+            ))
             .returning(workspace_user::id)
             .get_result(conn)
             .await
             .map_err(map_diesel_err!(InsertError, "insert", WorkspaceUser))?;
 
-            ids.push(id);
-        }
-        Ok(ids)
+            objs.push(obj);
+            }
+        Ok(objs)
     }
 }
 
@@ -79,9 +87,14 @@ impl InsertObjReturningObj for WorkspaceUser {
     ) -> Result<Self::Target, ApiError> {
         diesel::insert_into(workspace_user::table)
             .values(record)
-            .on_conflict((workspace_user::workspace_id, workspace_user::user_id))
+            .on_conflict(workspace_user::id)
             .do_update()
-            .set(&WorkspaceUserUpsert::new(record.role.clone()))
+            .set((
+                workspace_user::role.eq(record.role.clone()),
+                workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
+                workspace_user::deletion_reason.eq(None::<String>),
+            ))
+            .returning(WorkspaceUser::as_returning())
             .get_result(conn)
             .await
             .map_err(map_diesel_err!(InsertError, "insert", WorkspaceUser))
@@ -94,13 +107,18 @@ impl InsertObjReturningObj for WorkspaceUser {
         let mut objs = Vec::new();
         for record in records {
             let obj = diesel::insert_into(workspace_user::table)
-            .values(record)
-            .on_conflict((workspace_user::workspace_id, workspace_user::user_id))
-            .do_update()
-            .set(&WorkspaceUserUpsert::new(record.role.clone()))
-            .get_result(conn)
-            .await
-            .map_err(map_diesel_err!(InsertError, "insert", WorkspaceUser))?;
+                .values(record)
+                .on_conflict(workspace_user::id)
+                .do_update()
+                .set((
+                    workspace_user::role.eq(record.role.clone()),
+                    workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
+                    workspace_user::deletion_reason.eq(None::<String>),
+                ))
+                .returning(WorkspaceUser::as_returning())
+                .get_result(conn)
+                .await
+                .map_err(map_diesel_err!(InsertError, "insert", WorkspaceUser))?;
 
             objs.push(obj);
         }

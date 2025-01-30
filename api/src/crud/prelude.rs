@@ -133,8 +133,12 @@ macro_rules! get_by_id_trait {
             }
 
             async fn delete_by_id(&self, conn: &mut crate::state::DbConnection<'_>) -> Result<Self, crate::error::ApiError> {
-                match diesel::delete($table::table)
+                match diesel::update($table::table)
                     .filter($table::id.eq(self.id))
+                    .set((
+                        $table::deleted_at.eq(chrono::Utc::now()),
+                        $table::deletion_reason.eq("soft delete")
+                    ))
                     .returning(Self::as_returning())
                     .get_result(conn)
                     .await
