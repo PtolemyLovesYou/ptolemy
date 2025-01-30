@@ -1,18 +1,19 @@
-use api::crud::auth::admin::ensure_sysadmin;
-use api::error::ApiError;
-use api::run::{run_grpc_server, run_rest_api};
-use api::state::AppState;
-use std::sync::Arc;
-use tokio::try_join;
-use tracing::{error, info};
+use api::{
+    crud::auth::admin::ensure_sysadmin,
+    error::ServerError,
+    routes::get_router,
+    state::AppState,
+    middleware::shutdown_signal,
+};
+use tracing::error;
 
 #[tokio::main]
-async fn main() -> Result<(), ApiError> {
+async fn main() -> Result<(), ServerError> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    let shared_state = Arc::new(AppState::new().await?);
+    let shared_state = AppState::new_with_arc().await?;
 
     // ensure sysadmin
     match ensure_sysadmin(&shared_state).await {
@@ -22,16 +23,22 @@ async fn main() -> Result<(), ApiError> {
         }
     };
 
-    info!(
-        "Ptolemy REST API running on http://0.0.0.0:{} <3",
-        shared_state.port
-    );
-    info!("Ptolemy gRPC server running on [::]:50051 <3");
+    let service = get_router(&shared_state)
+        .await
+        .into_make_service_with_connect_info::<std::net::SocketAddr>();
 
-    try_join!(
-        run_rest_api(shared_state.clone()),
-        run_grpc_server(shared_state.clone())
-    )?;
+    let server_url = format!("[::]:{}", shared_state.port);
+    let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 
-    Ok(())
+    tracing::info!("Ptolemy running on {} <3", server_url);
+
+    match axum::serve(listener, service)
+        .with_graceful_shutdown(shutdown_signal(shared_state.clone()))
+        .await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            tracing::error!("Axum server error: {:?}", e);
+            Err(ServerError::ServerError)
+        }
+    }
 }

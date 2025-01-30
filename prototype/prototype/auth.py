@@ -3,13 +3,14 @@
 import streamlit as st
 import requests
 from ptolemy import GraphQLClient
+from prototype.env_settings import API_URL
 
 
 def login(username: str, password: str):
     """Login."""
     try:
         resp = requests.post(
-            "http://api:8000/auth",
+            f"{API_URL}/auth",
             json={"username": username, "password": password},
             timeout=5,
         )
@@ -17,7 +18,7 @@ def login(username: str, password: str):
             raise ValueError(f"Invalid username or password: {resp.text}")
 
         token = resp.json()["token"]
-        client = GraphQLClient("http://api:8000/graphql", token)
+        client = GraphQLClient(f"{API_URL}/graphql", token, auth_method="jwt")
         user = client.me()
 
         st.session_state.authenticated = True

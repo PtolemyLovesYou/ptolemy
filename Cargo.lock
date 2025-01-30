@@ -107,10 +107,13 @@ dependencies = [
  "chrono",
  "diesel",
  "diesel-async",
+ "heck 0.5.0",
  "hyper",
+ "ipnet",
  "jsonwebtoken",
  "juniper",
  "juniper_axum",
+ "pin-project-lite",
  "prost",
  "prost-types",
  "ptolemy",
@@ -563,7 +566,9 @@ dependencies = [
  "byteorder",
  "chrono",
  "diesel_derives",
+ "ipnet",
  "itoa",
+ "libc",
  "pq-sys",
  "serde_json",
  "uuid",
@@ -641,6 +646,49 @@ dependencies = [
  "quote",
  "syn 2.0.95",
 ]
+
+[[package]]
+name = "dummy"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "axum",
+ "base64 0.22.1",
+ "bb8",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "env_logger",
+ "heck 0.5.0",
+ "hyper",
+ "ipnet",
+ "jsonwebtoken",
+ "juniper",
+ "juniper_axum",
+ "log",
+ "pin-project-lite",
+ "prost",
+ "prost-types",
+ "ring",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "time",
+ "tokio",
+ "tonic",
+ "tonic-types",
+ "tower 0.5.2",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
 name = "either"
@@ -1295,6 +1343,10 @@ name = "ipnet"
 version = "2.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddc24109865250148c2e0f3d25d4f0f479571723792d3802153c60922a4fb708"
+dependencies = [
+ "schemars",
+ "serde",
+]
 
 [[package]]
 name = "is-terminal"
@@ -1735,12 +1787,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
 name = "pem"
 version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1806,9 +1852,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.15"
+version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "915a1e146535de9163f3987b8944ed8cf49a18bb0056bcebcdcece385cece4ff"
+checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
 
 [[package]]
 name = "pin-utils"
@@ -1961,7 +2007,6 @@ dependencies = [
  "env_logger",
  "heck 0.5.0",
  "log",
- "paste",
  "prost",
  "prost-types",
  "pyo3",
@@ -1974,6 +2019,7 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tonic-types",
+ "tracing",
  "uuid",
 ]
 
@@ -2329,6 +2375,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "schemars"
+version = "0.8.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09c024468a378b7e36765cd36702b7a90cc3cba11654f6685c8f233408e89e92"
+dependencies = [
+ "dyn-clone",
+ "schemars_derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "0.8.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1eee588578aff73f856ab961cd2f79e36bc45d7ded33a7562adba4667aecc0e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "syn 2.0.95",
+]
+
+[[package]]
 name = "scoped-futures"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2387,6 +2457,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_derive_internals"
+version = "0.29.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.95",
+]
+
+[[package]]
 name = "serde_json"
 version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2430,6 +2511,12 @@ dependencies = [
  "ryu",
  "serde",
 ]
+
+[[package]]
+name = "sha1_smol"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
 name = "sha2"
@@ -3135,6 +3222,7 @@ checksum = "f8c5f0a0af699448548ad1a2fbf920fb4bee257eae39953ba95cb84891a0446a"
 dependencies = [
  "getrandom",
  "serde",
+ "sha1_smol",
  "wasm-bindgen",
 ]
 

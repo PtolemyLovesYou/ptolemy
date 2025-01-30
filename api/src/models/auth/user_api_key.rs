@@ -1,5 +1,5 @@
 use crate::models::auth::user::User;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
@@ -25,8 +25,23 @@ pub struct UserApiKey {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub key_preview: String,
-    // pub permissions: ApiKeyPermissionEnum,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
+}
+
+crate::impl_has_id!(UserApiKey);
+
+impl Into<ptolemy::models::auth::UserApiKey> for UserApiKey {
+    fn into(self) -> ptolemy::models::auth::UserApiKey {
+        ptolemy::models::auth::UserApiKey {
+            id: self.id.into(),
+            user_id: self.user_id.into(),
+            name: self.name,
+            key_preview: self.key_preview,
+            expires_at: self.expires_at,
+        }
+    }
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
@@ -39,6 +54,5 @@ pub struct UserApiKeyCreate {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     pub key_hash: String,
     pub key_preview: String,
-    // pub permissions: ApiKeyPermissionEnum,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }

@@ -1,13 +1,4 @@
-use crate::crud::records::insert::{
-    insert_component_event_records, insert_io_records, insert_metadata_records,
-    insert_runtime_records, insert_subcomponent_event_records, insert_subsystem_event_records,
-    insert_system_event_records,
-};
-use crate::models::records::{
-    ComponentEventRecord, IORecord, MetadataRecord, RuntimeRecord, SubcomponentEventRecord,
-    SubsystemEventRecord, SystemEventRecord,
-};
-use crate::state::DbConnection;
+use crate::{crud::prelude::*, models::records::*, state::DbConnection};
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;
@@ -105,23 +96,25 @@ impl EventRecords {
     }
 
     pub async fn push(self, conn: &mut DbConnection<'_>) -> bool {
-        insert_system_event_records(conn, self.system_event_records)
+        SystemEventRecord::insert_many_returning_id(conn, &self.system_event_records)
             .await
             .ok();
-        insert_subsystem_event_records(conn, self.subsystem_event_records)
+        SubsystemEventRecord::insert_many_returning_id(conn, &self.subsystem_event_records)
             .await
             .ok();
-        insert_component_event_records(conn, self.component_event_records)
+        ComponentEventRecord::insert_many_returning_id(conn, &self.component_event_records)
             .await
             .ok();
-        insert_subcomponent_event_records(conn, self.subcomponent_event_records)
+        SubcomponentEventRecord::insert_many_returning_id(conn, &self.subcomponent_event_records)
             .await
             .ok();
-        insert_runtime_records(conn, self.runtime_records)
+        RuntimeRecord::insert_many_returning_id(conn, &self.runtime_records)
             .await
             .ok();
-        insert_io_records(conn, self.io_records).await.ok();
-        insert_metadata_records(conn, self.metadata_records)
+        IORecord::insert_many_returning_id(conn, &self.io_records)
+            .await
+            .ok();
+        MetadataRecord::insert_many_returning_id(conn, &self.metadata_records)
             .await
             .ok();
 

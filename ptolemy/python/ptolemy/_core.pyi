@@ -2,7 +2,7 @@
 
 # pylint: disable=unused-argument,missing-function-docstring,too-few-public-methods
 from __future__ import annotations
-from typing import Optional, Any, Dict, TypeVar, List
+from typing import Optional, Any, Dict, TypeVar, List, Literal
 from uuid import UUID
 from datetime import datetime
 from enum import Enum
@@ -136,7 +136,7 @@ class WorkspaceUser:
 class GraphQLClient:
     """GraphQL client."""
 
-    def __init__(self, url: str, api_key: str): ...
+    def __init__(self, url: str, api_key: str, auth_method: Literal['api_key', 'jwt'] = 'api_key'): ...
     def me(self) -> User: ...
     def create_workspace(
         self,

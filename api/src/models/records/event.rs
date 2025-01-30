@@ -1,4 +1,4 @@
-use crate::models::auth::Workspace;
+use crate::models::Workspace;
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::Record;
@@ -20,6 +20,8 @@ macro_rules! event_table {
             pub environment: Option<String>,
         }
 
+        crate::impl_has_id!($name);
+
         impl TryFrom<Record> for $name {
             type Error = ParseError;
 
@@ -30,10 +32,7 @@ macro_rules! event_table {
                     id: rec.id.into(),
                     $parent_fk: rec.parent_id.into(),
                     name: rec.record_data.name.clone(),
-                    parameters: match rec.record_data.parameters {
-                        Some(p) => Some(Into::into(p)),
-                        None => None,
-                    },
+                    parameters: rec.record_data.parameters.map(|p| Into::into(p)),
                     version: rec.record_data.version.clone(),
                     environment: rec.record_data.environment.clone(),
                 };

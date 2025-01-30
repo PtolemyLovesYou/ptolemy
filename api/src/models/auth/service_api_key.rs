@@ -1,6 +1,5 @@
-use crate::models::auth::enums::ApiKeyPermissionEnum;
-use crate::models::auth::workspace::Workspace;
-use chrono::NaiveDateTime;
+use crate::models::{ApiKeyPermissionEnum, Workspace};
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
@@ -27,7 +26,24 @@ pub struct ServiceApiKey {
     pub key_hash: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
+}
+
+crate::impl_has_id!(ServiceApiKey);
+
+impl Into<ptolemy::models::auth::ServiceApiKey> for ServiceApiKey {
+    fn into(self) -> ptolemy::models::auth::ServiceApiKey {
+        ptolemy::models::auth::ServiceApiKey {
+            id: self.id.into(),
+            workspace_id: self.workspace_id.into(),
+            name: self.name,
+            key_preview: self.key_preview,
+            permissions: self.permissions.into(),
+            expires_at: self.expires_at,
+        }
+    }
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
@@ -41,5 +57,5 @@ pub struct ServiceApiKeyCreate {
     pub key_hash: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }

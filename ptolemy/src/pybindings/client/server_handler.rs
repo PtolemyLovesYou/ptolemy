@@ -61,11 +61,9 @@ impl ServerHandler {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut request = tonic::Request::new(AuthenticationRequest { workspace_name });
 
-        let ak = format!("Bearer {}", self.api_key);
-
         request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("X-Api-Key")?,
-            tonic::metadata::MetadataValue::from_str(&ak)?,
+            tonic::metadata::MetadataValue::from_str(&self.api_key)?,
         );
 
         let resp = self

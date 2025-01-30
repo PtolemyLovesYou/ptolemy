@@ -7,5 +7,10 @@ pub mod middleware;
 pub mod models;
 pub mod observer;
 pub mod routes;
-pub mod run;
 pub mod state;
+pub mod executor;
+
+pub mod consts {
+    pub const SERVICE_API_KEY_PREFIX: &'static str = "pt-sk";
+    pub const USER_API_KEY_PREFIX: &'static str = "pt-pa";
+}

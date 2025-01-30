@@ -1,22 +1,54 @@
-use crate::crypto::PasswordHandler;
-use crate::error::{ApiError, CRUDError};
-use axum::http::StatusCode;
+use crate::{
+    crypto::PasswordHandler,
+    error::{ServerError, ApiError},
+    models::AuditLog,
+};
+use axum::{
+    extract::ConnectInfo,
+    http::{Request, StatusCode},
+};
 use bb8::PooledConnection;
-use diesel_async::pooled_connection::{bb8::Pool, AsyncDieselConnectionManager};
-use diesel_async::AsyncPgConnection;
+use diesel_async::{
+    pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
+    AsyncPgConnection,
+};
+use ipnet::IpNet;
+use ptolemy::writer::Writer;
+use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
-fn get_env_var(name: &str) -> Result<String, ApiError> {
+fn get_env_var(name: &str) -> Result<String, ServerError> {
     match std::env::var(name) {
         Ok(val) => Ok(val),
         Err(_) => {
             tracing::error!("{} must be set.", name);
-            Err(ApiError::ConfigError)
+            Err(ServerError::ConfigError)
         }
     }
 }
+
+#[derive(Clone)]
+pub struct RequestContext {
+    pub ip_address: Option<IpNet>,
+    pub source: Option<String>,
+}
+
+impl RequestContext {
+    pub fn from_axum_request(req: &Request<axum::body::Body>) -> Self {
+        let source = Some(req.uri().path().to_string());
+        let ip_address = req
+            .extensions()
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|i| IpNet::from_str(&i.to_string()).unwrap());
+
+        Self { ip_address, source }
+    }
+}
+
+pub type ApiAppState = Arc<AppState>;
+pub type AuditWriter = Arc<Writer<AuditLog>>;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -27,10 +59,11 @@ pub struct AppState {
     pub enable_graphiql: bool,
     pub ptolemy_env: String,
     pub jwt_secret: String,
+    pub audit_writer: Arc<Writer<AuditLog>>,
 }
 
 impl AppState {
-    pub async fn new() -> Result<Self, ApiError> {
+    pub async fn new() -> Result<Self, ServerError> {
         let port = get_env_var("API_PORT")?;
         let postgres_host = get_env_var("POSTGRES_HOST")?;
         let postgres_port = get_env_var("POSTGRES_PORT")?;
@@ -59,6 +92,30 @@ impl AppState {
         let pg_pool = Pool::builder().build(config).await.unwrap();
         let password_handler = PasswordHandler::new();
 
+        let pool_clone = pg_pool.clone();
+
+        let audit_writer = Arc::new(Writer::new(
+            move |msg: Vec<AuditLog>| {
+                let pool = pool_clone.clone();
+                let fut = async move {
+                    let n_msgs = msg.len();
+                    let mut conn = pool.get().await.unwrap();
+                    match AuditLog::insert_many(&mut conn, msg).await {
+                        Ok(_) => {
+                            tracing::debug!("Successfully inserted {} audit logs", n_msgs);
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to insert audit logs: {}", e.to_string());
+                        }
+                    }
+                };
+
+                tokio::spawn(fut);
+            },
+            128,
+            24,
+        ));
+
         let state = Self {
             port,
             pg_pool,
@@ -67,17 +124,22 @@ impl AppState {
             enable_graphiql,
             ptolemy_env,
             jwt_secret,
+            audit_writer,
         };
 
         Ok(state)
     }
 
-    pub async fn get_conn(&self) -> Result<DbConnection<'_>, CRUDError> {
+    pub async fn new_with_arc() -> Result<Arc<Self>, ServerError> {
+        Ok(Arc::new(Self::new().await?))
+    }
+
+    pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
         match self.pg_pool.get().await {
             Ok(c) => Ok(c),
             Err(e) => {
                 error!("Failed to get connection: {}", e);
-                Err(CRUDError::ConnectionError)
+                Err(ApiError::ConnectionError)
             }
         }
     }
@@ -86,5 +148,15 @@ impl AppState {
         self.get_conn()
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
+
+pub trait State {
+    fn state(&self) -> ApiAppState;
+}
+
+impl State for Arc<AppState> {
+    fn state(&self) -> ApiAppState {
+        self.clone()
     }
 }

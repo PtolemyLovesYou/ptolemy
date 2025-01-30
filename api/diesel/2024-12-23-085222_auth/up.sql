@@ -15,10 +15,11 @@ create table users (
 );
 
 create table workspace_user (
+    id uuid primary key default gen_random_uuid(),
     user_id uuid not null references users(id) on delete cascade,
     workspace_id uuid not null references workspace(id) on delete cascade,
     role workspace_role not null,
-    primary key (user_id, workspace_id)
+    unique(user_id, workspace_id)
 );
 
 create table user_api_key (
@@ -28,7 +29,7 @@ create table user_api_key (
     key_hash varchar not null,
     key_preview varchar not null,
     -- permissions api_key_permission not null,
-    expires_at timestamp(6)
+    expires_at timestamptz(6)
 );
 
 create table service_api_key (
@@ -38,5 +39,5 @@ create table service_api_key (
     key_hash varchar not null,
     key_preview varchar(16) not null,
     permissions api_key_permission not null,
-    expires_at timestamp(6)
+    expires_at timestamptz(6)
 );

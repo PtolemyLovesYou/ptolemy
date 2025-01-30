@@ -1,8 +1,10 @@
-use crate::models::records::enums::TierEnum;
-use crate::models::records::event::{
-    ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+use crate::models::records::{
+    enums::TierEnum,
+    event::{
+        ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+    },
+    utils::get_foreign_keys,
 };
-use crate::models::records::utils::get_foreign_keys;
 use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
@@ -32,6 +34,8 @@ pub struct RuntimeRecord {
     pub error_content: Option<String>,
 }
 
+crate::impl_has_id!(RuntimeRecord);
+
 impl TryFrom<Record> for RuntimeRecord {
     type Error = ParseError;
 
@@ -43,7 +47,7 @@ impl TryFrom<Record> for RuntimeRecord {
 
         let rec = RuntimeRecord {
             id: val.id.into(),
-            tier: val.tier.try_into()?,
+            tier: val.tier.into(),
             system_event_id,
             subsystem_event_id,
             component_event_id,

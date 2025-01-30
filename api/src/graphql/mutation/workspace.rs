@@ -1,17 +1,27 @@
-use crate::crud::auth::{
-    service_api_key as service_api_key_crud, workspace as workspace_crud,
-    workspace_user as workspace_user_crud,
-};
-use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult, WorkspaceUserResult,
-};
-use crate::graphql::state::JuniperAppState;
 use crate::{
-    models::auth::enums::{ApiKeyPermissionEnum, WorkspaceRoleEnum},
-    models::auth::{WorkspaceCreate, WorkspaceUserCreate},
+    consts::SERVICE_API_KEY_PREFIX,
+    crypto::generate_api_key, graphql::{
+        executor::JuniperExecutor, mutation::result::{
+            CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
+            WorkspaceUserResult,
+        }, state::JuniperAppState
+    },
+    models::{
+        prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate,
+        Workspace, WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate
+    }
 };
-use juniper::graphql_object;
+use ptolemy::models::enums::WorkspaceRole;
+use juniper::{graphql_object, GraphQLInputObject};
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
+pub struct WorkspaceUserCreateInput {
+    pub workspace_id: Uuid,
+    pub user_id: Uuid,
+    pub role: WorkspaceRoleEnum,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct WorkspaceMutation;
@@ -24,138 +34,64 @@ impl WorkspaceMutation {
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        let workspace = JuniperExecutor::from_juniper_app_state(
+            ctx,
+            "create",
+            |ctx| async move { Ok(ctx.user.can_create_delete_workspace()) },
+        ).create(&workspace_data).await;
 
-        if !ctx.user.is_admin {
-            return WorkspaceResult::err(
-                "user",
-                "You must be an admin to create a workspace".to_string(),
-            );
+        if workspace.is_err() {
+            return workspace.into();
         }
 
-        let workspace = match workspace_crud::create_workspace(&mut conn, &workspace_data).await {
-            Ok(w) => w,
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "workspace",
-                    format!("Failed to create workspace: {:?}", e),
-                )
-            }
-        };
+        let workspace = workspace.unwrap();
 
-        // add workspace admin
-        let admin_id = match admin_user_id {
-            Some(id) => id,
-            // if none provided, default to user_id
-            None => ctx.user.id,
-        };
+        let workspace_user = WorkspaceUser::new(
+            admin_user_id.unwrap_or(ctx.user.id.into()),
+            workspace.id,
+            WorkspaceRoleEnum::Admin,
+        );
 
-        match workspace_user_crud::create_workspace_user(
-            &mut conn,
-            &WorkspaceUserCreate {
-                workspace_id: workspace.id,
-                user_id: admin_id,
-                role: WorkspaceRoleEnum::Admin,
-            },
-        )
-        .await
-        {
-            Ok(_) => (),
-            Err(e) => {
-                return WorkspaceResult::err(
-                    "workspace_user",
-                    format!("Failed to create workspace user: {:?}", e),
-                )
-            }
-        };
-
-        WorkspaceResult(Ok(workspace))
+        crate::unchecked_executor!(ctx, "create")
+            .create(&workspace_user)
+            .await
+            .map(|_| workspace )
+            .into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
+        JuniperExecutor::from_juniper_app_state(
+            ctx, "delete",
+            |ctx| async move {
+                Ok(ctx.user.can_create_delete_workspace())
             }
-        };
-
-        if !ctx.user.is_admin {
-            return DeletionResult::err(
-                "user",
-                "You must be an admin to delete a workspace".to_string(),
-            );
-        }
-
-        match workspace_crud::delete_workspace(&mut conn, &workspace_id).await {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => {
-                DeletionResult::err("workspace", format!("Failed to delete workspace: {:?}", e))
-            }
-        }
+        ).delete::<Workspace>(&workspace_id).await.map(|_| true).into()
     }
 
     async fn add_user(
         &self,
         ctx: &JuniperAppState,
-        workspace_user: WorkspaceUserCreate,
+        workspace_user: WorkspaceUserCreateInput,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        let workspace_id = workspace_user.workspace_id.clone();
 
-        // Check user permissions
-        let user_permission = match workspace_user_crud::get_workspace_user_permission(
-            &mut conn,
-            &workspace_user.workspace_id,
-            &ctx.user.id,
-        )
-        .await
-        {
-            Ok(role) => role,
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
-            }
-        };
+        JuniperExecutor::from_juniper_app_state(
+            ctx, "add_user",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let user_permission: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        // Verify user has admin or manager role
-        match user_permission {
-            WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-            _ => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    "Insufficient permissions".to_string(),
-                )
-            }
-        }
-
-        match workspace_user_crud::create_workspace_user(&mut conn, &workspace_user).await {
-            Ok(result) => WorkspaceUserResult(Ok(result)),
-            Err(e) => WorkspaceUserResult::err(
-                "workspace_user",
-                format!("Failed to add user to workspace: {:?}", e),
-            ),
-        }
+                Ok(user_permission.can_add_user_to_workspace())
+            },
+        ).create(&WorkspaceUser::new(
+            workspace_user.user_id,
+            workspace_id,
+            workspace_user.role,
+        )).await.into()
     }
 
     async fn remove_user(
@@ -164,70 +100,28 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         user_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        JuniperExecutor::from_juniper_app_state(
+            ctx, "remove_user",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let src_user_role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        // Check user permissions
-        let user_permission = match workspace_user_crud::get_workspace_user_permission(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id,
-        )
-        .await
-        {
-            Ok(role) => role,
-            Err(e) => {
-                return DeletionResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
-            }
-        };
-
-        // Verify permissions - admin can delete anyone, manager cannot delete admin
-        match user_permission {
-            WorkspaceRoleEnum::Admin => (),
-            WorkspaceRoleEnum::Manager => {
-                let target_permission = match workspace_user_crud::get_workspace_user_permission(
+                let target_user_role: WorkspaceRole = WorkspaceUser::get_workspace_role(
                     &mut conn,
                     &workspace_id,
                     &user_id,
-                )
-                .await
-                {
-                    Ok(role) => role,
-                    Err(e) => {
-                        return DeletionResult::err(
-                            "permission",
-                            format!("Failed to get target user permission: {:?}", e),
-                        )
-                    }
-                };
+                ).await?.into();
 
-                if target_permission == WorkspaceRoleEnum::Admin {
-                    return DeletionResult::err(
-                        "permission",
-                        "Managers cannot delete admin users".to_string(),
-                    );
-                }
+                Ok(src_user_role.can_remove_user_from_workspace(&target_user_role))
             }
-            _ => return DeletionResult::err("permission", "Insufficient permissions".to_string()),
-        }
-
-        match workspace_user_crud::delete_workspace_user(&mut conn, &workspace_id, &user_id).await {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => DeletionResult::err(
-                "workspace_user",
-                format!("Failed to delete user from workspace: {:?}", e),
-            ),
-        }
+        ).delete::<WorkspaceUser>(&WorkspaceUser::compute_id(&user_id, &workspace_id))
+            .await
+            .map(|_| true)
+            .into()
     }
 
     async fn change_workspace_user_role(
@@ -237,66 +131,24 @@ impl WorkspaceMutation {
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
     ) -> WorkspaceUserResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        JuniperExecutor::from_juniper_app_state(
+            ctx, "change_workspace_user_role",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let src_user_role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        // Check user permissions
-        let user_permission = match workspace_user_crud::get_workspace_user_permission(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id,
-        )
-        .await
-        {
-            Ok(role) => role,
-            Err(e) => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
+                Ok(src_user_role.can_update_user_role())
             }
-        };
-
-        // Verify permissions - admin can set any role, manager cannot set admin role
-        match user_permission {
-            WorkspaceRoleEnum::Admin => (),
-            WorkspaceRoleEnum::Manager => {
-                if new_role == WorkspaceRoleEnum::Admin {
-                    return WorkspaceUserResult::err(
-                        "permission",
-                        "Managers cannot assign admin role".to_string(),
-                    );
-                }
-            }
-            _ => {
-                return WorkspaceUserResult::err(
-                    "permission",
-                    "Insufficient permissions".to_string(),
-                )
-            }
-        }
-
-        match workspace_user_crud::set_workspace_user_role(
-            &mut conn,
-            &workspace_id,
-            &user_id,
-            &new_role,
-        )
-        .await
-        {
-            Ok(result) => WorkspaceUserResult(Ok(result)),
-            Err(e) => WorkspaceUserResult::err(
-                "workspace_user",
-                format!("Failed to change user role: {:?}", e),
-            ),
-        }
+        ).update(
+            &WorkspaceUser::compute_id(&user_id, &workspace_id),
+            &WorkspaceUserUpdate {
+                role: Some(new_role),
+            },
+        ).await.into()
     }
 
     async fn create_service_api_key(
@@ -307,65 +159,34 @@ impl WorkspaceMutation {
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return CreateApiKeyResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
 
-        // Check user permissions
-        match workspace_user_crud::get_workspace_user_permission(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id,
-        )
-        .await
-        {
-            Ok(role) => match role {
-                WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => {
-                    return CreateApiKeyResult::err(
-                        "permission",
-                        "Insufficient permissions".to_string(),
-                    )
-                }
-            },
-            Err(e) => {
-                return CreateApiKeyResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
-            }
-        };
-
-        let duration = match duration_days {
-            None => None,
-            Some(days) => Some(days as i64).map(chrono::Duration::days),
-        };
-
-        match service_api_key_crud::create_service_api_key(
-            &mut conn,
+        let create_model = ServiceApiKeyCreate {
+            id: None,
             workspace_id,
             name,
-            permission,
-            duration,
-            &ctx.state.password_handler,
-        )
-        .await
-        {
-            Ok((api_key_id, api_key)) => CreateApiKeyResult(Ok(CreateApiKeyResponse {
-                id: api_key_id,
-                api_key,
-            })),
-            Err(e) => CreateApiKeyResult::err(
-                "service_api_key",
-                format!("Failed to create service API key: {:?}", e),
-            ),
-        }
+            permissions: permission.into(),
+            key_hash: ctx.state.password_handler.hash_password(&api_key),
+            key_preview: api_key.chars().take(12).collect(),
+            expires_at: duration_days.map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64)),
+        };
+
+        JuniperExecutor::from_juniper_app_state(
+            ctx,
+            "create_service_api_key",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
+
+                Ok(role.can_create_delete_service_api_key())
+            }
+        ).create(&create_model)
+            .await
+            .map(|ak| CreateApiKeyResponse { id: ak.id(), api_key }).into()
     }
 
     async fn delete_service_api_key(
@@ -374,49 +195,18 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        JuniperExecutor::from_juniper_app_state(
+            ctx, "delete_service_api_key",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let role: WorkspaceRole = WorkspaceUser::get_workspace_role(
+                    &mut conn,
+                    &workspace_id,
+                    &ctx.user.id.into(),
+                ).await?.into();
 
-        // Check user permissions
-        match workspace_user_crud::get_workspace_user_permission(
-            &mut conn,
-            &workspace_id,
-            &ctx.user.id,
-        )
-        .await
-        {
-            Ok(role) => match role {
-                WorkspaceRoleEnum::Admin | WorkspaceRoleEnum::Manager => (),
-                _ => {
-                    return DeletionResult::err(
-                        "permission",
-                        "Insufficient permissions".to_string(),
-                    )
-                }
-            },
-            Err(e) => {
-                return DeletionResult::err(
-                    "permission",
-                    format!("Failed to get workspace user permission: {:?}", e),
-                )
+                Ok(role.can_create_delete_service_api_key())
             }
-        };
-
-        match service_api_key_crud::delete_service_api_key(&mut conn, &api_key_id, &workspace_id)
-            .await
-        {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => DeletionResult::err(
-                "service_api_key",
-                format!("Failed to delete service API key: {:?}", e),
-            ),
-        }
+        ).delete::<ServiceApiKey>(&api_key_id).await.map(|_| true).into()
     }
 }

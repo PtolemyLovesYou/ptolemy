@@ -1,5 +1,8 @@
-use crate::graphql::state::JuniperAppState;
-use crate::models::auth::{ServiceApiKey, User, Workspace, WorkspaceUser};
+use crate::{
+    graphql::state::JuniperAppState,
+    models::{ServiceApiKey, User, Workspace, WorkspaceUser},
+    error::ApiError,
+};
 use juniper::{graphql_interface, graphql_object, GraphQLObject};
 use uuid::Uuid;
 
@@ -54,6 +57,20 @@ macro_rules! result_model {
                 $name(Ok(value))
             }
         }
+
+        impl From<Result<$result_type, ApiError>> for $name {
+            fn from(result: Result<$result_type, ApiError>) -> Self {
+                match result {
+                    Ok(t) => $name::ok(t),
+                    Err(e) => {
+                        $name::err(
+                            stringify!($name),
+                            e.to_string(),
+                        )
+                    }
+                }
+            }
+        }
     };
 }
 
@@ -70,6 +87,18 @@ pub struct ValidationError {
 }
 
 result_model!(DeletionResult, bool, deleted);
+
+impl From<Result<Uuid, ApiError>> for DeletionResult {
+    fn from(result: Result<Uuid, ApiError>) -> Self {
+        match result {
+            Ok(_) => DeletionResult::ok(true),
+            Err(e) => DeletionResult::err(
+                "database",
+                e.to_string(),
+            ),
+        }
+    }
+}
 
 result_model!(UserResult, User, user);
 

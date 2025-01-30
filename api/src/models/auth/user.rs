@@ -1,6 +1,6 @@
 use crate::models::auth::enums::UserStatusEnum;
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -16,13 +16,40 @@ pub struct User {
     pub status: UserStatusEnum,
     pub is_sysadmin: bool,
     pub is_admin: bool,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub deletion_reason: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
+crate::impl_has_id!(User);
+
+impl Into<ptolemy::models::auth::User> for User {
+    fn into(self) -> ptolemy::models::auth::User {
+        ptolemy::models::auth::User {
+            id: self.id.into(),
+            username: self.username,
+            display_name: self.display_name,
+            status: self.status.into(),
+            is_admin: self.is_admin,
+            is_sysadmin: self.is_sysadmin,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = crate::generated::auth_schema::users)]
 pub struct UserCreate {
     pub username: String,
-    pub password: String,
+    pub password_hash: String,
     pub display_name: Option<String>,
     pub is_sysadmin: bool,
     pub is_admin: bool,
+}
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = crate::generated::auth_schema::users)]
+pub struct UserUpdate {
+    pub display_name: Option<String>,
+    pub status: Option<UserStatusEnum>,
+    pub is_admin: Option<bool>,
+    pub password_hash: Option<String>,
 }

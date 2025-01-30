@@ -1,16 +1,15 @@
 use axum::http::StatusCode;
-use juniper::FieldError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum ApiError {
-    APIError,
+pub enum ServerError {
+    ServerError,
     GRPCError,
     ConfigError,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum CRUDError {
+pub enum ApiError {
     DatabaseError,
     NotFoundError,
     InsertError,
@@ -19,24 +18,44 @@ pub enum CRUDError {
     ConnectionError,
     UpdateError,
     BadQuery,
+    InternalError,
+    AuthError(String),
 }
 
-impl CRUDError {
-    pub fn http_status_code(&self) -> StatusCode {
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl ApiError {
+    pub fn category(&self) -> &str {
         match self {
-            CRUDError::DatabaseError => StatusCode::CONFLICT,
-            CRUDError::NotFoundError => StatusCode::NOT_FOUND,
-            CRUDError::BadQuery => StatusCode::BAD_REQUEST,
-            CRUDError::InsertError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::GetError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::DeleteError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::ConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
-            CRUDError::UpdateError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::DatabaseError => "database_error",
+            ApiError::NotFoundError => "not_found",
+            ApiError::InsertError => "insert_error",
+            ApiError::GetError => "get_error",
+            ApiError::DeleteError => "delete_error",
+            ApiError::ConnectionError => "connection_error",
+            ApiError::UpdateError => "update_error",
+            ApiError::BadQuery => "bad_query",
+            ApiError::InternalError => "internal_error",
+            ApiError::AuthError(_) => "auth_error",
         }
     }
 
-    pub fn juniper_field_error(&self) -> FieldError {
-        // TODO: Make this more descriptive
-        FieldError::from(format!("CRUD Error: {:?}", self))
+    pub fn http_status_code(&self) -> StatusCode {
+        match self {
+            ApiError::DatabaseError => StatusCode::CONFLICT,
+            ApiError::NotFoundError => StatusCode::NOT_FOUND,
+            ApiError::BadQuery => StatusCode::BAD_REQUEST,
+            ApiError::InsertError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::GetError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::DeleteError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::ConnectionError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::UpdateError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::AuthError(_) => StatusCode::UNAUTHORIZED,
+        }
     }
 }

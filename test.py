@@ -6,9 +6,9 @@ from ptolemy import Ptolemy
 
 client = Ptolemy(
     base_url="http://localhost:8000",
-    observer_url="http://localhost:50051",
-    api_key="pt-sk-6EmxiViMDSrFhS53mFff3PjboARmdCOvb7sxEXD_hJ8o_-wMYvjYbWCVtV6gPnRX",
-    workspace_name="fofofofo",
+    observer_url="http://localhost:8000",
+    api_key="pt-sk-q1pVe_zjHloua1doiBUYQ15bsAZLn2QZHBBRbgNhmY4N9EU_IKYOELg9aKPMedIC",
+    workspace_name="default",
     autoflush=False,
     batch_size=1024
     )

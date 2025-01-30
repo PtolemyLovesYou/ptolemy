@@ -1,96 +1,64 @@
-use crate::crud::auth::{user as user_crud, user_api_key as user_api_key_crud};
-use crate::graphql::state::JuniperAppState;
-use crate::models::auth::UserCreate;
-
-use crate::graphql::mutation::result::{
-    CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult,
+use crate::{
+    crud::prelude::*,
+    graphql::{
+        mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
+        state::JuniperAppState,
+        executor::JuniperExecutor,
+    },
+    models::{UserCreate, User, UserApiKeyCreate, prelude::HasId, UserApiKey},
+    consts::USER_API_KEY_PREFIX,
+    crypto::generate_api_key,
+    unchecked_executor,
 };
-use juniper::graphql_object;
+use chrono::{Duration, Utc};
+use juniper::{graphql_object, GraphQLInputObject};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize, GraphQLInputObject)]
+pub struct UserInput {
+    pub username: String,
+    pub password: String,
+    pub display_name: Option<String>,
+    pub is_sysadmin: bool,
+    pub is_admin: bool,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct UserMutation;
 
 #[graphql_object]
 impl UserMutation {
-    async fn create(&self, ctx: &JuniperAppState, user_data: UserCreate) -> UserResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return UserResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
+    async fn create(&self, ctx: &JuniperAppState, user_data: UserInput) -> UserResult {
+        let user_create = UserCreate {
+            username: user_data.username,
+            password_hash: ctx
+                .state
+                .password_handler
+                .hash_password(&user_data.password),
+            display_name: user_data.display_name,
+            is_sysadmin: user_data.is_sysadmin,
+            is_admin: user_data.is_admin,
         };
 
-        let user = ctx.user.clone();
-
-        // if user is not admin or sysadmin, return forbidden
-        if !user.is_admin && !user.is_sysadmin {
-            return UserResult::err(
-                "user",
-                "You must be an admin or sysadmin to create a user".to_string(),
-            );
-        }
-
-        // sysadmin cannot be created via REST API
-        if user_data.is_sysadmin {
-            return UserResult::err("user", "Sysadmin cannot be created via API".to_string());
-        }
-
-        // if user is admin and they're trying to make another admin, return forbidden
-        if user.is_admin && user_data.is_admin {
-            return UserResult::err(
-                "user",
-                "You cannot create another admin. Contact your sysadmin.".to_string(),
-            );
-        }
-
-        match user_crud::create_user(&mut conn, &user_data, &ctx.state.password_handler).await {
-            Ok(result) => UserResult(Ok(result)),
-            Err(e) => UserResult::err("user", format!("Failed to create user: {:?}", e)),
-        }
+        JuniperExecutor::from_juniper_app_state(
+            ctx, "create",
+            |ctx| async move {
+                Ok(ctx.user.can_create_delete_user(user_data.is_admin, user_data.is_sysadmin))
+            },
+        ).create(&user_create).await.into()
     }
 
     async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
+    JuniperExecutor::from_juniper_app_state(
+            ctx, "delete",
+            |ctx| async move {
+                let mut conn = ctx.state.get_conn().await?;
+                let acting_user = ctx.user.clone();
+                let user_to_delete = User::get_by_id(&mut conn, &id).await?;
+                Ok(acting_user.can_create_delete_user(user_to_delete.is_admin, user_to_delete.is_sysadmin))
             }
-        };
-
-        // get user permissions
-        let acting_user = ctx.user.clone();
-
-        let user_to_delete = match user_crud::get_user(&mut conn, &id).await {
-            Ok(u) => u,
-            Err(e) => return DeletionResult::err("user", format!("Failed to get user: {:?}", e)),
-        };
-
-        // if acting user is admin and they're trying to delete another admin, forbidden
-        if acting_user.is_admin && user_to_delete.is_admin {
-            return DeletionResult::err("user", "You cannot delete another admin.".to_string());
-        }
-
-        // cannot delete themselves
-        if acting_user.id == id {
-            return DeletionResult::err("user", "You cannot delete yourself.".to_string());
-        }
-
-        // sysadmin cannot be deleted via API
-        if user_to_delete.is_sysadmin {
-            return DeletionResult::err("user", "Sysadmin cannot be deleted via API".to_string());
-        }
-
-        match user_crud::delete_user(&mut conn, &id).await {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => DeletionResult::err("user", format!("Failed to delete user: {:?}", e)),
-        }
+        ).delete::<User>(&id).await.map(|_| true).into()
     }
 
     async fn create_user_api_key(
@@ -99,58 +67,31 @@ impl UserMutation {
         name: String,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return CreateApiKeyResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
+        let api_key = generate_api_key(USER_API_KEY_PREFIX).await;
+        let key_preview = api_key.chars().take(12).collect();
+        let key_hash = ctx.state.password_handler.hash_password(&api_key);
 
-        let duration = match duration_days {
-            None => None,
-            Some(days) => Some(days as i64).map(chrono::Duration::days),
-        };
-
-        match user_api_key_crud::create_user_api_key(
-            &mut conn,
-            ctx.user.id,
+        let user_api_key_create = UserApiKeyCreate {
+            id: None,
+            user_id: ctx.user.id.into(),
             name,
-            duration,
-            &ctx.state.password_handler,
-        )
-        .await
-        {
-            Ok((api_key_id, api_key)) => CreateApiKeyResult::ok(CreateApiKeyResponse {
-                id: api_key_id,
-                api_key,
-            }),
-            Err(e) => CreateApiKeyResult::err(
-                "user_api_key",
-                format!("Failed to create user API key: {:?}", e),
-            ),
-        }
+            key_hash,
+            key_preview,
+            expires_at: duration_days.map(|d| Utc::now() + Duration::days(d as i64)),
+        };
+
+        unchecked_executor!(ctx, "create_user_api_key")
+            .create(&user_api_key_create)
+            .await
+            .map(|ak| CreateApiKeyResponse { id: ak.id(), api_key })
+            .into()
     }
 
     async fn delete_user_api_key(&self, ctx: &JuniperAppState, api_key_id: Uuid) -> DeletionResult {
-        let mut conn = match ctx.state.get_conn_http().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                return DeletionResult::err(
-                    "database",
-                    format!("Failed to get database connection: {}", e),
-                )
-            }
-        };
-
-        match user_api_key_crud::delete_user_api_key(&mut conn, &api_key_id, &ctx.user.id).await {
-            Ok(_) => DeletionResult(Ok(true)),
-            Err(e) => DeletionResult::err(
-                "user_api_key",
-                format!("Failed to delete user API key: {:?}", e),
-            ),
-        }
+        unchecked_executor!(ctx, "delete_user_api_key")
+            .delete::<UserApiKey>(&api_key_id)
+            .await
+            .map(|_| true)
+            .into()
     }
 }

@@ -32,12 +32,15 @@ tonic-types = { workspace = true }
 prost-types = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-ring = "0.17.8"
-base64 = "0.22.1"
-tower-http = { version = "0.6.2", features = ["trace"] }
-argon2 = "0.5.3"
-tower = "0.5.2"
-jsonwebtoken = "9.3.0"
+ring = { workspace = true }
+base64 = { workspace = true }
+tower-http = { workspace = true }
+argon2 = { workspace = true }
+tower = { workspace = true }
+jsonwebtoken = { workspace = true }
+ipnet = { workspace = true }
+heck = { workspace = true }
+pin-project-lite = { workspace = true }
 
 [dependencies.ptolemy]
 path = "../ptolemy"

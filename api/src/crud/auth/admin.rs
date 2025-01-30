@@ -1,17 +1,17 @@
-use crate::crud::auth::user::{change_user_password, create_user, get_all_users};
-use crate::error::CRUDError;
-use crate::models::auth::UserCreate;
-use crate::state::AppState;
-use std::sync::Arc;
-use tracing::error;
+use crate::{
+    crud::prelude::*,
+    error::ApiError,
+    models::{UserCreate, UserUpdate, User},
+    state::ApiAppState,
+};
 
-pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
+pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), ApiError> {
     let mut conn = state.get_conn().await?;
 
     let user = std::env::var("PTOLEMY_USER").expect("PTOLEMY_USER must be set.");
     let pass = std::env::var("PTOLEMY_PASS").expect("PTOLEMY_PASS must be set.");
 
-    let users_list = get_all_users(&mut conn).await?;
+    let users_list = User::all(&mut conn).await?;
 
     for user in users_list {
         if user.is_sysadmin {
@@ -21,31 +21,30 @@ pub async fn ensure_sysadmin(state: &Arc<AppState>) -> Result<(), CRUDError> {
             {
                 return Ok(());
             }
-            // update password
             else {
-                change_user_password(&mut conn, &user.id, &pass, &state.password_handler).await?;
-                return Ok(());
+                let new_pass = state.password_handler.hash_password(&pass);
+                let changeset = UserUpdate {
+                    password_hash: Some(new_pass),
+                    status: None,
+                    is_admin: None,
+                    display_name: None,
+                };
+                user.update_by_id(&mut conn, &changeset).await?;
             }
         }
     }
 
-    match create_user(
+    UserCreate::insert_one_returning_id(
         &mut conn,
         &UserCreate {
             username: user,
             display_name: Some("SYSADMIN".to_string()),
             is_sysadmin: true,
             is_admin: false,
-            password: pass,
+            password_hash: state.password_handler.hash_password(&pass),
         },
-        &state.password_handler,
     )
-    .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            error!("Failed to create sysadmin: {:?}", e);
-            Err(CRUDError::InsertError)
-        }
-    }
+    .await?;
+
+    Ok(())
 }

@@ -26,7 +26,9 @@ diesel::table! {
         #[max_length = 16]
         key_preview -> Varchar,
         permissions -> ApiKeyPermission,
-        expires_at -> Nullable<Timestamp>,
+        expires_at -> Nullable<Timestamptz>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -37,7 +39,9 @@ diesel::table! {
         name -> Varchar,
         key_hash -> Varchar,
         key_preview -> Varchar,
-        expires_at -> Nullable<Timestamp>,
+        expires_at -> Nullable<Timestamptz>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -53,6 +57,8 @@ diesel::table! {
         status -> UserStatus,
         is_sysadmin -> Bool,
         is_admin -> Bool,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -63,8 +69,10 @@ diesel::table! {
         name -> Varchar,
         description -> Nullable<Varchar>,
         archived -> Bool,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -72,10 +80,13 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::WorkspaceRole;
 
-    workspace_user (user_id, workspace_id) {
+    workspace_user (id) {
+        id -> Uuid,
         user_id -> Uuid,
         workspace_id -> Uuid,
         role -> WorkspaceRole,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 

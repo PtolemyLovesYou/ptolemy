@@ -82,8 +82,8 @@ diesel::table! {
         subsystem_event_id -> Nullable<Uuid>,
         component_event_id -> Nullable<Uuid>,
         subcomponent_event_id -> Nullable<Uuid>,
-        start_time -> Timestamp,
-        end_time -> Timestamp,
+        start_time -> Timestamptz,
+        end_time -> Timestamptz,
         error_type -> Nullable<Varchar>,
         error_content -> Nullable<Varchar>,
     }
@@ -135,8 +135,10 @@ diesel::table! {
         name -> Varchar,
         description -> Nullable<Varchar>,
         archived -> Bool,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -144,10 +146,13 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::WorkspaceRole;
 
-    workspace_user (user_id, workspace_id) {
+    workspace_user (id) {
+        id -> Uuid,
         user_id -> Uuid,
         workspace_id -> Uuid,
         role -> WorkspaceRole,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 

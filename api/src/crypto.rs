@@ -1,12 +1,31 @@
+use crate::error::ApiError;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
 use base64::Engine;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use ring::rand::{SecureRandom, SystemRandom};
+use ring::{
+    digest::{digest, SHA256},
+    rand::{SecureRandom, SystemRandom},
+};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::{error, info};
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ClaimType {
+    UserJWT,
+    ServiceAPIKeyJWT,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "id")]
+pub enum AuthClaims {
+    UserJWT(Uuid),
+    ServiceApiKeyJWT(Uuid),
+}
 
 /// Generates a 32 byte api key and encodes it as a base64 string.
 ///
@@ -51,11 +70,12 @@ impl PasswordHandler {
     }
 }
 
-type ClaimsResult<T> = Result<T, jsonwebtoken::errors::Error>;
+type ClaimsResult<T> = Result<T, ApiError>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims<T> {
     sub: T,
+    claim_type: ClaimType,
     exp: usize,
     iat: usize,
 }
@@ -64,16 +84,21 @@ impl<T: for<'de> Deserialize<'de> + Serialize + Clone> Claims<T>
 where
     T: Clone + for<'de> Deserialize<'de> + Serialize,
 {
-    pub fn new(sub: T, valid_for_secs: usize) -> Self {
+    pub fn new(sub: T, claim_type: ClaimType, valid_for_secs: usize) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as usize;
         Self {
             sub,
+            claim_type,
             exp: now + valid_for_secs,
             iat: now,
         }
+    }
+
+    pub fn claim_type(&self) -> &ClaimType {
+        &self.claim_type
     }
 
     pub fn sub(&self) -> &T {
@@ -97,20 +122,53 @@ where
     }
 
     pub fn generate_auth_token(&self, secret: &[u8]) -> ClaimsResult<String> {
-        Ok(encode(
-            &Header::default(),
-            &self,
-            &EncodingKey::from_secret(secret),
-        )?)
+        Ok(
+            encode(&Header::default(), &self, &EncodingKey::from_secret(secret)).map_err(|e| {
+                error!("Failed to generate auth token: {}", e);
+                ApiError::InternalError
+            })?,
+        )
     }
 
-    pub fn from_token(token: &str, secret: &[u8]) -> ClaimsResult<Self> {
+    pub fn from_token(token: Option<String>, secret: &[u8]) -> ClaimsResult<Option<Self>> {
+        let token = match token {
+            Some(token) => token,
+            None => return Ok(None),
+        };
+
         let claims = decode::<Self>(
-            token,
+            &token,
             &DecodingKey::from_secret(secret),
             &Validation::default(),
-        )?;
+        )
+        .map_err(|e| {
+            info!("Failed to decode auth token: {}", e);
+            ApiError::AuthError("Invalid token".to_string())
+        })?;
 
-        Ok(claims.claims)
+        Ok(Some(claims.claims))
     }
+}
+
+pub type UuidClaims = Claims<Uuid>;
+
+pub trait GenerateSha256 {
+    fn sha256(&self) -> Vec<u8>;
+}
+
+impl GenerateSha256 for Uuid {
+    fn sha256(&self) -> Vec<u8> {
+        generate_sha256(self.as_bytes())
+    }
+}
+
+impl GenerateSha256 for serde_json::Value {
+    fn sha256(&self) -> Vec<u8> {
+        generate_sha256(self.to_string().as_bytes())
+    }
+}
+
+pub fn generate_sha256(data: &[u8]) -> Vec<u8> {
+    let digest = digest(&SHA256, data);
+    digest.as_ref().to_vec()
 }
