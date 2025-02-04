@@ -19,7 +19,7 @@ use uuid::Uuid;
 #[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
 #[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
 #[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
-#[diesel(table_name = crate::api::generated::records_schema::io)]
+#[diesel(table_name = crate::generated::db::records_schema::io)]
 pub struct IORecord {
     pub id: Uuid,
     pub tier: TierEnum,

@@ -1,10 +1,10 @@
 use crate::api::{
     crud::prelude::*,
     error::ApiError,
-    generated::auth_schema::workspace_user,
     models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate},
     state::DbConnection,
 };
+use crate::generated::db::auth_schema::workspace_user;
 use crate::map_diesel_err;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

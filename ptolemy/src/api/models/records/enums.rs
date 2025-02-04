@@ -1,6 +1,6 @@
 use crate::generated::observer;
 use crate::{
-    api::generated::records_schema::sql_types::{FieldValueType, IoType, Tier},
+    generated::db::records_schema::sql_types::{FieldValueType, IoType, Tier},
     define_enum,
 };
 use diesel::deserialize::FromSql;

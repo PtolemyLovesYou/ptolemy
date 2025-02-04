@@ -9,7 +9,7 @@ use uuid::Uuid;
 )]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
-#[diesel(table_name = crate::api::generated::auth_schema::workspace_user)]
+#[diesel(table_name = crate::generated::db::auth_schema::workspace_user)]
 #[diesel(primary_key(user_id, workspace_id))]
 pub struct WorkspaceUser {
     pub id: Uuid,
@@ -54,7 +54,7 @@ impl Into<crate::models::auth::WorkspaceUser> for WorkspaceUser {
 }
 
 #[derive(Debug, AsChangeset)]
-#[diesel(table_name = crate::api::generated::auth_schema::workspace_user)]
+#[diesel(table_name = crate::generated::db::auth_schema::workspace_user)]
 pub struct WorkspaceUserUpdate {
     pub role: Option<WorkspaceRoleEnum>,
 }

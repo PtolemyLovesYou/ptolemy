@@ -17,7 +17,7 @@ use uuid::Uuid;
     Associations,
 )]
 #[diesel(belongs_to(Workspace))]
-#[diesel(table_name = crate::api::generated::auth_schema::service_api_key)]
+#[diesel(table_name = crate::generated::db::auth_schema::service_api_key)]
 pub struct ServiceApiKey {
     pub id: Uuid,
     pub workspace_id: Uuid,
@@ -47,7 +47,7 @@ impl Into<crate::models::auth::ServiceApiKey> for ServiceApiKey {
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
-#[diesel(table_name = crate::api::generated::auth_schema::service_api_key)]
+#[diesel(table_name = crate::generated::db::auth_schema::service_api_key)]
 pub struct ServiceApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]
     pub id: Option<Uuid>,

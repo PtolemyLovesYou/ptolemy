@@ -1,5 +1,5 @@
 use crate::{
-    api::generated::audit_schema::sql_types::{AuthMethod, OperationType},
+    generated::db::audit_schema::sql_types::{AuthMethod, OperationType},
     define_enum,
 };
 use diesel::deserialize::FromSql;

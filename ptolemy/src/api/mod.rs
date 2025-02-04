@@ -2,7 +2,6 @@ mod crud;
 mod crypto;
 mod error;
 mod executor;
-mod generated;
 mod graphql;
 mod middleware;
 mod models;

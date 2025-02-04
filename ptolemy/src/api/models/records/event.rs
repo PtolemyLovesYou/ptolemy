@@ -10,7 +10,7 @@ macro_rules! event_table {
     ($name:ident, $table_name:ident, $parent_table:ident, $parent_fk:ident) => {
         #[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
         #[diesel(belongs_to($parent_table, foreign_key = $parent_fk))]
-        #[diesel(table_name = crate::api::generated::records_schema::$table_name)]
+        #[diesel(table_name = crate::generated::db::records_schema::$table_name)]
         pub struct $name {
             pub id: Uuid,
             pub $parent_fk: Uuid,

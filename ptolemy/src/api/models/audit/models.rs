@@ -1,4 +1,5 @@
-use crate::api::{crypto::GenerateSha256, generated::audit_schema::*};
+use crate::api::crypto::GenerateSha256;
+use crate::generated::db::audit_schema::*;
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;

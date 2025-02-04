@@ -1,10 +1,10 @@
 use crate::api::{
     crypto::PasswordHandler,
     error::ApiError,
-    generated::auth_schema::{service_api_key, users, workspace, workspace_user},
     models::{ServiceApiKey, User, Workspace, WorkspaceCreate, WorkspaceUpdate, WorkspaceUser},
     state::DbConnection,
 };
+use crate::generated::db::auth_schema::{service_api_key, users, workspace, workspace_user};
 use diesel::prelude::*;
 use diesel::BelongingToDsl;
 use diesel_async::RunQueryDsl;

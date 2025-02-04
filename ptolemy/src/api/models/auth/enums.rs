@@ -1,5 +1,5 @@
 use crate::{
-    api::generated::auth_schema::sql_types::{ApiKeyPermission, UserStatus, WorkspaceRole},
+    generated::db::auth_schema::sql_types::{ApiKeyPermission, UserStatus, WorkspaceRole},
     define_enum,
 };
 use diesel::deserialize::FromSql;

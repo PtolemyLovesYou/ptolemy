@@ -1,4 +1,5 @@
-use crate::api::{generated::records_schema::*, models::records::*};
+use crate::api::models::records::*;
+use crate::generated::db::records_schema::*;
 use crate::insert_obj_traits;
 use diesel_async::RunQueryDsl;
 

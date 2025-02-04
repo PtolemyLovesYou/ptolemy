@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
-#[diesel(table_name = crate::api::generated::auth_schema::workspace)]
+#[diesel(table_name = crate::generated::db::auth_schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workspace {
     pub id: Uuid,
@@ -34,14 +34,14 @@ impl Into<crate::models::auth::Workspace> for Workspace {
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
-#[diesel(table_name = crate::api::generated::auth_schema::workspace)]
+#[diesel(table_name = crate::generated::db::auth_schema::workspace)]
 pub struct WorkspaceCreate {
     name: String,
     description: Option<String>,
 }
 
 #[derive(Debug, AsChangeset)]
-#[diesel(table_name = crate::api::generated::auth_schema::workspace)]
+#[diesel(table_name = crate::generated::db::auth_schema::workspace)]
 pub struct WorkspaceUpdate {
     description: Option<String>,
     archived: Option<bool>,

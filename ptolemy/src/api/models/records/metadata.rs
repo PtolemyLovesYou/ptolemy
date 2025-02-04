@@ -16,7 +16,7 @@ use uuid::Uuid;
 #[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
 #[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
 #[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
-#[diesel(table_name = crate::api::generated::records_schema::metadata)]
+#[diesel(table_name = crate::generated::db::records_schema::metadata)]
 pub struct MetadataRecord {
     pub id: Uuid,
     pub system_event_id: Option<Uuid>,

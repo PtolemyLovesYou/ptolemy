@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
-#[diesel(table_name = crate::api::generated::auth_schema::users)]
+#[diesel(table_name = crate::generated::db::auth_schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
@@ -36,7 +36,7 @@ impl Into<crate::models::auth::User> for User {
 }
 
 #[derive(Debug, Serialize, Deserialize, Insertable)]
-#[diesel(table_name = crate::api::generated::auth_schema::users)]
+#[diesel(table_name = crate::generated::db::auth_schema::users)]
 pub struct UserCreate {
     pub username: String,
     pub password_hash: String,
@@ -46,7 +46,7 @@ pub struct UserCreate {
 }
 
 #[derive(Debug, AsChangeset)]
-#[diesel(table_name = crate::api::generated::auth_schema::users)]
+#[diesel(table_name = crate::generated::db::auth_schema::users)]
 pub struct UserUpdate {
     pub display_name: Option<String>,
     pub status: Option<UserStatusEnum>,
