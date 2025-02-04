@@ -8,6 +8,15 @@ name = "ptolemy"
 # "cdylib" is necessary to produce a shared library for Python to import from.
 crate-type = ["cdylib", "rlib"]
 
+[[ bin ]]
+name = "api"
+path = "src/bin/api.rs"
+features = ["api"]
+
+[[ bin ]]
+name = "generate-gql-schema"
+path = "src/bin/generate_gql_schema.rs"
+
 [dependencies]
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
@@ -28,12 +37,26 @@ chrono = { workspace = true }
 heck = { workspace = true }
 reqwest = { workspace = true }
 tracing = { workspace = true }
+argon2 = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
+ring = { workspace = true, optional = true }
+jsonwebtoken = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+diesel = { workspace = true, optional = true }
+juniper = { workspace = true, optional = true }
+ipnet.workspace = true
+bb8 = { workspace = true, optional = true }
+diesel-async = { workspace = true, optional = true }
+tower-http = { workspace = true, optional = true }
+juniper_axum = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
 
 
 [features]
 extension-module = ["pyo3/extension-module", "pyo3-ffi/extension-module"]
 python = ["pyo3", "pyo3-ffi"]
 client = ["python", "extension-module"]
+api = ["diesel", "argon2", "base64", "ring", "jsonwebtoken", "axum", "juniper", "bb8", "diesel-async", "tower-http", "juniper_axum", "tracing-subscriber"]
 
 [build-dependencies]
 tonic-build = "0.12.3"
