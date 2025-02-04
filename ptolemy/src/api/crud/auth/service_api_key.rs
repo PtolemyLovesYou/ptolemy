@@ -1,6 +1,4 @@
-use crate::api::{
-    models::{ServiceApiKey, ServiceApiKeyCreate},
-};
+use crate::api::models::{ServiceApiKey, ServiceApiKeyCreate};
 use crate::generated::db::auth_schema::service_api_key;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
