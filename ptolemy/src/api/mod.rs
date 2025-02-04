@@ -11,6 +11,7 @@ mod observer;
 mod routes;
 
 pub use self::error::ServerError;
+pub use self::graphql::{Mutation, Query, Schema};
 
 use self::{
     crud::auth::admin::ensure_sysadmin,

@@ -13,6 +13,10 @@ name = "api"
 path = "src/bin/api.rs"
 features = ["api"]
 
+[[ bin ]]
+name = "generate-gql-schema"
+path = "src/bin/generate_gql_schema.rs"
+
 [dependencies]
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9

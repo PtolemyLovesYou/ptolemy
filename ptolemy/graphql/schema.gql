@@ -20,12 +20,7 @@ enum WorkspaceRoleEnum {
   ADMIN
 }
 
-input LoginInput {
-  username: String!
-  password: String!
-}
-
-input UserCreate {
+input UserInput {
   username: String!
   password: String!
   displayName: String
@@ -38,9 +33,9 @@ input WorkspaceCreate {
   description: String
 }
 
-input WorkspaceUserCreate {
-  userId: Uuid!
+input WorkspaceUserCreateInput {
   workspaceId: Uuid!
+  userId: Uuid!
   role: WorkspaceRoleEnum!
 }
 
@@ -67,17 +62,6 @@ scalar DateTime
 
 scalar Uuid
 
-type AuthPayload {
-  token: String!
-  user: User!
-}
-
-type AuthResult implements GQLResult {
-  success: Boolean!
-  payload: AuthPayload
-  error: [ValidationError!]
-}
-
 type CreateApiKeyResponse {
   apiKey: String!
   id: Uuid!
@@ -98,7 +82,6 @@ type DeletionResult implements GQLResult {
 type Mutation {
   user: UserMutation!
   workspace: WorkspaceMutation!
-  auth(userData: LoginInput!): AuthResult!
 }
 
 type Query {
@@ -143,7 +126,7 @@ type UserApiKey {
 }
 
 type UserMutation {
-  create(userData: UserCreate!): UserResult!
+  create(userData: UserInput!): UserResult!
   delete(id: Uuid!): DeletionResult!
   createUserApiKey(name: String!, durationDays: Int): CreateApiKeyResult!
   deleteUserApiKey(apiKeyId: Uuid!): DeletionResult!
@@ -174,7 +157,7 @@ type Workspace {
 type WorkspaceMutation {
   create(adminUserId: Uuid, workspaceData: WorkspaceCreate!): WorkspaceResult!
   delete(workspaceId: Uuid!): DeletionResult!
-  addUser(workspaceUser: WorkspaceUserCreate!): WorkspaceUserResult!
+  addUser(workspaceUser: WorkspaceUserCreateInput!): WorkspaceUserResult!
   removeUser(workspaceId: Uuid!, userId: Uuid!): DeletionResult!
   changeWorkspaceUserRole(workspaceId: Uuid!, userId: Uuid!, newRole: WorkspaceRoleEnum!): WorkspaceUserResult!
   createServiceApiKey(workspaceId: Uuid!, name: String!, permission: ApiKeyPermissionEnum!, durationDays: Int): CreateApiKeyResult!
