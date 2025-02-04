@@ -44,14 +44,6 @@ RUN uv venv .venv && \
 # Optimized copy and build steps
 COPY ./pyproject.toml ./uv.lock ./Cargo.toml ./Cargo.lock ./
 COPY ./ptolemy ./ptolemy
-COPY ./api ./api
-COPY ./dummy ./dummy
-
-# Initial build with cached dependencies
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=./target \
-    cargo build -p dummy
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \

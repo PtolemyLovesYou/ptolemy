@@ -2,7 +2,7 @@ services:
   api:
     container_name: api
     build:
-      dockerfile: api/Dockerfile
+      dockerfile: ptolemy/Dockerfile
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -10,7 +10,7 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       # disable if the debug logs get too annoying
-      RUST_LOG: info,api=debug,ptolemy=debug
+      RUST_LOG: info,ptolemy=debug
       # set to "PROD" for production
       PTOLEMY_ENV: DEV
       # JWT secret goes here
@@ -19,7 +19,7 @@ services:
       - "8000:8000"
       - "50051:50051"
     volumes:
-      - ./api:/app
+      - ./ptolemy:/app
       - ptolemy_data:/ptolemy/data
     networks:
       - ptolemy

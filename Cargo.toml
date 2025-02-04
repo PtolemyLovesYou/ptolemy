@@ -1,13 +1,10 @@
 [workspace]
 members = [
-    "ptolemy",
-    "api", 
-    "dummy"]
+    "ptolemy", 
+]
 
 default-members = [
-    "api",
     "ptolemy",
-    "dummy",
 ]
 resolver = "2"
 
