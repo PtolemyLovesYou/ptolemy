@@ -1,23 +1,21 @@
-mod error;
-mod crypto;
-mod models;
-mod generated;
-mod state;
-mod executor;
 mod crud;
-mod middleware;
+mod crypto;
+mod error;
+mod executor;
+mod generated;
 mod graphql;
+mod middleware;
+mod models;
 mod observer;
 mod routes;
+mod state;
 
 pub use self::error::ServerError;
 pub use self::graphql::{Mutation, Query, Schema};
 
 use self::{
-    crud::auth::admin::ensure_sysadmin,
-    routes::get_router,
+    crud::auth::admin::ensure_sysadmin, middleware::shutdown_signal, routes::get_router,
     state::AppState,
-    middleware::shutdown_signal,
 };
 
 pub async fn run_server() -> Result<(), ServerError> {
@@ -46,7 +44,8 @@ pub async fn run_server() -> Result<(), ServerError> {
 
     match axum::serve(listener, service)
         .with_graceful_shutdown(shutdown_signal(shared_state.clone()))
-        .await {
+        .await
+    {
         Ok(_) => Ok(()),
         Err(e) => {
             tracing::error!("Axum server error: {:?}", e);

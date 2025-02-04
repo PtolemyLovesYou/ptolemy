@@ -1,10 +1,10 @@
 use crate::{
     api::models::records::{
-    enums::TierEnum,
-    event::{
-        ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
-    },
-    utils::get_foreign_keys,
+        enums::TierEnum,
+        event::{
+            ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
+        },
+        utils::get_foreign_keys,
     },
     error::ParseError,
     generated::observer::Record,

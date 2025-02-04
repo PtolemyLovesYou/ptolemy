@@ -5,11 +5,11 @@ use crate::api::models::records::{
     },
     utils::get_foreign_keys,
 };
-use diesel::prelude::*;
 use crate::error::ParseError;
 use crate::generated::observer::{record::RecordData, Record};
 use crate::models::event::{ProtoFeedback, ProtoInput, ProtoOutput, ProtoRecord};
 use crate::models::json_serializable::JsonSerializable;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;

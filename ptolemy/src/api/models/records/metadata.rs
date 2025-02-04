@@ -4,10 +4,10 @@ use crate::api::models::records::{
     },
     utils::get_foreign_keys,
 };
-use diesel::prelude::*;
 use crate::error::ParseError;
 use crate::generated::observer::Record;
 use crate::models::event::{ProtoMetadata, ProtoRecord};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

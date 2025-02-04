@@ -1,15 +1,15 @@
 use super::{
     crypto::PasswordHandler,
-    error::{ServerError, ApiError},
+    error::{ApiError, ServerError},
     models::AuditLog,
 };
+use crate::writer::Writer;
 use axum::http::StatusCode;
 use bb8::PooledConnection;
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection,
 };
-use crate::writer::Writer;
 use std::sync::Arc;
 use tracing::error;
 

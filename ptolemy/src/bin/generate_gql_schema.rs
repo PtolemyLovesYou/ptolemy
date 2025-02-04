@@ -1,5 +1,5 @@
-use ptolemy::api::{Mutation, Query};
 use juniper::{EmptySubscription, RootNode};
+use ptolemy::api::{Mutation, Query};
 
 const DEFAULT_DIR: &str = "graphql/schema.gql";
 

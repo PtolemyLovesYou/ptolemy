@@ -1,6 +1,6 @@
 use tower_http::classify::{
     // GrpcErrorsAsFailures,
-    ServerErrorsAsFailures
+    ServerErrorsAsFailures,
 };
 use tower_http::{
     trace::{self, TraceLayer},

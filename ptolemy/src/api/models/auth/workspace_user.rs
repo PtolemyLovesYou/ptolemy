@@ -4,7 +4,9 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations, Identifiable)]
+#[derive(
+    Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations, Identifiable,
+)]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::api::generated::auth_schema::workspace_user)]

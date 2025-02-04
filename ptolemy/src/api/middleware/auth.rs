@@ -1,9 +1,15 @@
 use std::str::FromStr as _;
 
 use crate::api::{
-    consts::USER_API_KEY_PREFIX, crud::prelude::*, crypto::{ClaimType, GenerateSha256, UuidClaims}, error::ApiError, models::{
-        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT}, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User
-    }, state::ApiAppState
+    consts::USER_API_KEY_PREFIX,
+    crud::prelude::*,
+    crypto::{ClaimType, GenerateSha256, UuidClaims},
+    error::ApiError,
+    models::{
+        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT},
+        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User,
+    },
+    state::ApiAppState,
 };
 use axum::{
     extract::State,
@@ -13,10 +19,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-fn get_header_raw(
-    req: &Request<axum::body::Body>,
-    header: HeaderName
-) -> Option<&[u8]> {
+fn get_header_raw(req: &Request<axum::body::Body>, header: HeaderName) -> Option<&[u8]> {
     req.headers().get(header).map(|h| h.as_bytes())
 }
 
@@ -27,7 +30,9 @@ fn get_header(
 ) -> AuthResult<Option<String>> {
     match req.headers().get(header) {
         Some(h) => {
-            let token = h.to_str().map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
+            let token = h
+                .to_str()
+                .map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
 
             match prefix {
                 Some(p) => Ok(Some(
@@ -116,9 +121,7 @@ async fn validate_jwt_header(
             }
         }
         ClaimType::ServiceAPIKeyJWT => {
-            match crate::api::models::ServiceApiKey::get_by_id(&mut conn, claims.sub())
-            .await
-            {
+            match crate::api::models::ServiceApiKey::get_by_id(&mut conn, claims.sub()).await {
                 Ok(sak) => {
                     req.extensions_mut()
                         .insert::<crate::models::auth::ServiceApiKey>(sak.into());
@@ -162,8 +165,9 @@ pub async fn master_auth_middleware(
             },
         };
 
-        let auth_payload_hash = get_header_raw(&req, HeaderName::from_str("Authorization").unwrap())
-            .map(|h| h.sha256());
+        let auth_payload_hash =
+            get_header_raw(&req, HeaderName::from_str("Authorization").unwrap())
+                .map(|h| h.sha256());
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
@@ -195,9 +199,9 @@ pub async fn master_auth_middleware(
                     Some(serde_json::json!({"error": format!("{:?}", e)})),
                 ),
             };
-        
-        let auth_payload_hash = get_header_raw(&req, HeaderName::from_str("X-Api-Key").unwrap())
-            .map(|h| h.sha256());
+
+        let auth_payload_hash =
+            get_header_raw(&req, HeaderName::from_str("X-Api-Key").unwrap()).map(|h| h.sha256());
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
@@ -220,7 +224,8 @@ pub async fn master_auth_middleware(
         });
     }
 
-    req.extensions_mut().insert(AccessAuditId(api_access_audit_log_id));
+    req.extensions_mut()
+        .insert(AccessAuditId(api_access_audit_log_id));
 
     let resp = next.run(req).await;
 

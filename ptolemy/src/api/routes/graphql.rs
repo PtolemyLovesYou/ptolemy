@@ -3,10 +3,10 @@ use crate::api::{
     models::middleware::AuthContext,
     state::ApiAppState,
 };
+use crate::models::auth::User;
 use axum::{extract::State, Extension};
 use juniper::{http::GraphQLBatchRequest, EmptySubscription};
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
-use crate::models::auth::User;
 
 pub async fn graphql_handler(
     Extension(auth_context): Extension<AuthContext>,

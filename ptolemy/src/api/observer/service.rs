@@ -1,9 +1,9 @@
 use std::str::FromStr as _;
 
 use crate::api::{
-    models::Workspace,
     crypto::{ClaimType, Claims},
     error::ApiError,
+    models::Workspace,
     observer::records::EventRecords,
     state::ApiAppState,
 };

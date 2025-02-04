@@ -1,6 +1,7 @@
+use crate::generated::observer;
 use crate::{
-    define_enum,
     api::generated::records_schema::sql_types::{FieldValueType, IoType, Tier},
+    define_enum,
 };
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};
@@ -9,7 +10,6 @@ use diesel::{
     {pg::Pg, pg::PgValue},
 };
 use juniper::GraphQLEnum;
-use crate::generated::observer;
 use std::io::Write;
 
 define_enum!(IoTypeEnum, IoType, [Input, Output, Feedback]);

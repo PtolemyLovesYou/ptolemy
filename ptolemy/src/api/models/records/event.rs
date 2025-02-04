@@ -1,8 +1,8 @@
 use crate::api::models::Workspace;
-use diesel::prelude::*;
 use crate::error::ParseError;
 use crate::generated::observer::Record;
 use crate::models::event::{ProtoEvent, ProtoRecord};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

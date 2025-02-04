@@ -1,6 +1,6 @@
 use crate::{
-    define_enum,
     api::generated::audit_schema::sql_types::{AuthMethod, OperationType},
+    define_enum,
 };
 use diesel::deserialize::FromSql;
 use diesel::serialize::{IsNull, Output, ToSql};

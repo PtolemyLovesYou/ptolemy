@@ -1,4 +1,4 @@
-use crate::api::{generated::audit_schema::*, crypto::GenerateSha256};
+use crate::api::{crypto::GenerateSha256, generated::audit_schema::*};
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
@@ -223,10 +223,7 @@ impl RecordAuditLogCreate {
             api_access_audit_log_id,
             workspace_id,
             table_name,
-            hashed_id: hashed_id
-                .into_iter()
-                .map(|i| i.sha256())
-                .collect(),
+            hashed_id: hashed_id.into_iter().map(|i| i.sha256()).collect(),
             operation_type: OperationTypeEnum::Read,
             batch_id: None,
             failure_reason,

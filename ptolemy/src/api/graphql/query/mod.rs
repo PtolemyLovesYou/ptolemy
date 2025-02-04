@@ -1,9 +1,8 @@
+use super::{executor::JuniperExecutor, state::JuniperAppState};
 use crate::api::{
-    crud::prelude::GetObjById as _, error::ApiError, models::{User, Workspace}
-};
-use super::{
-    state::JuniperAppState,
-    executor::JuniperExecutor,
+    crud::prelude::GetObjById as _,
+    error::ApiError,
+    models::{User, Workspace},
 };
 use juniper::graphql_object;
 use uuid::Uuid;
@@ -25,11 +24,12 @@ impl Query {
         id: Option<Uuid>,
         username: Option<String>,
     ) -> Result<Vec<User>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "user", |_| async move { Ok(true)})
+        JuniperExecutor::from_juniper_app_state(ctx, "user", |_| async move { Ok(true) })
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
                 User::search_users(&mut conn, id, username, None).await
-            }).await
+            })
+            .await
     }
 
     async fn workspace(
@@ -38,18 +38,20 @@ impl Query {
         name: Option<String>,
         archived: Option<bool>,
     ) -> Result<Vec<Workspace>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "workspace", |_| async move { Ok(true)})
+        JuniperExecutor::from_juniper_app_state(ctx, "workspace", |_| async move { Ok(true) })
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
                 Workspace::search_workspaces(&mut conn, id, name, archived).await
-            }).await
+            })
+            .await
     }
 
     async fn me(ctx: &JuniperAppState) -> Result<User, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "me", |_| async move { Ok(true)})
+        JuniperExecutor::from_juniper_app_state(ctx, "me", |_| async move { Ok(true) })
             .read(async move {
                 let mut conn = ctx.state.get_conn().await?;
                 User::get_by_id(&mut conn, &ctx.user.id.into()).await
-            }).await
+            })
+            .await
     }
 }

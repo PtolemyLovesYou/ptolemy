@@ -1,9 +1,9 @@
 use crate::api::{
+    crypto::PasswordHandler,
     error::ApiError,
-    generated::auth_schema::{workspace, users, workspace_user, service_api_key},
-    models::{Workspace, WorkspaceCreate, WorkspaceUpdate, User, WorkspaceUser, ServiceApiKey},
+    generated::auth_schema::{service_api_key, users, workspace, workspace_user},
+    models::{ServiceApiKey, User, Workspace, WorkspaceCreate, WorkspaceUpdate, WorkspaceUser},
     state::DbConnection,
-    crypto::PasswordHandler
 };
 use diesel::prelude::*;
 use diesel::BelongingToDsl;
@@ -11,10 +11,7 @@ use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
 impl Workspace {
-    pub async fn get_users(
-        &self,
-        conn: &mut DbConnection<'_>
-    ) -> Result<Vec<User>, ApiError> {
+    pub async fn get_users(&self, conn: &mut DbConnection<'_>) -> Result<Vec<User>, ApiError> {
         WorkspaceUser::belonging_to(&self)
             .inner_join(users::table.on(users::id.eq(workspace_user::user_id)))
             .filter(workspace_user::deleted_at.is_null())
@@ -24,7 +21,12 @@ impl Workspace {
             .map_err(crate::map_diesel_err!(GetError, "get", User))
     }
 
-    pub async fn get_workspace_users(&self, conn: &mut DbConnection<'_>, user_id: Option<Uuid>, username: Option<String>) -> Result<Vec<WorkspaceUser>, ApiError> {
+    pub async fn get_workspace_users(
+        &self,
+        conn: &mut DbConnection<'_>,
+        user_id: Option<Uuid>,
+        username: Option<String>,
+    ) -> Result<Vec<WorkspaceUser>, ApiError> {
         let mut query = workspace_user::table
             .inner_join(users::table.on(users::id.eq(workspace_user::user_id)))
             .filter(workspace_user::deleted_at.is_null())
@@ -39,10 +41,16 @@ impl Workspace {
             query = query.filter(users::username.eq(username));
         }
 
-        query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", WorkspaceUser))
+        query
+            .get_results(conn)
+            .await
+            .map_err(crate::map_diesel_err!(GetError, "get", WorkspaceUser))
     }
 
-    pub async fn get_service_api_keys(&self, conn: &mut DbConnection<'_>) -> Result<Vec<ServiceApiKey>, ApiError> {
+    pub async fn get_service_api_keys(
+        &self,
+        conn: &mut DbConnection<'_>,
+    ) -> Result<Vec<ServiceApiKey>, ApiError> {
         let api_keys: Vec<ServiceApiKey> = ServiceApiKey::belonging_to(&self)
             .select(ServiceApiKey::as_select())
             .filter(service_api_key::deleted_at.is_null())
@@ -60,7 +68,7 @@ impl Workspace {
         password_handler: &PasswordHandler,
     ) -> Result<(ServiceApiKey, Self), ApiError> {
         let key_preview = api_key.chars().take(12).collect::<String>();
-    
+
         let results: Vec<(ServiceApiKey, Workspace)> = workspace::table
             .inner_join(service_api_key::table.on(service_api_key::workspace_id.eq(workspace::id)))
             .filter(
@@ -74,13 +82,13 @@ impl Workspace {
             .get_results(conn)
             .await
             .map_err(crate::map_diesel_err!(GetError, "get", ServiceApiKey))?;
-    
+
         for (ak, workspace) in results {
             if password_handler.verify_password(&api_key, ak.key_hash.as_str()) {
                 return Ok((ak, workspace));
             }
         }
-    
+
         Err(ApiError::NotFoundError)
     }
 }
