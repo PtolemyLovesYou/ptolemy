@@ -1,0 +1,46 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "api"
+path = "src/main.rs"
+
+[[bin]]
+name = "generate-gql-schema"
+path = "src/bin/generate_gql_schema.rs"
+
+[dependencies]
+axum = { workspace = true }
+bb8 = { workspace = true }
+chrono = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+hyper = { workspace = true }
+juniper = { workspace = true }
+juniper_axum = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_repr = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+tonic-types = { workspace = true }
+prost-types = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+ring = { workspace = true }
+base64 = { workspace = true }
+tower-http = { workspace = true }
+argon2 = { workspace = true }
+tower = { workspace = true }
+jsonwebtoken = { workspace = true }
+ipnet = { workspace = true }
+heck = { workspace = true }
+pin-project-lite = { workspace = true }
+
+[dependencies.ptolemy]
+path = "../ptolemy"

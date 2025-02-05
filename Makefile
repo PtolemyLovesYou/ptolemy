@@ -15,7 +15,8 @@ cli:
 
 .PHONY: generate-gql-schema
 generate-gql-schema:
-	OUTPUT_DIR=$(PWD)/ptolemy/graphql/schema.gql cargo run -p ptolemy --bin generate-gql-schema --features api
+	OUTPUT_DIR=$(PWD)/api/graphql/schema.gql cargo run -p api --bin generate-gql-schema \
+	&& OUTPUT_DIR=$(PWD)/ptolemy/graphql/schema.gql cargo run -p api --bin generate-gql-schema
 
 .PHONY: test-client
 test-client:

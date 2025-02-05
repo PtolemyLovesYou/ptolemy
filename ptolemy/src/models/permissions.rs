@@ -1,13 +1,10 @@
-use super::auth::{ServiceApiKey, User, UserApiKey};
-use super::enums::{ApiKeyPermission, WorkspaceRole};
+use super::auth::{User, UserApiKey, ServiceApiKey};
+use super::enums::{WorkspaceRole, ApiKeyPermission};
 
 impl User {
-    pub fn can_create_delete_user(
-        &self,
-        other_user_is_admin: bool,
-        other_user_is_sysadmin: bool,
-    ) -> bool {
-        !(other_user_is_admin || other_user_is_sysadmin) || self.is_sysadmin
+    pub fn can_create_delete_user(&self, other_user_is_admin: bool, other_user_is_sysadmin: bool) -> bool {
+        !(other_user_is_admin || other_user_is_sysadmin)
+        || self.is_sysadmin
     }
 
     pub fn can_create_delete_workspace(&self) -> bool {
@@ -19,7 +16,7 @@ impl WorkspaceRole {
     pub fn can_update_workspace(&self) -> bool {
         match self {
             WorkspaceRole::Admin => true,
-            _ => false,
+            _ => false
         }
     }
 
@@ -44,14 +41,14 @@ impl WorkspaceRole {
     pub fn can_update_user_role(&self) -> bool {
         match self {
             WorkspaceRole::Admin => true,
-            _ => false,
+            _ => false
         }
     }
 
     pub fn can_create_delete_service_api_key(&self) -> bool {
         match self {
             WorkspaceRole::Admin | WorkspaceRole::User => true,
-            _ => false,
+            _ => false
         }
     }
 }
@@ -60,14 +57,14 @@ impl ServiceApiKey {
     pub fn can_read(&self) -> bool {
         match self.permissions {
             ApiKeyPermission::ReadOnly | ApiKeyPermission::ReadWrite => true,
-            _ => false,
+            _ => false
         }
     }
 
     pub fn can_write(&self) -> bool {
         match self.permissions {
             ApiKeyPermission::ReadWrite | ApiKeyPermission::WriteOnly => true,
-            _ => false,
+            _ => false
         }
     }
 }

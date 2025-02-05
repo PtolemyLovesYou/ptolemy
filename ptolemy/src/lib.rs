@@ -12,6 +12,3 @@ pub mod pybindings;
 
 #[cfg(feature = "python")]
 pub use pybindings::_core;
-
-#[cfg(feature = "api")]
-pub mod api;

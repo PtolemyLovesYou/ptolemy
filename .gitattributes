@@ -11,11 +11,13 @@
 # *.sql.j2 linguist-language=sql
 
 # Set generated code as undetectable >:)
+api/src/generated/*.rs -linguist-detectable
 ptolemy/src/generated/*.rs -linguist-detectable
+api/graphql/schema.gql -linguist-detectable
 ptolemy/graphql/schema.gql -linguist-detectable
 
 # Set migrations as detectable
-ptolemy/diesel/**/*.sql linguist-detectable
+api/diesel/**/*.sql linguist-detectable
 
 # *.sql linguist-language=SQL
 
