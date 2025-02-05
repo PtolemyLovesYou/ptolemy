@@ -41,6 +41,7 @@ jsonwebtoken = { workspace = true }
 ipnet = { workspace = true }
 heck = { workspace = true }
 pin-project-lite = { workspace = true }
+diesel_migrations = { version = "2.2.0", features = ["postgres"] }
 
 [dependencies.ptolemy]
 path = "../ptolemy"

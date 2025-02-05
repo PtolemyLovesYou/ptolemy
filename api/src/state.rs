@@ -16,6 +16,44 @@ use ipnet::IpNet;
 use ptolemy::writer::Writer;
 use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use tracing::error;
+use diesel::{pg::PgConnection, prelude::*};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
+
+pub fn run_migrations() -> Result<(), ServerError> {
+    let pg_user = get_env_var("POSTGRES_USER")?;
+    let pg_password = get_env_var("POSTGRES_PASSWORD")?;
+    let pg_host = get_env_var("POSTGRES_HOST")?;
+    let pg_port = get_env_var("POSTGRES_PORT")?;
+    let pg_db = get_env_var("POSTGRES_DB")?;
+    let pg_url = format!(
+        "postgres://{}:{}@{}:{}/{}",
+        pg_user, pg_password, pg_host, pg_port, pg_db
+    );
+
+    let mut conn = PgConnection::establish(&pg_url)
+        .map_err(|e| {
+            error!("Failed to connect to Postgres for migrations: {}", e);
+            ServerError::ConfigError
+        })?;
+
+    let ran_migrations = conn
+        .run_pending_migrations(MIGRATIONS).map_err(|e| {
+            error!("Failed to run migrations: {}", e);
+            ServerError::ConfigError
+        })?;
+
+    if ran_migrations.is_empty() {
+        tracing::debug!("No migrations run.");
+    }
+
+    for m in ran_migrations.iter() {
+        tracing::debug!("Ran migration: {:?}", m);
+    }
+
+    Ok(())
+}
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 

@@ -1,3 +1,4 @@
+# Base stage
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
 
 ARG RUST_VERSION=1.82.0
@@ -29,6 +30,7 @@ RUN apt-get update && \
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 
+# Builder stage
 FROM base as builder
 
 WORKDIR /app
@@ -41,17 +43,11 @@ ENV BUILD_PROTOBUFS=0 \
 RUN uv venv .venv && \
     uv pip install cffi==${CFFI_VERSION}
 
-# Optimized copy and build steps
-COPY ./pyproject.toml ./uv.lock ./Cargo.toml ./Cargo.lock ./
-COPY ./ptolemy ./ptolemy
-COPY ./api ./api
-COPY ./dummy ./dummy
+COPY Cargo.toml Cargo.lock ./
+COPY pyproject.toml uv.lock ./
 
-# Initial build with cached dependencies
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=./target \
-    cargo build -p dummy
+COPY ./api/ ./api/
+COPY ./ptolemy/ ./ptolemy/
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
@@ -63,6 +59,7 @@ COPY ./prototype ./prototype
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --package prototype --inexact
 
+# Runtime stage
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app

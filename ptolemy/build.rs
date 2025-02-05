@@ -76,7 +76,13 @@ fn gql_compiler() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    gql_compiler()?;
+    let compile_gql = std::env::var("COMPILE_GQL")
+        .map(|s| s == "1")
+        .unwrap_or(false);
+
+    if compile_gql {
+        gql_compiler()?;
+    }
 
     // protobuf
     let build_protobufs = std::env::var("BUILD_PROTOBUFS")

@@ -2,7 +2,7 @@ use api::{
     crud::auth::admin::ensure_sysadmin,
     error::ServerError,
     routes::get_router,
-    state::AppState,
+    state::{AppState, run_migrations},
     middleware::shutdown_signal,
 };
 use tracing::error;
@@ -12,6 +12,8 @@ async fn main() -> Result<(), ServerError> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
+
+    run_migrations()?;
 
     let shared_state = AppState::new_with_arc().await?;
 
