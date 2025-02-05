@@ -101,13 +101,13 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new() -> Result<Self, ServerError> {
-        let port = get_env_var("API_PORT")?;
+        let port = get_env_var("API_PORT").unwrap_or("8000".to_string());
         let postgres_host = get_env_var("POSTGRES_HOST")?;
         let postgres_port = get_env_var("POSTGRES_PORT")?;
         let postgres_user = get_env_var("POSTGRES_USER")?;
         let postgres_password = get_env_var("POSTGRES_PASSWORD")?;
         let postgres_db = get_env_var("POSTGRES_DB")?;
-        let ptolemy_env = get_env_var("PTOLEMY_ENV")?;
+        let ptolemy_env = get_env_var("PTOLEMY_ENV").unwrap_or("PROD".to_string());
         let jwt_secret = get_env_var("JWT_SECRET")?;
 
         // Default to false if the env var is not set

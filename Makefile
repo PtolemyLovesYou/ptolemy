@@ -38,4 +38,4 @@ docs:
 
 .PHONY: run-prototype-app
 run-prototype-app:
-	uv run --directory prototype -m streamlit run app.py
+	API_URL=http://localhost:8000 uv run --directory prototype -m streamlit run app.py
