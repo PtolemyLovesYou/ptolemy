@@ -3,7 +3,7 @@
 
 Universal monitoring observability for AI systems, without reinventing the wheel for each new methodology.
 
-# Setup (Development)
+# Setup (Quickstart)
 ## Docker
 To run using the quickstart docker-compose.yml, run the following command:
 
@@ -13,6 +13,7 @@ docker compose up
 
 You should be able to access the experimental Streamlit app at `http://localhost:8501`.
 
+# Setup (Development)
 ## Run locally
 To run outside of Docker, you must have `uv` and `cargo` installed. You must also have a Postgres instance running available at `http://localhost:5432`. If the user credentials for the Postgres instance are different than those in `.cargo/config.toml`, you can override them by exporting them as environment variables.
 
