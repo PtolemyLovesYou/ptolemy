@@ -8,7 +8,7 @@ Universal monitoring observability for AI systems, without reinventing the wheel
 To run using the quickstart docker-compose.yml, run the following command:
 
 ```sh
-docker compose up
+> docker compose up
 ```
 
 You should be able to access the experimental Streamlit app at `http://localhost:8501`.
