@@ -35,7 +35,6 @@ class Ptolemy:
     def __init__(
         self,
         base_url: str,
-        observer_url: str,
         api_key: str,
         workspace_name: str,
         autoflush: bool,

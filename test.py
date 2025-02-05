@@ -6,7 +6,6 @@ from ptolemy import Ptolemy
 
 client = Ptolemy(
     base_url="http://localhost:8000",
-    observer_url="http://localhost:8000",
     api_key="pt-sk-q1pVe_zjHloua1doiBUYQ15bsAZLn2QZHBBRbgNhmY4N9EU_IKYOELg9aKPMedIC",
     workspace_name="default",
     autoflush=False,
