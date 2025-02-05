@@ -76,6 +76,8 @@ fn gql_compiler() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Validate + compile gql queries/mutations and write to a generated Rust file.
+    // Only happens if env var COMPILE_GQL is set to 1
     let compile_gql = std::env::var("COMPILE_GQL")
         .map(|s| s == "1")
         .unwrap_or(false);
@@ -84,7 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         gql_compiler()?;
     }
 
-    // protobuf
+    // Build protobufs and write to src/generated
+    // Only happens if env var BUILD_PROTOBUFS is set to 1
     let build_protobufs = std::env::var("BUILD_PROTOBUFS")
         .map(|s| s == "1")
         .unwrap_or(true);
