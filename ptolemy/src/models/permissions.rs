@@ -47,7 +47,7 @@ impl WorkspaceRole {
 
     pub fn can_create_delete_service_api_key(&self) -> bool {
         match self {
-            WorkspaceRole::Admin | WorkspaceRole::User => true,
+            WorkspaceRole::Admin | WorkspaceRole::Manager => true,
             _ => false
         }
     }
