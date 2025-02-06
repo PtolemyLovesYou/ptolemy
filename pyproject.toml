@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["ptolemy", "prototype", "docs"]
+members = ["ptolemy", "prototype", "docs", "query-engine"]
 
 [tool.uv.sources]
 prototype = { workspace = true }
