@@ -5,21 +5,27 @@ from pydantic import BaseModel, ConfigDict, RootModel
 from redis import Redis
 from .models.enums import JobStatus
 
+
 class QueryBatch(BaseModel):
     """Query batch."""
+
     data: Optional[bytes] = None
     error: Optional[str] = None
     success: bool
 
+
 class RedisConn(RootModel):
     """Redis connection."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     root: Redis
 
     def create_job_status(self, query_id: str):
         """Create job status."""
-        self.root.set(f"ptolemy:status:{query_id}", JobStatus.PENDING, ex=300, keepttl=True)
+        self.root.set(
+            f"ptolemy:status:{query_id}", JobStatus.PENDING, ex=300, keepttl=True
+        )
 
     def set_job_status(self, query_id: str, status: JobStatus):
         """Set job status."""

@@ -8,8 +8,10 @@ from redis import BlockingConnectionPool, Redis
 from .query_executor import QueryExecutor
 from .db import RedisConn
 
+
 class AppState(BaseModel):
     """App state."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     redis_pool: BlockingConnectionPool
@@ -17,15 +19,15 @@ class AppState(BaseModel):
     jobs: Dict[str, Future]
 
     @classmethod
-    def new(cls) -> 'AppState':
+    def new(cls) -> "AppState":
         """Create new state."""
-        redis_host = os.getenv('REDIS_HOST', 'localhost')
-        redis_port = os.getenv('REDIS_PORT', "6379")
-        redis_db = os.getenv('REDIS_DB', "0")
+        redis_host = os.getenv("REDIS_HOST", "localhost")
+        redis_port = os.getenv("REDIS_PORT", "6379")
+        redis_db = os.getenv("REDIS_DB", "0")
 
         redis_pool = BlockingConnectionPool.from_url(
             f"redis://{redis_host}:{redis_port}/{redis_db}"
-            )
+        )
 
         executor = ThreadPoolExecutor(max_workers=10)
         jobs = {}
@@ -54,7 +56,9 @@ class AppState(BaseModel):
 
         return False
 
+
 state = AppState.new()
+
 
 def get_state() -> AppState:
     """Get state."""

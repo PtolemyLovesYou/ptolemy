@@ -8,6 +8,7 @@ from .models.enums import JobStatus
 
 class QueryExecutor(BaseModel):
     """Query Executor."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     conn: duckdb.DuckDBPyConnection
@@ -43,11 +44,8 @@ class QueryExecutor(BaseModel):
             results = self.conn.sql(self.query).fetch_arrow_reader(batch_size=100)
             for batch in results:
                 self.redis_conn.push_batch(
-                    QueryBatch(
-                        data=batch.serialize().to_pybytes(),
-                        success=True
-                        )
-                    )
+                    QueryBatch(data=batch.serialize().to_pybytes(), success=True)
+                )
             return 0
         except duckdb.Error as e:
             self.teardown()

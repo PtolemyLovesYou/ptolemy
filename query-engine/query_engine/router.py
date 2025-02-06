@@ -1,6 +1,8 @@
 """Routes."""
+
 from fastapi import APIRouter
 from .routes.query import router as query_router
+
 
 def get_routes() -> APIRouter:
     """Get api router."""

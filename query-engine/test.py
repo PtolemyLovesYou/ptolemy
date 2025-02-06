@@ -5,11 +5,11 @@ import pandas as pd
 
 conn = duckdb.connect()
 
-df = pd.DataFrame([{'a': x, 'b': x**2} for x in range(1000)])
+df = pd.DataFrame([{"a": x, "b": x**2} for x in range(1000)])
 
 result = map(
     lambda batch: batch.serialize().to_pybytes(),
-    conn.sql("select * from df").fetch_arrow_reader(batch_size=100)
+    conn.sql("select * from df").fetch_arrow_reader(batch_size=100),
 )
 
 for r in result:
