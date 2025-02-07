@@ -19,6 +19,29 @@ use tracing::error;
 use diesel::{pg::PgConnection, prelude::*};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
+pub type RedisPool = r2d2::Pool<redis::Client>;
+
+pub fn get_redis_conn() -> Result<RedisPool, ServerError> {
+    let redis_host = get_env_var("REDIS_HOST")?;
+    let redis_port = get_env_var("REDIS_PORT")?;
+    let redis_db = get_env_var("REDIS_DB")?;
+
+    let redis_url = format!("redis://{}:{}/{}", redis_host, redis_port, redis_db);
+
+    let client = redis::Client::open(&redis_url)
+        .map_err(|e| {
+            error!("Failed to connect to Redis: {}", e);
+            ServerError::ConfigError
+        });
+
+    r2d2::Pool::builder()
+        .build(client)
+        .map_err(|e| {
+            error!("Failed to connect to Redis: {}", e);
+            ServerError::ConfigError
+        })
+}
+
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
 pub fn run_migrations() -> Result<(), ServerError> {
@@ -97,6 +120,7 @@ pub struct AppState {
     pub ptolemy_env: String,
     pub jwt_secret: String,
     pub audit_writer: Arc<Writer<AuditLog>>,
+    pub redis_pool: RedisPool,
 }
 
 impl AppState {
@@ -153,6 +177,8 @@ impl AppState {
             24,
         ));
 
+        let redis_pool = get_redis_conn();
+
         let state = Self {
             port,
             pg_pool,
@@ -162,6 +188,7 @@ impl AppState {
             ptolemy_env,
             jwt_secret,
             audit_writer,
+            redis_pool,
         };
 
         Ok(state)
