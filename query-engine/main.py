@@ -19,7 +19,7 @@ def main():
     """Main function."""
 
     consumer = Consumer(
-        conn=redis.Redis(host="localhost", port=6379, db=0),
+        conn=redis.Redis(host="redis", port=6379, db=0),
         executor=ThreadPoolExecutor(max_workers=2),
         stream_name="ptolemy:query",
         group_name="ptolemy:query",

@@ -1,0 +1,12 @@
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+COPY ./query-engine ./query-engine
+RUN uv init prototype
+RUN uv init ptolemy
+
+RUN uv sync --frozen --directory query-engine --inexact
+
+CMD ["uv", "run", "--directory", "query-engine", "main.py"]

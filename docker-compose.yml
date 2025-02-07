@@ -44,6 +44,23 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - ptolemy
+  query_engine:
+    container_name: query_engine
+    build:
+      dockerfile: query-engine/Dockerfile
+    volumes:
+      - ./query_engine:/app/query_engine
+    networks:
+      - ptolemy
+    depends_on:
+      - redis
   app:
     container_name: app
     build:

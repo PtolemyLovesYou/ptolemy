@@ -20,7 +20,7 @@ class QueryExecutor(BaseModel):
     @cached_property
     def redis_conn(self) -> redis.Redis:
         """Redis connection."""
-        return redis.Redis(host="localhost", port=6379, db=0)
+        return redis.Redis(host="redis", port=6379, db=0)
 
     @cached_property
     def keyspace(self) -> str:
