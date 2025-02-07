@@ -1,19 +1,46 @@
 """Serialization example."""
 
-import duckdb
+from io import BytesIO
 import pandas as pd
+import redis
 
-conn = duckdb.connect()
+redis_conn = redis.Redis(host="localhost", port=6379, db=0)
 
-df = pd.DataFrame([{"a": x, "b": x**2} for x in range(1000)])
+msg = {
+    "action": "start",
+    "query_id": "1",
+    "schema_name": "test",
+    "role_name": "test",
+    "query": "select 1",
+}
 
-result = map(
-    lambda batch: batch.serialize().to_pybytes(),
-    conn.sql("select * from df").fetch_arrow_reader(batch_size=100),
-)
+redis_conn.xadd("ptolemy:query", msg)
 
-for r in result:
-    print(type(r))
+print(redis_conn.hget("ptolemy:query:1", "status"))
+
+c = 0
+
+while True:
+    result = redis_conn.hget("ptolemy:query:1", f"result:{c}")
+    if result is None:
+        break
+    # deserialize from bytes
+    buf = BytesIO(result)
+    df = pd.read_feather(buf)
+    print(df)
+    c += 1
+
+# conn = duckdb.connect()
+
+# df = pd.DataFrame([{"a": x, "b": x**2} for x in range(1000)])
+
+# result = map(
+#     lambda batch: batch.serialize().to_pybytes(),
+#     conn.sql("select * from df").fetch_arrow_reader(batch_size=100),
+# )
+
+# for r in result:
+#     print(type(r))
 
 # At user creation
 # 1. Create schema for credentials provided
