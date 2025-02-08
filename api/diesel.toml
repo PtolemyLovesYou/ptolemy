@@ -16,4 +16,4 @@ file = "src/generated/audit_schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
 filter = { only_tables = ["api_auth_audit_logs", "api_access_audit_logs", "iam_audit_logs", "record_audit_logs"] }
 [migrations_directory]
-dir = "/app/diesel"
+dir = "diesel/"
