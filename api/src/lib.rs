@@ -5,11 +5,11 @@ pub mod generated;
 pub mod graphql;
 pub mod middleware;
 pub mod models;
-pub mod observer;
 pub mod routes;
 pub mod state;
 pub mod executor;
 pub mod query_executor;
+pub mod services;
 
 pub mod consts {
     pub const SERVICE_API_KEY_PREFIX: &'static str = "pt-sk";

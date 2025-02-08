@@ -42,7 +42,7 @@ ipnet = { workspace = true }
 heck = { workspace = true }
 pin-project-lite = { workspace = true }
 diesel_migrations = { version = "2.2.0", features = ["postgres"] }
-redis = { version = "0.28.2", features = ["aio", "r2d2"] }
+redis = { version = "0.28.2", features = ["aio", "r2d2", "tokio-comp"] }
 r2d2 = "0.8.10"
 
 [dependencies.ptolemy]

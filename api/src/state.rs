@@ -28,11 +28,11 @@ pub fn get_redis_conn() -> Result<RedisPool, ServerError> {
 
     let redis_url = format!("redis://{}:{}/{}", redis_host, redis_port, redis_db);
 
-    let client = redis::Client::open(&redis_url)
+    let client = redis::Client::open(redis_url)
         .map_err(|e| {
             error!("Failed to connect to Redis: {}", e);
             ServerError::ConfigError
-        });
+        })?;
 
     r2d2::Pool::builder()
         .build(client)
@@ -177,7 +177,7 @@ impl AppState {
             24,
         ));
 
-        let redis_pool = get_redis_conn();
+        let redis_pool = get_redis_conn()?;
 
         let state = Self {
             port,
