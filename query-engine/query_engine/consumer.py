@@ -2,7 +2,7 @@
 
 import multiprocessing
 import logging
-from typing import Literal, Optional, Self
+from typing import Literal, Optional, Self, List
 from concurrent.futures import ThreadPoolExecutor, Future
 from pydantic import BaseModel, ConfigDict, model_validator
 import redis
@@ -18,8 +18,7 @@ class Message(BaseModel):
 
     action: Literal["start", "cancel", "stop"]
     query_id: str
-    schema_name: Optional[str] = None
-    role_name: Optional[str] = None
+    allowed_workspace_ids: List[str]
     query: Optional[str] = None
 
     @model_validator(mode="after")
@@ -32,14 +31,13 @@ class Message(BaseModel):
         if self.action == "start":
             if any(
                 i is None
-                for i in [self.query_id, self.schema_name, self.role_name, self.query]
+                for i in [self.query_id, self.allowed_workspace_ids, self.query]
             ):
                 logger.error(
                     "Missing required fields for start action",
                     extra={
                         "query_id": self.query_id,
-                        "schema_name": self.schema_name,
-                        "role_name": self.role_name,
+                        "allowed_workspace_ids": self.allowed_workspace_ids,
                         "query": self.query,
                     },
                 )

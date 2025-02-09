@@ -1,19 +1,31 @@
 """Query Executor."""
 import logging
-from typing import Optional
+import os
+from typing import Optional, List
 from io import BytesIO
 from functools import cached_property
 import redis
 import duckdb
 from pydantic import BaseModel, ConfigDict
 
+ATTACH_DB = """
+attach database '{}' as ptolemy (type postgres, schema 'duckdb', read_only);
+"""
+
+SET_WORKSPACE = """
+call postgres_execute('ptolemy', 'set ptolemy.current_workspaces = \'{}\'');
+"""
+
+SET_ROLE = """
+call postgres_execute('ptolemy', 'set role = ptolemy_duckdb');
+"""
+
 class QueryExecutor(BaseModel):
     """Query Executor."""
     model_config = ConfigDict(arbitrary_types_allowed=True)
     logger: logging.Logger
     query_id: str
-    schema_name: str
-    role_name: str
+    allowed_workspace_ids: List[str]
     query: str
     conn: Optional[duckdb.DuckDBPyConnection] = None
 
@@ -27,10 +39,24 @@ class QueryExecutor(BaseModel):
         """Keyspace."""
         return f"ptolemy:query:{self.query_id}"
 
+    @property
+    def database_url(self) -> str:
+        """Database url."""
+        user = os.getenv("POSTGRES_USER", "postgres")
+        password = os.getenv("POSTGRES_PASSWORD", "postgres")
+        host = os.getenv("POSTGRES_HOST", "postgres")
+        db = os.getenv("POSTGRES_DB", "postgres")
+        postgres_port = os.getenv("POSTGRES_PORT", "5432")
+        return f"postgresql://{user}:{password}@{host}:{postgres_port}/{db}"
+
     def setup_conn(self):
         """Set up connection."""
         if self.conn is None:
             self.conn = duckdb.connect(":memory:")
+
+        self.conn.execute(ATTACH_DB.format(self.database_url))
+        self.conn.execute(SET_WORKSPACE.format(','.join([])))
+        self.conn.execute(SET_ROLE)
 
     def __call__(self) -> bool:
         if self.redis_conn.hexists(self.keyspace, "status"):
