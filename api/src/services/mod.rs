@@ -1,2 +1,2 @@
-pub mod observer;
 pub mod auth;
+pub mod observer;

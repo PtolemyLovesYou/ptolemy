@@ -1,14 +1,14 @@
 use std::str::FromStr as _;
 
 use crate::{
-    models::Workspace,
     crypto::{ClaimType, Claims},
     error::ApiError,
+    models::Workspace,
     state::ApiAppState,
 };
 use ptolemy::generated::observer::{
-    observer_authentication_server::ObserverAuthentication,
-    AuthenticationRequest, AuthenticationResponse,
+    observer_authentication_server::ObserverAuthentication, AuthenticationRequest,
+    AuthenticationResponse,
 };
 use tonic::{metadata::MetadataKey, Request, Response, Status};
 use tracing::error;

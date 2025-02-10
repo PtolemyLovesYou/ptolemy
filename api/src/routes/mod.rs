@@ -1,8 +1,8 @@
 use self::graphql::graphql_handler;
 use crate::{
     middleware::{master_auth_middleware, trace_layer_rest},
-    services::observer::observer_service,
     services::auth::authentication_service,
+    services::observer::observer_service,
     state::ApiAppState,
 };
 use axum::{

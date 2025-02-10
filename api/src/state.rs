@@ -1,6 +1,6 @@
 use crate::{
     crypto::PasswordHandler,
-    error::{ServerError, ApiError},
+    error::{ApiError, ServerError},
     models::AuditLog,
 };
 use axum::{
@@ -8,16 +8,16 @@ use axum::{
     http::{Request, StatusCode},
 };
 use bb8::PooledConnection;
+use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection,
 };
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use ipnet::IpNet;
 use ptolemy::writer::Writer;
 use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use tracing::error;
-use diesel::{pg::PgConnection, prelude::*};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 pub type RedisPool = r2d2::Pool<redis::Client>;
 
@@ -28,18 +28,15 @@ pub fn get_redis_conn() -> Result<RedisPool, ServerError> {
 
     let redis_url = format!("redis://{}:{}/{}", redis_host, redis_port, redis_db);
 
-    let client = redis::Client::open(redis_url)
-        .map_err(|e| {
-            error!("Failed to connect to Redis: {}", e);
-            ServerError::ConfigError
-        })?;
+    let client = redis::Client::open(redis_url).map_err(|e| {
+        error!("Failed to connect to Redis: {}", e);
+        ServerError::ConfigError
+    })?;
 
-    r2d2::Pool::builder()
-        .build(client)
-        .map_err(|e| {
-            error!("Failed to connect to Redis: {}", e);
-            ServerError::ConfigError
-        })
+    r2d2::Pool::builder().build(client).map_err(|e| {
+        error!("Failed to connect to Redis: {}", e);
+        ServerError::ConfigError
+    })
 }
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
@@ -55,17 +52,15 @@ pub fn run_migrations() -> Result<(), ServerError> {
         pg_user, pg_password, pg_host, pg_port, pg_db
     );
 
-    let mut conn = PgConnection::establish(&pg_url)
-        .map_err(|e| {
-            error!("Failed to connect to Postgres for migrations: {}", e);
-            ServerError::ConfigError
-        })?;
+    let mut conn = PgConnection::establish(&pg_url).map_err(|e| {
+        error!("Failed to connect to Postgres for migrations: {}", e);
+        ServerError::ConfigError
+    })?;
 
-    let ran_migrations = conn
-        .run_pending_migrations(MIGRATIONS).map_err(|e| {
-            error!("Failed to run migrations: {}", e);
-            ServerError::ConfigError
-        })?;
+    let ran_migrations = conn.run_pending_migrations(MIGRATIONS).map_err(|e| {
+        error!("Failed to run migrations: {}", e);
+        ServerError::ConfigError
+    })?;
 
     if ran_migrations.is_empty() {
         tracing::debug!("No migrations run.");

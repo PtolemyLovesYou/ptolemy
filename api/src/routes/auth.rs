@@ -1,10 +1,14 @@
 use crate::{
     crypto::{ClaimType, Claims, GenerateSha256},
-    state::ApiAppState,
-    models::{User, audit::{AuthAuditLogCreate, AuthMethodEnum}, middleware::AccessAuditId},
     error::ApiError,
+    models::{
+        audit::{AuthAuditLogCreate, AuthMethodEnum},
+        middleware::AccessAuditId,
+        User,
+    },
+    state::ApiAppState,
 };
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json, Extension};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -19,13 +23,20 @@ pub struct AuthResponse {
     pub token: String,
 }
 
-async fn auth_login(state: &ApiAppState, payload: &AuthPayload) -> Result<(User, AuthResponse), ApiError> {
+async fn auth_login(
+    state: &ApiAppState,
+    payload: &AuthPayload,
+) -> Result<(User, AuthResponse), ApiError> {
     let user = User::auth_user(
         &mut state.get_conn().await?,
         &payload.username,
         &payload.password,
         &state.password_handler,
-    ).await?.ok_or(ApiError::AuthError("Invalid username or password".to_string()))?;
+    )
+    .await?
+    .ok_or(ApiError::AuthError(
+        "Invalid username or password".to_string(),
+    ))?;
 
     let token = Claims::new(user.id, ClaimType::UserJWT, 3600)
         .generate_auth_token(state.jwt_secret.as_bytes())?;
@@ -38,36 +49,37 @@ pub async fn login(
     State(state): State<ApiAppState>,
     Json(payload): Json<AuthPayload>,
 ) -> Result<impl IntoResponse, StatusCode> {
-
     let response = auth_login(&state, &payload).await;
 
     let log = match &response {
-        Ok((user, _)) => {
-            AuthAuditLogCreate::ok(
-                access_audit_id.0.clone(),
-                None,
-                None,
-                Some(user.id.clone()),
-                AuthMethodEnum::UsernamePassword,
-                Some(json!({
+        Ok((user, _)) => AuthAuditLogCreate::ok(
+            access_audit_id.0.clone(),
+            None,
+            None,
+            Some(user.id.clone()),
+            AuthMethodEnum::UsernamePassword,
+            Some(
+                json!({
                     "username": payload.username,
                     "password": payload.password,
-                }).sha256()),
-            )
-        }
-        Err(e) => {
-            AuthAuditLogCreate::err(
-                access_audit_id.0.clone(),
-                AuthMethodEnum::UsernamePassword,
-                Some(json!({
+                })
+                .sha256(),
+            ),
+        ),
+        Err(e) => AuthAuditLogCreate::err(
+            access_audit_id.0.clone(),
+            AuthMethodEnum::UsernamePassword,
+            Some(
+                json!({
                     "username": payload.username.sha256(),
                     "password": payload.password.sha256(),
-                }).sha256()),
-                Some(json!({
-                    "error": format!("{:?}", e),
-                }))
-            )
-        }
+                })
+                .sha256(),
+            ),
+            Some(json!({
+                "error": format!("{:?}", e),
+            })),
+        ),
     };
 
     state.audit_writer.write(log.into()).await;
@@ -75,6 +87,6 @@ pub async fn login(
     Ok(Json(
         response
             .map(|(_, auth_response)| auth_response)
-            .map_err(|e| e.http_status_code())?
-        ))
+            .map_err(|e| e.http_status_code())?,
+    ))
 }

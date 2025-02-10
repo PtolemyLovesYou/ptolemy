@@ -1,6 +1,10 @@
 use crate::{
-    crud::prelude::GetObjById as _, error::ApiError, graphql::{state::JuniperAppState, executor::JuniperExecutor}, models::{
-        ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum, Workspace, WorkspaceRoleEnum, WorkspaceUser
+    crud::prelude::GetObjById as _,
+    error::ApiError,
+    graphql::{executor::JuniperExecutor, state::JuniperAppState},
+    models::{
+        ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum, Workspace,
+        WorkspaceRoleEnum, WorkspaceUser,
     },
     unchecked_executor,
 };
@@ -48,7 +52,10 @@ impl Workspace {
             .await
     }
 
-    async fn service_api_keys(&self, ctx: &JuniperAppState) -> Result<Vec<ServiceApiKey>, ApiError> {
+    async fn service_api_keys(
+        &self,
+        ctx: &JuniperAppState,
+    ) -> Result<Vec<ServiceApiKey>, ApiError> {
         unchecked_executor!(ctx, "service_api_key")
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
@@ -93,8 +100,10 @@ impl User {
         unchecked_executor!(ctx, "workspace")
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
-                self.get_workspaces(&mut conn, workspace_id, workspace_name).await
-            }).await
+                self.get_workspaces(&mut conn, workspace_id, workspace_name)
+                    .await
+            })
+            .await
     }
 
     async fn user_api_keys(&self, ctx: &JuniperAppState) -> Result<Vec<UserApiKey>, ApiError> {
@@ -102,7 +111,8 @@ impl User {
             .read_many(async move {
                 let mut conn = ctx.state.get_conn().await?;
                 self.get_user_api_keys(&mut conn).await
-            }).await
+            })
+            .await
     }
 }
 

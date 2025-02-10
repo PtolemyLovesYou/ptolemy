@@ -1,10 +1,10 @@
-use crate::state::ApiAppState;
 use super::records::EventRecords;
+use crate::models::middleware::AuthContext;
+use crate::state::ApiAppState;
 use ptolemy::generated::observer::{
-    observer_server::Observer,
-    PublishRequest, PublishResponse, Record,
+    observer_server::Observer, PublishRequest, PublishResponse, Record,
 };
-use ptolemy::models::{auth::ServiceApiKey, enums::ApiKeyPermission};
+use ptolemy::models::enums::ApiKeyPermission;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
 
@@ -38,13 +38,14 @@ impl Observer for MyObserver {
         &self,
         request: Request<PublishRequest>,
     ) -> Result<Response<PublishResponse>, Status> {
-        let sak = request.extensions().get::<ServiceApiKey>().ok_or_else(|| {
-            error!("Service API key not found in extensions");
-            Status::internal("Service API key not found in extensions")
+        let auth_context = request.extensions().get::<AuthContext>().ok_or_else(|| {
+            error!("Auth context not found in extensions");
+            Status::internal("Auth context not found in extensions")
         })?;
 
-        match sak.permissions {
-            ApiKeyPermission::ReadWrite | ApiKeyPermission::WriteOnly => (),
+        match auth_context.workspaces.first() {
+            Some((_, Some(ApiKeyPermission::WriteOnly)))=> (),
+            Some((_, Some(ApiKeyPermission::ReadWrite))) => (),
             _ => {
                 return Err(Status::permission_denied(
                     "Insufficient permissions to write",

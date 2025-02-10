@@ -10,6 +10,11 @@ pub struct AccessAuditId(pub Uuid);
 pub struct AuthContext {
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Uuid,
+    pub user: Option<ptolemy::models::auth::User>,
+    pub workspaces: Vec<(
+        ptolemy::models::auth::Workspace,
+        Option<ptolemy::models::enums::ApiKeyPermission>,
+    )>,
 }
 
 pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthResult<T>>> {

@@ -1,8 +1,7 @@
-use tokio::signal;
 use crate::state::ApiAppState;
+use tokio::signal;
 
 pub async fn shutdown_signal(state: ApiAppState) {
-
     let ctrl_c = async {
         signal::ctrl_c().await.unwrap();
     };
