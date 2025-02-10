@@ -44,9 +44,6 @@ impl UserMutation {
         JuniperExecutor::from_juniper_app_state(ctx, "create", |ctx| async move {
             Ok(ctx
                 .auth_context
-                .user
-                .as_ref()
-                .unwrap()
                 .can_create_delete_user(user_data.is_admin, user_data.is_sysadmin))
         })
         .create(&user_create)
@@ -57,10 +54,11 @@ impl UserMutation {
     async fn delete(&self, ctx: &JuniperAppState, id: Uuid) -> DeletionResult {
         JuniperExecutor::from_juniper_app_state(ctx, "delete", |ctx| async move {
             let mut conn = ctx.state.get_conn().await?;
-            let acting_user = ctx.auth_context.user.as_ref().unwrap().clone();
             let user_to_delete = User::get_by_id(&mut conn, &id).await?;
-            Ok(acting_user
-                .can_create_delete_user(user_to_delete.is_admin, user_to_delete.is_sysadmin))
+            Ok(ctx.auth_context.can_create_delete_user(
+                user_to_delete.is_admin,
+                user_to_delete.is_sysadmin,
+            ))
         })
         .delete::<User>(&id)
         .await
@@ -80,7 +78,7 @@ impl UserMutation {
 
         let user_api_key_create = UserApiKeyCreate {
             id: None,
-            user_id: ctx.auth_context.user.as_ref().map(|u| u.id.into()).unwrap(),
+            user_id: ctx.auth_context.user().map(|u| u.id.into()).unwrap(),
             name,
             key_hash,
             key_preview,

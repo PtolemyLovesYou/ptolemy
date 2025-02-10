@@ -52,7 +52,7 @@ impl Query {
                 let mut conn = ctx.state.get_conn().await?;
                 User::get_by_id(
                     &mut conn,
-                    &ctx.auth_context.user.as_ref().map(|u| u.id.into()).unwrap(),
+                    &ctx.auth_context.user()?.id.into(),
                 )
                 .await
             })

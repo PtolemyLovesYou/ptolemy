@@ -4,7 +4,6 @@ use crate::state::ApiAppState;
 use ptolemy::generated::observer::{
     observer_server::Observer, PublishRequest, PublishResponse, Record,
 };
-use ptolemy::models::enums::ApiKeyPermission;
 use tonic::{Request, Response, Status};
 use tracing::{debug, error};
 
@@ -43,10 +42,14 @@ impl Observer for MyObserver {
             Status::internal("Auth context not found in extensions")
         })?;
 
-        match auth_context.workspaces.first() {
-            Some((_, Some(ApiKeyPermission::WriteOnly)))=> (),
-            Some((_, Some(ApiKeyPermission::ReadWrite))) => (),
-            _ => {
+        let wk = auth_context.workspaces.first().ok_or_else(|| {
+            error!("No workspaces found in auth context");
+            Status::internal("No workspaces found in auth context")
+        })?;
+
+        match auth_context.can_write_workspace(wk.workspace.id.into()) {
+            true => (),
+            false => {
                 return Err(Status::permission_denied(
                     "Insufficient permissions to write",
                 ))

@@ -3,7 +3,7 @@ use crate::{
     error::ApiError,
     generated::auth_schema::{user_api_key, users, workspace, workspace_user},
     map_diesel_err,
-    models::{User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceUser},
+    models::{User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum, WorkspaceUser},
     state::DbConnection,
 };
 use diesel::prelude::*;
@@ -32,6 +32,19 @@ impl User {
         }
 
         query
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
+    }
+
+    pub async fn get_workspaces_with_roles(
+        &self,
+        conn: &mut DbConnection<'_>,
+    ) -> Result<Vec<(Workspace, WorkspaceRoleEnum)>, ApiError> {
+        WorkspaceUser::belonging_to(self)
+            .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
+            .filter(workspace_user::deleted_at.is_null())
+            .select((workspace::all_columns, workspace_user::role))
             .get_results(conn)
             .await
             .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))

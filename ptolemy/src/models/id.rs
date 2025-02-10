@@ -6,6 +6,20 @@ use crate::error::ParseError;
 #[derive(Debug, Clone, Copy, PartialEq, Hash, PartialOrd, Serialize, Deserialize)]
 pub struct Id(Uuid);
 
+impl Id {
+    pub fn as_uuid(&self) -> Uuid {
+        self.0.clone()
+    }
+}
+
+impl std::ops::Deref for Id {
+    type Target = Uuid;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl From<Uuid> for Id {
     fn from(id: Uuid) -> Self {
         Self(id)

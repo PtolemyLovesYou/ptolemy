@@ -6,7 +6,7 @@ use crate::{
     crypto::{ClaimType, GenerateSha256, UuidClaims},
     error::ApiError,
     models::{
-        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT},
+        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT, WorkspacePermission},
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User,
     },
     state::ApiAppState,
@@ -17,7 +17,6 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
-use ptolemy::models::{auth::Workspace, enums::ApiKeyPermission};
 use uuid::Uuid;
 
 fn get_header_raw(req: &Request<axum::body::Body>, header: HeaderName) -> Option<&[u8]> {
@@ -74,7 +73,7 @@ async fn validate_api_key_header(
     header: ApiKey,
 ) -> AuthResult<(
     Option<ptolemy::models::auth::User>,
-    Vec<(Workspace, Option<ApiKeyPermission>)>,
+    Vec<WorkspacePermission>,
 )> {
     let api_key = match header {
         ApiKey::Undeclared | ApiKey::Err(_) => return Ok((None, Vec::new())),
@@ -91,10 +90,14 @@ async fn validate_api_key_header(
         {
             Ok(u) => {
                 let workspaces = u
-                    .get_workspaces(&mut state.get_conn().await.unwrap(), None, None)
+                    .get_workspaces_with_roles(&mut state.get_conn().await.unwrap())
                     .await?
                     .into_iter()
-                    .map(|i| (i.into(), None))
+                    .map(|(i, r)| WorkspacePermission {
+                        workspace: i.into(),
+                        permissions: None,
+                        role: Some(r.into()),
+                    })
                     .collect();
 
                 return Ok((Some(u.into()), workspaces));
@@ -112,7 +115,7 @@ async fn validate_jwt_header(
     header: JWT,
 ) -> AuthResult<(
     Option<ptolemy::models::auth::User>,
-    Vec<(Workspace, Option<ApiKeyPermission>)>,
+    Vec<WorkspacePermission>,
 )> {
     let mut conn = state.get_conn().await.unwrap();
 
@@ -125,10 +128,14 @@ async fn validate_jwt_header(
         ClaimType::UserJWT => {
             let user = crate::models::User::get_by_id(&mut conn, claims.sub()).await?;
             let workspaces = user
-                .get_workspaces(&mut conn, None, None)
+                .get_workspaces_with_roles(&mut conn)
                 .await?
                 .into_iter()
-                .map(|i| (i.into(), None))
+                .map(|(i, r)| WorkspacePermission {
+                    workspace: i.into(),
+                    permissions: None,
+                    role: Some(r.into()),
+                })
                 .collect();
 
             Ok((Some(user.into()), workspaces))
@@ -139,9 +146,11 @@ async fn validate_jwt_header(
                     let workspace =
                         crate::models::Workspace::get_by_id(&mut conn, &sak.workspace_id).await?;
 
-                    let role = Some(sak.permissions.clone().into());
-
-                    Ok((None, vec![(workspace.into(), role)]))
+                    Ok((None, vec![WorkspacePermission {
+                        workspace: workspace.into(),
+                        permissions: Some(sak.permissions.clone().into()),
+                        role: None,
+                    }]))
                 }
                 Err(_) => Err(ApiError::NotFoundError),
             }
