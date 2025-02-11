@@ -87,24 +87,37 @@ class QueryExecutor(BaseModel):
             self.redis_conn.expire(self.keyspace, 3600)
             return 1
 
-        results_serialized = []
+        total_rows = results.shape[0]
+        total_batches = results.shape[0] // 100
+        est_size = results.memory_usage(deep=True).sum()
+
+        self.logger.debug(
+            "Query %s executed with %d result batches of size %.2f kB",
+            self.query_id,
+            total_batches,
+            est_size / 1024
+            )
+
+        column_names = results.columns.tolist()
+        column_types = results.dtypes.tolist()
 
         for i in range(0, len(results), 100):
             buf = BytesIO()
             dff = results[i:i+100]
             dff.to_feather(buf)
-            results_serialized.append(buf.getvalue())
+
+            self.logger.debug("Storing result batch %d for query %s", i, self.query_id)
+            self.redis_conn.hset(self.keyspace, f"result:{i}", buf.getvalue())
 
         # Initialize the hash with success status
         self.redis_conn.hset(self.keyspace, "status", "success")
 
-        # Store each batch as a field in the hash
-        for idx, result in enumerate(results_serialized):
-            self.logger.debug("Storing result batch %d for query %s", idx, self.query_id)
-            self.redis_conn.hset(self.keyspace, f"result:{idx}", result)
-
         # Store the total number of result batches
-        self.redis_conn.hset(self.keyspace, "total_batches", len(results_serialized))
+        self.redis_conn.hset(self.keyspace, "metadata:total_rows", total_rows)
+        self.redis_conn.hset(self.keyspace, "metadata:total_batches", total_batches)
+        self.redis_conn.hset(self.keyspace, "metadata:est_size_bytes", est_size)
+        self.redis_conn.hset(self.keyspace, "metadata:column_names", column_names)
+        self.redis_conn.hset(self.keyspace, "metadata:column_types", column_types)
 
         # Set expiry time (e.g., 1 hour)
         self.redis_conn.expire(self.keyspace, 3600)

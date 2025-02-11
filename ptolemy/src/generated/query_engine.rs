@@ -14,8 +14,10 @@ pub struct QueryRequest {
 pub struct QueryResponse {
     #[prost(string, tag = "1")]
     pub query_id: ::prost::alloc::string::String,
-    #[prost(message, optional, tag = "2")]
-    pub metadata: ::core::option::Option<QueryMetadata>,
+    #[prost(bool, tag = "2")]
+    pub success: bool,
+    #[prost(string, optional, tag = "3")]
+    pub error: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryMetadata {
@@ -27,9 +29,7 @@ pub struct QueryMetadata {
     pub column_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(string, repeated, tag = "4")]
     pub column_types: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(message, optional, tag = "5")]
-    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    #[prost(uint32, tag = "6")]
+    #[prost(uint32, tag = "5")]
     pub estimated_size_bytes: u32,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -49,9 +49,6 @@ pub struct QueryStatusResponse {
     pub metadata: ::core::option::Option<QueryMetadata>,
     #[prost(message, optional, tag = "5")]
     pub last_updated: ::core::option::Option<::prost_types::Timestamp>,
-    /// 0-100
-    #[prost(float, tag = "6")]
-    pub progress_percentage: f32,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CancelQueryRequest {

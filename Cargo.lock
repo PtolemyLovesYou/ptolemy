@@ -126,6 +126,7 @@ dependencies = [
  "serde_repr",
  "time",
  "tokio",
+ "tokio-stream",
  "tonic",
  "tonic-types",
  "tower 0.5.2",

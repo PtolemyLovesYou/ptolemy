@@ -18,10 +18,9 @@ use ipnet::IpNet;
 use ptolemy::writer::Writer;
 use std::{net::SocketAddr, str::FromStr, sync::Arc};
 use tracing::error;
+use redis::aio::MultiplexedConnection;
 
-pub type RedisPool = r2d2::Pool<redis::Client>;
-
-pub fn get_redis_conn() -> Result<RedisPool, ServerError> {
+pub async fn get_redis_conn() -> Result<MultiplexedConnection, ServerError> {
     let redis_host = get_env_var("REDIS_HOST")?;
     let redis_port = get_env_var("REDIS_PORT")?;
     let redis_db = get_env_var("REDIS_DB")?;
@@ -33,8 +32,8 @@ pub fn get_redis_conn() -> Result<RedisPool, ServerError> {
         ServerError::ConfigError
     })?;
 
-    r2d2::Pool::builder().build(client).map_err(|e| {
-        error!("Failed to connect to Redis: {}", e);
+    client.get_multiplexed_async_connection().await.map_err(|e| {
+        error!("Failed to get Redis connection: {}", e);
         ServerError::ConfigError
     })
 }
@@ -115,7 +114,7 @@ pub struct AppState {
     pub ptolemy_env: String,
     pub jwt_secret: String,
     pub audit_writer: Arc<Writer<AuditLog>>,
-    pub redis_pool: RedisPool,
+    pub redis_conn: MultiplexedConnection,
 }
 
 impl AppState {
@@ -172,7 +171,7 @@ impl AppState {
             24,
         ));
 
-        let redis_pool = get_redis_conn()?;
+        let redis_conn = get_redis_conn().await?;
 
         let state = Self {
             port,
@@ -183,7 +182,7 @@ impl AppState {
             ptolemy_env,
             jwt_secret,
             audit_writer,
-            redis_pool,
+            redis_conn,
         };
 
         Ok(state)
@@ -207,6 +206,10 @@ impl AppState {
         self.get_conn()
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    }
+
+    pub async fn get_redis_conn(&self) -> Result<MultiplexedConnection, ApiError> {
+        Ok(self.redis_conn.clone())
     }
 }
 

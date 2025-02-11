@@ -16,19 +16,21 @@ logger = logging.getLogger(__name__)
 class Message(BaseModel):
     """Message."""
 
-    action: Literal["start", "cancel", "stop"]
+    action: Literal["query", "cancel", "stop"]
     query_id: str
-    allowed_workspace_ids: List[str]
+    allowed_workspace_ids: Optional[List[str]] = None
     query: Optional[str] = None
+    batch_size: Optional[int] = None
+    timeout_seconds: Optional[int] = None
 
     @model_validator(mode="after")
     def validate_action(self) -> Self:
         """Validate action."""
-        if self.action not in ["start", "cancel", "stop"]:
+        if self.action not in ["query", "cancel", "stop"]:
             logger.error("Invalid message action", extra={"action": self.action})
             raise ValueError(f"Invalid action: {self.action}")
 
-        if self.action == "start":
+        if self.action == "query":
             if any(
                 i is None
                 for i in [self.query_id, self.allowed_workspace_ids, self.query]
@@ -195,8 +197,7 @@ class Consumer(BaseModel):
             QueryExecutor(
                 logger=wlogger,
                 query_id=msg.query_id,
-                schema_name=msg.schema_name,
-                role_name=msg.role_name,
+                allowed_workspace_ids=msg.allowed_workspace_ids,
                 query=msg.query
             )()
 

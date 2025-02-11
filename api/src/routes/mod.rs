@@ -3,6 +3,7 @@ use crate::{
     middleware::{master_auth_middleware, trace_layer_rest},
     services::auth::authentication_service,
     services::observer::observer_service,
+    services::query_engine::query_engine_service,
     state::ApiAppState,
 };
 use axum::{
@@ -62,6 +63,7 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .routes()
         .add_service(authentication_service(state.clone()).await)
         .add_service(observer_service(state.clone()).await)
+        .add_service(query_engine_service(state.clone()).await)
         .into_axum_router();
 
     Router::new()

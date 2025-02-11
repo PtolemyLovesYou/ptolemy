@@ -26,7 +26,8 @@ message QueryRequest {
 
 message QueryResponse {
     string query_id = 1;
-    QueryMetadata metadata = 2;
+    bool success = 2;
+    optional string error = 3;
 }
 
 message QueryMetadata {
@@ -34,8 +35,7 @@ message QueryMetadata {
     uint32 total_batches = 2;
     repeated string column_names = 3;
     repeated string column_types = 4;
-    google.protobuf.Timestamp start_time = 5;
-    uint32 estimated_size_bytes = 6;
+    uint32 estimated_size_bytes = 5;
 }
 
 message QueryStatusRequest {
@@ -48,7 +48,6 @@ message QueryStatusResponse {
     optional string error = 3;
     optional QueryMetadata metadata = 4;
     google.protobuf.Timestamp last_updated = 5;
-    float progress_percentage = 6;  // 0-100
 }
 
 enum QueryStatus {
