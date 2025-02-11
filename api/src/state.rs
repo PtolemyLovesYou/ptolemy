@@ -2,54 +2,24 @@ use crate::{
     crypto::PasswordHandler,
     error::{ApiError, ServerError},
     models::AuditLog,
+    db::{RedisConfig, PostgresConfig, DbConnection},
 };
-use axum::{
-    extract::ConnectInfo,
-    http::{Request, StatusCode},
-};
-use bb8::PooledConnection;
+use axum::http::StatusCode;
 use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{
-    pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
+    pooled_connection::bb8::Pool,
     AsyncPgConnection,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use ipnet::IpNet;
 use ptolemy::writer::Writer;
-use std::{net::SocketAddr, str::FromStr, sync::Arc};
+use std::sync::Arc;
 use tracing::error;
 use redis::aio::MultiplexedConnection;
-
-pub async fn get_redis_conn() -> Result<MultiplexedConnection, ServerError> {
-    let redis_host = get_env_var("REDIS_HOST")?;
-    let redis_port = get_env_var("REDIS_PORT")?;
-    let redis_db = get_env_var("REDIS_DB")?;
-
-    let redis_url = format!("redis://{}:{}/{}", redis_host, redis_port, redis_db);
-
-    let client = redis::Client::open(redis_url).map_err(|e| {
-        error!("Failed to connect to Redis: {}", e);
-        ServerError::ConfigError
-    })?;
-
-    client.get_multiplexed_async_connection().await.map_err(|e| {
-        error!("Failed to get Redis connection: {}", e);
-        ServerError::ConfigError
-    })
-}
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
 pub fn run_migrations() -> Result<(), ServerError> {
-    let pg_user = get_env_var("POSTGRES_USER")?;
-    let pg_password = get_env_var("POSTGRES_PASSWORD")?;
-    let pg_host = get_env_var("POSTGRES_HOST")?;
-    let pg_port = get_env_var("POSTGRES_PORT")?;
-    let pg_db = get_env_var("POSTGRES_DB")?;
-    let pg_url = format!(
-        "postgres://{}:{}@{}:{}/{}",
-        pg_user, pg_password, pg_host, pg_port, pg_db
-    );
+    let pg_url = PostgresConfig::from_env()?.url();
 
     let mut conn = PgConnection::establish(&pg_url).map_err(|e| {
         error!("Failed to connect to Postgres for migrations: {}", e);
@@ -72,8 +42,6 @@ pub fn run_migrations() -> Result<(), ServerError> {
     Ok(())
 }
 
-pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
-
 fn get_env_var(name: &str) -> Result<String, ServerError> {
     match std::env::var(name) {
         Ok(val) => Ok(val),
@@ -81,24 +49,6 @@ fn get_env_var(name: &str) -> Result<String, ServerError> {
             tracing::error!("{} must be set.", name);
             Err(ServerError::ConfigError)
         }
-    }
-}
-
-#[derive(Clone)]
-pub struct RequestContext {
-    pub ip_address: Option<IpNet>,
-    pub source: Option<String>,
-}
-
-impl RequestContext {
-    pub fn from_axum_request(req: &Request<axum::body::Body>) -> Self {
-        let source = Some(req.uri().path().to_string());
-        let ip_address = req
-            .extensions()
-            .get::<ConnectInfo<SocketAddr>>()
-            .map(|i| IpNet::from_str(&i.to_string()).unwrap());
-
-        Self { ip_address, source }
     }
 }
 
@@ -120,11 +70,6 @@ pub struct AppState {
 impl AppState {
     pub async fn new() -> Result<Self, ServerError> {
         let port = get_env_var("API_PORT").unwrap_or("8000".to_string());
-        let postgres_host = get_env_var("POSTGRES_HOST")?;
-        let postgres_port = get_env_var("POSTGRES_PORT")?;
-        let postgres_user = get_env_var("POSTGRES_USER")?;
-        let postgres_password = get_env_var("POSTGRES_PASSWORD")?;
-        let postgres_db = get_env_var("POSTGRES_DB")?;
         let ptolemy_env = get_env_var("PTOLEMY_ENV").unwrap_or("PROD".to_string());
         let jwt_secret = get_env_var("JWT_SECRET")?;
 
@@ -138,13 +83,9 @@ impl AppState {
             .map(|v| v.to_lowercase() == "true")
             .unwrap_or(!(ptolemy_env == "PROD"));
 
-        let db_url = format!(
-            "postgres://{}:{}@{}:{}/{}",
-            postgres_user, postgres_password, postgres_host, postgres_port, postgres_db
-        );
+        let pg_config = PostgresConfig::from_env()?;
+        let pg_pool = pg_config.diesel_conn().await?;
 
-        let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(db_url);
-        let pg_pool = Pool::builder().build(config).await.unwrap();
         let password_handler = PasswordHandler::new();
 
         let pool_clone = pg_pool.clone();
@@ -171,7 +112,7 @@ impl AppState {
             24,
         ));
 
-        let redis_conn = get_redis_conn().await?;
+        let redis_conn = RedisConfig::from_env()?.get_connection().await?;
 
         let state = Self {
             port,

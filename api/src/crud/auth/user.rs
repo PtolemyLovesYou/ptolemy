@@ -4,7 +4,7 @@ use crate::{
     generated::auth_schema::{user_api_key, users, workspace, workspace_user},
     map_diesel_err,
     models::{User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum, WorkspaceUser},
-    state::DbConnection,
+    db::DbConnection,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

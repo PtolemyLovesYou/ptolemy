@@ -1,5 +1,5 @@
 use crate::models::prelude::HasId;
-pub use crate::state::DbConnection;
+pub use crate::db::DbConnection;
 use uuid::Uuid;
 
 pub type DieselResult<T> = Result<T, diesel::result::Error>;
@@ -9,7 +9,7 @@ macro_rules! search_db_obj {
     ($fn_name:ident, $ty:ident, $table:ident, [$(($req_field:ident, $req_type:ty)),+ $(,)?]) => {
         impl $ty {
             pub async fn $fn_name(
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 $($req_field: Option<$req_type>),+
             ) -> Result<Vec<$ty>, crate::error::ApiError> {
                 let mut query = $table::table.into_boxed();
@@ -107,7 +107,7 @@ macro_rules! update_by_id_trait {
 
             async fn update_by_id(
                 &self,
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 obj: &Self::InsertTarget,
             ) -> Result<Self, crate::error::ApiError> {
                 match diesel::update($table::table)
@@ -141,7 +141,7 @@ macro_rules! get_by_id_trait {
     ($ty:ident, $table:ident) => {
         impl crate::crud::prelude::GetObjById for $ty {
             async fn get_by_id(
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 id: &uuid::Uuid,
             ) -> Result<Self, crate::error::ApiError> {
                 match $table::table
@@ -167,7 +167,7 @@ macro_rules! get_by_id_trait {
 
             async fn delete_by_id(
                 &self,
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
             ) -> Result<Self, crate::error::ApiError> {
                 match diesel::update($table::table)
                     .filter($table::id.eq(self.id))
@@ -206,7 +206,7 @@ macro_rules! insert_obj_traits {
         impl crate::crud::prelude::InsertObjReturningObj for $ty {
             type Target = $target;
             async fn insert_one_returning_obj(
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 record: &Self,
             ) -> Result<Self::Target, crate::error::ApiError> {
                 diesel::insert_into($table::table)
@@ -218,7 +218,7 @@ macro_rules! insert_obj_traits {
             }
 
             async fn insert_many_returning_obj(
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 records: &Vec<Self>,
             ) -> Result<Vec<Self::Target>, crate::error::ApiError> {
                 diesel::insert_into($table::table)
@@ -234,7 +234,7 @@ macro_rules! insert_obj_traits {
     ($ty:ident, $table:ident) => {
         impl crate::crud::prelude::InsertObjReturningId for $ty {
             async fn insert_one_returning_id(
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 record: &Self,
             ) -> Result<uuid::Uuid, crate::error::ApiError> {
                 diesel::insert_into($table::table)
@@ -246,7 +246,7 @@ macro_rules! insert_obj_traits {
             }
 
             async fn insert_many_returning_id(
-                conn: &mut crate::state::DbConnection<'_>,
+                conn: &mut crate::db::DbConnection<'_>,
                 records: &Vec<Self>,
             ) -> Result<Vec<uuid::Uuid>, crate::error::ApiError> {
                 diesel::insert_into($table::table)

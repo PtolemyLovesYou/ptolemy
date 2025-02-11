@@ -8,7 +8,7 @@ use crate::{
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, IAMAuditLogCreate,
         RecordAuditLogCreate,
     },
-    state::DbConnection,
+    db::DbConnection,
 };
 use diesel_async::RunQueryDsl;
 use tracing::error;

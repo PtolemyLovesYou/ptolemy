@@ -3,7 +3,7 @@ use crate::{
     error::ApiError,
     generated::auth_schema::{service_api_key, users, workspace, workspace_user},
     models::{ServiceApiKey, User, Workspace, WorkspaceCreate, WorkspaceUpdate, WorkspaceUser},
-    state::DbConnection,
+    db::DbConnection,
 };
 use diesel::prelude::*;
 use diesel::BelongingToDsl;
