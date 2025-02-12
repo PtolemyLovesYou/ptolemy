@@ -1,19 +1,21 @@
 """Query Executor."""
 import logging
 import os
+import json
 from typing import Optional, List
 from io import BytesIO
 from functools import cached_property
 import redis
 import duckdb
 from pydantic import BaseModel, ConfigDict
+from .env_settings import REDIS_DB, REDIS_HOST, REDIS_PORT
 
 ATTACH_DB = """
 attach database '{}' as ptolemy (type postgres, schema 'duckdb', read_only);
 """
 
 SET_WORKSPACE = """
-call postgres_execute('ptolemy', 'set ptolemy.current_workspaces = \'{}\'');
+call postgres_execute('ptolemy', 'set ptolemy.current_workspaces = ''{}''');
 """
 
 SET_ROLE = """
@@ -32,7 +34,7 @@ class QueryExecutor(BaseModel):
     @cached_property
     def redis_conn(self) -> redis.Redis:
         """Redis connection."""
-        return redis.Redis(host="redis", port=6379, db=0)
+        return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
     @cached_property
     def keyspace(self) -> str:
@@ -44,7 +46,7 @@ class QueryExecutor(BaseModel):
         """Database url."""
         user = os.getenv("POSTGRES_USER", "postgres")
         password = os.getenv("POSTGRES_PASSWORD", "postgres")
-        host = os.getenv("POSTGRES_HOST", "postgres")
+        host = os.getenv("POSTGRES_HOST", "localhost")
         db = os.getenv("POSTGRES_DB", "postgres")
         postgres_port = os.getenv("POSTGRES_PORT", "5432")
         return f"postgresql://{user}:{password}@{host}:{postgres_port}/{db}"
@@ -52,16 +54,21 @@ class QueryExecutor(BaseModel):
     def setup_conn(self):
         """Set up connection."""
         if self.conn is None:
+            self.logger.info("Creating new connection")
             self.conn = duckdb.connect(":memory:")
 
+        self.logger.info("Setting up connection")
         self.conn.execute(ATTACH_DB.format(self.database_url))
-        self.conn.execute(SET_WORKSPACE.format(','.join([])))
+        self.logger.info("Setting workspace and role")
+        self.conn.execute(SET_WORKSPACE.format(','.join(self.allowed_workspace_ids)))
         self.conn.execute(SET_ROLE)
 
     def __call__(self) -> bool:
         if self.redis_conn.hexists(self.keyspace, "status"):
             self.logger.error("Query %s already executed. Overwriting.", self.query_id)
 
+        self.logger.info("Executing query %s", self.query_id)
+        self.logger.info("Setting status to running")
         self.redis_conn.hset(
             self.keyspace,
             "status",
@@ -115,9 +122,13 @@ class QueryExecutor(BaseModel):
         # Store the total number of result batches
         self.redis_conn.hset(self.keyspace, "metadata:total_rows", total_rows)
         self.redis_conn.hset(self.keyspace, "metadata:total_batches", total_batches)
-        self.redis_conn.hset(self.keyspace, "metadata:est_size_bytes", est_size)
-        self.redis_conn.hset(self.keyspace, "metadata:column_names", column_names)
-        self.redis_conn.hset(self.keyspace, "metadata:column_types", column_types)
+        self.redis_conn.hset(self.keyspace, "metadata:est_size_bytes", int(est_size))
+        self.redis_conn.hset(self.keyspace, "metadata:column_names", json.dumps(column_names))
+        self.redis_conn.hset(
+            self.keyspace,
+            "metadata:column_types",
+            json.dumps([str(i) for i in column_types])
+            )
 
         # Set expiry time (e.g., 1 hour)
         self.redis_conn.expire(self.keyspace, 3600)

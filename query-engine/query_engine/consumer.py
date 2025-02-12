@@ -2,9 +2,9 @@
 
 import multiprocessing
 import logging
-from typing import Literal, Optional, Self, List
+from typing import Literal, Optional, Self, List, Union
 from concurrent.futures import ThreadPoolExecutor, Future
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, field_validator
 import redis
 from .query_executor import QueryExecutor
 
@@ -18,10 +18,23 @@ class Message(BaseModel):
 
     action: Literal["query", "cancel", "stop"]
     query_id: str
-    allowed_workspace_ids: Optional[List[str]] = None
+    allowed_workspace_ids: Optional[Union[str, List[str]]] = None
     query: Optional[str] = None
     batch_size: Optional[int] = None
     timeout_seconds: Optional[int] = None
+
+    @field_validator("allowed_workspace_ids")
+    @classmethod
+    def validate_allowed_workspace_ids(cls, v):
+        """Validate allowed workspace ids."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            return v.split(",")
+        if isinstance(v, list):
+            return v
+
+        raise ValueError("allowed_workspace_ids must be a string or list")
 
     @model_validator(mode="after")
     def validate_action(self) -> Self:
@@ -194,12 +207,27 @@ class Consumer(BaseModel):
                 extra={"action": msg.action, "query_id": msg.query_id},
             )
 
-            QueryExecutor(
+            executor = QueryExecutor(
                 logger=wlogger,
                 query_id=msg.query_id,
                 allowed_workspace_ids=msg.allowed_workspace_ids,
                 query=msg.query
-            )()
+            )
+
+            try:
+                executor()
+            except Exception as e:
+                wlogger.error(
+                    "Failed to process message: %s",
+                    str(e),
+                    exc_info=True,
+                    extra={
+                        "action": msg.action,
+                        "query_id": msg.query_id,
+                        "error": str(e),
+                    },
+                )
+                raise
 
             wlogger.info(
                 "Finished processing message",
