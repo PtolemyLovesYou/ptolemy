@@ -4,6 +4,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from query_engine.consumer import Consumer
 import redis
+from query_engine.env_settings import REDIS_HOST, REDIS_PORT, REDIS_DB, STREAM_NAME, GROUP_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +20,10 @@ def main():
     """Main function."""
 
     consumer = Consumer(
-        conn=redis.Redis(host="redis", port=6379, db=0),
+        conn=redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB),
         executor=ThreadPoolExecutor(max_workers=2),
-        stream_name="ptolemy:query",
-        group_name="ptolemy:query",
+        stream_name=STREAM_NAME,
+        group_name=GROUP_NAME,
     )
 
     consumer.run()
