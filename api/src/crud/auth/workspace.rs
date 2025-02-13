@@ -63,7 +63,7 @@ impl Workspace {
 
     pub async fn from_service_api_key(
         conn: &mut DbConnection<'_>,
-        workspace_name: &str,
+        _workspace_name: &str,
         api_key: &str,
         password_handler: &PasswordHandler,
     ) -> Result<(ServiceApiKey, Self), ApiError> {
@@ -75,7 +75,6 @@ impl Workspace {
                 service_api_key::key_preview
                     .eq(key_preview)
                     .and(service_api_key::deleted_at.is_null())
-                    .and(workspace::name.eq(workspace_name))
                     .and(workspace::deleted_at.is_null()),
             )
             .select((ServiceApiKey::as_select(), Workspace::as_select()))
