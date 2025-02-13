@@ -28,7 +28,7 @@ impl QueryMessage {
         cmd.arg("ptolemy:query").arg("*")
             .arg("action").arg(&self.action)
             .arg("query_id").arg(&self.query_id)
-            .arg("allowed_workspace_ids").arg(&self.allowed_workspace_ids)
+            .arg("allowed_workspace_ids").arg(self.allowed_workspace_ids.join(","))
             .arg("query").arg(&self.query)
             .arg("batch_size").arg(&self.batch_size)
             .arg("timeout_seconds").arg(&self.timeout_seconds);
@@ -113,7 +113,7 @@ impl QueryEngineRedisHandler {
                         ApiError::InternalError
                     })?;
                 
-                let column_names= redis::cmd("HGET")
+                let column_names_raw: String= redis::cmd("HGET")
                     .arg(&self.keyspace())
                     .arg("metadata:column_names")
                     .query_async(&mut self.conn)
@@ -122,6 +122,12 @@ impl QueryEngineRedisHandler {
                         tracing::error!("Failed to get query metadata: {}", e);
                         ApiError::InternalError
                     })?;
+
+                let column_names = serde_json::from_str(&column_names_raw)
+                    .map_err(|e| {
+                        tracing::error!("Failed to deserialize column names: {}", e);
+                        ApiError::InternalError
+                })?;
                 
                 let column_types = redis::cmd("HGET")
                     .arg(&self.keyspace())

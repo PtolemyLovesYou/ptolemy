@@ -6,7 +6,6 @@ pub mod generated;
 pub mod graphql;
 pub mod middleware;
 pub mod models;
-pub mod query_executor;
 pub mod routes;
 pub mod services;
 pub mod state;
