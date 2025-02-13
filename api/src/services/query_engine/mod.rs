@@ -48,7 +48,10 @@ impl QueryEngine for MyQueryEngine {
     async fn query(&self, request: Request<QueryRequest>) -> QueryEngineResult<QueryResponse> {
         let mut handler = QueryEngineRedisHandler::new(self.state.get_redis_conn().await.unwrap(), Uuid::new_v4()).await;
 
-        let auth_ctx = request.extensions().get::<AuthContext>().unwrap();
+        let auth_ctx = request.extensions().get::<AuthContext>().ok_or_else(|| {
+            tracing::error!("Auth context not found in extensions");
+            Status::internal("Auth context not found in extensions")
+        })?;
 
         let mut allowed_workspace_ids = Vec::new();
         for workspace in auth_ctx.workspaces.iter() {

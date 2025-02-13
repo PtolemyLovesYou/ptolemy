@@ -159,6 +159,25 @@ impl PtolemyClient {
         }
     }
 
+    #[pyo3(signature=(query, batch_size=None, timeout_seconds=None))]
+    fn sql(
+        &mut self,
+        query: String,
+        batch_size: Option<u32>,
+        timeout_seconds: Option<u32>,
+    ) -> PyResult<Vec<Vec<u8>>> {
+        let mut client = self
+            .grpc_client
+            .lock()
+            .unwrap();
+
+        let data = client.query(query, batch_size, timeout_seconds)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+
+        drop(client);
+        Ok(data)
+    }
+
     #[pyo3(signature=(name, parameters=None, version=None, environment=None))]
     fn trace(
         &mut self,

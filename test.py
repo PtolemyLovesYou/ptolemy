@@ -229,3 +229,6 @@ for _ in tqdm(list(range(N))):
 end = time.time()
 client.flush()
 print(((end - start) / N) * 1000)
+
+for i in client.sql("select 1"):
+  print(i)

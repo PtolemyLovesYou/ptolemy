@@ -25,13 +25,23 @@ impl QueryMessage {
     pub fn to_redis_cmd(&self) -> redis::Cmd {
         let mut cmd = redis::cmd("XADD");
 
+        let batch_size = match self.batch_size {
+            Some(size) => size,
+            None => 256,
+        };
+
+        let timeout_seconds = match self.timeout_seconds {
+            Some(size) => size,
+            None => 60,
+        };
+
         cmd.arg("ptolemy:query").arg("*")
             .arg("action").arg(&self.action)
             .arg("query_id").arg(&self.query_id)
             .arg("allowed_workspace_ids").arg(self.allowed_workspace_ids.join(","))
             .arg("query").arg(&self.query)
-            .arg("batch_size").arg(&self.batch_size)
-            .arg("timeout_seconds").arg(&self.timeout_seconds);
+            .arg("batch_size").arg(&batch_size)
+            .arg("timeout_seconds").arg(&timeout_seconds);
 
         cmd
     }
@@ -141,7 +151,7 @@ impl QueryEngineRedisHandler {
                 
                 let estimated_size_bytes = redis::cmd("HGET")
                     .arg(&self.keyspace())
-                    .arg("metadata:estimated_size_bytes")
+                    .arg("metadata:est_size_bytes")
                     .query_async::<u32>(&mut self.conn)
                     .await
                     .map_err(|e| {

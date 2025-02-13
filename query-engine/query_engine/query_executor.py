@@ -2,6 +2,7 @@
 import logging
 import os
 import json
+from enum import StrEnum
 from typing import Optional, List
 from io import BytesIO
 from functools import cached_property
@@ -9,6 +10,14 @@ import redis
 import duckdb
 from pydantic import BaseModel, ConfigDict
 from .env_settings import REDIS_DB, REDIS_HOST, REDIS_PORT
+
+class QueryStatus(StrEnum):
+    """Query Status."""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
 ATTACH_DB = """
 attach database '{}' as ptolemy (type postgres, schema 'duckdb', read_only);
@@ -72,7 +81,7 @@ class QueryExecutor(BaseModel):
         self.redis_conn.hset(
             self.keyspace,
             "status",
-            "running"
+            QueryStatus.RUNNING
         )
 
         self.setup_conn()
@@ -86,7 +95,7 @@ class QueryExecutor(BaseModel):
             self.redis_conn.hset(
                 self.keyspace,
                 mapping={
-                    "status": "error",
+                    "status": QueryStatus.FAILED,
                     "error": str(e)
                 }
             )
@@ -116,18 +125,19 @@ class QueryExecutor(BaseModel):
             self.logger.debug("Storing result batch %d for query %s", i, self.query_id)
             self.redis_conn.hset(self.keyspace, f"result:{i}", buf.getvalue())
 
-        # Initialize the hash with success status
-        self.redis_conn.hset(self.keyspace, "status", "success")
+        query_metadata = {
+            "status": QueryStatus.COMPLETED,
+            "metadata:total_rows": total_rows,
+            "metadata:total_batches": total_batches,
+            "metadata:est_size_bytes": int(est_size),
+            "metadata:column_names": json.dumps(column_names),
+            "metadata:column_types": json.dumps([str(i) for i in column_types])
+        }
 
         # Store the total number of result batches
-        self.redis_conn.hset(self.keyspace, "metadata:total_rows", total_rows)
-        self.redis_conn.hset(self.keyspace, "metadata:total_batches", total_batches)
-        self.redis_conn.hset(self.keyspace, "metadata:est_size_bytes", int(est_size))
-        self.redis_conn.hset(self.keyspace, "metadata:column_names", json.dumps(column_names))
         self.redis_conn.hset(
             self.keyspace,
-            "metadata:column_types",
-            json.dumps([str(i) for i in column_types])
+            mapping=query_metadata
             )
 
         # Set expiry time (e.g., 1 hour)
