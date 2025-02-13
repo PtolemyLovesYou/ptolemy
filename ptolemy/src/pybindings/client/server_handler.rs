@@ -101,9 +101,6 @@ impl ServerHandler {
                 .block_on(self.query_engine_client.fetch_batch(FetchBatchRequest { query_id: query_id.clone(), batch_id: None }))?
                 .into_inner();
 
-            println!("got this far");
-
-            
             while let Some(data) = self.rt.block_on(batches.message())? {
                 arrs.push(data.data);
             }

@@ -104,8 +104,20 @@ class QueryExecutor(BaseModel):
             return 1
 
         total_rows = results.shape[0]
-        total_batches = results.shape[0] // 100
         est_size = results.memory_usage(deep=True).sum()
+
+        column_names = results.columns.tolist()
+        column_types = results.dtypes.tolist()
+        total_batches = 0
+
+        for i in range(0, len(results), 100):
+            total_batches += 1
+            buf = BytesIO()
+            dff = results[i:i+100]
+            dff.to_feather(buf)
+
+            self.logger.debug("Storing result batch %d for query %s", i, self.query_id)
+            self.redis_conn.hset(self.keyspace, f"result:{i}", buf.getvalue())
 
         self.logger.debug(
             "Query %s executed with %d result batches of size %.2f kB",
@@ -113,17 +125,6 @@ class QueryExecutor(BaseModel):
             total_batches,
             est_size / 1024
             )
-
-        column_names = results.columns.tolist()
-        column_types = results.dtypes.tolist()
-
-        for i in range(0, len(results), 100):
-            buf = BytesIO()
-            dff = results[i:i+100]
-            dff.to_feather(buf)
-
-            self.logger.debug("Storing result batch %d for query %s", i, self.query_id)
-            self.redis_conn.hset(self.keyspace, f"result:{i}", buf.getvalue())
 
         query_metadata = {
             "status": QueryStatus.COMPLETED,

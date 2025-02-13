@@ -227,7 +227,6 @@ impl QueryEngineRedisHandler {
             },
             QueryStatus::Completed => {
                 let total_batches = status.metadata.as_ref().unwrap().total_batches;
-                let (tx, rx) = mpsc::channel(total_batches as usize);
                 let mut batches: Vec<Vec<u8>> = Vec::new();
                 for i in 0..total_batches {
                     let result: Vec<u8> = redis::cmd("HGET")
@@ -242,6 +241,8 @@ impl QueryEngineRedisHandler {
                     
                     batches.push(result);
                 }
+
+                let (tx, rx) = mpsc::channel(total_batches.max(1) as usize);
 
                 for (batch_id, batch) in batches.iter().enumerate() {
                     tx.send(Ok(FetchBatchResponse {

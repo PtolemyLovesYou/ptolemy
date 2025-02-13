@@ -3,6 +3,8 @@
 import time
 import requests
 from tqdm.auto import tqdm
+import pandas as pd
+from io import BytesIO
 from ptolemy import Ptolemy
 
 # get superadmin credentials
@@ -231,4 +233,5 @@ client.flush()
 print(((end - start) / N) * 1000)
 
 for i in client.sql("select 1"):
-    print(i)
+    buf = BytesIO(i)
+    print(pd.read_feather(buf))
