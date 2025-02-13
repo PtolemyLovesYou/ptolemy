@@ -1,7 +1,7 @@
 use crate::{
+    error::ApiError,
     graphql::state::JuniperAppState,
     models::{ServiceApiKey, User, Workspace, WorkspaceUser},
-    error::ApiError,
 };
 use juniper::{graphql_interface, graphql_object, GraphQLObject};
 use uuid::Uuid;
@@ -62,12 +62,7 @@ macro_rules! result_model {
             fn from(result: Result<$result_type, ApiError>) -> Self {
                 match result {
                     Ok(t) => $name::ok(t),
-                    Err(e) => {
-                        $name::err(
-                            stringify!($name),
-                            e.to_string(),
-                        )
-                    }
+                    Err(e) => $name::err(stringify!($name), e.to_string()),
                 }
             }
         }
@@ -92,10 +87,7 @@ impl From<Result<Uuid, ApiError>> for DeletionResult {
     fn from(result: Result<Uuid, ApiError>) -> Self {
         match result {
             Ok(_) => DeletionResult::ok(true),
-            Err(e) => DeletionResult::err(
-                "database",
-                e.to_string(),
-            ),
+            Err(e) => DeletionResult::err("database", e.to_string()),
         }
     }
 }

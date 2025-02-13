@@ -7,9 +7,118 @@ pub type AuthResult<T> = Result<T, ApiError>;
 pub struct AccessAuditId(pub Uuid);
 
 #[derive(Clone, Debug)]
+pub struct WorkspacePermission {
+    pub workspace: ptolemy::models::auth::Workspace,
+    pub permissions: Option<ptolemy::models::enums::ApiKeyPermission>,
+    pub role: Option<ptolemy::models::enums::WorkspaceRole>,
+}
+
+#[derive(Clone, Debug)]
 pub struct AuthContext {
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Uuid,
+    pub user: Option<ptolemy::models::auth::User>,
+    pub workspaces: Vec<WorkspacePermission>,
+}
+
+impl AuthContext {
+    pub fn user(&self) -> Result<&ptolemy::models::auth::User, ApiError> {
+        match self.user.as_ref() {
+            Some(u) => Ok(u),
+            None => Err(ApiError::InternalError),
+        }
+    }
+
+    pub fn can_create_delete_workspace(&self) -> bool {
+        match &self.user {
+            Some(u) => u.is_admin,
+            None => false,
+        }
+    }
+
+    pub fn can_create_delete_user(&self, other_user_is_admin: bool, other_user_is_sysadmin: bool) -> bool {
+        match &self.user {
+            Some(u) => {
+                !(other_user_is_admin || other_user_is_sysadmin)
+                || u.is_sysadmin
+            },
+            None => false,
+        }
+    }
+
+    pub fn can_update_workspace(&self, workspace_id: uuid::Uuid) -> bool {
+        for workspace in &self.workspaces {
+            if workspace.workspace.id.as_uuid() == workspace_id {
+                return match workspace.role {
+                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
+                    _ => false,
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn can_add_remove_update_user_to_workspace(&self, workspace_id: uuid::Uuid) -> bool {
+        for workspace in &self.workspaces {
+            if workspace.workspace.id.as_uuid() == workspace_id {
+                return match workspace.role {
+                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
+                    _ => false,
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn can_create_delete_service_api_key(&self, workspace_id: uuid::Uuid) -> bool {
+        for workspace in &self.workspaces {
+            if workspace.workspace.id.as_uuid() == workspace_id {
+                return match workspace.role {
+                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
+                    Some(ptolemy::models::enums::WorkspaceRole::Manager) => true,
+                    _ => false,
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn can_read_workspace(&self, workspace_id: uuid::Uuid) -> bool {
+        if self.user.is_some() {
+            for workspace in &self.workspaces {
+                return workspace.workspace.id.as_uuid() == workspace_id
+            }
+        }
+
+        for workspace in &self.workspaces {
+            if workspace.workspace.id.as_uuid() == workspace_id {
+                return match workspace.permissions {
+                    Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) => true,
+                    Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
+                    _ => false,
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn can_write_workspace(&self, workspace_id: uuid::Uuid) -> bool {
+        for workspace in &self.workspaces {
+            if workspace.workspace.id.as_uuid() == workspace_id {
+                return match workspace.permissions {
+                    Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
+                    Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) => true,
+                    _ => false,
+                }
+            }
+        }
+
+        false
+    }
 }
 
 pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthResult<T>>> {

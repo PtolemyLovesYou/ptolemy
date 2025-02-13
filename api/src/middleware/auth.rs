@@ -1,9 +1,15 @@
 use std::str::FromStr as _;
 
 use crate::{
-    consts::USER_API_KEY_PREFIX, crud::prelude::*, crypto::{ClaimType, GenerateSha256, UuidClaims}, error::ApiError, models::{
-        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT}, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User
-    }, state::ApiAppState
+    consts::USER_API_KEY_PREFIX,
+    crud::prelude::*,
+    crypto::{ClaimType, GenerateSha256, UuidClaims},
+    error::ApiError,
+    models::{
+        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT, WorkspacePermission},
+        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User,
+    },
+    state::ApiAppState,
 };
 use axum::{
     extract::State,
@@ -13,10 +19,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-fn get_header_raw(
-    req: &Request<axum::body::Body>,
-    header: HeaderName
-) -> Option<&[u8]> {
+fn get_header_raw(req: &Request<axum::body::Body>, header: HeaderName) -> Option<&[u8]> {
     req.headers().get(header).map(|h| h.as_bytes())
 }
 
@@ -27,7 +30,9 @@ fn get_header(
 ) -> AuthResult<Option<String>> {
     match req.headers().get(header) {
         Some(h) => {
-            let token = h.to_str().map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
+            let token = h
+                .to_str()
+                .map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
 
             match prefix {
                 Some(p) => Ok(Some(
@@ -64,11 +69,14 @@ fn insert_headers(req: &mut Request<axum::body::Body>, state: &ApiAppState) -> (
 
 async fn validate_api_key_header(
     state: &ApiAppState,
-    req: &mut Request<axum::body::Body>,
+    _req: &mut Request<axum::body::Body>,
     header: ApiKey,
-) -> AuthResult<()> {
+) -> AuthResult<(
+    Option<ptolemy::models::auth::User>,
+    Vec<WorkspacePermission>,
+)> {
     let api_key = match header {
-        ApiKey::Undeclared | ApiKey::Err(_) => return Ok(()),
+        ApiKey::Undeclared | ApiKey::Err(_) => return Ok((None, Vec::new())),
         ApiKey::Ok(api_key) => api_key,
     };
 
@@ -81,9 +89,18 @@ async fn validate_api_key_header(
         .await
         {
             Ok(u) => {
-                req.extensions_mut()
-                    .insert::<ptolemy::models::auth::User>(u.into());
-                return Ok(());
+                let workspaces = u
+                    .get_workspaces_with_roles(&mut state.get_conn().await.unwrap())
+                    .await?
+                    .into_iter()
+                    .map(|(i, r)| WorkspacePermission {
+                        workspace: i.into(),
+                        permissions: None,
+                        role: Some(r.into()),
+                    })
+                    .collect();
+
+                return Ok((Some(u.into()), workspaces));
             }
             Err(_) => return Err(ApiError::NotFoundError),
         }
@@ -94,35 +111,46 @@ async fn validate_api_key_header(
 
 async fn validate_jwt_header(
     state: &ApiAppState,
-    req: &mut Request<axum::body::Body>,
+    _req: &mut Request<axum::body::Body>,
     header: JWT,
-) -> AuthResult<()> {
+) -> AuthResult<(
+    Option<ptolemy::models::auth::User>,
+    Vec<WorkspacePermission>,
+)> {
     let mut conn = state.get_conn().await.unwrap();
 
     let claims = match header {
-        JWT::Undeclared | JWT::Err(_) => return Ok(()),
+        JWT::Undeclared | JWT::Err(_) => return Ok((None, vec![])),
         JWT::Ok(c) => c,
     };
 
     match claims.claim_type() {
         ClaimType::UserJWT => {
-            match crate::models::User::get_by_id(&mut conn, claims.sub()).await {
-                Ok(u) => {
-                    req.extensions_mut()
-                        .insert::<ptolemy::models::auth::User>(u.into());
-                    Ok(())
-                }
-                Err(_) => Err(ApiError::NotFoundError),
-            }
+            let user = crate::models::User::get_by_id(&mut conn, claims.sub()).await?;
+            let workspaces = user
+                .get_workspaces_with_roles(&mut conn)
+                .await?
+                .into_iter()
+                .map(|(i, r)| WorkspacePermission {
+                    workspace: i.into(),
+                    permissions: None,
+                    role: Some(r.into()),
+                })
+                .collect();
+
+            Ok((Some(user.into()), workspaces))
         }
         ClaimType::ServiceAPIKeyJWT => {
-            match crate::models::ServiceApiKey::get_by_id(&mut conn, claims.sub())
-            .await
-            {
+            match crate::models::ServiceApiKey::get_by_id(&mut conn, claims.sub()).await {
                 Ok(sak) => {
-                    req.extensions_mut()
-                        .insert::<ptolemy::models::auth::ServiceApiKey>(sak.into());
-                    Ok(())
+                    let workspace =
+                        crate::models::Workspace::get_by_id(&mut conn, &sak.workspace_id).await?;
+
+                    Ok((None, vec![WorkspacePermission {
+                        workspace: workspace.into(),
+                        permissions: Some(sak.permissions.clone().into()),
+                        role: None,
+                    }]))
                 }
                 Err(_) => Err(ApiError::NotFoundError),
             }
@@ -145,10 +173,12 @@ pub async fn master_auth_middleware(
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
 
     if !jwt_header.undeclared() {
-        let (success, failure_details) =
+        let (user, workspaces, success, failure_details) =
             match validate_jwt_header(&state, &mut req, jwt_header.clone()).await {
-                Ok(_) => (true, None),
+                Ok((user, workspaces)) => (user, workspaces, true, None),
                 Err(e) => (
+                    None,
+                    vec![],
                     false,
                     Some(serde_json::json!({"error": format!("{:?}", e)})),
                 ),
@@ -162,8 +192,9 @@ pub async fn master_auth_middleware(
             },
         };
 
-        let auth_payload_hash = get_header_raw(&req, HeaderName::from_str("Authorization").unwrap())
-            .map(|h| h.sha256());
+        let auth_payload_hash =
+            get_header_raw(&req, HeaderName::from_str("Authorization").unwrap())
+                .map(|h| h.sha256());
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
@@ -183,21 +214,25 @@ pub async fn master_auth_middleware(
         req.extensions_mut().insert(AuthContext {
             api_access_audit_log_id,
             api_auth_audit_log_id,
+            user,
+            workspaces,
         });
     }
 
     if !api_key_header.undeclared() {
-        let (success, failure_details) =
+        let (user, workspaces, success, failure_details) =
             match validate_api_key_header(&state, &mut req, api_key_header.clone()).await {
-                Ok(_) => (true, None),
+                Ok((user, workspaces)) => (user, workspaces, true, None),
                 Err(e) => (
+                    None,
+                    vec![],
                     false,
                     Some(serde_json::json!({"error": format!("{:?}", e)})),
                 ),
             };
-        
-        let auth_payload_hash = get_header_raw(&req, HeaderName::from_str("X-Api-Key").unwrap())
-            .map(|h| h.sha256());
+
+        let auth_payload_hash =
+            get_header_raw(&req, HeaderName::from_str("X-Api-Key").unwrap()).map(|h| h.sha256());
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
@@ -217,10 +252,13 @@ pub async fn master_auth_middleware(
         req.extensions_mut().insert(AuthContext {
             api_access_audit_log_id,
             api_auth_audit_log_id,
+            user,
+            workspaces,
         });
     }
 
-    req.extensions_mut().insert(AccessAuditId(api_access_audit_log_id));
+    req.extensions_mut()
+        .insert(AccessAuditId(api_access_audit_log_id));
 
     let resp = next.run(req).await;
 

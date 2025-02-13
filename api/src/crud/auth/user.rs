@@ -1,17 +1,22 @@
 use crate::{
     crypto::PasswordHandler,
     error::ApiError,
-    generated::auth_schema::{users, workspace_user, workspace, user_api_key},
+    generated::auth_schema::{user_api_key, users, workspace, workspace_user},
     map_diesel_err,
-    models::{User, UserCreate, UserUpdate, UserStatusEnum, Workspace, WorkspaceUser, UserApiKey},
-    state::DbConnection,
+    models::{User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum, WorkspaceUser},
+    db::DbConnection,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
 impl User {
-    pub async fn get_workspace_users(&self, conn: &mut DbConnection<'_>, workspace_id: Option<Uuid>, workspace_name: Option<String>) -> Result<Vec<WorkspaceUser>, ApiError> {
+    pub async fn get_workspace_users(
+        &self,
+        conn: &mut DbConnection<'_>,
+        workspace_id: Option<Uuid>,
+        workspace_name: Option<String>,
+    ) -> Result<Vec<WorkspaceUser>, ApiError> {
         let mut query = WorkspaceUser::belonging_to(self)
             .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
             .filter(workspace_user::deleted_at.is_null())
@@ -26,10 +31,31 @@ impl User {
             query = query.filter(workspace::name.eq(workspace_name));
         }
 
-        query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
+        query
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
     }
 
-    pub async fn get_workspaces(&self, conn: &mut DbConnection<'_>, workspace_id: Option<Uuid>, workspace_name: Option<String>) -> Result<Vec<Workspace>, ApiError> {
+    pub async fn get_workspaces_with_roles(
+        &self,
+        conn: &mut DbConnection<'_>,
+    ) -> Result<Vec<(Workspace, WorkspaceRoleEnum)>, ApiError> {
+        WorkspaceUser::belonging_to(self)
+            .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
+            .filter(workspace_user::deleted_at.is_null())
+            .select((workspace::all_columns, workspace_user::role))
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", WorkspaceUser))
+    }
+
+    pub async fn get_workspaces(
+        &self,
+        conn: &mut DbConnection<'_>,
+        workspace_id: Option<Uuid>,
+        workspace_name: Option<String>,
+    ) -> Result<Vec<Workspace>, ApiError> {
         let mut query = WorkspaceUser::belonging_to(self)
             .inner_join(workspace::table.on(workspace::id.eq(workspace_user::workspace_id)))
             .filter(workspace_user::deleted_at.is_null())
@@ -44,7 +70,10 @@ impl User {
             query = query.filter(workspace::name.eq(workspace_name));
         }
 
-        query.get_results(conn).await.map_err(map_diesel_err!(GetError, "get", Workspace))
+        query
+            .get_results(conn)
+            .await
+            .map_err(map_diesel_err!(GetError, "get", Workspace))
     }
 
     pub async fn get_user_api_keys(
@@ -67,7 +96,7 @@ impl User {
         password_handler: &PasswordHandler,
     ) -> Result<Self, ApiError> {
         let chars = api_key.chars().take(12).collect::<String>();
-    
+
         let api_keys: Vec<UserApiKey> = user_api_key::table
             .select(UserApiKey::as_select())
             .filter(
@@ -78,7 +107,7 @@ impl User {
             .get_results(conn)
             .await
             .map_err(map_diesel_err!(GetError, "get", UserApiKey))?;
-    
+
         for ak in api_keys {
             if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
                 return users::table
@@ -88,7 +117,7 @@ impl User {
                     .map_err(map_diesel_err!(GetError, "get", User));
             }
         }
-    
+
         Err(ApiError::AuthError("API Key Not Found".to_string()))
     }
 
@@ -113,13 +142,13 @@ impl User {
             .get_result::<User>(conn)
             .await
             .map_err(map_diesel_err!(GetError, "get", User))?;
-    
+
         if user.status != UserStatusEnum::Active {
             return Ok(None);
         }
-    
+
         let pass_correct = password_handler.verify_password(&password, &user.password_hash);
-    
+
         match pass_correct {
             true => Ok(Some(user)),
             false => Ok(None),
@@ -132,6 +161,7 @@ crate::get_by_id_trait!(User, users);
 crate::search_db_obj!(
     search_users,
     User,
-users,
-    [(id, Uuid), (username, String), (status, UserStatusEnum)]);
+    users,
+    [(id, Uuid), (username, String), (status, UserStatusEnum)]
+);
 crate::update_by_id_trait!(User, users, UserUpdate);

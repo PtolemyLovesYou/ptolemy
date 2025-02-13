@@ -28,6 +28,8 @@ diesel::table! {
         version -> Nullable<Varchar>,
         #[max_length = 8]
         environment -> Nullable<Varchar>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -52,6 +54,8 @@ diesel::table! {
         field_value_bool -> Nullable<Bool>,
         field_value_json -> Nullable<Json>,
         field_value_type -> FieldValueType,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -68,6 +72,8 @@ diesel::table! {
         subcomponent_event_id -> Nullable<Uuid>,
         field_name -> Varchar,
         field_value -> Varchar,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -86,6 +92,8 @@ diesel::table! {
         end_time -> Timestamptz,
         error_type -> Nullable<Varchar>,
         error_content -> Nullable<Varchar>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -99,6 +107,8 @@ diesel::table! {
         version -> Nullable<Varchar>,
         #[max_length = 8]
         environment -> Nullable<Varchar>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -112,6 +122,8 @@ diesel::table! {
         version -> Nullable<Varchar>,
         #[max_length = 8]
         environment -> Nullable<Varchar>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 
@@ -125,6 +137,8 @@ diesel::table! {
         version -> Nullable<Varchar>,
         #[max_length = 8]
         environment -> Nullable<Varchar>,
+        deleted_at -> Nullable<Timestamptz>,
+        deletion_reason -> Nullable<Varchar>,
     }
 }
 

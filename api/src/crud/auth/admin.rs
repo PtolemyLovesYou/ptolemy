@@ -1,7 +1,7 @@
 use crate::{
     crud::prelude::*,
     error::ApiError,
-    models::{UserCreate, UserUpdate, User},
+    models::{User, UserCreate, UserUpdate},
     state::ApiAppState,
 };
 
@@ -20,8 +20,7 @@ pub async fn ensure_sysadmin(state: &ApiAppState) -> Result<(), ApiError> {
                 .verify_password(&pass, &user.password_hash)
             {
                 return Ok(());
-            }
-            else {
+            } else {
                 let new_pass = state.password_handler.hash_password(&pass);
                 let changeset = UserUpdate {
                     password_hash: Some(new_pass),

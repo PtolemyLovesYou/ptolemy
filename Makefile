@@ -36,6 +36,14 @@ setup-client-dev:
 docs:
 	uv run --directory docs -m mkdocs serve -a localhost:8080
 
+.PHONY: run-api
+run-api:
+	cargo run -p api --bin api
+
 .PHONY: run-prototype-app
 run-prototype-app:
 	API_URL=http://localhost:8000 uv run --directory prototype -m streamlit run app.py
+
+.PHONY: run-query-engine
+run-query-engine:
+	uv run --directory query-engine main.py

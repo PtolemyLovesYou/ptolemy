@@ -2,6 +2,13 @@ use crate::generated::observer::{
     observer_authentication_client::ObserverAuthenticationClient, observer_client::ObserverClient,
     AuthenticationRequest, PublishRequest, PublishResponse, Record,
 };
+use crate::generated::query_engine::{
+    query_engine_client::QueryEngineClient,
+    QueryRequest,
+    QueryStatus,
+    QueryStatusRequest,
+    FetchBatchRequest,
+};
 use crate::models::id::Id;
 use pyo3::prelude::*;
 use std::collections::VecDeque;
@@ -12,6 +19,7 @@ use tonic::transport::Channel;
 pub struct ServerHandler {
     client: ObserverClient<Channel>,
     auth_client: ObserverAuthenticationClient<Channel>,
+    query_engine_client: QueryEngineClient<Channel>,
     queue: VecDeque<Record>,
     rt: tokio::runtime::Runtime,
     batch_size: usize,
@@ -33,6 +41,9 @@ impl ServerHandler {
         let auth_client = rt
             .block_on(ObserverAuthenticationClient::connect(observer_url.clone()))
             .unwrap();
+        let query_engine_client = rt
+            .block_on(QueryEngineClient::connect(observer_url.clone()))
+            .unwrap();
 
         Ok(Self {
             client,
@@ -40,10 +51,77 @@ impl ServerHandler {
             queue,
             batch_size,
             auth_client,
+            query_engine_client,
             api_key,
             token: None,
             workspace_id: None,
         })
+    }
+}
+
+impl ServerHandler {
+    pub fn query(
+        &mut self,
+        query: String,
+        batch_size: Option<u32>,
+        timeout_seconds: Option<u32>
+    ) -> Result<Vec<Vec<u8>>, Box<dyn std::error::Error>> {
+        let mut query_request = tonic::Request::new(QueryRequest {
+            query,
+            batch_size,
+            timeout_seconds
+        });
+
+        let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
+
+        query_request.metadata_mut().insert(
+            tonic::metadata::MetadataKey::from_str("Authorization")?,
+            tonic::metadata::MetadataValue::from_str(&format!("Bearer {}", token))?,
+        );
+
+        let query_response = self.rt
+            .block_on(self.query_engine_client.query(query_request))?
+            .into_inner();
+
+        let query_id = query_response.query_id;
+
+        let mut status = QueryStatus::Pending;
+
+        while let QueryStatus::Pending | QueryStatus::Running = status {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            status = self.rt
+                .block_on(self.query_engine_client.get_query_status(QueryStatusRequest { query_id: query_id.clone() }))?
+                .into_inner()
+                .status();
+        }
+
+        if status == QueryStatus::Completed {
+            let mut arrs = Vec::new();
+            let mut batches = self.rt
+                .block_on(self.query_engine_client.fetch_batch(FetchBatchRequest { query_id: query_id.clone(), batch_id: None }))?
+                .into_inner();
+
+            while let Some(data) = self.rt.block_on(batches.message())? {
+                arrs.push(data.data);
+            }
+
+            return Ok(arrs);
+        }
+
+        if status == QueryStatus::Failed {
+            let query_status = self.rt
+                .block_on(self.query_engine_client.get_query_status(QueryStatusRequest { query_id: query_id.clone() }))?
+                .into_inner();
+
+            return Err(format!("Query failed: {}", query_status.error()).into());
+        }
+
+        if status == QueryStatus::Cancelled {
+            return Err("Query was cancelled".into());
+        }
+
+        
+        Ok(Vec::new())
     }
 }
 
@@ -84,7 +162,6 @@ impl ServerHandler {
         let mut publish_request = tonic::Request::new(PublishRequest { records });
 
         let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
-        println!("{}", token);
 
         publish_request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("Authorization")?,
@@ -109,12 +186,10 @@ impl ServerHandler {
             return true;
         }
 
-        println!("Sending {} records to server", records.len());
-
         match self.publish_request(records) {
             Ok(_) => true,
             Err(e) => {
-                println!("Error publishing records: {}", e);
+                tracing::error!("Error publishing records: {}", e);
                 false
             }
         }

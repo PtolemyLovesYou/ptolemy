@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package query_engine;
+
+service QueryEngine {
+    // Execute a query
+    rpc Query(QueryRequest) returns (QueryResponse);
+    
+    // Stream results back to client
+    rpc FetchBatch(FetchBatchRequest) returns (stream FetchBatchResponse);
+    
+    // Cancel an in-progress query
+    rpc CancelQuery(CancelQueryRequest) returns (CancelQueryResponse);
+    
+    // Get query status
+    rpc GetQueryStatus(QueryStatusRequest) returns (QueryStatusResponse);
+}
+
+message QueryRequest {
+    string query = 1;
+    optional uint32 batch_size = 2;   // Rows per batch, server will use default if not specified
+    optional uint32 timeout_seconds = 3; // Query timeout
+}
+
+message QueryResponse {
+    string query_id = 1;
+    bool success = 2;
+    optional string error = 3;
+}
+
+message QueryMetadata {
+    uint32 total_rows = 1;
+    uint32 total_batches = 2;
+    repeated string column_names = 3;
+    repeated string column_types = 4;
+    uint32 estimated_size_bytes = 5;
+}
+
+message QueryStatusRequest {
+    string query_id = 1;
+}
+
+message QueryStatusResponse {
+    string query_id = 1;
+    QueryStatus status = 2;
+    optional string error = 3;
+    optional QueryMetadata metadata = 4;
+    google.protobuf.Timestamp last_updated = 5;
+}
+
+enum QueryStatus {
+    PENDING = 0;
+    RUNNING = 1;
+    COMPLETED = 2;
+    FAILED = 3;
+    CANCELLED = 4;
+}
+
+message CancelQueryRequest {
+    string query_id = 1;
+}
+
+message CancelQueryResponse {
+    bool success = 1;
+    optional string error = 2;
+}
+
+message FetchBatchRequest {
+    string query_id = 1;
+    optional uint32 batch_id = 2;  // If not specified, server will send next batch
+}
+
+message FetchBatchResponse {
+    string query_id = 1;
+    uint32 batch_id = 2;
+    bytes data = 3;  // Feather format
+    optional string error = 4;
+    bool is_last_batch = 5;
+    QueryStatus status = 6;
+}

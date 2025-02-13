@@ -6,11 +6,9 @@ use crate::{
 use axum::{extract::State, Extension};
 use juniper::{http::GraphQLBatchRequest, EmptySubscription};
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
-use ptolemy::models::auth::User;
 
 pub async fn graphql_handler(
     Extension(auth_context): Extension<AuthContext>,
-    Extension(user): Extension<User>,
     State(state): State<ApiAppState>,
     JuniperRequest(request): JuniperRequest,
 ) -> JuniperResponse {
@@ -29,7 +27,6 @@ pub async fn graphql_handler(
 
     let state_clone = JuniperAppState {
         state: state.clone(),
-        user,
         query_metadata,
         auth_context,
     };

@@ -1,9 +1,9 @@
 use api::{
     crud::auth::admin::ensure_sysadmin,
     error::ServerError,
-    routes::get_router,
-    state::{AppState, run_migrations},
     middleware::shutdown_signal,
+    routes::get_router,
+    state::{run_migrations, AppState},
 };
 use tracing::error;
 
@@ -36,7 +36,8 @@ async fn main() -> Result<(), ServerError> {
 
     match axum::serve(listener, service)
         .with_graceful_shutdown(shutdown_signal(shared_state.clone()))
-        .await {
+        .await
+    {
         Ok(_) => Ok(()),
         Err(e) => {
             tracing::error!("Axum server error: {:?}", e);

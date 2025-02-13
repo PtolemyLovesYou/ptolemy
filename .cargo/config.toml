@@ -12,3 +12,7 @@ RUST_LOG = "info,api=debug,ptolemy=debug"
 API_PORT = "8000"
 PTOLEMY_USER = "admin"
 PTOLEMY_PASS = "admin"
+
+REDIS_HOST= "localhost"
+REDIS_PORT= "6379"
+REDIS_DB= "0"
