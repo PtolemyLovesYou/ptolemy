@@ -1,13 +1,12 @@
 use std::str::FromStr as _;
 
 use crate::{
-    consts::USER_API_KEY_PREFIX,
+    consts::{SERVICE_API_KEY_PREFIX, USER_API_KEY_PREFIX},
     crud::prelude::*,
     crypto::{ClaimType, GenerateSha256, UuidClaims},
     error::ApiError,
     models::{
-        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, JWT, WorkspacePermission},
-        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User,
+        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, WorkspacePermission, JWT}, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User, Workspace
     },
     state::ApiAppState,
 };
@@ -74,11 +73,27 @@ async fn validate_api_key_header(
 ) -> AuthResult<(
     Option<ptolemy::models::auth::User>,
     Vec<WorkspacePermission>,
+    Option<ptolemy::models::auth::ServiceApiKey>,
 )> {
     let api_key = match header {
-        ApiKey::Undeclared | ApiKey::Err(_) => return Ok((None, Vec::new())),
+        ApiKey::Undeclared | ApiKey::Err(_) => return Ok((None, Vec::new(), None)),
         ApiKey::Ok(api_key) => api_key,
     };
+
+    if api_key.starts_with(SERVICE_API_KEY_PREFIX) {
+        let (sak, workspace) = Workspace::from_service_api_key(
+            &mut state.get_conn().await.unwrap(),
+            "asdf",
+            &api_key,
+            &state.password_handler,
+        ).await?;
+
+        return Ok((
+            None,
+            vec![WorkspacePermission { workspace: workspace.into(), permissions: Some(sak.permissions.clone().into()), role: None}],
+            Some(sak.into()),
+        ))
+    }
 
     if api_key.starts_with(USER_API_KEY_PREFIX) {
         match User::from_user_api_key(
@@ -100,7 +115,7 @@ async fn validate_api_key_header(
                     })
                     .collect();
 
-                return Ok((Some(u.into()), workspaces));
+                return Ok((Some(u.into()), workspaces, None));
             }
             Err(_) => return Err(ApiError::NotFoundError),
         }
@@ -220,12 +235,13 @@ pub async fn master_auth_middleware(
     }
 
     if !api_key_header.undeclared() {
-        let (user, workspaces, success, failure_details) =
+        let (user, workspaces, sak, success, failure_details) =
             match validate_api_key_header(&state, &mut req, api_key_header.clone()).await {
-                Ok((user, workspaces)) => (user, workspaces, true, None),
+                Ok((user, workspaces, sak)) => (user, workspaces, sak, true, None),
                 Err(e) => (
                     None,
                     vec![],
+                    None,
                     false,
                     Some(serde_json::json!({"error": format!("{:?}", e)})),
                 ),
@@ -237,8 +253,8 @@ pub async fn master_auth_middleware(
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
             api_access_audit_log_id: api_access_audit_log_id.clone(),
-            user_id: None,
-            service_api_key_id: None,
+            user_id: user.as_ref().map(|u| u.id.into()),
+            service_api_key_id: sak.as_ref().map(|sak| sak.id.into()),
             user_api_key_id: None,
             auth_method: AuthMethodEnum::ApiKey,
             auth_payload_hash,
