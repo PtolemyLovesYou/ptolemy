@@ -231,4 +231,4 @@ client.flush()
 print(((end - start) / N) * 1000)
 
 for i in client.sql("select 1"):
-  print(i)
+    print(i)
