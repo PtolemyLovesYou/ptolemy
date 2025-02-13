@@ -4,7 +4,6 @@ import time
 import requests
 from tqdm.auto import tqdm
 import pandas as pd
-from io import BytesIO
 from ptolemy import Ptolemy
 
 # get superadmin credentials
