@@ -47,3 +47,7 @@ run-prototype-app:
 .PHONY: run-query-engine
 run-query-engine:
 	uv run --directory query-engine main.py
+
+.PHONY: run-integration_tests
+run-integration-tests:
+	uv run --directory integration-tests -m pytest integration_tests
