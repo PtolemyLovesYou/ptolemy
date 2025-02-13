@@ -124,6 +124,10 @@ class Consumer(BaseModel):
         Returns:
             Message: Parsed message from stream
         """
+        if not self.conn.exists(self.stream_name):
+            logger.info("Stream does not exist, creating")
+            self._ensure_consumer_group()
+
         # Read new messages (> symbol)
         logger.debug("Attempting to read new messages from stream")
         messages = self.conn.xreadgroup(

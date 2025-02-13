@@ -11,7 +11,7 @@ import duckdb
 from pydantic import BaseModel, ConfigDict
 import pandas as pd
 from .status import QueryStatus
-from .env_settings import REDIS_DB, REDIS_HOST, REDIS_PORT
+from .env_settings import REDIS_DB, REDIS_HOST, REDIS_PORT, STREAM_NAME
 
 LOAD_EXT = """
 install postgres;
@@ -50,7 +50,7 @@ class QueryExecutor(BaseModel):
     @cached_property
     def keyspace(self) -> str:
         """Keyspace."""
-        return f"ptolemy:query:{self.query_id}"
+        return f"{STREAM_NAME}:{self.query_id}"
 
     @property
     def database_url(self) -> str:
