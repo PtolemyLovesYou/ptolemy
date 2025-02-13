@@ -80,10 +80,21 @@ class QueryExecutor(BaseModel):
         self.conn.execute(SET_ROLE)
         self.conn.commit()
 
-    def __call__(self) -> bool:
+    def init(self) -> None:
+        """Initialize."""
         if self.redis_conn.hexists(self.keyspace, "status"):
             self.logger.error("Query %s already executed. Overwriting.", self.query_id)
 
+        self.logger.info("Initializing query %s", self.query_id)
+        self.redis_conn.hset(
+            self.keyspace,
+            mapping={
+                "status": QueryStatus.PENDING
+            },
+        )
+        self.redis_conn.expire(self.keyspace, 3600)
+
+    def __call__(self) -> bool:
         self.logger.info("Executing query %s", self.query_id)
         self.logger.info("Setting status to running")
         self.redis_conn.hset(
@@ -107,8 +118,6 @@ class QueryExecutor(BaseModel):
                     "error": str(e)
                 }
             )
-            # Optionally set expiry time (e.g., 1 hour)
-            self.redis_conn.expire(self.keyspace, 3600)
             return 1
 
         total_rows = results.shape[0]
@@ -148,8 +157,5 @@ class QueryExecutor(BaseModel):
             self.keyspace,
             mapping=query_metadata
             )
-
-        # Set expiry time (e.g., 1 hour)
-        self.redis_conn.expire(self.keyspace, 3600)
 
         return 0

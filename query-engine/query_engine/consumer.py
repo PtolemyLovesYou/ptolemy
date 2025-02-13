@@ -214,6 +214,8 @@ class Consumer(BaseModel):
                 query=msg.query
             )
 
+            executor.init()
+
             try:
                 executor()
             except Exception as e:

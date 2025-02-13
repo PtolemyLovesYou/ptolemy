@@ -2,8 +2,8 @@
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from query_engine.consumer import Consumer
 import redis
+from query_engine.consumer import Consumer
 from query_engine.env_settings import REDIS_HOST, REDIS_PORT, REDIS_DB, STREAM_NAME, GROUP_NAME
 
 logger = logging.getLogger(__name__)
