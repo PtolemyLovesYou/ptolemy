@@ -232,6 +232,5 @@ end = time.time()
 client.flush()
 print(((end - start) / N) * 1000)
 
-for i in client.sql("select 1"):
-    buf = BytesIO(i)
-    print(pd.read_feather(buf))
+df = pd.concat(client.sql("select * from ptolemy.workspace"))
+print(df)

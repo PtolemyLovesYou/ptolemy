@@ -12,9 +12,34 @@ use crate::pybindings::client::utils::{format_traceback, ExcType, ExcValue, Trac
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use pyo3::sync::GILOnceCell;
+use pyo3_ffi::c_str;
 use std::collections::HashMap;
+use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+
+const BYTES_TO_DF_FN_STR: &'static CStr = c_str!(r###"
+import pandas as pd
+from io import BytesIO
+
+def bytes_to_df(by: bytes):
+    buf = BytesIO(by)
+    return pd.read_feather(buf)
+"###);
+static BYTES_TO_DF_FN: GILOnceCell<PyObject> = GILOnceCell::new();
+
+pub fn bytes_to_df(py: Python<'_>, by: Vec<u8>) -> PyResult<PyObject> {
+    let bytes_to_df = BYTES_TO_DF_FN.get_or_init(py, || {
+        PyModule::from_code(py, BYTES_TO_DF_FN_STR, c_str!(""), c_str!(""))
+            .unwrap()
+            .getattr("bytes_to_df")
+            .unwrap()
+            .unbind()
+    });
+
+    bytes_to_df.call1(py, (by,))
+}
 
 macro_rules! set_io {
     ($self:ident, $kwds:ident, $field_val_type:ident, $proto_struct:ident, $set_fn:ident) => {{
@@ -162,17 +187,25 @@ impl PtolemyClient {
     #[pyo3(signature=(query, batch_size=None, timeout_seconds=None))]
     fn sql(
         &mut self,
+        py: Python<'_>,
         query: String,
         batch_size: Option<u32>,
         timeout_seconds: Option<u32>,
-    ) -> PyResult<Vec<Vec<u8>>> {
+    ) -> PyResult<Vec<PyObject>> {
         let mut client = self
             .grpc_client
             .lock()
             .unwrap();
 
-        let data = client.query(query, batch_size, timeout_seconds)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let result = client.query(query, batch_size, timeout_seconds)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_iter();
+        
+        let mut data = Vec::new();
+
+        for r in result {
+            data.push(bytes_to_df(py, r)?);
+        }
 
         drop(client);
         Ok(data)

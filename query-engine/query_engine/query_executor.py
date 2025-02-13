@@ -19,6 +19,11 @@ class QueryStatus(StrEnum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+LOAD_EXT = """
+install postgres;
+load postgres;
+"""
+
 ATTACH_DB = """
 attach database '{}' as ptolemy (type postgres, schema 'duckdb', read_only);
 """
@@ -56,7 +61,7 @@ class QueryExecutor(BaseModel):
         user = os.getenv("POSTGRES_USER", "postgres")
         password = os.getenv("POSTGRES_PASSWORD", "postgres")
         host = os.getenv("POSTGRES_HOST", "localhost")
-        db = os.getenv("POSTGRES_DB", "postgres")
+        db = os.getenv("POSTGRES_DB", "ptolemy")
         postgres_port = os.getenv("POSTGRES_PORT", "5432")
         return f"postgresql://{user}:{password}@{host}:{postgres_port}/{db}"
 
@@ -66,11 +71,14 @@ class QueryExecutor(BaseModel):
             self.logger.info("Creating new connection")
             self.conn = duckdb.connect(":memory:")
 
+        self.logger.info("Loading extension")
+        self.conn.execute(LOAD_EXT)
         self.logger.info("Setting up connection")
         self.conn.execute(ATTACH_DB.format(self.database_url))
         self.logger.info("Setting workspace and role")
         self.conn.execute(SET_WORKSPACE.format(','.join(self.allowed_workspace_ids)))
         self.conn.execute(SET_ROLE)
+        self.conn.commit()
 
     def __call__(self) -> bool:
         if self.redis_conn.hexists(self.keyspace, "status"):
@@ -88,7 +96,7 @@ class QueryExecutor(BaseModel):
 
         try:
             self.logger.debug("Executing query %s", self.query_id)
-            results = self.conn.sql(self.query).df()
+            results = self.conn.sql(self.query).arrow().to_pandas()
 
         except Exception as e:  # pylint: disable=broad-except
             self.logger.info("Error executing query %s", self.query_id, exc_info=e)

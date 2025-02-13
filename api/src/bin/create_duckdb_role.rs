@@ -1,9 +1,11 @@
 use api::state::AppState;
 use diesel_async::RunQueryDsl;
 
-const QUERY: [&str; 4] = [
+const QUERY: [&str; 6] = [
     "create role ptolemy_duckdb;",
     "grant connect on database ptolemy to ptolemy_duckdb;",
+    "grant usage on schema public to ptolemy_duckdb;",
+    "grant select on all tables in schema public to ptolemy_duckdb;",
     "grant usage on schema duckdb to ptolemy_duckdb;",
     "grant select on all tables in schema duckdb to ptolemy_duckdb;",
 ];
