@@ -127,14 +127,15 @@ class QueryExecutor(BaseModel):
         column_types = results.dtypes.tolist()
         total_batches = 0
 
-        for i in range(0, len(results), 100):
-            total_batches += 1
+        for x, i in enumerate(range(0, len(results), 100)):
             buf = BytesIO()
             dff = results[i:i+100]
-            dff.to_feather(buf)
+            if len(dff) > 0:
+                total_batches += 1
+                dff.to_feather(buf)
 
-            self.logger.debug("Storing result batch %d for query %s", i, self.query_id)
-            self.redis_conn.hset(self.keyspace, f"result:{i}", buf.getvalue())
+                self.logger.debug("Storing result batch %d for query %s", x, self.query_id)
+                self.redis_conn.hset(self.keyspace, f"result:{x}", buf.getvalue())
 
         self.logger.debug(
             "Query %s executed with %d result batches of size %.2f kB",

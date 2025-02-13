@@ -206,7 +206,7 @@ client = Ptolemy(
     batch_size=1024
 )
 
-N = 100
+N = 1000
 
 start = time.time()
 for _ in tqdm(list(range(N))):
@@ -231,5 +231,5 @@ end = time.time()
 client.flush()
 print(((end - start) / N) * 1000)
 
-df = pd.concat(client.sql("select * from ptolemy.workspace"))
-print(df)
+df = pd.concat(client.sql("select * from ptolemy.subcomponent_event limit 1000"))
+print(len(df))
