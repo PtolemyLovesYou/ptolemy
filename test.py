@@ -1,10 +1,8 @@
 """Test log."""
 
 import time
-import uuid
 import requests
 from tqdm.auto import tqdm
-import redis
 from ptolemy import Ptolemy
 
 # get superadmin credentials
@@ -231,16 +229,3 @@ for _ in tqdm(list(range(N))):
 end = time.time()
 client.flush()
 print(((end - start) / N) * 1000)
-
-r = redis.Redis(host='localhost', port=6379, db=0)
-r.xadd(
-  "ptolemy:query",
-  {
-    "query_id": uuid.uuid4().hex,
-    "action": "query",
-    "query": "select 1 as foo",
-    "allowed_workspace_ids": wk_id,
-    "batch_size": 1024,
-    "timeout": 60
-  }
-  )
