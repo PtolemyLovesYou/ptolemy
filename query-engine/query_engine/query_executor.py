@@ -1,23 +1,17 @@
 """Query Executor."""
+
 import logging
 import os
 import json
-from enum import StrEnum
 from typing import Optional, List
 from io import BytesIO
 from functools import cached_property
 import redis
 import duckdb
 from pydantic import BaseModel, ConfigDict
+import pandas as pd
+from .status import QueryStatus
 from .env_settings import REDIS_DB, REDIS_HOST, REDIS_PORT
-
-class QueryStatus(StrEnum):
-    """Query Status."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
 
 LOAD_EXT = """
 install postgres;
@@ -36,12 +30,15 @@ SET_ROLE = """
 call postgres_execute('ptolemy', 'set role = ptolemy_duckdb');
 """
 
+
 class QueryExecutor(BaseModel):
     """Query Executor."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
     logger: logging.Logger
     query_id: str
     allowed_workspace_ids: List[str]
+    batch_size: int = 100
     query: str
     conn: Optional[duckdb.DuckDBPyConnection] = None
 
@@ -71,12 +68,10 @@ class QueryExecutor(BaseModel):
             self.logger.info("Creating new connection")
             self.conn = duckdb.connect(":memory:")
 
-        self.logger.info("Loading extension")
+        self.logger.info("Configuring")
         self.conn.execute(LOAD_EXT)
-        self.logger.info("Setting up connection")
         self.conn.execute(ATTACH_DB.format(self.database_url))
-        self.logger.info("Setting workspace and role")
-        self.conn.execute(SET_WORKSPACE.format(','.join(self.allowed_workspace_ids)))
+        self.conn.execute(SET_WORKSPACE.format(",".join(self.allowed_workspace_ids)))
         self.conn.execute(SET_ROLE)
         self.conn.commit()
 
@@ -88,35 +83,25 @@ class QueryExecutor(BaseModel):
         self.logger.info("Initializing query %s", self.query_id)
         self.redis_conn.hset(
             self.keyspace,
-            mapping={
-                "status": QueryStatus.PENDING
-            },
+            mapping={"status": QueryStatus.PENDING},
         )
         self.redis_conn.expire(self.keyspace, 3600)
 
     def __call__(self) -> bool:
         self.logger.info("Executing query %s", self.query_id)
         self.logger.info("Setting status to running")
-        self.redis_conn.hset(
-            self.keyspace,
-            "status",
-            QueryStatus.RUNNING
-        )
+        self.redis_conn.hset(self.keyspace, "status", QueryStatus.RUNNING)
 
         self.setup_conn()
 
         try:
             self.logger.debug("Executing query %s", self.query_id)
-            results = self.conn.sql(self.query).arrow().to_pandas()
+            results: pd.DataFrame = self.conn.sql(self.query).arrow().to_pandas()
 
         except Exception as e:  # pylint: disable=broad-except
             self.logger.info("Error executing query %s", self.query_id, exc_info=e)
             self.redis_conn.hset(
-                self.keyspace,
-                mapping={
-                    "status": QueryStatus.FAILED,
-                    "error": str(e)
-                }
+                self.keyspace, mapping={"status": QueryStatus.FAILED, "error": str(e)}
             )
             return 1
 
@@ -127,22 +112,28 @@ class QueryExecutor(BaseModel):
         column_types = results.dtypes.tolist()
         total_batches = 0
 
-        for batch_id, i in enumerate(range(0, len(results), 100)):
+        batches = {}
+
+        for batch_id, i in enumerate(range(0, len(results), self.batch_size)):
             buf = BytesIO()
-            dff = results[i:i+100]
+            dff = results[i : i + self.batch_size]
             if len(dff) > 0:
                 total_batches += 1
                 dff.to_feather(buf)
 
-                self.logger.debug("Storing result batch %d for query %s", batch_id, self.query_id)
-                self.redis_conn.hset(self.keyspace, f"result:{batch_id}", buf.getvalue())
+                self.logger.debug(
+                    "Storing result batch %d for query %s", batch_id, self.query_id
+                )
+                batches[f"result:{batch_id}"] = buf.getvalue()
 
-        self.logger.debug(
+        self.redis_conn.hset(self.keyspace, mapping=batches)
+
+        self.logger.info(
             "Query %s executed with %d result batches of size %.2f kB",
             self.query_id,
             total_batches,
-            est_size / 1024
-            )
+            est_size / 1024,
+        )
 
         query_metadata = {
             "status": QueryStatus.COMPLETED,
@@ -150,13 +141,10 @@ class QueryExecutor(BaseModel):
             "metadata:total_batches": total_batches,
             "metadata:est_size_bytes": int(est_size),
             "metadata:column_names": json.dumps(column_names),
-            "metadata:column_types": json.dumps([str(i) for i in column_types])
+            "metadata:column_types": json.dumps([str(i) for i in column_types]),
         }
 
         # Store the total number of result batches
-        self.redis_conn.hset(
-            self.keyspace,
-            mapping=query_metadata
-            )
+        self.redis_conn.hset(self.keyspace, mapping=query_metadata)
 
         return 0

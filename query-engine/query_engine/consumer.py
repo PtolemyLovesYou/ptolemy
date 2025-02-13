@@ -211,7 +211,8 @@ class Consumer(BaseModel):
                 logger=wlogger,
                 query_id=msg.query_id,
                 allowed_workspace_ids=msg.allowed_workspace_ids,
-                query=msg.query
+                query=msg.query,
+                batch_size=msg.batch_size or 100,
             )
 
             executor.init()

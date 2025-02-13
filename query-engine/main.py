@@ -4,9 +4,16 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import redis
 from query_engine.consumer import Consumer
-from query_engine.env_settings import REDIS_HOST, REDIS_PORT, REDIS_DB, STREAM_NAME, GROUP_NAME
+from query_engine.env_settings import (
+    REDIS_HOST,
+    REDIS_PORT,
+    REDIS_DB,
+    STREAM_NAME,
+    GROUP_NAME,
+)
 
 logger = logging.getLogger(__name__)
+
 
 def configure_logger():
     """Configure logger."""
@@ -15,6 +22,7 @@ def configure_logger():
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
 
 def main():
     """Main function."""
