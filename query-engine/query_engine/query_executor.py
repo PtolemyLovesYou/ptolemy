@@ -104,6 +104,9 @@ class QueryExecutor(BaseModel):
                 self.keyspace, mapping={"status": QueryStatus.FAILED, "error": str(e)}
             )
             return 1
+        finally:
+            self.logger.debug("Closing connection")
+            self.conn.close()
 
         total_rows = results.shape[0]
         est_size = results.memory_usage(deep=True).sum()

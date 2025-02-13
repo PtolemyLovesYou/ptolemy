@@ -2,10 +2,11 @@
 
 # pylint: disable=unused-argument,missing-function-docstring,too-few-public-methods
 from __future__ import annotations
-from typing import Optional, Any, Dict, TypeVar, List, Literal
+from typing import Optional, Any, Dict, TypeVar, List, Literal, Iterable
 from uuid import UUID
 from datetime import datetime
 from enum import Enum
+import pandas as pd
 
 T = TypeVar("T", bound=Enum)
 
@@ -76,6 +77,8 @@ class Ptolemy:
     def push_io(self) -> bool: ...
     def flush(self) -> bool: ...
 
+    def sql(self, query: str) -> Iterable[pd.DataFrame]: ...
+
 class Workspace:
     """Workspace object."""
 
@@ -135,7 +138,12 @@ class WorkspaceUser:
 class GraphQLClient:
     """GraphQL client."""
 
-    def __init__(self, url: str, api_key: str, auth_method: Literal['api_key', 'jwt'] = 'api_key'): ...
+    def __init__(
+        self,
+        url:str ,
+        api_key: str,
+        auth_method: Literal['api_key', 'jwt'] = 'api_key'
+        ): ...
     def me(self) -> User: ...
     def create_workspace(
         self,
