@@ -122,3 +122,67 @@ create table metadata (
          system_event_id is null and subsystem_event_id is null and component_event_id is null)
     )
 );
+
+-- create soft delete rules for all tables
+create rule soft_delete_system_event as
+    on delete to system_event do instead (
+        update system_event
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
+
+create rule soft_delete_subsystem_event as
+    on delete to subsystem_event do instead (
+        update subsystem_event
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
+
+create rule soft_delete_component_event as
+    on delete to component_event do instead (
+        update component_event
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
+
+create rule soft_delete_subcomponent_event as
+    on delete to subcomponent_event do instead (
+        update subcomponent_event
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
+
+create rule soft_delete_runtime as
+    on delete to runtime do instead (
+        update runtime
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
+
+create rule soft_delete_io as
+    on delete to io do instead (
+        update io
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
+
+create rule soft_delete_metadata as
+    on delete to metadata do instead (
+        update metadata
+        set deleted_at = now(),
+            deletion_reason = 'soft delete'
+        where id = old.id
+          and deleted_at is null
+    );
