@@ -25,8 +25,6 @@ create table api_auth_audit_logs (
     auth_payload_hash bytea,
     success boolean not null,
     failure_details jsonb,
-    is_emergency_access boolean default false,
-    emergency_access_reason varchar,
     -- At least one of these should be present
     constraint check_id check (
         (user_id is not null) or

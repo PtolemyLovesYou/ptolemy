@@ -42,8 +42,6 @@ diesel::table! {
         auth_payload_hash -> Nullable<Bytea>,
         success -> Bool,
         failure_details -> Nullable<Jsonb>,
-        is_emergency_access -> Nullable<Bool>,
-        emergency_access_reason -> Nullable<Varchar>,
     }
 }
 
