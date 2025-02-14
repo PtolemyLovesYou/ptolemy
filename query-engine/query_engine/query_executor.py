@@ -129,7 +129,8 @@ class QueryExecutor(BaseModel):
                 )
                 batches[f"result:{batch_id}"] = buf.getvalue()
 
-        self.redis_conn.hset(self.keyspace, mapping=batches)
+        if batches:
+            self.redis_conn.hset(self.keyspace, mapping=batches)
 
         self.logger.info(
             "Query %s executed with %d result batches of size %.2f kB",

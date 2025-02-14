@@ -11,13 +11,8 @@ SYSADMIN_USERNAME = os.getenv("SYSADMIN_USERNAME", "admin")
 SYSADMIN_PASSWORD = os.getenv("SYSADMIN_PASSWORD", "admin")
 GRAPHQL_PATH = os.getenv("GRAPHQL_PATH", "../ptolemy/graphql")
 
-ADMIN_USERNAME = f"test_user_admin_{int(time.time())}"
-ADMIN_PASSWORD = ADMIN_USERNAME
-
 USER_USERNAME = f"test_user_{int(time.time())}"
 USER_PASSWORD = USER_USERNAME
-
-WORKSPACE_NAME = f"test_workspace_{int(time.time())}"
 
 with open(os.path.join(GRAPHQL_PATH, "query.gql"), encoding="utf-8") as f:
     GRAPHQL_QUERY = f.read()
@@ -47,7 +42,12 @@ class IntegrationTestBase:
         yield resp.json()["token"]
 
     @pytest.fixture(scope="class")
-    def admin_user_id(self, sysadmin_jwt: str) -> Generator[str, None, None]:
+    def workspace_name(self) -> Generator[str, None, None]:
+        """Workspace Name."""
+        yield f"test_workspace_{int(time.time())}"
+
+    @pytest.fixture(scope="class")
+    def admin_user_id(self, sysadmin_jwt: str, admin_username: str) -> Generator[str, None, None]:
         """Create admin user."""
         resp = requests.post(
             os.path.join(BASE_URL, "graphql"),
@@ -55,8 +55,8 @@ class IntegrationTestBase:
                 "query": GRAPHQL_MUTATION,
                 "operationName": "CreateUser",
                 "variables": {
-                    "username": ADMIN_USERNAME,
-                    "password": ADMIN_PASSWORD,
+                    "username": admin_username,
+                    "password": admin_username,
                     "displayName": "Test User (integration tests)",
                     "isAdmin": True,
                 },
@@ -90,14 +90,30 @@ class IntegrationTestBase:
 
         assert resp.status_code == 200, f"Error: {resp.text}"
 
+        delete_resp = requests.post(
+            os.path.join(BASE_URL, "graphql"),
+            json={
+                "query": GRAPHQL_MUTATION,
+                "operationName": "DeleteUser",
+                "variables": {"userId": user_id},
+            },
+            timeout=30,
+            headers={
+                "Authorization": f"Bearer {sysadmin_jwt}",
+                "Content-Type": "application/json",
+            },
+        )
+
+        assert delete_resp.status_code == 200, f"Error: {delete_resp.text}"
+
     @pytest.fixture(scope="class")
-    def admin_jwt(self, admin_user_id: str) -> Generator[str, None, None]:
+    def admin_jwt(self, admin_user_id: str, admin_username: str) -> Generator[str, None, None]:
         """Admin JWT."""
         resp = requests.post(
             os.path.join(BASE_URL, "auth"),
             json={
-                "username": ADMIN_USERNAME,
-                "password": ADMIN_PASSWORD,
+                "username": admin_username,
+                "password": admin_username,
             },
             timeout=10,
         )
@@ -105,6 +121,11 @@ class IntegrationTestBase:
         assert resp.status_code == 200, f"Error for {admin_user_id}: {resp.text}"
 
         yield resp.json()["token"]
+
+    @pytest.fixture(scope="class")
+    def admin_username(self) -> Generator[str, None, None]:
+        """Username."""
+        yield f"test_user_{int(time.time())}"
 
     @pytest.fixture(scope="class")
     def admin_api_key(self, admin_jwt: str) -> Generator[str, None, None]:
@@ -133,7 +154,7 @@ class IntegrationTestBase:
 
     @pytest.fixture(scope="class")
     def workspace_id(
-        self, admin_api_key: str, admin_user_id: str
+        self, admin_api_key: str, admin_user_id: str, workspace_name: str
     ) -> Generator[str, None, None]:
         """Workspace Name."""
         resp = requests.post(
@@ -142,7 +163,7 @@ class IntegrationTestBase:
                 "query": GRAPHQL_MUTATION,
                 "operationName": "CreateWorkspace",
                 "variables": {
-                    "name": WORKSPACE_NAME,
+                    "name": workspace_name,
                     "description": "Test Workspace (integration tests)",
                     "adminUserId": admin_user_id,
                 },
@@ -223,12 +244,12 @@ class IntegrationTestBase:
         yield from self._service_api_key(admin_api_key, workspace_id, "WRITE_ONLY")
 
     @pytest.fixture
-    def client(self, rw_service_api_key: str) -> Ptolemy:
+    def client(self, rw_service_api_key: str, workspace_name: str) -> Ptolemy:
         """Ptolemy Client."""
         return Ptolemy(
             base_url=BASE_URL,
             api_key=rw_service_api_key,
-            workspace_name=WORKSPACE_NAME,
+            workspace_name=workspace_name,
             autoflush=False,
             batch_size=256,
         )

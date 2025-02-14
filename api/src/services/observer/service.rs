@@ -18,7 +18,9 @@ impl MyObserver {
     }
 }
 
-async fn insert_rows(state: ApiAppState, records: Vec<Record>) {
+async fn insert_rows(state: ApiAppState, records: Vec<Record>, auth_context: AuthContext) {
+    use diesel_async::RunQueryDsl;
+
     let mut conn = match state.get_conn().await {
         Ok(c) => c,
         Err(e) => {
@@ -26,6 +28,16 @@ async fn insert_rows(state: ApiAppState, records: Vec<Record>) {
             return;
         }
     };
+
+    diesel::sql_query(format!("SET app.current_api_access_audit_log_id = '{}'", auth_context.api_access_audit_log_id.to_string()))
+        .execute(&mut conn)
+        .await
+        .expect("Failed to set current_api_access_audit_log_id");
+
+    diesel::sql_query(format!("SET app.current_user_query_id = '{}'", uuid::Uuid::new_v4().to_string()))
+        .execute(&mut conn)
+        .await
+        .expect("Failed to set current_api_access_id");
 
     let event_records = EventRecords::new(records);
     event_records.push(&mut conn).await;
@@ -56,11 +68,13 @@ impl Observer for MyObserver {
             }
         };
 
+        let auth_context_clone = auth_context.clone();
+
         let records = request.into_inner().records;
 
         debug!("Received {} records", records.len());
 
-        tokio::spawn(insert_rows(self.state.clone(), records));
+        tokio::spawn(insert_rows(self.state.clone(), records, auth_context_clone));
 
         let reply = PublishResponse {
             successful: true,
