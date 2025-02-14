@@ -56,52 +56,54 @@ create table record_access_audit_logs (
     entity_ids uuid[]
 );
 
-create or replace function log_record_access()
-returns trigger as $$
-declare
+CREATE OR REPLACE FUNCTION log_record_access()
+RETURNS trigger AS $$
+DECLARE
     _api_access_audit_log_id uuid;
     _user_query_id uuid;
     _operation operation_type;
     _entity_ids uuid[];
-begin
+BEGIN
     -- Get current query context with error handling
-    begin
+    BEGIN
         _api_access_audit_log_id := current_setting('app.current_api_access_audit_log_id')::uuid;
         _user_query_id := current_setting('app.current_user_query_id')::uuid;
-    exception 
-        when undefined_object then
-            raise exception 'Required context not set: app.current_api_access_audit_log_id or app.current_user_query_id must be set';
-    end;
+    EXCEPTION 
+        WHEN undefined_object THEN
+            RAISE EXCEPTION 'Required context not set: app.current_api_access_audit_log_id or app.current_user_query_id must be set';
+    END;
     
     -- Determine operation type
-    if TG_OP = 'INSERT' then
+    IF TG_OP = 'INSERT' THEN
         _operation := 'create';
-    elsif TG_OP = 'UPDATE' then
-        if new.deleted_at is not null and old.deleted_at is null then
+        SELECT array_agg(id) INTO _entity_ids FROM new;
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF EXISTS (
+            SELECT 1 FROM new 
+            WHERE deleted_at IS NOT NULL 
+            AND id IN (SELECT id FROM old WHERE deleted_at IS NULL)
+        ) THEN
             _operation := 'delete';  -- Soft delete
-        else
+        ELSE
             _operation := 'update';
-        end if;
-    elsif TG_OP = 'DELETE' then
+        END IF;
+        SELECT array_agg(id) INTO _entity_ids FROM new;
+    ELSIF TG_OP = 'DELETE' THEN
         _operation := 'delete';      -- Hard delete
-    elsif TG_OP = 'SELECT' then
+        SELECT array_agg(id) INTO _entity_ids FROM old;
+    ELSIF TG_OP = 'SELECT' THEN
         _operation := 'read';
-    end if;
+        SELECT array_agg(id) INTO _entity_ids FROM new;
+    END IF;
 
-    -- Set entity_ids based on operation type
-    _entity_ids := case 
-        when TG_OP = 'DELETE' then array[old.id]
-        when TG_OP in ('UPDATE', 'SELECT', 'INSERT') then array[new.id]
-    end;
-
-    insert into record_access_audit_logs (
+    INSERT INTO record_access_audit_logs (
         api_access_audit_log_id,
         user_query_id,
         operation_type,
         schema_name,
         table_name,
         entity_ids
-    ) values (
+    ) VALUES (
         _api_access_audit_log_id,
         _user_query_id,
         _operation,
@@ -110,9 +112,9 @@ begin
         _entity_ids
     );
 
-    return null;
-end;
-$$ language plpgsql security definer;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 create trigger audit_record_access_insert
 after insert on system_event
