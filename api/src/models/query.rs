@@ -52,5 +52,68 @@ pub struct UserQueryCreate {
     query_start_time: chrono::DateTime<chrono::Utc>,
     query_end_time: Option<chrono::DateTime<chrono::Utc>>,
     query_status: QueryStatusEnum,
+    failure_details: Option<serde_json::Value>,
     resource_usage: Option<serde_json::Value>,
+}
+
+impl UserQueryCreate {
+    pub fn sql(
+        allowed_workspace_ids: Vec<Uuid>,
+        access_reason: Option<AccessReasonEnum>,
+        access_reason_details: Option<String>,
+        query_text: String,
+        query_metadata: Option<serde_json::Value>,
+        query_start_time: chrono::DateTime<chrono::Utc>,
+        query_end_time: Option<chrono::DateTime<chrono::Utc>>,
+        query_status: QueryStatusEnum,
+        failure_details: Option<serde_json::Value>,
+        resource_usage: Option<serde_json::Value>,
+    ) -> Self {
+        UserQueryCreate {
+            allowed_workspace_ids,
+            query_type: QueryTypeEnum::Sql,
+            access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),
+            query_access_details: access_reason_details,
+            query_text,
+            operation_name: None,
+            variables: None,
+            query_metadata,
+            query_start_time,
+            query_end_time,
+            query_status,
+            failure_details,
+            resource_usage,
+        }
+    }
+
+    pub fn graphql(
+        allowed_workspace_ids: Vec<Uuid>,
+        access_reason: Option<AccessReasonEnum>,
+        access_reason_details: Option<String>,
+        query_text: String,
+        operation_name: Option<String>,
+        variables: Option<serde_json::Value>,
+        query_metadata: Option<serde_json::Value>,
+        query_start_time: chrono::DateTime<chrono::Utc>,
+        query_end_time: Option<chrono::DateTime<chrono::Utc>>,
+        query_status: QueryStatusEnum,
+        failure_details: Option<serde_json::Value>,
+        resource_usage: Option<serde_json::Value>,
+    ) -> Self {
+        UserQueryCreate {
+            allowed_workspace_ids,
+            query_type: QueryTypeEnum::Graphql,
+            access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),
+            query_access_details: access_reason_details,
+            query_text,
+            operation_name,
+            variables,
+            query_metadata,
+            query_start_time,
+            query_end_time,
+            query_status,
+            failure_details,
+            resource_usage,
+        }
+    }
 }
