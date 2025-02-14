@@ -1,6 +1,6 @@
 use crate::{
     generated::query_schema::user_query,
-    models::query::UserQuery;
+    models::query::UserQuery,
 };
 use diesel_async::RunQueryDsl;
 
