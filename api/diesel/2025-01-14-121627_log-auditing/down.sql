@@ -14,13 +14,11 @@ drop rule soft_delete_service_api_key on service_api_key;
 
 -- Drop indices
 drop index idx_iam_audit_access_id;
-drop index idx_record_audit_access_id;
 drop index idx_api_auth_audit_access_id;
 drop index idx_api_access_audit_archive;
 
 -- Drop audit tables (in correct order due to foreign key constraints)
 drop table iam_audit_logs;
-drop table record_audit_logs;
 drop table api_auth_audit_logs;
 drop table api_access_audit_logs;
 

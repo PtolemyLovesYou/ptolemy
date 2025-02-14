@@ -62,30 +62,11 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::OperationType;
-
-    record_audit_logs (id) {
-        id -> Uuid,
-        api_access_audit_log_id -> Uuid,
-        workspace_id -> Uuid,
-        table_name -> Varchar,
-        hashed_id -> Nullable<Array<Nullable<Bytea>>>,
-        operation_type -> OperationType,
-        batch_id -> Nullable<Uuid>,
-        failure_reason -> Nullable<Varchar>,
-        query_metadata -> Nullable<Jsonb>,
-    }
-}
-
 diesel::joinable!(api_auth_audit_logs -> api_access_audit_logs (api_access_audit_log_id));
 diesel::joinable!(iam_audit_logs -> api_access_audit_logs (api_access_audit_log_id));
-diesel::joinable!(record_audit_logs -> api_access_audit_logs (api_access_audit_log_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     api_access_audit_logs,
     api_auth_audit_logs,
     iam_audit_logs,
-    record_audit_logs,
 );

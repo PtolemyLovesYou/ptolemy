@@ -1,12 +1,11 @@
 use super::prelude::*;
 use crate::{
     generated::audit_schema::{
-        api_access_audit_logs, api_auth_audit_logs, iam_audit_logs, record_audit_logs,
+        api_access_audit_logs, api_auth_audit_logs, iam_audit_logs,
     },
     insert_obj_traits,
     models::{
         ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, IAMAuditLogCreate,
-        RecordAuditLogCreate,
     },
     db::DbConnection,
 };
@@ -16,7 +15,6 @@ use tracing::error;
 insert_obj_traits!(ApiAccessAuditLogCreate, api_access_audit_logs);
 insert_obj_traits!(AuthAuditLogCreate, api_auth_audit_logs);
 insert_obj_traits!(IAMAuditLogCreate, iam_audit_logs);
-insert_obj_traits!(RecordAuditLogCreate, record_audit_logs);
 
 macro_rules! insert_audit_logs {
     ($type:ident, $records:ident, $failed_logs:ident, $conn:ident) => {
@@ -38,14 +36,12 @@ impl AuditLog {
         let mut api_access_logs = Vec::new();
         let mut api_auth_logs = Vec::new();
         let mut iam_logs = Vec::new();
-        let mut record_logs = Vec::new();
 
         for log in records {
             match log {
                 AuditLog::ApiAccess(l) => api_access_logs.push(l),
                 AuditLog::Auth(l) => api_auth_logs.push(l),
                 AuditLog::IAM(l) => iam_logs.push(l),
-                AuditLog::Record(l) => record_logs.push(l),
             }
         }
 
@@ -54,7 +50,6 @@ impl AuditLog {
         insert_audit_logs!(ApiAccessAuditLogCreate, api_access_logs, failed_logs, conn);
         insert_audit_logs!(AuthAuditLogCreate, api_auth_logs, failed_logs, conn);
         insert_audit_logs!(IAMAuditLogCreate, iam_logs, failed_logs, conn);
-        insert_audit_logs!(RecordAuditLogCreate, record_logs, failed_logs, conn);
 
         match failed_logs.len() {
             0 => Ok(()),

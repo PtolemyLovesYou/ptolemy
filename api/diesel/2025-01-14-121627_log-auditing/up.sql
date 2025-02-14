@@ -34,24 +34,6 @@ create table api_auth_audit_logs (
     )
 );
 
--- Record audit logs
-create table record_audit_logs (
-    id uuid primary key default gen_random_uuid(),
-    api_access_audit_log_id uuid not null references api_access_audit_logs(id),
-    workspace_id uuid not null references workspace(id),
-    table_name varchar not null,
-    hashed_id bytea[],
-
-    operation_type operation_type not null,
-    -- Optional - for batch operation correlation
-    batch_id uuid,
-    failure_reason varchar,
-    query_metadata jsonb,
-    constraint check_resource_or_failure check (
-        hashed_id is not null or failure_reason is not null
-    )
-);
-
 create table iam_audit_logs (
     id uuid primary key default gen_random_uuid(),
     api_access_audit_log_id uuid not null references api_access_audit_logs(id),
@@ -78,9 +60,6 @@ create index idx_api_access_audit_archive
 -- Add indices for efficient joins when archiving
 create index idx_api_auth_audit_access_id
     on api_auth_audit_logs(api_access_audit_log_id);
-
-create index idx_record_audit_access_id
-    on record_audit_logs(api_access_audit_log_id);
 
 create index idx_iam_audit_access_id
     on iam_audit_logs(api_access_audit_log_id);
