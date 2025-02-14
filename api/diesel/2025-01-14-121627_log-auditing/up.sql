@@ -72,27 +72,6 @@ create table iam_audit_logs (
     )
 );
 
--- Soft deletion for iam tables
-alter table service_api_key
-    add column deleted_at timestamptz,
-    add column deletion_reason varchar;
-
-alter table user_api_key
-    add column deleted_at timestamptz,
-    add column deletion_reason varchar;
-
-alter table workspace
-    add column deleted_at timestamptz,
-    add column deletion_reason varchar;
-
-alter table users
-    add column deleted_at timestamptz,
-    add column deletion_reason varchar;
-
-alter table workspace_user 
-    add column deleted_at timestamptz,
-    add column deletion_reason varchar;
-
 -- Indices for archiving
 create index idx_api_access_audit_archive 
     on api_access_audit_logs(created_at) 

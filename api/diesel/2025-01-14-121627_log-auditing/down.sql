@@ -18,27 +18,6 @@ drop index idx_record_audit_access_id;
 drop index idx_api_auth_audit_access_id;
 drop index idx_api_access_audit_archive;
 
--- Remove soft deletion columns
-alter table workspace_user 
-    drop column deletion_reason,
-    drop column deleted_at;
-
-alter table users
-    drop column deletion_reason,
-    drop column deleted_at;
-
-alter table workspace
-    drop column deletion_reason,
-    drop column deleted_at;
-
-alter table user_api_key
-    drop column deletion_reason,
-    drop column deleted_at;
-
-alter table service_api_key
-    drop column deletion_reason,
-    drop column deleted_at;
-
 -- Drop audit tables (in correct order due to foreign key constraints)
 drop table iam_audit_logs;
 drop table record_audit_logs;

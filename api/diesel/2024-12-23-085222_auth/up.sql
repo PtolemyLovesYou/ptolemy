@@ -11,6 +11,8 @@ create table users (
     status user_status not null default 'active',
     is_sysadmin bool not null,
     is_admin bool not null,
+    deleted_at timestamptz,
+    deletion_reason varchar,
     CONSTRAINT check_admin_roles CHECK (NOT (is_sysadmin AND is_admin))
 );
 
@@ -19,6 +21,8 @@ create table workspace_user (
     user_id uuid not null references users(id) on delete cascade,
     workspace_id uuid not null references workspace(id) on delete cascade,
     role workspace_role not null,
+    deleted_at timestamptz,
+    deletion_reason varchar,
     unique(user_id, workspace_id)
 );
 
@@ -28,8 +32,9 @@ create table user_api_key (
     name varchar not null,
     key_hash varchar not null,
     key_preview varchar not null,
-    -- permissions api_key_permission not null,
-    expires_at timestamptz(6)
+    expires_at timestamptz(6),
+    deleted_at timestamptz,
+    deletion_reason varchar
 );
 
 create table service_api_key (
@@ -39,5 +44,7 @@ create table service_api_key (
     key_hash varchar not null,
     key_preview varchar(16) not null,
     permissions api_key_permission not null,
-    expires_at timestamptz(6)
+    expires_at timestamptz(6),
+    deleted_at timestamptz,
+    deletion_reason varchar
 );
