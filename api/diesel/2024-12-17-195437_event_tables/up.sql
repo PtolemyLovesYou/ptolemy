@@ -8,7 +8,9 @@ create table system_event (
     name varchar not null,
     parameters json,
     version varchar(16),
-    environment varchar(8)
+    environment varchar(8),
+    deleted_at timestamptz,
+    deletion_reason varchar
 );
 
 create table subsystem_event (
@@ -17,7 +19,9 @@ create table subsystem_event (
     name varchar not null,
     parameters json,
     version varchar(16),
-    environment varchar(8)
+    environment varchar(8),
+    deleted_at timestamptz,
+    deletion_reason varchar
 );
 
 create table component_event (
@@ -26,7 +30,9 @@ create table component_event (
     name varchar not null,
     parameters json,
     version varchar(16),
-    environment varchar(8)
+    environment varchar(8),
+    deleted_at timestamptz,
+    deletion_reason varchar
 );
 
 create table subcomponent_event (
@@ -35,7 +41,9 @@ create table subcomponent_event (
     name varchar not null,
     parameters json,
     version varchar(16),
-    environment varchar(8)
+    environment varchar(8),
+    deleted_at timestamptz,
+    deletion_reason varchar
 );
 
 create table runtime (
@@ -49,6 +57,8 @@ create table runtime (
     end_time timestamptz(6) not null,
     error_type varchar,
     error_content varchar,
+    deleted_at timestamptz,
+    deletion_reason varchar,
     constraint runtime_fk_tier_check check (
         (tier = 'system' and system_event_id is not null and 
          subsystem_event_id is null and component_event_id is null and subcomponent_event_id is null) or
@@ -76,6 +86,8 @@ create table io (
     field_value_bool bool,
     field_value_json json,
     field_value_type field_value_type not null,
+    deleted_at timestamptz,
+    deletion_reason varchar,
     constraint io_fk_tier_check check (
         (tier = 'system' and system_event_id is not null and 
          subsystem_event_id is null and component_event_id is null and subcomponent_event_id is null) or
@@ -97,6 +109,8 @@ create table metadata (
     subcomponent_event_id uuid references subcomponent_event(id) on delete cascade,
     field_name varchar not null,
     field_value varchar not null,
+    deleted_at timestamptz,
+    deletion_reason varchar,
     constraint metadata_fk_tier_check check (
         (tier = 'system' and system_event_id is not null and 
          subsystem_event_id is null and component_event_id is null and subcomponent_event_id is null) or
