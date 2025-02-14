@@ -11,11 +11,11 @@ use diesel::{
 use juniper::GraphQLEnum;
 use std::io::Write;
 
-define_enum!(WorkspaceRoleEnum, WorkspaceRole, [User, Manager, Admin], WithSerialize);
-define_enum!(UserStatusEnum, UserStatus, [Active, Suspended], WithSerialize);
+define_enum!(WorkspaceRoleEnum, WorkspaceRole, [User, Manager, Admin], WithConversion);
+define_enum!(UserStatusEnum, UserStatus, [Active, Suspended], WithConversion);
 define_enum!(
     ApiKeyPermissionEnum,
     ApiKeyPermission,
     [ReadOnly, WriteOnly, ReadWrite],
-    WithSerialize
+    WithConversion
 );

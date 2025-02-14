@@ -14,8 +14,7 @@ use std::io::Write;
 define_enum!(
     OperationTypeEnum,
     OperationType,
-    [Read, Create, Update, Delete, Grant, Revoke],
-    WithSerialize
+    [Read, Create, Update, Delete, Grant, Revoke]
 );
 
-define_enum!(AuthMethodEnum, AuthMethod, [ApiKey, JWT, UsernamePassword], WithSerialize);
+define_enum!(AuthMethodEnum, AuthMethod, [ApiKey, JWT, UsernamePassword]);
