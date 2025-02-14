@@ -38,9 +38,10 @@ crate::define_enum!(
         ]
     );
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Selectable, Insertable)]
 #[diesel(table_name = user_query)]
-pub struct UserQueryCreate {
+pub struct UserQuery {
+    id: Uuid,
     allowed_workspace_ids: Vec<Uuid>,
     query_type: QueryTypeEnum,
     access_reason: AccessReasonEnum,
@@ -56,7 +57,7 @@ pub struct UserQueryCreate {
     resource_usage: Option<serde_json::Value>,
 }
 
-impl UserQueryCreate {
+impl UserQuery {
     pub fn sql(
         allowed_workspace_ids: Vec<Uuid>,
         access_reason: Option<AccessReasonEnum>,
@@ -69,7 +70,8 @@ impl UserQueryCreate {
         failure_details: Option<serde_json::Value>,
         resource_usage: Option<serde_json::Value>,
     ) -> Self {
-        UserQueryCreate {
+        UserQuery {
+            id: uuid::Uuid::new_v4(),
             allowed_workspace_ids,
             query_type: QueryTypeEnum::Sql,
             access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),
@@ -100,7 +102,8 @@ impl UserQueryCreate {
         failure_details: Option<serde_json::Value>,
         resource_usage: Option<serde_json::Value>,
     ) -> Self {
-        UserQueryCreate {
+        UserQuery {
+            id: uuid::Uuid::new_v4(),
             allowed_workspace_ids,
             query_type: QueryTypeEnum::Graphql,
             access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),
