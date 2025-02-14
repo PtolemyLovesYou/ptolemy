@@ -37,6 +37,10 @@ macro_rules! define_enum {
                 Err(format!("Unrecognized enum variant: {}", String::from_utf8_lossy(bytes.as_bytes())).into())
             }
         }
+    };
+
+    ($name:ident, $type:tt, [$($variant:ident),+], WithSerialize) => {
+        define_enum!($name, $type, [$($variant),+]);
 
         impl Into<ptolemy::models::enums::$type> for $name {
             fn into(self) -> ptolemy::models::enums::$type {

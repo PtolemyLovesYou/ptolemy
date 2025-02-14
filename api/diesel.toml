@@ -15,5 +15,11 @@ filter = { only_tables = ["workspace", "system_event", "subsystem_event", "compo
 file = "src/generated/audit_schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
 filter = { only_tables = ["api_auth_audit_logs", "api_access_audit_logs", "iam_audit_logs", "record_audit_logs"] }
+
+[print_schema.query]
+file = "src/generated/query_schema.rs"
+custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
+filter = { only_tables = ["user_query"] }
+
 [migrations_directory]
 dir = "diesel/"

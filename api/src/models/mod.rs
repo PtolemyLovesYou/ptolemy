@@ -3,6 +3,7 @@ pub mod auth;
 pub mod enum_utils;
 pub mod middleware;
 pub mod records;
+pub mod query;
 
 pub use self::audit::*;
 pub use self::auth::*;
