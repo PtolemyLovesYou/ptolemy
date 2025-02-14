@@ -19,25 +19,18 @@ impl MyObserver {
 }
 
 async fn insert_rows(state: ApiAppState, records: Vec<Record>, auth_context: AuthContext) {
-    use diesel_async::RunQueryDsl;
+    let user_query_id = uuid::Uuid::new_v4();
 
-    let mut conn = match state.get_conn().await {
+    let mut conn = match state.get_conn_with_vars(
+        &auth_context.api_access_audit_log_id,
+        Some(&user_query_id),
+    ).await {
         Ok(c) => c,
         Err(e) => {
             error!("Failed to get database connection: {:?}", e);
             return;
         }
     };
-
-    diesel::sql_query(format!("SET app.current_api_access_audit_log_id = '{}'", auth_context.api_access_audit_log_id.to_string()))
-        .execute(&mut conn)
-        .await
-        .expect("Failed to set current_api_access_audit_log_id");
-
-    diesel::sql_query(format!("SET app.current_user_query_id = '{}'", uuid::Uuid::new_v4().to_string()))
-        .execute(&mut conn)
-        .await
-        .expect("Failed to set current_api_access_id");
 
     let event_records = EventRecords::new(records);
     event_records.push(&mut conn).await;

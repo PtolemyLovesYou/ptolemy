@@ -9,6 +9,7 @@ use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{
     pooled_connection::bb8::Pool,
     AsyncPgConnection,
+    RunQueryDsl,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use ptolemy::writer::Writer;
@@ -141,6 +142,27 @@ impl AppState {
                 Err(ApiError::ConnectionError)
             }
         }
+    }
+
+    pub async fn get_conn_with_vars(
+        &self,
+        api_access_audit_log_id: &uuid::Uuid,
+        user_query_id: Option<&uuid::Uuid>,
+    ) -> Result<DbConnection<'_>, ApiError> {
+        let mut conn = self.get_conn().await?;
+        diesel::sql_query(format!("SET app.current_api_access_audit_log_id = '{}'", api_access_audit_log_id.to_string()))
+            .execute(&mut conn)
+            .await
+            .expect("Failed to set current_api_access_audit_log_id");
+
+        if let Some(user_query_id) = user_query_id {
+            diesel::sql_query(format!("SET app.current_user_query_id = '{}'", user_query_id.to_string()))
+                .execute(&mut conn)
+                .await
+                .expect("Failed to set current_api_access_id");
+        }
+
+        Ok(conn)
     }
 
     pub async fn get_conn_http(&self) -> Result<DbConnection<'_>, StatusCode> {
