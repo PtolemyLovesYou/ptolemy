@@ -235,7 +235,7 @@ impl QueryEngineRedisHandler {
                 ApiError::InternalError
             })?;
 
-        redis::cmd("HEXPIRE")
+        redis::cmd("EXPIRE")
             .arg(format!("ptolemy:query:{}", &self.query_id))
             .arg(3600)
             .exec_async(&mut self.conn)

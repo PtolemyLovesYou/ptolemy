@@ -45,6 +45,7 @@ async fn log_status_trigger(
     use ptolemy::generated::query_engine::QueryStatus;
 
     let start_time = chrono::Utc::now();
+    let mut interval = tokio::time::interval(chrono::Duration::seconds(1).to_std().unwrap());
     let mut n_iter = 0;
     while start_time + chrono::Duration::seconds(timeout.into()) > chrono::Utc::now() {
         match handler.get_query_status().await {
@@ -53,7 +54,7 @@ async fn log_status_trigger(
 
                 match status.status() {
                     QueryStatus::Pending | QueryStatus::Running => {
-                        continue;
+                        ();
                     }
                     _ => {
                         let obj = UserQueryResult {
@@ -104,7 +105,7 @@ async fn log_status_trigger(
                 }
             }
         };
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        interval.tick().await;
         n_iter += 1;
     }
 }

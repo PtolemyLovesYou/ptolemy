@@ -1,33 +1,27 @@
-use tower_http::classify::{GrpcErrorsAsFailures, ServerErrorsAsFailures};
-use tower_http::{
-    trace::{self, TraceLayer},
-    LatencyUnit,
-};
-use tracing::Level;
-
-type TraceMiddleware<T> = TraceLayer<tower_http::classify::SharedClassifier<T>>;
-
-pub fn trace_layer<T>(layer: TraceMiddleware<T>) -> TraceMiddleware<T> {
-    layer
-        .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
-        .on_response(
-            trace::DefaultOnResponse::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
-        .on_body_chunk(trace::DefaultOnBodyChunk::new())
-        .on_eos(
-            trace::DefaultOnEos::new()
-                .level(Level::INFO)
-                .latency_unit(LatencyUnit::Micros),
-        )
-        .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
-}
-
-pub fn trace_layer_rest() -> TraceMiddleware<ServerErrorsAsFailures> {
-    trace_layer(TraceLayer::new_for_http())
-}
-
-pub fn trace_layer_grpc() -> TraceMiddleware<GrpcErrorsAsFailures> {
-    trace_layer(TraceLayer::new_for_grpc())
+#[macro_export]
+macro_rules! trace_layer {
+    (Http) => { crate::trace_layer!(new_for_http) };
+    // (Grpc) => { crate::trace_layer!(new_for_grpc) };
+    ($type:ident) => {
+        tower_http::trace::TraceLayer::$type()
+            .on_request(|request: &axum::http::Request<_>, _: &_| {
+                tracing::info!(
+                    method = %request.method(),
+                    path = %request.uri().path(),
+                    "incoming request"
+                );
+            })
+            .on_response(
+                tower_http::trace::DefaultOnResponse::new()
+                    .level(tracing::Level::INFO)
+                    .latency_unit(tower_http::LatencyUnit::Micros),
+            )
+            .on_body_chunk(tower_http::trace::DefaultOnBodyChunk::new())
+            .on_eos(
+                tower_http::trace::DefaultOnEos::new()
+                    .level(tracing::Level::INFO)
+                    .latency_unit(tower_http::LatencyUnit::Micros),
+            )
+            .on_failure(tower_http::trace::DefaultOnFailure::new().level(tracing::Level::ERROR))
+    };
 }

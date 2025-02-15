@@ -1,6 +1,6 @@
 use self::graphql::graphql_handler;
 use crate::{
-    middleware::{master_auth_middleware, trace_layer_rest},
+    middleware::master_auth_middleware,
     services::auth::authentication_service,
     services::observer::observer_service,
     services::query_engine::query_engine_service,
@@ -70,5 +70,5 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .merge(grpc_router)
         .merge(http_router)
         .layer(from_fn_with_state(state.clone(), master_auth_middleware))
-        .layer(trace_layer_rest())
+        .layer(crate::trace_layer!(Http))
 }
