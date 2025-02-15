@@ -35,20 +35,16 @@ macro_rules! handler {
         }
     };
     ($self:ident, $request:ident) => {
-        {
-            handler!(
-                $self,
-                Uuid::try_parse($request.get_ref().query_id.as_str()).map_err(|_| {
-                    Status::invalid_argument("Invalid query_id")
-                })?,
-                Id
-            )
-        }
+        handler!(
+            $self,
+            Uuid::try_parse($request.get_ref().query_id.as_str()).map_err(|_| {
+                Status::invalid_argument("Invalid query_id")
+            })?,
+            Id
+        )
     };
     ($self:ident) => {
-        {
-            handler!($self, Uuid::new_v4(), Id)
-        }
+        handler!($self, Uuid::new_v4(), Id)
     }
 }
 
