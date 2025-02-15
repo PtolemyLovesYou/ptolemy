@@ -3,6 +3,7 @@ use crate::{
     error::{ApiError, ServerError},
     models::AuditLog,
     db::{RedisConfig, PostgresConfig, DbConnection},
+    env_settings::get_env_var,
 };
 use axum::http::StatusCode;
 use diesel::{pg::PgConnection, prelude::*};
@@ -41,16 +42,6 @@ pub fn run_migrations() -> Result<(), ServerError> {
     }
 
     Ok(())
-}
-
-fn get_env_var(name: &str) -> Result<String, ServerError> {
-    match std::env::var(name) {
-        Ok(val) => Ok(val),
-        Err(_) => {
-            tracing::error!("{} must be set.", name);
-            Err(ServerError::ConfigError)
-        }
-    }
 }
 
 pub type ApiAppState = Arc<AppState>;

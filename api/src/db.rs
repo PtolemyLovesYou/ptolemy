@@ -1,4 +1,4 @@
-use crate::error::ServerError;
+use crate::{error::ServerError, env_settings::get_env_var};
 use bb8::PooledConnection;
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
@@ -8,16 +8,6 @@ use tracing::error;
 use redis::aio::MultiplexedConnection;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
-
-fn get_env_var(name: &str) -> Result<String, ServerError> {
-    match std::env::var(name) {
-        Ok(val) => Ok(val),
-        Err(_) => {
-            tracing::error!("{} must be set.", name);
-            Err(ServerError::ConfigError)
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct RedisConfig {
