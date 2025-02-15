@@ -131,7 +131,6 @@ impl AppState {
         drop(futures);
     }
 
-    #[tracing::instrument]
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
         match self.pg_pool.get().await {
             Ok(c) => Ok(c),
@@ -142,7 +141,6 @@ impl AppState {
         }
     }
 
-    #[tracing::instrument]
     pub async fn get_conn_with_vars(
         &self,
         api_access_audit_log_id: &uuid::Uuid,
