@@ -22,6 +22,7 @@ pub async fn audit<L: self::prelude::Auditable>(
         match L::insert_many_returning_id(conn, &current_records).await {
             Ok(_) => {
                 // If successful, clear the current records and break
+                tracing::debug!("Inserted {} logs to {}", current_records.len(), L::table_name());
                 current_records = Vec::new();
                 break;
             }
