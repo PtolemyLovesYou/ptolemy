@@ -30,6 +30,7 @@ diesel::table! {
         variables -> Nullable<Jsonb>,
         query_metadata -> Nullable<Jsonb>,
         query_start_time -> Timestamptz,
+        failure_details -> Nullable<Jsonb>,
     }
 }
 

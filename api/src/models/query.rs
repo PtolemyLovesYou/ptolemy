@@ -1,4 +1,4 @@
-use crate::generated::query_schema::{user_query, sql_types::*, user_query_results};
+use crate::generated::query_schema::{sql_types::*, user_query, user_query_results};
 use diesel::prelude::*;
 use uuid::Uuid;
 use std::io::Write;
@@ -44,6 +44,7 @@ pub struct UserQuery {
     variables: Option<serde_json::Value>,
     query_metadata: Option<serde_json::Value>,
     query_start_time: chrono::DateTime<chrono::Utc>,
+    failure_details: Option<serde_json::Value>,
 }
 
 impl UserQuery {
@@ -54,6 +55,7 @@ impl UserQuery {
         query_text: String,
         query_metadata: Option<serde_json::Value>,
         query_start_time: chrono::DateTime<chrono::Utc>,
+        failure_details: Option<serde_json::Value>,
     ) -> Self {
         UserQuery {
             id: uuid::Uuid::new_v4(),
@@ -66,6 +68,7 @@ impl UserQuery {
             variables: None,
             query_metadata,
             query_start_time,
+            failure_details,
         }
     }
 
@@ -78,6 +81,7 @@ impl UserQuery {
         variables: Option<serde_json::Value>,
         query_metadata: Option<serde_json::Value>,
         query_start_time: chrono::DateTime<chrono::Utc>,
+        failure_details: Option<serde_json::Value>,
     ) -> Self {
         UserQuery {
             id: uuid::Uuid::new_v4(),
@@ -90,6 +94,7 @@ impl UserQuery {
             variables,
             query_metadata,
             query_start_time,
+            failure_details,
         }
     }
 }

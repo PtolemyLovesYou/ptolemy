@@ -39,7 +39,8 @@ create table user_query (
     operation_name varchar,
     variables jsonb,
     query_metadata jsonb,
-    query_start_time timestamptz not null
+    query_start_time timestamptz not null,
+    failure_details jsonb
 );
 
 create table user_query_results (
