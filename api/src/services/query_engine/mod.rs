@@ -55,37 +55,39 @@ async fn log_status_trigger(
                     QueryStatus::Pending | QueryStatus::Running => {
                         continue;
                     }
-                    _ => (),
-                }
+                    _ => {
+                        let obj = UserQueryResult {
+                            id: uuid::Uuid::new_v4(),
+                            user_query_id: handler.query_id,
+                            query_end_time: chrono::Utc::now(),
+                            query_status: status.status().into(),
+                            failure_details: status
+                                .error
+                                .as_ref()
+                                .map(|f| serde_json::json!({"error": f})),
+                            resource_usage: status.metadata.as_ref().map(|m| {
+                                serde_json::json!({
+                                    "estimated_size_bytes": m.estimated_size_bytes,
+                                    "total_rows": m.total_rows,
+                                    "total_batches": m.total_batches,
+                                })
+                            }),
+                        };
+        
+                        let mut conn = match state.get_conn().await {
+                            Ok(conn) => conn,
+                            Err(e) => {
+                                tracing::error!("Failed to get Postgres connection: {}", e);
+                                continue;
+                            }
+                        };
+        
+                        if let Err(e) = UserQueryResult::insert_one_returning_id(&mut conn, &obj).await {
+                            tracing::error!("Failed to insert query result: {}", e);
+                        }
 
-                let obj = UserQueryResult {
-                    id: uuid::Uuid::new_v4(),
-                    user_query_id: handler.query_id,
-                    query_end_time: chrono::Utc::now(),
-                    query_status: status.status().into(),
-                    failure_details: status
-                        .error
-                        .as_ref()
-                        .map(|f| serde_json::json!({"error": f})),
-                    resource_usage: status.metadata.as_ref().map(|m| {
-                        serde_json::json!({
-                            "estimated_size_bytes": m.estimated_size_bytes,
-                            "total_rows": m.total_rows,
-                            "total_batches": m.total_batches,
-                        })
-                    }),
-                };
-
-                let mut conn = match state.get_conn().await {
-                    Ok(conn) => conn,
-                    Err(e) => {
-                        tracing::error!("Failed to get Postgres connection: {}", e);
-                        continue;
-                    }
-                };
-
-                if let Err(e) = UserQueryResult::insert_one_returning_id(&mut conn, &obj).await {
-                    tracing::error!("Failed to insert query result: {}", e);
+                        break;
+                    },
                 }
             }
             Err(e) => {
