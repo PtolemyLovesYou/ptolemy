@@ -57,14 +57,11 @@ where
         T: HasId,
         F: std::future::Future<Output = Result<Vec<T>, ApiError>>,
     {
-        match (self.validate_permissions)(self.ctx).await? {
-            true => (),
-            false => {
-                return Err(ApiError::AuthError(
-                    "Insufficient permissions to perform this operation".to_string(),
-                ))
-            }
-        };
+        if (self.validate_permissions)(self.ctx).await? == false {
+            return Err(ApiError::AuthError(
+                "Insufficient permissions to perform this operation".to_string(),
+            ));
+        }
 
         let result = read_fut.await;
 
@@ -99,14 +96,11 @@ where
         T: GetObjById + Serialize + UpdateObjById,
     {
         let result = async move {
-            match (self.validate_permissions)(self.ctx).await? {
-                true => (),
-                false => {
-                    return Err(ApiError::AuthError(
-                        "Insufficient permissions to perform this operation".to_string(),
-                    ))
-                }
-            };
+            if (self.validate_permissions)(self.ctx).await? == false {
+                return Err(ApiError::AuthError(
+                    "Insufficient permissions to perform this operation".to_string(),
+                ));
+            }
 
             let state = self.ctx.state();
 
@@ -147,14 +141,11 @@ where
 
     pub async fn delete<T: GetObjById + Serialize>(self, id: &Uuid) -> Result<T, ApiError> {
         let result = async move {
-            match (self.validate_permissions)(self.ctx).await? {
-                true => (),
-                false => {
-                    return Err(ApiError::AuthError(
-                        "Insufficient permissions to perform this operation".to_string(),
-                    ))
-                }
-            };
+            if (self.validate_permissions)(self.ctx).await? == false {
+                return Err(ApiError::AuthError(
+                    "Insufficient permissions to perform this operation".to_string(),
+                ));
+            }
 
             let state = self.ctx.state();
 
@@ -197,14 +188,11 @@ where
         T::Target: Serialize,
     {
         let result = async move {
-            match (self.validate_permissions)(self.ctx).await? {
-                true => (),
-                false => {
-                    return Err(ApiError::AuthError(
-                        "Insufficient permissions to perform this operation".to_string(),
-                    ))
-                }
-            };
+            if (self.validate_permissions)(self.ctx).await? == false {
+                return Err(ApiError::AuthError(
+                    "Insufficient permissions to perform this operation".to_string(),
+                ));
+            }
 
             let state = self.ctx.state();
 

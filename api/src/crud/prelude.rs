@@ -110,27 +110,24 @@ macro_rules! update_by_id_trait {
                 conn: &mut crate::db::DbConnection<'_>,
                 obj: &Self::InsertTarget,
             ) -> Result<Self, crate::error::ApiError> {
-                match diesel::update($table::table)
+                diesel::update($table::table)
                     .filter($table::id.eq(self.id))
                     .set(obj)
                     .returning(Self::as_returning())
                     .get_result(conn)
                     .await
-                {
-                    Ok(obj) => Ok(obj),
-                    Err(e) => {
+                    .map_err(|e| {
                         tracing::error!("Unable to update {} by id: {}", stringify!($ty), e);
                         match e {
                             diesel::result::Error::NotFound => {
-                                Err(crate::error::ApiError::NotFoundError)
+                                crate::error::ApiError::NotFoundError
                             }
                             diesel::result::Error::DatabaseError(..) => {
-                                Err(crate::error::ApiError::DatabaseError)
+                                crate::error::ApiError::DatabaseError
                             }
-                            _ => Err(crate::error::ApiError::UpdateError),
+                            _ => crate::error::ApiError::UpdateError,
                         }
-                    }
-                }
+                    })
             }
         }
     };
@@ -144,32 +141,29 @@ macro_rules! get_by_id_trait {
                 conn: &mut crate::db::DbConnection<'_>,
                 id: &uuid::Uuid,
             ) -> Result<Self, crate::error::ApiError> {
-                match $table::table
+                $table::table
                     .filter($table::id.eq(id))
                     .get_result(conn)
                     .await
-                {
-                    Ok(obj) => Ok(obj),
-                    Err(e) => {
+                    .map_err(|e| {
                         tracing::error!("Unable to get {} by id: {}", stringify!($ty), e);
                         match e {
                             diesel::result::Error::NotFound => {
-                                Err(crate::error::ApiError::NotFoundError)
+                                crate::error::ApiError::NotFoundError
                             }
                             diesel::result::Error::DatabaseError(..) => {
-                                Err(crate::error::ApiError::DatabaseError)
+                                crate::error::ApiError::DatabaseError
                             }
-                            _ => Err(crate::error::ApiError::GetError),
+                            _ => crate::error::ApiError::GetError,
                         }
-                    }
-                }
+                    })
             }
 
             async fn delete_by_id(
                 &self,
                 conn: &mut crate::db::DbConnection<'_>,
             ) -> Result<Self, crate::error::ApiError> {
-                match diesel::update($table::table)
+                diesel::update($table::table)
                     .filter($table::id.eq(self.id))
                     .set((
                         $table::deleted_at.eq(chrono::Utc::now()),
@@ -178,21 +172,18 @@ macro_rules! get_by_id_trait {
                     .returning(Self::as_returning())
                     .get_result(conn)
                     .await
-                {
-                    Ok(obj) => Ok(obj),
-                    Err(e) => {
-                        tracing::error!("Unable to delete {} by id: {}", stringify!($ty), e);
+                    .map_err(|e| {
+                        tracing::error!("Unable to soft delete {} by id: {}", stringify!($ty), e);
                         match e {
                             diesel::result::Error::NotFound => {
-                                Err(crate::error::ApiError::NotFoundError)
+                                crate::error::ApiError::NotFoundError
                             }
                             diesel::result::Error::DatabaseError(..) => {
-                                Err(crate::error::ApiError::DatabaseError)
+                                crate::error::ApiError::DatabaseError
                             }
-                            _ => Err(crate::error::ApiError::DeleteError),
+                            _ => crate::error::ApiError::DeleteError,
                         }
-                    }
-                }
+                    })
             }
         }
     };

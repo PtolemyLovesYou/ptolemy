@@ -23,27 +23,18 @@ pub struct AuthContext {
 
 impl AuthContext {
     pub fn user(&self) -> Result<&ptolemy::models::auth::User, ApiError> {
-        match self.user.as_ref() {
-            Some(u) => Ok(u),
-            None => Err(ApiError::InternalError),
-        }
+        self.user.as_ref().ok_or(ApiError::InternalError)
     }
 
     pub fn can_create_delete_workspace(&self) -> bool {
-        match &self.user {
-            Some(u) => u.is_admin,
-            None => false,
-        }
+        self.user.as_ref().map(|u| u.is_sysadmin).unwrap_or(false)
     }
 
     pub fn can_create_delete_user(&self, other_user_is_admin: bool, other_user_is_sysadmin: bool) -> bool {
-        match &self.user {
-            Some(u) => {
-                !(other_user_is_admin || other_user_is_sysadmin)
-                || u.is_sysadmin
-            },
-            None => false,
-        }
+        self.user.as_ref().map(|u| {
+            !(other_user_is_admin || other_user_is_sysadmin)
+            || u.is_sysadmin
+        }).unwrap_or(false)
     }
 
     pub fn can_update_workspace(&self, workspace_id: uuid::Uuid) -> bool {
@@ -125,24 +116,15 @@ pub trait AuthHeader<T>: Clone + From<AuthResult<Option<T>>> + From<Option<AuthR
     fn as_result(&self) -> Result<Option<&T>, ApiError>;
 
     fn ok(&self) -> Option<&T> {
-        match self.as_result() {
-            Ok(Some(t)) => Some(t),
-            _ => None,
-        }
+        self.as_result().unwrap_or(None)
     }
 
     fn err(&self) -> Option<ApiError> {
-        match self.as_result() {
-            Err(e) => Some(e),
-            _ => None,
-        }
+        self.as_result().err()
     }
 
     fn undeclared(&self) -> bool {
-        match self.as_result() {
-            Ok(o) => o.is_none(),
-            _ => false,
-        }
+        self.as_result().map(|o| o.is_none()).unwrap_or(false)
     }
 }
 

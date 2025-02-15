@@ -18,12 +18,9 @@ insert_obj_traits!(IAMAuditLogCreate, iam_audit_logs);
 
 macro_rules! insert_audit_logs {
     ($type:ident, $records:ident, $failed_logs:ident, $conn:ident) => {
-        match $type::insert_many_returning_id($conn, &$records).await {
-            Ok(_) => (),
-            Err(e) => {
-                error!("Failed to insert audit logs: {:?}", e);
-                $failed_logs.extend($records.into_iter().map(|l| serde_json::json!(l)));
-            }
+        if let Err(e) = $type::insert_many_returning_id($conn, &$records).await {
+            error!("Failed to insert audit logs: {:?}", e);
+            $failed_logs.extend($records.into_iter().map(|l| serde_json::json!(l)));
         }
     };
 }

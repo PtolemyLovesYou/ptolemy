@@ -51,14 +51,13 @@ impl ObserverAuthentication for MyObserverAuthentication {
                 error!("Failed to convert API key to string: {}", e);
                 Status::internal("Failed to convert API key to string")
             })?;
-
-        let mut conn = match self.state.get_conn().await {
-            Ok(c) => c,
-            Err(e) => {
-                error!("Failed to get database connection: {:?}", e);
-                return Err(Status::internal("Failed to get database connection"));
-            }
-        };
+        
+        let mut conn = self.state
+            .get_conn()
+            .await
+            .map_err(|e| {
+                Status::internal(format!("Failed to get database connection: {}", e))
+            })?;
 
         let data = request.get_ref();
 
