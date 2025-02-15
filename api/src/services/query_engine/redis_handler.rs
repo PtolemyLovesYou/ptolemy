@@ -142,7 +142,7 @@ impl QueryEngineRedisHandler {
                     ApiError::InternalError
                 })?;
 
-                let column_types = serde_json::from_str(&column_types_raw.as_str()).map_err(|e| {
+                let column_types = serde_json::from_str(column_types_raw.as_str()).map_err(|e| {
                     tracing::error!("Failed to deserialize column types: {}", e);
                     ApiError::InternalError
                 })?;

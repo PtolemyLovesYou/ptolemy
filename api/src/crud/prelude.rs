@@ -18,7 +18,7 @@ macro_rules! search_db_obj {
                         query = query.filter($table::$req_field.eq($req_field));
                     }
                 )+
-                query.get_results(conn).await.map_err(crate::map_diesel_err!(GetError, "get", $ty))
+                query.get_results(conn).await.map_err($crate::map_diesel_err!(GetError, "get", $ty))
             }
         }
     }
@@ -37,7 +37,7 @@ macro_rules! map_diesel_err {
             match e {
                 diesel::result::Error::NotFound => $crate::error::ApiError::NotFoundError,
                 diesel::result::Error::DatabaseError(..) => $crate::error::ApiError::DatabaseError,
-                _ => crate::error::ApiError::$catchall,
+                _ => $crate::error::ApiError::$catchall,
             }
         }
     };
@@ -113,7 +113,7 @@ macro_rules! update_by_id_trait {
                 &self,
                 conn: &mut $crate::db::DbConnection<'_>,
                 obj: &Self::InsertTarget,
-            ) -> Result<Self, crate::error::ApiError> {
+            ) -> Result<Self, $crate::error::ApiError> {
                 match diesel::update($table::table)
                     .filter($table::id.eq(self.id))
                     .set(obj)
@@ -147,7 +147,7 @@ macro_rules! get_by_id_trait {
             async fn get_by_id(
                 conn: &mut $crate::db::DbConnection<'_>,
                 id: &uuid::Uuid,
-            ) -> Result<Self, crate::error::ApiError> {
+            ) -> Result<Self, $crate::error::ApiError> {
                 match $table::table
                     .filter($table::id.eq(id))
                     .get_result(conn)
@@ -210,7 +210,7 @@ macro_rules! insert_obj_traits {
         impl $crate::crud::prelude::InsertObjReturningObj for $ty {
             type Target = $target;
             async fn insert_one_returning_obj(
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 record: &Self,
             ) -> Result<Self::Target, crate::error::ApiError> {
                 diesel::insert_into($table::table)

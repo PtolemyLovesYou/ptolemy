@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! trace_layer {
-    (Http) => { crate::trace_layer!(new_for_http) };
+    (Http) => { $crate::trace_layer!(new_for_http) };
     // (Grpc) => { crate::trace_layer!(new_for_grpc) };
     ($type:ident) => {
         tower_http::trace::TraceLayer::$type()
