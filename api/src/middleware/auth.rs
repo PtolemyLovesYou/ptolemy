@@ -6,7 +6,10 @@ use crate::{
     crypto::{ClaimType, GenerateSha256, UuidClaims},
     error::ApiError,
     models::{
-        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, WorkspacePermission, JWT}, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User, Workspace
+        middleware::{
+            AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, WorkspacePermission, JWT,
+        },
+        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User, Workspace,
     },
     state::ApiAppState,
 };
@@ -86,13 +89,18 @@ async fn validate_api_key_header(
             "asdf",
             &api_key,
             &state.password_handler,
-        ).await?;
+        )
+        .await?;
 
         return Ok((
             None,
-            vec![WorkspacePermission { workspace: workspace.into(), permissions: Some(sak.permissions.clone().into()), role: None}],
+            vec![WorkspacePermission {
+                workspace: workspace.into(),
+                permissions: Some(sak.permissions.clone().into()),
+                role: None,
+            }],
             Some(sak.into()),
-        ))
+        ));
     }
 
     if api_key.starts_with(USER_API_KEY_PREFIX) {
@@ -161,11 +169,14 @@ async fn validate_jwt_header(
                     let workspace =
                         crate::models::Workspace::get_by_id(&mut conn, &sak.workspace_id).await?;
 
-                    Ok((None, vec![WorkspacePermission {
-                        workspace: workspace.into(),
-                        permissions: Some(sak.permissions.clone().into()),
-                        role: None,
-                    }]))
+                    Ok((
+                        None,
+                        vec![WorkspacePermission {
+                            workspace: workspace.into(),
+                            permissions: Some(sak.permissions.clone().into()),
+                            role: None,
+                        }],
+                    ))
                 }
                 Err(_) => Err(ApiError::NotFoundError),
             }

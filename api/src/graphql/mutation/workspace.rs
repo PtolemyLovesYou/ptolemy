@@ -37,9 +37,7 @@ impl WorkspaceMutation {
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
         let workspace = JuniperExecutor::from_juniper_app_state(ctx, "create", |ctx| async move {
-            Ok(ctx
-                .auth_context
-                .can_create_delete_workspace())
+            Ok(ctx.auth_context.can_create_delete_workspace())
         })
         .create(&workspace_data)
         .await;
@@ -65,9 +63,7 @@ impl WorkspaceMutation {
 
     async fn delete(&self, ctx: &JuniperAppState, workspace_id: Uuid) -> DeletionResult {
         JuniperExecutor::from_juniper_app_state(ctx, "delete", |ctx| async move {
-            Ok(ctx
-                .auth_context
-                .can_create_delete_workspace())
+            Ok(ctx.auth_context.can_create_delete_workspace())
         })
         .delete::<Workspace>(&workspace_id)
         .await
@@ -83,7 +79,9 @@ impl WorkspaceMutation {
         let workspace_id = workspace_user.workspace_id.clone();
 
         JuniperExecutor::from_juniper_app_state(ctx, "add_user", |ctx| async move {
-            Ok(ctx.auth_context.can_add_remove_update_user_to_workspace(workspace_id.clone()))
+            Ok(ctx
+                .auth_context
+                .can_add_remove_update_user_to_workspace(workspace_id.clone()))
         })
         .create(&WorkspaceUser::new(
             workspace_user.user_id,
@@ -101,7 +99,9 @@ impl WorkspaceMutation {
         user_id: Uuid,
     ) -> DeletionResult {
         JuniperExecutor::from_juniper_app_state(ctx, "remove_user", |ctx| async move {
-            Ok(ctx.auth_context.can_add_remove_update_user_to_workspace(workspace_id.clone()))
+            Ok(ctx
+                .auth_context
+                .can_add_remove_update_user_to_workspace(workspace_id.clone()))
         })
         .delete::<WorkspaceUser>(&WorkspaceUser::compute_id(&user_id, &workspace_id))
         .await
@@ -120,7 +120,9 @@ impl WorkspaceMutation {
             ctx,
             "change_workspace_user_role",
             |ctx| async move {
-                Ok(ctx.auth_context.can_add_remove_update_user_to_workspace(workspace_id.clone()))
+                Ok(ctx
+                    .auth_context
+                    .can_add_remove_update_user_to_workspace(workspace_id.clone()))
             },
         )
         .update(
@@ -155,7 +157,9 @@ impl WorkspaceMutation {
         };
 
         JuniperExecutor::from_juniper_app_state(ctx, "create_service_api_key", |ctx| async move {
-            Ok(ctx.auth_context.can_create_delete_service_api_key(workspace_id.clone()))
+            Ok(ctx
+                .auth_context
+                .can_create_delete_service_api_key(workspace_id.clone()))
         })
         .create(&create_model)
         .await
@@ -173,7 +177,9 @@ impl WorkspaceMutation {
         api_key_id: Uuid,
     ) -> DeletionResult {
         JuniperExecutor::from_juniper_app_state(ctx, "delete_service_api_key", |ctx| async move {
-            Ok(ctx.auth_context.can_create_delete_service_api_key(workspace_id.clone()))
+            Ok(ctx
+                .auth_context
+                .can_create_delete_service_api_key(workspace_id.clone()))
         })
         .delete::<ServiceApiKey>(&api_key_id)
         .await

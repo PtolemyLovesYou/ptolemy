@@ -21,10 +21,10 @@ impl MyObserver {
 async fn insert_rows(state: ApiAppState, records: Vec<Record>, auth_context: AuthContext) {
     let user_query_id = uuid::Uuid::new_v4();
 
-    let mut conn = match state.get_conn_with_vars(
-        &auth_context.api_access_audit_log_id,
-        Some(&user_query_id),
-    ).await {
+    let mut conn = match state
+        .get_conn_with_vars(&auth_context.api_access_audit_log_id, Some(&user_query_id))
+        .await
+    {
         Ok(c) => c,
         Err(e) => {
             error!("Failed to get database connection: {:?}", e);
@@ -67,7 +67,8 @@ impl Observer for MyObserver {
 
         debug!("Received {} records", records.len());
 
-        self.state.spawn(insert_rows(self.state.clone(), records, auth_context_clone));
+        self.state
+            .spawn(insert_rows(self.state.clone(), records, auth_context_clone));
 
         let reply = PublishResponse {
             successful: true,

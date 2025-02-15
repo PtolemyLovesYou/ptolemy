@@ -1,4 +1,4 @@
-use crate::{crud::prelude::*, models::records::*, db::DbConnection};
+use crate::{crud::prelude::*, db::DbConnection, models::records::*};
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;

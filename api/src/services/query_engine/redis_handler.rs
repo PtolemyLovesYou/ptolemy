@@ -1,14 +1,11 @@
-use ptolemy::generated::query_engine::{
-    QueryStatusResponse,
-    FetchBatchResponse,
-    QueryMetadata,
-    QueryStatus,
-};
 use crate::error::ApiError;
+use ptolemy::generated::query_engine::{
+    FetchBatchResponse, QueryMetadata, QueryStatus, QueryStatusResponse,
+};
 use redis::aio::MultiplexedConnection;
-use tonic::Status;
-use tokio::sync::mpsc;
 use serde::Serialize;
+use tokio::sync::mpsc;
+use tonic::Status;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
@@ -35,18 +32,26 @@ impl QueryMessage {
             None => 60,
         };
 
-        cmd.arg("ptolemy:query").arg("*")
-            .arg("action").arg(&self.action)
-            .arg("query_id").arg(&self.query_id)
-            .arg("allowed_workspace_ids").arg(self.allowed_workspace_ids.join(","))
-            .arg("query").arg(&self.query)
-            .arg("batch_size").arg(&batch_size)
-            .arg("timeout_seconds").arg(&timeout_seconds);
+        cmd.arg("ptolemy:query")
+            .arg("*")
+            .arg("action")
+            .arg(&self.action)
+            .arg("query_id")
+            .arg(&self.query_id)
+            .arg("allowed_workspace_ids")
+            .arg(self.allowed_workspace_ids.join(","))
+            .arg("query")
+            .arg(&self.query)
+            .arg("batch_size")
+            .arg(&batch_size)
+            .arg("timeout_seconds")
+            .arg(&timeout_seconds);
 
         cmd
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct QueryEngineRedisHandler {
     conn: MultiplexedConnection,
     pub query_id: Uuid,
@@ -65,8 +70,10 @@ impl QueryEngineRedisHandler {
         redis::cmd("XADD")
             .arg("ptolemy:query")
             .arg("*")
-            .arg("action").arg("cancel")
-            .arg("query_id").arg(&self.query_id.to_string())
+            .arg("action")
+            .arg("cancel")
+            .arg("query_id")
+            .arg(&self.query_id.to_string())
             .exec_async(&mut self.conn)
             .await
             .map_err(|e| {
@@ -109,9 +116,9 @@ impl QueryEngineRedisHandler {
                         tracing::error!("Failed to get query error: {}", e);
                         ApiError::InternalError
                     })?;
-                
+
                 Some(err_str)
-            },
+            }
             _ => None,
         };
 
@@ -126,7 +133,7 @@ impl QueryEngineRedisHandler {
                         tracing::error!("Failed to get query metadata: {}", e);
                         ApiError::InternalError
                     })?;
-                
+
                 let total_batches = redis::cmd("HGET")
                     .arg(&self.keyspace())
                     .arg("metadata:total_batches")
@@ -136,8 +143,8 @@ impl QueryEngineRedisHandler {
                         tracing::error!("Failed to get query metadata: {}", e);
                         ApiError::InternalError
                     })?;
-                
-                let column_names_raw: String= redis::cmd("HGET")
+
+                let column_names_raw: String = redis::cmd("HGET")
                     .arg(&self.keyspace())
                     .arg("metadata:column_names")
                     .query_async(&mut self.conn)
@@ -147,12 +154,11 @@ impl QueryEngineRedisHandler {
                         ApiError::InternalError
                     })?;
 
-                let column_names = serde_json::from_str(&column_names_raw)
-                    .map_err(|e| {
-                        tracing::error!("Failed to deserialize column names: {}", e);
-                        ApiError::InternalError
+                let column_names = serde_json::from_str(&column_names_raw).map_err(|e| {
+                    tracing::error!("Failed to deserialize column names: {}", e);
+                    ApiError::InternalError
                 })?;
-                
+
                 let column_types = redis::cmd("HGET")
                     .arg(&self.keyspace())
                     .arg("metadata:column_types")
@@ -162,7 +168,7 @@ impl QueryEngineRedisHandler {
                         tracing::error!("Failed to get query metadata: {}", e);
                         ApiError::InternalError
                     })?;
-                
+
                 let estimated_size_bytes = redis::cmd("HGET")
                     .arg(&self.keyspace())
                     .arg("metadata:est_size_bytes")
@@ -172,7 +178,7 @@ impl QueryEngineRedisHandler {
                         tracing::error!("Failed to get query metadata: {}", e);
                         ApiError::InternalError
                     })?;
-                
+
                 Some(QueryMetadata {
                     total_rows,
                     total_batches,
@@ -180,8 +186,8 @@ impl QueryEngineRedisHandler {
                     column_types,
                     estimated_size_bytes,
                 })
-            },
-            _ => None
+            }
+            _ => None,
         };
 
         Ok(QueryStatusResponse {
@@ -198,18 +204,22 @@ impl QueryEngineRedisHandler {
         query: &str,
         allowed_workspace_ids: &Vec<Uuid>,
         batch_size: Option<u32>,
-        timeout_seconds: Option<u32>
+        timeout_seconds: Option<u32>,
     ) -> Result<(), ApiError> {
         let msg = QueryMessage {
             action: "query".to_string(),
             query_id: self.query_id.to_string(),
-            allowed_workspace_ids: allowed_workspace_ids.iter().map(|id| id.to_string()).collect(),
+            allowed_workspace_ids: allowed_workspace_ids
+                .iter()
+                .map(|id| id.to_string())
+                .collect(),
             query: query.to_string(),
             batch_size,
             timeout_seconds,
         };
 
-        msg.to_redis_cmd().exec_async(&mut self.conn)
+        msg.to_redis_cmd()
+            .exec_async(&mut self.conn)
             .await
             .map(|_| {
                 tracing::debug!("Sent query {} to Redis", &self.query_id);
@@ -220,10 +230,33 @@ impl QueryEngineRedisHandler {
                 ApiError::InternalError
             })?;
 
+        redis::cmd("HSET")
+            .arg(format!("ptolemy:query:{}", &self.query_id))
+            .arg("status")
+            .arg("pending")
+            .exec_async(&mut self.conn)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to set query status: {}", e);
+                ApiError::InternalError
+            })?;
+
+        redis::cmd("HEXPIRE")
+            .arg(format!("ptolemy:query:{}", &self.query_id))
+            .arg(3600)
+            .exec_async(&mut self.conn)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to expire query: {}", e);
+                ApiError::InternalError
+            })?;
+
         Ok(())
     }
-    
-    pub async fn get_batches(&mut self) -> Result<mpsc::Receiver<Result<FetchBatchResponse, Status>>, Status> {
+
+    pub async fn get_batches(
+        &mut self,
+    ) -> Result<mpsc::Receiver<Result<FetchBatchResponse, Status>>, Status> {
         let status = self.get_query_status().await.map_err(|e| {
             tracing::error!("Failed to get query status: {}", e);
             Status::internal(e.to_string())
@@ -232,13 +265,12 @@ impl QueryEngineRedisHandler {
         match status.status() {
             QueryStatus::Pending | QueryStatus::Running => {
                 Err(Status::not_found("Query is not completed yet."))
-            },
-            QueryStatus::Cancelled => {
-                Err(Status::cancelled("Query was cancelled."))
-            },
-            QueryStatus::Failed => {
-                Err(Status::internal(format!("Query failed: {}", status.error.as_ref().unwrap())))
-            },
+            }
+            QueryStatus::Cancelled => Err(Status::cancelled("Query was cancelled.")),
+            QueryStatus::Failed => Err(Status::internal(format!(
+                "Query failed: {}",
+                status.error.as_ref().unwrap()
+            ))),
             QueryStatus::Completed => {
                 let total_batches = status.metadata.as_ref().unwrap().total_batches;
                 let mut batches: Vec<Vec<u8>> = Vec::new();
@@ -252,7 +284,7 @@ impl QueryEngineRedisHandler {
                             tracing::error!("Failed to get batch: {}", e);
                             Status::internal(e.to_string())
                         })?;
-                    
+
                     batches.push(result);
                 }
 
@@ -266,7 +298,9 @@ impl QueryEngineRedisHandler {
                         error: None,
                         is_last_batch: (batch_id as u32) == total_batches - 1,
                         status: QueryStatus::Completed.into(),
-                    })).await.map_err(|e| {
+                    }))
+                    .await
+                    .map_err(|e| {
                         tracing::error!("Failed to send batch: {}", e);
                         Status::internal(e.to_string())
                     })?;

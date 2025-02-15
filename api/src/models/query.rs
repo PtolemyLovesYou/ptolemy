@@ -1,7 +1,7 @@
 use crate::generated::query_schema::{sql_types::*, user_query, user_query_results};
 use diesel::prelude::*;
-use uuid::Uuid;
 use std::io::Write;
+use uuid::Uuid;
 
 crate::define_enum!(
     QueryStatusEnum,
@@ -9,10 +9,22 @@ crate::define_enum!(
     [Pending, Running, Completed, Failed, Cancelled]
 );
 
+impl From<ptolemy::generated::query_engine::QueryStatus> for QueryStatusEnum {
+    fn from(status: ptolemy::generated::query_engine::QueryStatus) -> Self {
+        match status {
+            ptolemy::generated::query_engine::QueryStatus::Pending => QueryStatusEnum::Pending,
+            ptolemy::generated::query_engine::QueryStatus::Running => QueryStatusEnum::Running,
+            ptolemy::generated::query_engine::QueryStatus::Completed => QueryStatusEnum::Completed,
+            ptolemy::generated::query_engine::QueryStatus::Failed => QueryStatusEnum::Failed,
+            ptolemy::generated::query_engine::QueryStatus::Cancelled => QueryStatusEnum::Cancelled,
+        }
+    }
+}
+
 crate::define_enum!(QueryTypeEnum, QueryType, [Graphql, Sql]);
 
 crate::define_enum!(
-    AccessReasonEnum, 
+    AccessReasonEnum,
     AccessReason,
     [
         Research,
@@ -28,8 +40,8 @@ crate::define_enum!(
         WorkerComp,
         SpecializedGovt,
         Other
-        ]
-    );
+    ]
+);
 
 #[derive(Debug, Selectable, Insertable)]
 #[diesel(table_name = user_query)]

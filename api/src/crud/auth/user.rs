@@ -1,10 +1,13 @@
 use crate::{
     crypto::PasswordHandler,
+    db::DbConnection,
     error::ApiError,
     generated::auth_schema::{user_api_key, users, workspace, workspace_user},
     map_diesel_err,
-    models::{User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum, WorkspaceUser},
-    db::DbConnection,
+    models::{
+        User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum,
+        WorkspaceUser,
+    },
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

@@ -6,7 +6,12 @@ use ptolemy::generated::observer;
 use std::io::Write;
 
 define_enum!(IoTypeEnum, IoType, [Input, Output, Feedback]);
-define_enum!(TierEnum, Tier, [System, Subsystem, Component, Subcomponent], WithConversion);
+define_enum!(
+    TierEnum,
+    Tier,
+    [System, Subsystem, Component, Subcomponent],
+    WithConversion
+);
 
 impl Into<observer::Tier> for TierEnum {
     fn into(self) -> observer::Tier {

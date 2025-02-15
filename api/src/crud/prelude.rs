@@ -1,5 +1,5 @@
-use crate::models::prelude::HasId;
 pub use crate::db::DbConnection;
+use crate::models::prelude::HasId;
 use uuid::Uuid;
 
 pub type DieselResult<T> = Result<T, diesel::result::Error>;

@@ -1,13 +1,9 @@
 use super::prelude::*;
 use crate::{
-    generated::audit_schema::{
-        api_access_audit_logs, api_auth_audit_logs, iam_audit_logs,
-    },
-    insert_obj_traits,
-    models::{
-        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, IAMAuditLogCreate,
-    },
     db::DbConnection,
+    generated::audit_schema::{api_access_audit_logs, api_auth_audit_logs, iam_audit_logs},
+    insert_obj_traits,
+    models::{ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, IAMAuditLogCreate},
 };
 use diesel_async::RunQueryDsl;
 use tracing::error;

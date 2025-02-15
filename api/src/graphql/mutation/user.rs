@@ -55,10 +55,9 @@ impl UserMutation {
         JuniperExecutor::from_juniper_app_state(ctx, "delete", |ctx| async move {
             let mut conn = ctx.state.get_conn().await?;
             let user_to_delete = User::get_by_id(&mut conn, &id).await?;
-            Ok(ctx.auth_context.can_create_delete_user(
-                user_to_delete.is_admin,
-                user_to_delete.is_sysadmin,
-            ))
+            Ok(ctx
+                .auth_context
+                .can_create_delete_user(user_to_delete.is_admin, user_to_delete.is_sysadmin))
         })
         .delete::<User>(&id)
         .await

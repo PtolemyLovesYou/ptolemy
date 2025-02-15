@@ -36,12 +36,13 @@ impl AuthContext {
         }
     }
 
-    pub fn can_create_delete_user(&self, other_user_is_admin: bool, other_user_is_sysadmin: bool) -> bool {
+    pub fn can_create_delete_user(
+        &self,
+        other_user_is_admin: bool,
+        other_user_is_sysadmin: bool,
+    ) -> bool {
         match &self.user {
-            Some(u) => {
-                !(other_user_is_admin || other_user_is_sysadmin)
-                || u.is_sysadmin
-            },
+            Some(u) => !(other_user_is_admin || other_user_is_sysadmin) || u.is_sysadmin,
             None => false,
         }
     }
@@ -52,7 +53,7 @@ impl AuthContext {
                 return match workspace.role {
                     Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
                     _ => false,
-                }
+                };
             }
         }
 
@@ -65,7 +66,7 @@ impl AuthContext {
                 return match workspace.role {
                     Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
                     _ => false,
-                }
+                };
             }
         }
 
@@ -79,7 +80,7 @@ impl AuthContext {
                     Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
                     Some(ptolemy::models::enums::WorkspaceRole::Manager) => true,
                     _ => false,
-                }
+                };
             }
         }
 
@@ -89,7 +90,7 @@ impl AuthContext {
     pub fn can_read_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         if self.user.is_some() {
             for workspace in &self.workspaces {
-                return workspace.workspace.id.as_uuid() == workspace_id
+                return workspace.workspace.id.as_uuid() == workspace_id;
             }
         }
 
@@ -99,7 +100,7 @@ impl AuthContext {
                     Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) => true,
                     Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
                     _ => false,
-                }
+                };
             }
         }
 
@@ -113,7 +114,7 @@ impl AuthContext {
                     Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
                     Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) => true,
                     _ => false,
-                }
+                };
             }
         }
 

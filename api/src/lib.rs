@@ -1,5 +1,7 @@
 pub mod crud;
 pub mod crypto;
+pub mod db;
+pub mod env_settings;
 pub mod error;
 pub mod executor;
 pub mod generated;
@@ -9,8 +11,6 @@ pub mod models;
 pub mod routes;
 pub mod services;
 pub mod state;
-pub mod db;
-pub mod env_settings;
 
 pub mod consts {
     pub const SERVICE_API_KEY_PREFIX: &'static str = "pt-sk";

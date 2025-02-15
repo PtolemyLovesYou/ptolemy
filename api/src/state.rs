@@ -1,22 +1,18 @@
 use crate::{
     crypto::PasswordHandler,
+    db::{DbConnection, PostgresConfig, RedisConfig},
+    env_settings::get_env_var,
     error::{ApiError, ServerError},
     models::AuditLog,
-    db::{RedisConfig, PostgresConfig, DbConnection},
-    env_settings::get_env_var,
 };
 use axum::http::StatusCode;
 use diesel::{pg::PgConnection, prelude::*};
-use diesel_async::{
-    pooled_connection::bb8::Pool,
-    AsyncPgConnection,
-    RunQueryDsl,
-};
+use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use ptolemy::writer::Writer;
+use redis::aio::MultiplexedConnection;
 use std::sync::Arc;
 use tracing::error;
-use redis::aio::MultiplexedConnection;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
@@ -83,11 +79,13 @@ impl AppState {
 
         let pool_clone = pg_pool.clone();
 
-        let jobs_rt = Arc::new(tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(1)
-            .enable_all()
-            .build()
-            .unwrap());
+        let jobs_rt = Arc::new(
+            tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(1)
+                .enable_all()
+                .build()
+                .unwrap(),
+        );
 
         let jobs_rt_clone = jobs_rt.clone();
 
@@ -155,16 +153,22 @@ impl AppState {
         user_query_id: Option<&uuid::Uuid>,
     ) -> Result<DbConnection<'_>, ApiError> {
         let mut conn = self.get_conn().await?;
-        diesel::sql_query(format!("SET app.current_api_access_audit_log_id = '{}'", api_access_audit_log_id.to_string()))
-            .execute(&mut conn)
-            .await
-            .expect("Failed to set current_api_access_audit_log_id");
+        diesel::sql_query(format!(
+            "SET app.current_api_access_audit_log_id = '{}'",
+            api_access_audit_log_id.to_string()
+        ))
+        .execute(&mut conn)
+        .await
+        .expect("Failed to set current_api_access_audit_log_id");
 
         if let Some(user_query_id) = user_query_id {
-            diesel::sql_query(format!("SET app.current_user_query_id = '{}'", user_query_id.to_string()))
-                .execute(&mut conn)
-                .await
-                .expect("Failed to set current_api_access_id");
+            diesel::sql_query(format!(
+                "SET app.current_user_query_id = '{}'",
+                user_query_id.to_string()
+            ))
+            .execute(&mut conn)
+            .await
+            .expect("Failed to set current_api_access_id");
         }
 
         Ok(conn)
