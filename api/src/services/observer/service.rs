@@ -67,7 +67,7 @@ impl Observer for MyObserver {
 
         debug!("Received {} records", records.len());
 
-        tokio::spawn(insert_rows(self.state.clone(), records, auth_context_clone));
+        self.state.spawn(insert_rows(self.state.clone(), records, auth_context_clone));
 
         let reply = PublishResponse {
             successful: true,

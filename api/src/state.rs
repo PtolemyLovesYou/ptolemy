@@ -57,6 +57,7 @@ pub struct AppState {
     pub jwt_secret: String,
     pub audit_writer: Arc<Writer<AuditLog>>,
     pub redis_conn: MultiplexedConnection,
+    pub jobs_rt: Arc<tokio::runtime::Runtime>,
 }
 
 impl AppState {
@@ -82,6 +83,14 @@ impl AppState {
 
         let pool_clone = pg_pool.clone();
 
+        let jobs_rt = Arc::new(tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .unwrap());
+
+        let jobs_rt_clone = jobs_rt.clone();
+
         let audit_writer = Arc::new(Writer::new(
             move |msg: Vec<AuditLog>| {
                 let pool = pool_clone.clone();
@@ -98,7 +107,7 @@ impl AppState {
                     }
                 };
 
-                tokio::spawn(fut);
+                jobs_rt_clone.spawn(fut);
             },
             128,
             24,
@@ -116,6 +125,7 @@ impl AppState {
             jwt_secret,
             audit_writer,
             redis_conn,
+            jobs_rt,
         };
 
         Ok(state)
@@ -123,6 +133,10 @@ impl AppState {
 
     pub async fn new_with_arc() -> Result<Arc<Self>, ServerError> {
         Ok(Arc::new(Self::new().await?))
+    }
+
+    pub fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+        self.jobs_rt.spawn(fut);
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
