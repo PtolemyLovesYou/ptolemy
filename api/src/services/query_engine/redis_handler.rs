@@ -212,36 +212,19 @@ impl QueryEngineRedisHandler {
             timeout_seconds,
         };
 
-        msg.to_redis_cmd()
-            .exec_async(&mut self.conn)
-            .await
-            .map(|_| {
-                tracing::debug!("Sent query {} to Redis", &self.query_id);
-                
-            })
-            .map_err(|e| {
-                tracing::error!("Failed to send query to Redis: {}", e);
-                ApiError::InternalError
-            })?;
-
-        redis::cmd("HSET")
+        redis::pipe()
+            .add_command(msg.to_redis_cmd())
+            .cmd("HSET")
             .arg(format!("ptolemy:query:{}", &self.query_id))
             .arg("status")
             .arg("pending")
-            .exec_async(&mut self.conn)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to set query status: {}", e);
-                ApiError::InternalError
-            })?;
-
-        redis::cmd("EXPIRE")
+            .cmd("EXPIRE")
             .arg(format!("ptolemy:query:{}", &self.query_id))
             .arg(3600)
             .exec_async(&mut self.conn)
             .await
             .map_err(|e| {
-                tracing::error!("Failed to expire query: {}", e);
+                tracing::error!("Failed to send query to Redis: {}", e);
                 ApiError::InternalError
             })?;
 
