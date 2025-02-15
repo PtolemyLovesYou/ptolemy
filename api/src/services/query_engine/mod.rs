@@ -23,6 +23,35 @@ use uuid::Uuid;
 mod redis_handler;
 use redis_handler::QueryEngineRedisHandler;
 
+macro_rules! handler {
+    ($self:ident, $id:expr, Id) => {
+        {
+            let conn = $self.state.get_redis_conn().await.map_err(|e| {
+                tracing::error!("Failed to get redis connection: {}", e);
+                Status::internal(e.to_string())
+                })?;
+            
+            QueryEngineRedisHandler::new(conn, $id).await
+        }
+    };
+    ($self:ident, $request:ident) => {
+        {
+            handler!(
+                $self,
+                Uuid::try_parse($request.get_ref().query_id.as_str()).map_err(|_| {
+                    Status::invalid_argument("Invalid query_id")
+                })?,
+                Id
+            )
+        }
+    };
+    ($self:ident) => {
+        {
+            handler!($self, Uuid::new_v4(), Id)
+        }
+    }
+}
+
 pub async fn query_engine_service(state: ApiAppState) -> QueryEngineServer<MyQueryEngine> {
     let service = MyQueryEngine::new(state.clone()).await;
 
@@ -46,12 +75,7 @@ impl QueryEngine for MyQueryEngine {
     type FetchBatchStream = ReceiverStream<Result<FetchBatchResponse, Status>>;
 
     async fn query(&self, request: Request<QueryRequest>) -> QueryEngineResult<QueryResponse> {
-        let conn = self.state.get_redis_conn().await.map_err(|e| {
-            tracing::error!("Failed to get redis connection: {}", e);
-            Status::internal(e.to_string())
-        })?;
-
-        let mut handler = QueryEngineRedisHandler::new(conn, Uuid::new_v4()).await;
+        let mut handler = handler!(self);
 
         let auth_ctx = request.extensions().get::<AuthContext>().ok_or_else(|| {
             tracing::error!("Auth context not found in extensions");
@@ -113,14 +137,7 @@ impl QueryEngine for MyQueryEngine {
     }
 
     async fn fetch_batch(&self, request: Request<FetchBatchRequest>) -> QueryEngineResult<Self::FetchBatchStream> {
-        let conn = self.state.get_redis_conn().await.map_err(|e| {
-            tracing::error!("Failed to get redis connection: {}", e);
-            Status::internal(e.to_string())
-        })?;
-
-        let query_id = Uuid::try_parse(request.get_ref().query_id.as_str()).map_err(|_| Status::invalid_argument("Invalid query_id"))?;
-
-        let mut handler = QueryEngineRedisHandler::new(conn, query_id).await;
+        let mut handler = handler!(self, request);
 
         let stream = handler.get_batches().await.map_err(|e| {
             tracing::error!("Failed to get batches: {}", e);
@@ -133,16 +150,9 @@ impl QueryEngine for MyQueryEngine {
     }
 
     async fn cancel_query(&self, request: Request<CancelQueryRequest>) -> QueryEngineResult<CancelQueryResponse> {
-        let conn = self.state.get_redis_conn().await.map_err(|e| {
-            tracing::error!("Failed to get redis connection: {}", e);
-            Status::internal(e.to_string())
-        })?;
+        let mut handler = handler!(self, request);
 
-        let query_id = Uuid::try_parse(request.get_ref().query_id.as_str()).map_err(|_| {
-            Status::invalid_argument("Invalid query_id")
-        })?;
-
-        let (success, error) = match QueryEngineRedisHandler::new(conn, query_id).await.cancel_query().await {
+        let (success, error) = match handler.cancel_query().await {
             Ok(()) => (true, None),
             Err(e) => (false, Some(e.to_string())),
         };
@@ -154,15 +164,7 @@ impl QueryEngine for MyQueryEngine {
     }
 
     async fn get_query_status(&self, request: Request<QueryStatusRequest>) -> QueryEngineResult<QueryStatusResponse> {
-        let conn = self.state.get_redis_conn().await.map_err(|e| {
-            tracing::error!("Failed to get redis connection: {}", e);
-            Status::internal(e.to_string())
-        })?;
-        let query_id = Uuid::try_parse(request.get_ref().query_id.as_str()).map_err(|_| {
-            Status::invalid_argument("Invalid query_id")
-        })?;
-
-        let mut handler = QueryEngineRedisHandler::new(conn, query_id).await;
+        let mut handler = handler!(self, request);
 
         let query_status = handler.get_query_status().await.map_err(|e| {
             tracing::error!("Failed to get query status: {}", e);
