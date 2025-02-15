@@ -3,13 +3,11 @@ use crate::{
     db::{DbConnection, PostgresConfig, RedisConfig},
     env_settings::get_env_var,
     error::{ApiError, ServerError},
-    models::AuditLog,
 };
 use axum::http::StatusCode;
 use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use ptolemy::writer::Writer;
 use redis::aio::MultiplexedConnection;
 use std::sync::Arc;
 use tracing::error;
@@ -51,7 +49,6 @@ pub struct AppState {
     pub enable_graphiql: bool,
     pub ptolemy_env: String,
     pub jwt_secret: String,
-    pub audit_writer: Arc<Writer<AuditLog>>,
     pub redis_conn: MultiplexedConnection,
     pub jobs_rt: Arc<tokio::runtime::Runtime>,
 }
@@ -77,8 +74,6 @@ impl AppState {
 
         let password_handler = PasswordHandler::new();
 
-        let pool_clone = pg_pool.clone();
-
         let jobs_rt = Arc::new(
             tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(1)
@@ -86,30 +81,6 @@ impl AppState {
                 .build()
                 .unwrap(),
         );
-
-        let jobs_rt_clone = jobs_rt.clone();
-
-        let audit_writer = Arc::new(Writer::new(
-            move |msg: Vec<AuditLog>| {
-                let pool = pool_clone.clone();
-                let fut = async move {
-                    let n_msgs = msg.len();
-                    let mut conn = pool.get().await.unwrap();
-                    match AuditLog::insert_many(&mut conn, msg).await {
-                        Ok(_) => {
-                            tracing::debug!("Successfully inserted {} audit logs", n_msgs);
-                        }
-                        Err(e) => {
-                            tracing::error!("Failed to insert audit logs: {}", e.to_string());
-                        }
-                    }
-                };
-
-                jobs_rt_clone.spawn(fut);
-            },
-            128,
-            24,
-        ));
 
         let redis_conn = RedisConfig::from_env()?.get_connection().await?;
 
@@ -121,7 +92,6 @@ impl AppState {
             enable_graphiql,
             ptolemy_env,
             jwt_secret,
-            audit_writer,
             redis_conn,
             jobs_rt,
         };
@@ -131,6 +101,10 @@ impl AppState {
 
     pub async fn new_with_arc() -> Result<Arc<Self>, ServerError> {
         Ok(Arc::new(Self::new().await?))
+    }
+
+    pub async fn shutdown(&self) -> Result<(), ServerError> {
+        Ok(())
     }
 
     pub fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {

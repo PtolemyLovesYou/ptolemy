@@ -191,10 +191,22 @@ pub async fn master_auth_middleware(
 ) -> Result<impl IntoResponse, StatusCode> {
     let api_access_audit_log = ApiAccessAuditLogCreate::from_axum_request(&req, None);
     let api_access_audit_log_id = api_access_audit_log.id;
-    state
-        .audit_writer
-        .write(AuditLog::ApiAccess(api_access_audit_log))
-        .await;
+
+    let state_clone = state.clone();
+
+    state.spawn(async move {
+        let mut conn = match state_clone.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to get db connection: {}", e);
+                return;
+            }
+        };
+
+        if let Err(e) = AuditLog::insert_many(&mut conn, vec![AuditLog::ApiAccess(api_access_audit_log)]).await {
+            tracing::error!("Failed to insert audit log: {}", e);
+        }
+    });
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
 
@@ -236,7 +248,22 @@ pub async fn master_auth_middleware(
 
         let api_auth_audit_log_id = log.id;
 
-        state.audit_writer.write(AuditLog::Auth(log)).await;
+        let state_clone = state.clone();
+
+        state.spawn(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get db connection: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = AuditLog::insert_many(&mut conn, vec![AuditLog::Auth(log)]).await {
+                tracing::error!("Failed to insert audit log: {}", e);
+            }
+        });
+
         req.extensions_mut().insert(AuthContext {
             api_access_audit_log_id,
             api_auth_audit_log_id,
@@ -275,7 +302,22 @@ pub async fn master_auth_middleware(
 
         let api_auth_audit_log_id = log.id;
 
-        state.audit_writer.write(AuditLog::Auth(log)).await;
+        let state_clone = state.clone();
+
+        state.spawn(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get db connection: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = AuditLog::insert_many(&mut conn, vec![AuditLog::Auth(log)]).await {
+                tracing::error!("Failed to insert audit log: {}", e);
+            }
+        });
+
         req.extensions_mut().insert(AuthContext {
             api_access_audit_log_id,
             api_auth_audit_log_id,

@@ -2,7 +2,7 @@ use crate::{
     crud::prelude::{GetObjById, InsertObjReturningObj, UpdateObjById},
     crypto::GenerateSha256 as _,
     error::ApiError,
-    models::{middleware::AuthContext, prelude::HasId, IAMAuditLogCreate, OperationTypeEnum},
+    models::{middleware::AuthContext, prelude::HasId, AuditLog, IAMAuditLogCreate, OperationTypeEnum},
     state::State,
 };
 use serde::Serialize;
@@ -85,11 +85,25 @@ where
             ),
         }
         .into_iter()
-        .map(|r| r.into());
+        .map(|r| r.into())
+        .collect()
+        ;
 
-        let state = self.ctx.state();
+        let state_clone = self.ctx.state().clone();
 
-        state.audit_writer.write_many(logs).await;
+        self.ctx.state().spawn(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get connection: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = AuditLog::insert_many(&mut conn, logs).await {
+                tracing::error!("Failed to insert audit logs: {}", e);
+            }
+        });
 
         result
     }
@@ -140,7 +154,21 @@ where
             ),
         };
 
-        self.ctx.state().audit_writer.write(log.into()).await;
+        let state_clone = self.ctx.state().clone();
+
+        self.ctx.state().spawn(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get connection: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
+                tracing::error!("Failed to insert audit logs: {}", e);
+            }
+        });
 
         result.map(|(_, o)| o)
     }
@@ -186,7 +214,21 @@ where
             ),
         };
 
-        self.ctx.state().audit_writer.write(log.into()).await;
+        let state_clone = self.ctx.state().clone();
+
+        self.ctx.state().spawn(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get connection: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
+                tracing::error!("Failed to insert audit logs: {}", e);
+            }
+        });
 
         result
     }
@@ -234,7 +276,21 @@ where
             ),
         };
 
-        self.ctx.state().audit_writer.write(log.into()).await;
+        let state_clone = self.ctx.state().clone();
+
+        self.ctx.state().spawn(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get connection: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
+                tracing::error!("Failed to insert audit logs: {}", e);
+            }
+        });
 
         result
     }
