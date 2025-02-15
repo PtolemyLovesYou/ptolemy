@@ -122,31 +122,23 @@ impl QueryEngine for MyQueryEngine {
     }
 
     async fn cancel_query(&self, request: Request<CancelQueryRequest>) -> QueryEngineResult<CancelQueryResponse> {
-        tracing::debug!("Cancel query: {}", request.get_ref().query_id);
-        let mut conn = self.state.get_redis_conn().await.unwrap();
+        let conn = self.state.get_redis_conn().await.unwrap();
+        let query_id = Uuid::try_parse(request.get_ref().query_id.as_str()).unwrap();
 
-        // send cancellation message
-        match redis::cmd("XADD")
-            .arg("ptolemy:query")
-            .arg("*")
-            .arg("action").arg("cancel")
-            .arg("query_id").arg(&request.get_ref().query_id)
-            .exec_async(&mut conn)
-            .await {
-                Ok(_) => {
-                    Ok(Response::new(CancelQueryResponse {
-                        success: true,
-                        error: None,
-                    }))
-                },
-                Err(e) => {
-                    tracing::error!("Failed to cancel query: {}", e);
-                    Ok(Response::new(CancelQueryResponse {
-                        success: false,
-                        error: Some(e.to_string()),
-                    }))
-                }
+        match QueryEngineRedisHandler::new(conn, query_id).await.cancel_query().await {
+            Ok(_) => {
+                Ok(Response::new(CancelQueryResponse {
+                    success: true,
+                    error: None,
+                }))
+            },
+            Err(e) => {
+                Ok(Response::new(CancelQueryResponse {
+                    success: false,
+                    error: Some(e.to_string()),
+                }))
             }
+        }
     }
 
     async fn get_query_status(&self, request: Request<QueryStatusRequest>) -> QueryEngineResult<QueryStatusResponse> {

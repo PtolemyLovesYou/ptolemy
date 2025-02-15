@@ -61,6 +61,20 @@ impl QueryEngineRedisHandler {
         format!("ptolemy:query:{}", self.query_id)
     }
 
+    pub async fn cancel_query(&mut self) -> Result<(), ApiError> {
+        redis::cmd("XADD")
+            .arg("ptolemy:query")
+            .arg("*")
+            .arg("action").arg("cancel")
+            .arg("query_id").arg(&self.query_id.to_string())
+            .exec_async(&mut self.conn)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to cancel query: {}", e);
+                ApiError::InternalError
+            })
+    }
+
     pub async fn get_query_status(&mut self) -> Result<QueryStatusResponse, ApiError> {
         let status = redis::cmd("HGET")
             .arg(&self.keyspace())
