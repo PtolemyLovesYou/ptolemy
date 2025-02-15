@@ -118,29 +118,18 @@ impl QueryEngineRedisHandler {
 
         let metadata = match status {
             QueryStatus::Completed => {
-                let total_rows = redis::cmd("HGET")
-                    .arg(self.keyspace())
-                    .arg("metadata:total_rows")
-                    .query_async::<u32>(&mut self.conn)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!("Failed to get query metadata: {}", e);
-                        ApiError::InternalError
-                    })?;
-
-                let total_batches = redis::cmd("HGET")
-                    .arg(self.keyspace())
-                    .arg("metadata:total_batches")
-                    .query_async::<u32>(&mut self.conn)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!("Failed to get query metadata: {}", e);
-                        ApiError::InternalError
-                    })?;
-
-                let column_names_raw: String = redis::cmd("HGET")
-                    .arg(self.keyspace())
-                    .arg("metadata:column_names")
+                let (
+                    total_rows,
+                    total_batches,
+                    column_names_raw,
+                    column_types_raw,
+                    estimated_size_bytes
+                ): ( u32, u32, String, String, u32) = redis::pipe()
+                    .cmd("HGET").arg(self.keyspace()).arg("metadata:total_rows")
+                    .cmd("HGET").arg(self.keyspace()).arg("metadata:total_batches")
+                    .cmd("HGET").arg(self.keyspace()).arg("metadata:column_names")
+                    .cmd("HGET").arg(self.keyspace()).arg("metadata:column_types")
+                    .cmd("HGET").arg(self.keyspace()).arg("metadata:est_size_bytes")
                     .query_async(&mut self.conn)
                     .await
                     .map_err(|e| {
@@ -148,30 +137,15 @@ impl QueryEngineRedisHandler {
                         ApiError::InternalError
                     })?;
 
-                let column_names = serde_json::from_str(&column_names_raw).map_err(|e| {
+                let column_names = serde_json::from_str(column_names_raw.as_str()).map_err(|e| {
                     tracing::error!("Failed to deserialize column names: {}", e);
                     ApiError::InternalError
                 })?;
 
-                let column_types = redis::cmd("HGET")
-                    .arg(self.keyspace())
-                    .arg("metadata:column_types")
-                    .query_async(&mut self.conn)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!("Failed to get query metadata: {}", e);
-                        ApiError::InternalError
-                    })?;
-
-                let estimated_size_bytes = redis::cmd("HGET")
-                    .arg(self.keyspace())
-                    .arg("metadata:est_size_bytes")
-                    .query_async::<u32>(&mut self.conn)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!("Failed to get query metadata: {}", e);
-                        ApiError::InternalError
-                    })?;
+                let column_types = serde_json::from_str(&column_types_raw.as_str()).map_err(|e| {
+                    tracing::error!("Failed to deserialize column types: {}", e);
+                    ApiError::InternalError
+                })?;
 
                 Some(QueryMetadata {
                     total_rows,
