@@ -92,9 +92,8 @@ class QueryExecutor(BaseModel):
         self.logger.info("Setting status to running")
         self.redis_conn.hset(self.keyspace, "status", QueryStatus.RUNNING)
 
-        self.setup_conn()
-
         try:
+            self.setup_conn()
             self.logger.debug("Executing query %s", self.query_id)
             results: pd.DataFrame = self.conn.sql(self.query).arrow().to_pandas()
 
