@@ -2,15 +2,15 @@
 macro_rules! define_enum {
     ($name:ident, $type:tt, [$($variant:ident),+]) => {
         #[derive(
-            Clone, Debug, PartialEq, FromSqlRow, AsExpression, Eq, GraphQLEnum,
+            Clone, Debug, PartialEq, diesel::FromSqlRow, diesel::AsExpression, Eq, juniper::GraphQLEnum,
         )]
         #[diesel(sql_type = $type)]
         pub enum $name {
             $($variant),+
         }
 
-        impl ToSql<$type, Pg> for $name {
-            fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
+        impl diesel::serialize::ToSql<$type, diesel::pg::Pg> for $name {
+            fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, diesel::pg::Pg>) -> diesel::serialize::Result {
                 use heck::ToSnakeCase;
 
                 match *self {
@@ -19,7 +19,7 @@ macro_rules! define_enum {
                     )+
                 }
 
-                Ok(IsNull::No)
+                Ok(diesel::serialize::IsNull::No)
             }
         }
 
@@ -34,8 +34,8 @@ macro_rules! define_enum {
             }
         }
 
-        impl FromSql<$type, Pg> for $name {
-            fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
+        impl diesel::deserialize::FromSql<$type, diesel::pg::Pg> for $name {
+            fn from_sql(bytes: diesel::pg::PgValue<'_>) -> diesel::deserialize::Result<Self> {
                 use heck::ToSnakeCase;
 
                 let input = bytes.as_bytes();

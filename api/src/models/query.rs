@@ -1,13 +1,6 @@
 use crate::generated::query_schema::{user_query, sql_types::*, user_query_results};
 use diesel::prelude::*;
 use uuid::Uuid;
-use diesel::deserialize::FromSql;
-use diesel::serialize::{IsNull, Output, ToSql};
-use diesel::{
-    AsExpression, FromSqlRow,
-    {pg::Pg, pg::PgValue},
-};
-use juniper::GraphQLEnum;
 use std::io::Write;
 
 crate::define_enum!(

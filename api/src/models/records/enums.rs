@@ -2,13 +2,6 @@ use crate::{
     define_enum,
     generated::records_schema::sql_types::{FieldValueType, IoType, Tier},
 };
-use diesel::deserialize::FromSql;
-use diesel::serialize::{IsNull, Output, ToSql};
-use diesel::{
-    AsExpression, FromSqlRow,
-    {pg::Pg, pg::PgValue},
-};
-use juniper::GraphQLEnum;
 use ptolemy::generated::observer;
 use std::io::Write;
 
