@@ -1,5 +1,7 @@
 -- This file should undo anything in `up.sql`
 -- Drop all views in duckdb schema
+drop view if exists duckdb.user_query;
+
 drop view if exists duckdb.subcomponent_metadata;
 drop view if exists duckdb.component_metadata;
 drop view if exists duckdb.subsystem_metadata;

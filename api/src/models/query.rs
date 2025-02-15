@@ -47,6 +47,7 @@ crate::define_enum!(
 #[diesel(table_name = user_query)]
 pub struct UserQuery {
     id: Uuid,
+    api_access_audit_log_id: Uuid,
     allowed_workspace_ids: Vec<Uuid>,
     query_type: QueryTypeEnum,
     access_reason: AccessReasonEnum,
@@ -62,6 +63,7 @@ pub struct UserQuery {
 impl UserQuery {
     pub fn sql(
         id: Uuid,
+        api_access_audit_log_id: Uuid,
         allowed_workspace_ids: Vec<Uuid>,
         access_reason: Option<AccessReasonEnum>,
         access_reason_details: Option<String>,
@@ -72,6 +74,7 @@ impl UserQuery {
     ) -> Self {
         UserQuery {
             id,
+            api_access_audit_log_id,
             allowed_workspace_ids,
             query_type: QueryTypeEnum::Sql,
             access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),
@@ -87,6 +90,7 @@ impl UserQuery {
 
     pub fn graphql(
         id: Uuid,
+        api_access_audit_log_id: Uuid,
         allowed_workspace_ids: Vec<Uuid>,
         access_reason: Option<AccessReasonEnum>,
         access_reason_details: Option<String>,
@@ -99,6 +103,7 @@ impl UserQuery {
     ) -> Self {
         UserQuery {
             id,
+            api_access_audit_log_id,
             allowed_workspace_ids,
             query_type: QueryTypeEnum::Graphql,
             access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),

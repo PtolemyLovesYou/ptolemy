@@ -21,6 +21,7 @@ diesel::table! {
 
     user_query (id) {
         id -> Uuid,
+        api_access_audit_log_id -> Uuid,
         allowed_workspace_ids -> Nullable<Array<Nullable<Uuid>>>,
         query_type -> QueryType,
         access_reason -> AccessReason,
@@ -50,4 +51,7 @@ diesel::table! {
 
 diesel::joinable!(user_query_results -> user_query (user_query_id));
 
-diesel::allow_tables_to_appear_in_same_query!(user_query, user_query_results,);
+diesel::allow_tables_to_appear_in_same_query!(
+    user_query,
+    user_query_results,
+);

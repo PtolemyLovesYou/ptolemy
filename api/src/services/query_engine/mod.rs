@@ -177,6 +177,7 @@ impl QueryEngine for MyQueryEngine {
         {
             let query_log = crate::models::query::UserQuery::sql(
                 handler.query_id,
+                auth_ctx.api_access_audit_log_id.clone(),
                 allowed_workspace_ids,
                 None,
                 None,
