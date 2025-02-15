@@ -211,20 +211,20 @@ impl Serialize for AuditLog {
     }
 }
 
-impl Into<AuditLog> for ApiAccessAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::ApiAccess(self)
+impl From<ApiAccessAuditLogCreate> for AuditLog {
+    fn from(val: ApiAccessAuditLogCreate) -> Self {
+        AuditLog::ApiAccess(val)
     }
 }
 
-impl Into<AuditLog> for AuthAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::Auth(self)
+impl From<AuthAuditLogCreate> for AuditLog {
+    fn from(val: AuthAuditLogCreate) -> Self {
+        AuditLog::Auth(val)
     }
 }
 
-impl Into<AuditLog> for IAMAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::IAM(self)
+impl From<IAMAuditLogCreate> for AuditLog {
+    fn from(val: IAMAuditLogCreate) -> Self {
+        AuditLog::IAM(val)
     }
 }

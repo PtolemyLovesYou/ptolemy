@@ -47,6 +47,12 @@ pub struct PasswordHandler {
     argon2: Argon2<'static>,
 }
 
+impl Default for PasswordHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PasswordHandler {
     pub fn new() -> Self {
         let argon2 = Argon2::default();
@@ -122,12 +128,10 @@ where
     }
 
     pub fn generate_auth_token(&self, secret: &[u8]) -> ClaimsResult<String> {
-        Ok(
-            encode(&Header::default(), &self, &EncodingKey::from_secret(secret)).map_err(|e| {
+        encode(&Header::default(), &self, &EncodingKey::from_secret(secret)).map_err(|e| {
                 error!("Failed to generate auth token: {}", e);
                 ApiError::InternalError
-            })?,
-        )
+            })
     }
 
     pub fn from_token(token: Option<String>, secret: &[u8]) -> ClaimsResult<Option<Self>> {
@@ -156,7 +160,7 @@ pub trait GenerateSha256 {
     fn sha256(&self) -> Vec<u8>;
 }
 
-impl<'a> GenerateSha256 for &'a [u8] {
+impl GenerateSha256 for &[u8] {
     fn sha256(&self) -> Vec<u8> {
         generate_sha256(self)
     }

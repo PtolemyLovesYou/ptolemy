@@ -22,15 +22,9 @@ impl QueryMessage {
     pub fn to_redis_cmd(&self) -> redis::Cmd {
         let mut cmd = redis::cmd("XADD");
 
-        let batch_size = match self.batch_size {
-            Some(size) => size,
-            None => 256,
-        };
+        let batch_size = self.batch_size.unwrap_or(256);
 
-        let timeout_seconds = match self.timeout_seconds {
-            Some(size) => size,
-            None => 60,
-        };
+        let timeout_seconds = self.timeout_seconds.unwrap_or(60);
 
         cmd.arg("ptolemy:query")
             .arg("*")
@@ -43,9 +37,9 @@ impl QueryMessage {
             .arg("query")
             .arg(&self.query)
             .arg("batch_size")
-            .arg(&batch_size)
+            .arg(batch_size)
             .arg("timeout_seconds")
-            .arg(&timeout_seconds);
+            .arg(timeout_seconds);
 
         cmd
     }
@@ -73,7 +67,7 @@ impl QueryEngineRedisHandler {
             .arg("action")
             .arg("cancel")
             .arg("query_id")
-            .arg(&self.query_id.to_string())
+            .arg(self.query_id.to_string())
             .exec_async(&mut self.conn)
             .await
             .map_err(|e| {
@@ -84,7 +78,7 @@ impl QueryEngineRedisHandler {
 
     pub async fn get_query_status(&mut self) -> Result<QueryStatusResponse, ApiError> {
         let status = redis::cmd("HGET")
-            .arg(&self.keyspace())
+            .arg(self.keyspace())
             .arg("status")
             .query_async::<String>(&mut self.conn)
             .await
@@ -108,7 +102,7 @@ impl QueryEngineRedisHandler {
         let error = match status {
             QueryStatus::Failed => {
                 let err_str = redis::cmd("HGET")
-                    .arg(&self.keyspace())
+                    .arg(self.keyspace())
                     .arg("error")
                     .query_async::<String>(&mut self.conn)
                     .await
@@ -125,7 +119,7 @@ impl QueryEngineRedisHandler {
         let metadata = match status {
             QueryStatus::Completed => {
                 let total_rows = redis::cmd("HGET")
-                    .arg(&self.keyspace())
+                    .arg(self.keyspace())
                     .arg("metadata:total_rows")
                     .query_async::<u32>(&mut self.conn)
                     .await
@@ -135,7 +129,7 @@ impl QueryEngineRedisHandler {
                     })?;
 
                 let total_batches = redis::cmd("HGET")
-                    .arg(&self.keyspace())
+                    .arg(self.keyspace())
                     .arg("metadata:total_batches")
                     .query_async::<u32>(&mut self.conn)
                     .await
@@ -145,7 +139,7 @@ impl QueryEngineRedisHandler {
                     })?;
 
                 let column_names_raw: String = redis::cmd("HGET")
-                    .arg(&self.keyspace())
+                    .arg(self.keyspace())
                     .arg("metadata:column_names")
                     .query_async(&mut self.conn)
                     .await
@@ -160,7 +154,7 @@ impl QueryEngineRedisHandler {
                 })?;
 
                 let column_types = redis::cmd("HGET")
-                    .arg(&self.keyspace())
+                    .arg(self.keyspace())
                     .arg("metadata:column_types")
                     .query_async(&mut self.conn)
                     .await
@@ -170,7 +164,7 @@ impl QueryEngineRedisHandler {
                     })?;
 
                 let estimated_size_bytes = redis::cmd("HGET")
-                    .arg(&self.keyspace())
+                    .arg(self.keyspace())
                     .arg("metadata:est_size_bytes")
                     .query_async::<u32>(&mut self.conn)
                     .await
@@ -223,7 +217,7 @@ impl QueryEngineRedisHandler {
             .await
             .map(|_| {
                 tracing::debug!("Sent query {} to Redis", &self.query_id);
-                ()
+                
             })
             .map_err(|e| {
                 tracing::error!("Failed to send query to Redis: {}", e);
@@ -276,7 +270,7 @@ impl QueryEngineRedisHandler {
                 let mut batches: Vec<Vec<u8>> = Vec::new();
                 for i in 0..total_batches {
                     let result: Vec<u8> = redis::cmd("HGET")
-                        .arg(&self.keyspace())
+                        .arg(self.keyspace())
                         .arg(format!("result:{}", i))
                         .query_async(&mut self.conn)
                         .await

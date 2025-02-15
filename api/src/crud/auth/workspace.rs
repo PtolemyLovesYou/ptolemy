@@ -83,7 +83,7 @@ impl Workspace {
             .map_err(crate::map_diesel_err!(GetError, "get", ServiceApiKey))?;
 
         for (ak, workspace) in results {
-            if password_handler.verify_password(&api_key, ak.key_hash.as_str()) {
+            if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
                 return Ok((ak, workspace));
             }
         }

@@ -13,9 +13,9 @@ define_enum!(
     WithConversion
 );
 
-impl Into<observer::Tier> for TierEnum {
-    fn into(self) -> observer::Tier {
-        match self {
+impl From<TierEnum> for observer::Tier {
+    fn from(val: TierEnum) -> Self {
+        match val {
             TierEnum::System => observer::Tier::System,
             TierEnum::Subsystem => observer::Tier::Subsystem,
             TierEnum::Component => observer::Tier::Component,

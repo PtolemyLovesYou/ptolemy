@@ -70,14 +70,14 @@ where
 
         let logs = match &result {
             Ok(t) => IAMAuditLogCreate::new_reads(
-                self.auth_context.api_access_audit_log_id.clone(),
+                self.auth_context.api_access_audit_log_id,
                 Some(t.iter().map(|r| r.id()).collect()),
                 self.name.to_string(),
                 None,
                 self.query_metadata.clone(),
             ),
             Err(e) => IAMAuditLogCreate::new_reads(
-                self.auth_context.api_access_audit_log_id.clone(),
+                self.auth_context.api_access_audit_log_id,
                 None,
                 self.name.to_string(),
                 Some(e.category().to_string()),
@@ -122,8 +122,8 @@ where
 
         let log = match &result {
             Ok((old, new)) => IAMAuditLogCreate::ok(
-                self.auth_context.api_access_audit_log_id.clone(),
-                id.clone(),
+                self.auth_context.api_access_audit_log_id,
+                *id,
                 self.name.to_string(),
                 OperationTypeEnum::Update,
                 Some(serde_json::json!(old).sha256()),
@@ -131,8 +131,8 @@ where
                 self.query_metadata.clone(),
             ),
             Err(e) => IAMAuditLogCreate::err(
-                self.auth_context.api_access_audit_log_id.clone(),
-                Some(id.clone()),
+                self.auth_context.api_access_audit_log_id,
+                Some(*id),
                 self.name.to_string(),
                 OperationTypeEnum::Update,
                 Some(e.to_string()),
@@ -162,13 +162,13 @@ where
 
             let obj = T::get_by_id(&mut conn, id).await?;
 
-            Ok(obj.delete_by_id(&mut conn).await?)
+            obj.delete_by_id(&mut conn).await
         }
         .await;
 
         let log = match &result {
             Ok(t) => IAMAuditLogCreate::ok(
-                self.auth_context.api_access_audit_log_id.clone(),
+                self.auth_context.api_access_audit_log_id,
                 t.id(),
                 self.name.to_string(),
                 OperationTypeEnum::Delete,
@@ -177,8 +177,8 @@ where
                 self.query_metadata.clone(),
             ),
             Err(e) => IAMAuditLogCreate::err(
-                self.auth_context.api_access_audit_log_id.clone(),
-                Some(id.clone()),
+                self.auth_context.api_access_audit_log_id,
+                Some(*id),
                 self.name.to_string(),
                 OperationTypeEnum::Delete,
                 Some(e.to_string()),
@@ -216,7 +216,7 @@ where
 
         let log = match &result {
             Ok(t) => IAMAuditLogCreate::ok(
-                self.auth_context.api_access_audit_log_id.clone(),
+                self.auth_context.api_access_audit_log_id,
                 t.id(),
                 self.name.to_string(),
                 OperationTypeEnum::Create,
@@ -225,7 +225,7 @@ where
                 self.query_metadata.clone(),
             ),
             Err(e) => IAMAuditLogCreate::err(
-                self.auth_context.api_access_audit_log_id.clone(),
+                self.auth_context.api_access_audit_log_id,
                 None,
                 self.name.to_string(),
                 OperationTypeEnum::Create,

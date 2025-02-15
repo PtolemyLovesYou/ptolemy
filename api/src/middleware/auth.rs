@@ -56,7 +56,7 @@ fn insert_headers(req: &mut Request<axum::body::Body>, state: &ApiAppState) -> (
         HeaderName::from_str("Authorization").unwrap(),
         Some("Bearer "),
     )
-    .and_then(|header| UuidClaims::from_token(header, &state.jwt_secret.as_bytes()))
+    .and_then(|header| UuidClaims::from_token(header, state.jwt_secret.as_bytes()))
     .into();
 
     req.extensions_mut().insert(jwt_header.clone());
@@ -190,7 +190,7 @@ pub async fn master_auth_middleware(
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
     let api_access_audit_log = ApiAccessAuditLogCreate::from_axum_request(&req, None);
-    let api_access_audit_log_id = api_access_audit_log.id.clone();
+    let api_access_audit_log_id = api_access_audit_log.id;
     state
         .audit_writer
         .write(AuditLog::ApiAccess(api_access_audit_log))
@@ -213,8 +213,8 @@ pub async fn master_auth_middleware(
         let (user_id, service_api_key_id) = match jwt_header.ok() {
             None => (None, None),
             Some(jwt) => match jwt.claim_type() {
-                ClaimType::UserJWT => (Some(jwt.sub().clone()), None),
-                ClaimType::ServiceAPIKeyJWT => (None, Some(jwt.sub().clone())),
+                ClaimType::UserJWT => (Some(*jwt.sub()), None),
+                ClaimType::ServiceAPIKeyJWT => (None, Some(*jwt.sub())),
             },
         };
 
@@ -224,7 +224,7 @@ pub async fn master_auth_middleware(
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
-            api_access_audit_log_id: api_access_audit_log_id.clone(),
+            api_access_audit_log_id,
             user_id,
             service_api_key_id,
             user_api_key_id: None,
@@ -234,7 +234,7 @@ pub async fn master_auth_middleware(
             failure_details,
         };
 
-        let api_auth_audit_log_id = log.id.clone();
+        let api_auth_audit_log_id = log.id;
 
         state.audit_writer.write(AuditLog::Auth(log)).await;
         req.extensions_mut().insert(AuthContext {
@@ -263,7 +263,7 @@ pub async fn master_auth_middleware(
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
-            api_access_audit_log_id: api_access_audit_log_id.clone(),
+            api_access_audit_log_id,
             user_id: user.as_ref().map(|u| u.id.into()),
             service_api_key_id: sak.as_ref().map(|sak| sak.id.into()),
             user_api_key_id: None,
@@ -273,7 +273,7 @@ pub async fn master_auth_middleware(
             failure_details,
         };
 
-        let api_auth_audit_log_id = log.id.clone();
+        let api_auth_audit_log_id = log.id;
 
         state.audit_writer.write(AuditLog::Auth(log)).await;
         req.extensions_mut().insert(AuthContext {

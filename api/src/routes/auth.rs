@@ -53,10 +53,10 @@ pub async fn login(
 
     let log = match &response {
         Ok((user, _)) => AuthAuditLogCreate::ok(
-            access_audit_id.0.clone(),
+            access_audit_id.0,
             None,
             None,
-            Some(user.id.clone()),
+            Some(user.id),
             AuthMethodEnum::UsernamePassword,
             Some(
                 json!({
@@ -67,7 +67,7 @@ pub async fn login(
             ),
         ),
         Err(e) => AuthAuditLogCreate::err(
-            access_audit_id.0.clone(),
+            access_audit_id.0,
             AuthMethodEnum::UsernamePassword,
             Some(
                 json!({

@@ -20,15 +20,15 @@ pub struct Workspace {
 
 crate::impl_has_id!(Workspace);
 
-impl Into<ptolemy::models::auth::Workspace> for Workspace {
-    fn into(self) -> ptolemy::models::auth::Workspace {
+impl From<Workspace> for ptolemy::models::auth::Workspace {
+    fn from(val: Workspace) -> Self {
         ptolemy::models::auth::Workspace {
-            id: self.id.into(),
-            name: self.name,
-            description: self.description,
-            archived: self.archived,
-            created_at: self.created_at,
-            updated_at: self.updated_at,
+            id: val.id.into(),
+            name: val.name,
+            description: val.description,
+            archived: val.archived,
+            created_at: val.created_at,
+            updated_at: val.updated_at,
         }
     }
 }

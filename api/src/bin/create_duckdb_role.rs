@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut conn = state.get_conn().await.unwrap();
 
-    for stmt in QUERY.clone().into_iter() {
+    for stmt in QUERY.into_iter() {
         println!("Executing: {}", stmt);
         if stmt.is_empty() {
             continue;

@@ -60,7 +60,7 @@ async fn log_status_trigger(
 
                 let obj = UserQueryResult {
                     id: uuid::Uuid::new_v4(),
-                    user_query_id: handler.query_id.clone(),
+                    user_query_id: handler.query_id,
                     query_end_time: chrono::Utc::now(),
                     query_status: status.status().into(),
                     failure_details: status
@@ -172,7 +172,7 @@ impl QueryEngine for MyQueryEngine {
             .await
         {
             let query_log = crate::models::query::UserQuery::sql(
-                handler.query_id.clone(),
+                handler.query_id,
                 allowed_workspace_ids,
                 None,
                 None,
@@ -208,7 +208,7 @@ impl QueryEngine for MyQueryEngine {
                 tracing::error!("Failed to get batches: {}", e);
                 Status::internal(e.to_string())
             })
-            .map(|s| ReceiverStream::new(s))?;
+            .map(ReceiverStream::new)?;
 
         Ok(Response::new(receiver_stream))
     }

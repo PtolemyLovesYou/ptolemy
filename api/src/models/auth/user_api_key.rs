@@ -32,14 +32,14 @@ pub struct UserApiKey {
 
 crate::impl_has_id!(UserApiKey);
 
-impl Into<ptolemy::models::auth::UserApiKey> for UserApiKey {
-    fn into(self) -> ptolemy::models::auth::UserApiKey {
+impl From<UserApiKey> for ptolemy::models::auth::UserApiKey {
+    fn from(val: UserApiKey) -> Self {
         ptolemy::models::auth::UserApiKey {
-            id: self.id.into(),
-            user_id: self.user_id.into(),
-            name: self.name,
-            key_preview: self.key_preview,
-            expires_at: self.expires_at,
+            id: val.id.into(),
+            user_id: val.user_id.into(),
+            name: val.name,
+            key_preview: val.key_preview,
+            expires_at: val.expires_at,
         }
     }
 }

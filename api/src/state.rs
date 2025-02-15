@@ -70,7 +70,7 @@ impl AppState {
         // Default to false if env var is not set and PTOLEMY_ENV is set to 'PROD'
         let enable_graphiql = std::env::var("PTOLEMY_ENABLE_GRAPHIQL")
             .map(|v| v.to_lowercase() == "true")
-            .unwrap_or(!(ptolemy_env == "PROD"));
+            .unwrap_or(ptolemy_env != "PROD");
 
         let pg_config = PostgresConfig::from_env()?;
         let pg_pool = pg_config.diesel_conn().await?;
@@ -155,7 +155,7 @@ impl AppState {
         let mut conn = self.get_conn().await?;
         diesel::sql_query(format!(
             "SET app.current_api_access_audit_log_id = '{}'",
-            api_access_audit_log_id.to_string()
+            api_access_audit_log_id
         ))
         .execute(&mut conn)
         .await
@@ -164,7 +164,7 @@ impl AppState {
         if let Some(user_query_id) = user_query_id {
             diesel::sql_query(format!(
                 "SET app.current_user_query_id = '{}'",
-                user_query_id.to_string()
+                user_query_id
             ))
             .execute(&mut conn)
             .await

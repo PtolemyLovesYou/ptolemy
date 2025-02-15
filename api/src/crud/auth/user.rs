@@ -150,7 +150,7 @@ impl User {
             return Ok(None);
         }
 
-        let pass_correct = password_handler.verify_password(&password, &user.password_hash);
+        let pass_correct = password_handler.verify_password(password, &user.password_hash);
 
         match pass_correct {
             true => Ok(Some(user)),

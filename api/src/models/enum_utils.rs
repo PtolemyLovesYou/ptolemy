@@ -54,7 +54,7 @@ macro_rules! define_enum {
             where
                 S: serde::Serializer,
             {
-                Ok(self.to_string().serialize(serializer)?)
+                self.to_string().serialize(serializer)
             }
         }
 

@@ -9,9 +9,9 @@ macro_rules! search_db_obj {
     ($fn_name:ident, $ty:ident, $table:ident, [$(($req_field:ident, $req_type:ty)),+ $(,)?]) => {
         impl $ty {
             pub async fn $fn_name(
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 $($req_field: Option<$req_type>),+
-            ) -> Result<Vec<$ty>, crate::error::ApiError> {
+            ) -> Result<Vec<$ty>, $crate::error::ApiError> {
                 let mut query = $table::table.into_boxed();
                 $(
                     if let Some($req_field) = $req_field {
@@ -35,8 +35,8 @@ macro_rules! map_diesel_err {
                 e
             );
             match e {
-                diesel::result::Error::NotFound => crate::error::ApiError::NotFoundError,
-                diesel::result::Error::DatabaseError(..) => crate::error::ApiError::DatabaseError,
+                diesel::result::Error::NotFound => $crate::error::ApiError::NotFoundError,
+                diesel::result::Error::DatabaseError(..) => $crate::error::ApiError::DatabaseError,
                 _ => crate::error::ApiError::$catchall,
             }
         }
@@ -102,12 +102,12 @@ where
 #[macro_export]
 macro_rules! update_by_id_trait {
     ($ty:ident, $table:ident, $changeset_ty:ident) => {
-        impl crate::crud::prelude::UpdateObjById for $ty {
+        impl $crate::crud::prelude::UpdateObjById for $ty {
             type InsertTarget = $changeset_ty;
 
             async fn update_by_id(
                 &self,
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 obj: &Self::InsertTarget,
             ) -> Result<Self, crate::error::ApiError> {
                 match diesel::update($table::table)
@@ -139,9 +139,9 @@ macro_rules! update_by_id_trait {
 #[macro_export]
 macro_rules! get_by_id_trait {
     ($ty:ident, $table:ident) => {
-        impl crate::crud::prelude::GetObjById for $ty {
+        impl $crate::crud::prelude::GetObjById for $ty {
             async fn get_by_id(
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 id: &uuid::Uuid,
             ) -> Result<Self, crate::error::ApiError> {
                 match $table::table
@@ -201,9 +201,9 @@ macro_rules! get_by_id_trait {
 #[macro_export]
 macro_rules! insert_obj_traits {
     ($ty:ident, $table:ident, $target:ident) => {
-        crate::insert_obj_traits!($ty, $table);
+        $crate::insert_obj_traits!($ty, $table);
 
-        impl crate::crud::prelude::InsertObjReturningObj for $ty {
+        impl $crate::crud::prelude::InsertObjReturningObj for $ty {
             type Target = $target;
             async fn insert_one_returning_obj(
                 conn: &mut crate::db::DbConnection<'_>,
