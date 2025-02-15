@@ -49,6 +49,7 @@ pub struct UserQuery {
 
 impl UserQuery {
     pub fn sql(
+        id: Uuid,
         allowed_workspace_ids: Vec<Uuid>,
         access_reason: Option<AccessReasonEnum>,
         access_reason_details: Option<String>,
@@ -58,7 +59,7 @@ impl UserQuery {
         failure_details: Option<serde_json::Value>,
     ) -> Self {
         UserQuery {
-            id: uuid::Uuid::new_v4(),
+            id,
             allowed_workspace_ids,
             query_type: QueryTypeEnum::Sql,
             access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),
@@ -73,6 +74,7 @@ impl UserQuery {
     }
 
     pub fn graphql(
+        id: Uuid,
         allowed_workspace_ids: Vec<Uuid>,
         access_reason: Option<AccessReasonEnum>,
         access_reason_details: Option<String>,
@@ -84,7 +86,7 @@ impl UserQuery {
         failure_details: Option<serde_json::Value>,
     ) -> Self {
         UserQuery {
-            id: uuid::Uuid::new_v4(),
+            id,
             allowed_workspace_ids,
             query_type: QueryTypeEnum::Graphql,
             access_reason: access_reason.unwrap_or(AccessReasonEnum::Research),

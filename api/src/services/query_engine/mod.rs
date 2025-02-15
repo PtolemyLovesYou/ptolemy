@@ -10,7 +10,7 @@ use ptolemy::generated::query_engine::{
     CancelQueryResponse,
 };
 use crate::{
-    models::middleware::AuthContext, state::ApiAppState
+    models::middleware::AuthContext, state::ApiAppState, crud::prelude::*,
 };
 use tonic::{
     Request,
@@ -68,15 +68,36 @@ impl QueryEngine for MyQueryEngine {
             }
         }
 
+        let start_time = chrono::Utc::now();
+
         let (success, error) = match handler.send_query(
             &request.get_ref().query,
-            allowed_workspace_ids,
+            &allowed_workspace_ids,
             None,
             None
         ).await {
             Ok(()) => (true, None),
             Err(e) => (false, Some(e.to_string())),
         };
+
+        if let Ok(mut conn) = self.state
+            .get_conn_with_vars(&auth_ctx.api_access_audit_log_id, Some(&handler.query_id)).await {
+                let query_log = crate::models::query::UserQuery::sql(
+                    handler.query_id.clone(),
+                    allowed_workspace_ids,
+                    None,
+                    None,
+                    request.get_ref().query.clone(),
+                    None,
+                    start_time,
+                    None,
+                );
+
+                crate::models::query::UserQuery::insert_one_returning_id(
+                    &mut conn,
+                    &query_log
+                    ).await.unwrap();
+            }
 
         Ok(Response::new(QueryResponse {
             query_id: handler.query_id.to_string(),

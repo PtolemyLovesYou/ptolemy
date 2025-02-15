@@ -290,3 +290,7 @@ create view duckdb.subcomponent_metadata as
            m.field_value
     from duckdb.subcomponent_event s
     left join metadata m on s.id = m.subcomponent_event_id;
+
+create view duckdb.user_query as
+    select *
+    from user_query;
