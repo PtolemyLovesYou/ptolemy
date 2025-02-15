@@ -1,4 +1,4 @@
-use crate::generated::query_schema::{user_query, sql_types::*};
+use crate::generated::query_schema::{user_query, sql_types::*, user_query_results};
 use diesel::prelude::*;
 use uuid::Uuid;
 use diesel::deserialize::FromSql;
@@ -51,10 +51,6 @@ pub struct UserQuery {
     variables: Option<serde_json::Value>,
     query_metadata: Option<serde_json::Value>,
     query_start_time: chrono::DateTime<chrono::Utc>,
-    query_end_time: Option<chrono::DateTime<chrono::Utc>>,
-    query_status: QueryStatusEnum,
-    failure_details: Option<serde_json::Value>,
-    resource_usage: Option<serde_json::Value>,
 }
 
 impl UserQuery {
@@ -65,10 +61,6 @@ impl UserQuery {
         query_text: String,
         query_metadata: Option<serde_json::Value>,
         query_start_time: chrono::DateTime<chrono::Utc>,
-        query_end_time: Option<chrono::DateTime<chrono::Utc>>,
-        query_status: QueryStatusEnum,
-        failure_details: Option<serde_json::Value>,
-        resource_usage: Option<serde_json::Value>,
     ) -> Self {
         UserQuery {
             id: uuid::Uuid::new_v4(),
@@ -81,10 +73,6 @@ impl UserQuery {
             variables: None,
             query_metadata,
             query_start_time,
-            query_end_time,
-            query_status,
-            failure_details,
-            resource_usage,
         }
     }
 
@@ -97,10 +85,6 @@ impl UserQuery {
         variables: Option<serde_json::Value>,
         query_metadata: Option<serde_json::Value>,
         query_start_time: chrono::DateTime<chrono::Utc>,
-        query_end_time: Option<chrono::DateTime<chrono::Utc>>,
-        query_status: QueryStatusEnum,
-        failure_details: Option<serde_json::Value>,
-        resource_usage: Option<serde_json::Value>,
     ) -> Self {
         UserQuery {
             id: uuid::Uuid::new_v4(),
@@ -113,10 +97,17 @@ impl UserQuery {
             variables,
             query_metadata,
             query_start_time,
-            query_end_time,
-            query_status,
-            failure_details,
-            resource_usage,
         }
     }
+}
+
+#[derive(Debug, Selectable, Insertable)]
+#[diesel(table_name = user_query_results)]
+pub struct UserQueryResult {
+    pub id: Uuid,
+    pub user_query_id: Uuid,
+    pub failure_details: Option<serde_json::Value>,
+    pub query_end_time: chrono::DateTime<chrono::Utc>,
+    pub query_status: QueryStatusEnum,
+    pub resource_usage: Option<serde_json::Value>,
 }

@@ -18,7 +18,6 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::QueryType;
     use super::sql_types::AccessReason;
-    use super::sql_types::QueryStatus;
 
     user_query (id) {
         id -> Uuid,
@@ -30,10 +29,27 @@ diesel::table! {
         operation_name -> Nullable<Varchar>,
         variables -> Nullable<Jsonb>,
         query_metadata -> Nullable<Jsonb>,
-        failure_details -> Nullable<Jsonb>,
         query_start_time -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::QueryStatus;
+
+    user_query_results (id) {
+        id -> Uuid,
+        user_query_id -> Uuid,
+        failure_details -> Nullable<Jsonb>,
         query_end_time -> Nullable<Timestamptz>,
         query_status -> Nullable<QueryStatus>,
         resource_usage -> Nullable<Jsonb>,
     }
 }
+
+diesel::joinable!(user_query_results -> user_query (user_query_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    user_query,
+    user_query_results,
+);

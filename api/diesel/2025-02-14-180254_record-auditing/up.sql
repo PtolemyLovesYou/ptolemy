@@ -39,8 +39,13 @@ create table user_query (
     operation_name varchar,
     variables jsonb,
     query_metadata jsonb,
+    query_start_time timestamptz not null
+);
+
+create table user_query_results (
+    id uuid primary key default gen_random_uuid(),
+    user_query_id uuid not null references user_query(id),
     failure_details jsonb,
-    query_start_time timestamptz not null,
     query_end_time timestamptz,
     query_status query_status,
     resource_usage jsonb

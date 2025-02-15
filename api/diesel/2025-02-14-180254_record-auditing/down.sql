@@ -36,6 +36,7 @@ drop function if exists log_record_access();
 
 -- Drop tables (in correct order due to foreign key constraints)
 drop table if exists record_access_audit_logs;
+drop table if exists user_query_results;
 drop table if exists user_query;
 
 -- Drop custom types
