@@ -171,8 +171,8 @@ macro_rules! get_by_id_trait {
 
             async fn delete_by_id(
                 &self,
-                conn: &mut crate::db::DbConnection<'_>,
-            ) -> Result<Self, crate::error::ApiError> {
+                conn: &mut $crate::db::DbConnection<'_>,
+            ) -> Result<Self, $crate::error::ApiError> {
                 match diesel::update($table::table)
                     .filter($table::id.eq(self.id))
                     .set((
@@ -212,53 +212,53 @@ macro_rules! insert_obj_traits {
             async fn insert_one_returning_obj(
                 conn: &mut $crate::db::DbConnection<'_>,
                 record: &Self,
-            ) -> Result<Self::Target, crate::error::ApiError> {
+            ) -> Result<Self::Target, $crate::error::ApiError> {
                 diesel::insert_into($table::table)
                     .values(record)
                     .returning($target::as_returning())
                     .get_result(conn)
                     .await
-                    .map_err(crate::map_diesel_err!(InsertError, "insert", $ty))
+                    .map_err($crate::map_diesel_err!(InsertError, "insert", $ty))
             }
 
             async fn insert_many_returning_obj(
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 records: &[Self],
-            ) -> Result<Vec<Self::Target>, crate::error::ApiError> {
+            ) -> Result<Vec<Self::Target>, $crate::error::ApiError> {
                 diesel::insert_into($table::table)
                     .values(records)
                     .returning($target::as_returning())
                     .get_results(conn)
                     .await
-                    .map_err(crate::map_diesel_err!(InsertError, "insert", $ty))
+                    .map_err($crate::map_diesel_err!(InsertError, "insert", $ty))
             }
         }
     };
 
     ($ty:ident, $table:ident) => {
-        impl crate::crud::prelude::InsertObjReturningId for $ty {
+        impl $crate::crud::prelude::InsertObjReturningId for $ty {
             async fn insert_one_returning_id(
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 record: &Self,
-            ) -> Result<uuid::Uuid, crate::error::ApiError> {
+            ) -> Result<uuid::Uuid, $crate::error::ApiError> {
                 diesel::insert_into($table::table)
                     .values(record)
                     .returning($table::id)
                     .get_result(conn)
                     .await
-                    .map_err(crate::map_diesel_err!(InsertError, "insert", $ty))
+                    .map_err($crate::map_diesel_err!(InsertError, "insert", $ty))
             }
 
             async fn insert_many_returning_id(
-                conn: &mut crate::db::DbConnection<'_>,
+                conn: &mut $crate::db::DbConnection<'_>,
                 records: &[Self],
-            ) -> Result<Vec<uuid::Uuid>, crate::error::ApiError> {
+            ) -> Result<Vec<uuid::Uuid>, $crate::error::ApiError> {
                 diesel::insert_into($table::table)
                     .values(records)
                     .returning($table::id)
                     .get_results(conn)
                     .await
-                    .map_err(crate::map_diesel_err!(InsertError, "insert", $ty))
+                    .map_err($crate::map_diesel_err!(InsertError, "insert", $ty))
             }
         }
     };

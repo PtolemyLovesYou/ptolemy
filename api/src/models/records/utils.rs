@@ -3,6 +3,7 @@ use ptolemy::generated::observer::Tier;
 use ptolemy::models::id::Id;
 use uuid::Uuid;
 
+#[allow(clippy::type_complexity)] // this is literally the easiest way to do it
 pub fn get_foreign_keys(
     parent_id: Id,
     tier: &Tier,
