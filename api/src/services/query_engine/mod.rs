@@ -94,9 +94,8 @@ impl QueryEngine for MyQueryEngine {
                 );
 
                 if let Err(e) = crate::models::query::UserQuery::insert_one_returning_id(
-                    &mut conn,
-                    &query_log
-                    ).await {
+                    &mut conn, &query_log
+                ).await {
                         tracing::error!("Failed to insert query log: {}", e);
                     }
             }
