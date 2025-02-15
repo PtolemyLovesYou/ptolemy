@@ -53,9 +53,7 @@ async fn log_status_trigger(
                 tracing::debug!("Query status: {:?}", status);
 
                 match status.status() {
-                    QueryStatus::Pending | QueryStatus::Running => {
-                        ();
-                    }
+                    QueryStatus::Pending | QueryStatus::Running => {}
                     _ => {
                         let obj = UserQueryResult {
                             id: uuid::Uuid::new_v4(),

@@ -50,10 +50,7 @@ impl AuthContext {
     pub fn can_update_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.role {
-                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
-                    _ => false,
-                };
+                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin));
             }
         }
 
@@ -63,10 +60,7 @@ impl AuthContext {
     pub fn can_add_remove_update_user_to_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.role {
-                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
-                    _ => false,
-                };
+                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin));
             }
         }
 
@@ -76,11 +70,7 @@ impl AuthContext {
     pub fn can_create_delete_service_api_key(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.role {
-                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
-                    Some(ptolemy::models::enums::WorkspaceRole::Manager) => true,
-                    _ => false,
-                };
+                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin) | Some(ptolemy::models::enums::WorkspaceRole::Manager));
             }
         }
 
@@ -98,11 +88,7 @@ impl AuthContext {
 
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.permissions {
-                    Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) => true,
-                    Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
-                    _ => false,
-                };
+                return matches!(workspace.permissions, Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) | Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite));
             }
         }
 
@@ -112,11 +98,7 @@ impl AuthContext {
     pub fn can_write_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.permissions {
-                    Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
-                    Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) => true,
-                    _ => false,
-                };
+                return matches!(workspace.permissions, Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) | Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite));
             }
         }
 

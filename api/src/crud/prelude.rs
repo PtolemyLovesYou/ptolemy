@@ -57,7 +57,7 @@ where
     ) -> impl std::future::Future<Output = Result<Uuid, crate::error::ApiError>> + Send;
     fn insert_many_returning_id(
         conn: &mut DbConnection<'_>,
-        records: &Vec<Self>,
+        records: &[Self],
     ) -> impl std::future::Future<Output = Result<Vec<Uuid>, crate::error::ApiError>> + Send;
 }
 
@@ -72,7 +72,7 @@ where
     ) -> impl std::future::Future<Output = Result<Self::Target, crate::error::ApiError>> + Send;
     fn insert_many_returning_obj(
         conn: &mut DbConnection<'_>,
-        records: &Vec<Self>,
+        records: &[Self],
     ) -> impl std::future::Future<Output = Result<Vec<Self::Target>, crate::error::ApiError>> + Send;
 }
 
@@ -223,7 +223,7 @@ macro_rules! insert_obj_traits {
 
             async fn insert_many_returning_obj(
                 conn: &mut crate::db::DbConnection<'_>,
-                records: &Vec<Self>,
+                records: &[Self],
             ) -> Result<Vec<Self::Target>, crate::error::ApiError> {
                 diesel::insert_into($table::table)
                     .values(records)
@@ -251,7 +251,7 @@ macro_rules! insert_obj_traits {
 
             async fn insert_many_returning_id(
                 conn: &mut crate::db::DbConnection<'_>,
-                records: &Vec<Self>,
+                records: &[Self],
             ) -> Result<Vec<uuid::Uuid>, crate::error::ApiError> {
                 diesel::insert_into($table::table)
                     .values(records)

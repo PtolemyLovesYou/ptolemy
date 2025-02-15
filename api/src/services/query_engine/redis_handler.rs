@@ -170,7 +170,7 @@ impl QueryEngineRedisHandler {
     pub async fn send_query(
         &mut self,
         query: &str,
-        allowed_workspace_ids: &Vec<Uuid>,
+        allowed_workspace_ids: &[Uuid],
         batch_size: Option<u32>,
         timeout_seconds: Option<u32>,
     ) -> Result<(), ApiError> {
