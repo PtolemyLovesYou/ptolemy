@@ -94,6 +94,14 @@ class QueryExecutor(BaseModel):
 
         try:
             self.setup_conn()
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.info("Error setting up connection for query %s", self.query_id, exc_info=e)
+            self.redis_conn.hset(
+                self.keyspace, mapping={"status": QueryStatus.FAILED, "error": "Internal Error"}
+            )
+            return 1
+
+        try:
             self.logger.debug("Executing query %s", self.query_id)
             results: pd.DataFrame = self.conn.sql(self.query).arrow().to_pandas()
 
