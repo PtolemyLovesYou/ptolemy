@@ -79,9 +79,9 @@ macro_rules! define_enum {
     ($name:ident, $type:tt, [$($variant:ident),+], WithConversion) => {
         define_enum!($name, $type, [$($variant),+]);
 
-        impl Into<ptolemy::models::enums::$type> for $name {
-            fn into(self) -> ptolemy::models::enums::$type {
-                match self {
+        impl From<$name> for ptolemy::models::enums::$type {
+            fn from(value: $name) -> Self {
+                match value {
                     $(
                         $name::$variant => ptolemy::models::enums::$type::$variant,
                     )+

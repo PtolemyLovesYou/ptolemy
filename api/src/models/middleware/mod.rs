@@ -90,7 +90,9 @@ impl AuthContext {
     pub fn can_read_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         if self.user.is_some() {
             for workspace in &self.workspaces {
-                return workspace.workspace.id.as_uuid() == workspace_id;
+                if workspace.workspace.id.as_uuid() == workspace_id {
+                    return true;
+                }
             }
         }
 
@@ -172,9 +174,9 @@ macro_rules! auth_header {
             }
         }
 
-        impl Into<AuthResult<Option<$ty>>> for $name {
-            fn into(self) -> AuthResult<Option<$ty>> {
-                match self {
+        impl From<$name> for AuthResult<Option<$ty>> {
+            fn from(header: $name) -> AuthResult<Option<$ty>> {
+                match header {
                     $name::Ok(t) => AuthResult::Ok(Some(t)),
                     $name::Undeclared => AuthResult::Ok(None),
                     $name::Err(e) => AuthResult::Err(e),
