@@ -133,14 +133,13 @@ impl QueryEngine for MyQueryEngine {
     }
 
     async fn fetch_batch(&self, request: Request<FetchBatchRequest>) -> QueryEngineResult<Self::FetchBatchStream> {
-        let mut handler = handler!(self, request);
-
-        let stream = handler.get_batches().await.map_err(|e| {
-            tracing::error!("Failed to get batches: {}", e);
-            Status::internal(e.to_string())
-        })?;
-        
-        let receiver_stream = ReceiverStream::new(stream);
+        let receiver_stream = handler!(self, request).get_batches()
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get batches: {}", e);
+                Status::internal(e.to_string())
+            })
+            .map(|s| ReceiverStream::new(s))?;
 
         Ok(Response::new(receiver_stream))
     }
