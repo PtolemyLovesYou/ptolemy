@@ -136,8 +136,8 @@ impl User {
 
     pub async fn auth_user(
         conn: &mut DbConnection<'_>,
-        uname: &String,
-        password: &String,
+        uname: &str,
+        password: &str,
         password_handler: &PasswordHandler,
     ) -> Result<Option<User>, ApiError> {
         let user = users::table

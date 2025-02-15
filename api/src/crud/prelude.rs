@@ -126,12 +126,12 @@ macro_rules! update_by_id_trait {
                         tracing::error!("Unable to update {} by id: {}", stringify!($ty), e);
                         match e {
                             diesel::result::Error::NotFound => {
-                                Err(crate::error::ApiError::NotFoundError)
+                                Err($crate::error::ApiError::NotFoundError)
                             }
                             diesel::result::Error::DatabaseError(..) => {
-                                Err(crate::error::ApiError::DatabaseError)
+                                Err($crate::error::ApiError::DatabaseError)
                             }
-                            _ => Err(crate::error::ApiError::UpdateError),
+                            _ => Err($crate::error::ApiError::UpdateError),
                         }
                     }
                 }
@@ -158,12 +158,12 @@ macro_rules! get_by_id_trait {
                         tracing::error!("Unable to get {} by id: {}", stringify!($ty), e);
                         match e {
                             diesel::result::Error::NotFound => {
-                                Err(crate::error::ApiError::NotFoundError)
+                                Err($crate::error::ApiError::NotFoundError)
                             }
                             diesel::result::Error::DatabaseError(..) => {
-                                Err(crate::error::ApiError::DatabaseError)
+                                Err($crate::error::ApiError::DatabaseError)
                             }
-                            _ => Err(crate::error::ApiError::GetError),
+                            _ => Err($crate::error::ApiError::GetError),
                         }
                     }
                 }
@@ -188,12 +188,12 @@ macro_rules! get_by_id_trait {
                         tracing::error!("Unable to delete {} by id: {}", stringify!($ty), e);
                         match e {
                             diesel::result::Error::NotFound => {
-                                Err(crate::error::ApiError::NotFoundError)
+                                Err($crate::error::ApiError::NotFoundError)
                             }
                             diesel::result::Error::DatabaseError(..) => {
-                                Err(crate::error::ApiError::DatabaseError)
+                                Err($crate::error::ApiError::DatabaseError)
                             }
-                            _ => Err(crate::error::ApiError::DeleteError),
+                            _ => Err($crate::error::ApiError::DeleteError),
                         }
                     }
                 }
