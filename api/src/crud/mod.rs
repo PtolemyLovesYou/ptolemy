@@ -4,7 +4,7 @@ pub mod prelude;
 pub mod query;
 pub mod records;
 
-pub async fn audit<L: self::prelude::InsertObjReturningId + serde::Serialize>(
+pub async fn audit<L: self::prelude::Auditable>(
     conn: &mut super::db::DbConnection<'_>,
     records: Vec<L>,
 ) {
@@ -47,8 +47,9 @@ pub async fn audit<L: self::prelude::InsertObjReturningId + serde::Serialize>(
     if !current_records.is_empty() {
         failed_records.extend(current_records.into_iter().map(|l| serde_json::json!(l)));
         tracing::error!(
-            "Failed to insert audit logs after {} attempts. Logging failed records: {:?}",
+            "Failed to insert audit logs after {} attempts. Logging failed records: table=\"{}\" records={:?}",
             MAX_RETRIES,
+            L::table_name(),
             serde_json::json!(failed_records).to_string()
         );
     }

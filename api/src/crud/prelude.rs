@@ -43,6 +43,10 @@ macro_rules! map_diesel_err {
     };
 }
 
+pub trait Auditable: serde::Serialize + InsertObjReturningId {
+    fn table_name() -> &'static str;
+}
+
 pub trait InsertObjReturningId
 where
     Self: Sized,
