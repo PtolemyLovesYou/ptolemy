@@ -9,7 +9,7 @@ use crate::{
         middleware::{
             AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, WorkspacePermission, JWT,
         },
-        ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User, Workspace,
+        ApiAccessAuditLogCreate, AuthAuditLogCreate, AuthMethodEnum, User, Workspace,
     },
     state::ApiAppState,
 };
@@ -203,9 +203,7 @@ pub async fn master_auth_middleware(
             }
         };
 
-        if let Err(e) = AuditLog::insert_many(&mut conn, vec![AuditLog::ApiAccess(api_access_audit_log)]).await {
-            tracing::error!("Failed to insert audit log: {}", e);
-        }
+        crate::crud::audit(&mut conn, vec![api_access_audit_log]).await;
     });
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
@@ -259,9 +257,7 @@ pub async fn master_auth_middleware(
                 }
             };
 
-            if let Err(e) = AuditLog::insert_many(&mut conn, vec![AuditLog::Auth(log)]).await {
-                tracing::error!("Failed to insert audit log: {}", e);
-            }
+            crate::crud::audit(&mut conn, vec![log]).await;
         });
 
         req.extensions_mut().insert(AuthContext {
@@ -313,9 +309,7 @@ pub async fn master_auth_middleware(
                 }
             };
 
-            if let Err(e) = AuditLog::insert_many(&mut conn, vec![AuditLog::Auth(log)]).await {
-                tracing::error!("Failed to insert audit log: {}", e);
-            }
+            crate::crud::audit(&mut conn, vec![log]).await;
         });
 
         req.extensions_mut().insert(AuthContext {

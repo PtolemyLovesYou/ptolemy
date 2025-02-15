@@ -2,7 +2,7 @@ use crate::{
     crud::prelude::{GetObjById, InsertObjReturningObj, UpdateObjById},
     crypto::GenerateSha256 as _,
     error::ApiError,
-    models::{middleware::AuthContext, prelude::HasId, AuditLog, IAMAuditLogCreate, OperationTypeEnum},
+    models::{middleware::AuthContext, prelude::HasId, IAMAuditLogCreate, OperationTypeEnum},
     state::State,
 };
 use serde::Serialize;
@@ -83,11 +83,7 @@ where
                 Some(e.category().to_string()),
                 self.query_metadata.clone(),
             ),
-        }
-        .into_iter()
-        .map(|r| r.into())
-        .collect()
-        ;
+        };
 
         let state_clone = self.ctx.state().clone();
 
@@ -100,9 +96,7 @@ where
                 }
             };
 
-            if let Err(e) = AuditLog::insert_many(&mut conn, logs).await {
-                tracing::error!("Failed to insert audit logs: {}", e);
-            }
+            crate::crud::audit(&mut conn, logs).await;
         });
 
         result
@@ -165,9 +159,7 @@ where
                 }
             };
 
-            if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
-                tracing::error!("Failed to insert audit logs: {}", e);
-            }
+            crate::crud::audit(&mut conn, vec![log]).await;
         });
 
         result.map(|(_, o)| o)
@@ -225,9 +217,7 @@ where
                 }
             };
 
-            if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
-                tracing::error!("Failed to insert audit logs: {}", e);
-            }
+            crate::crud::audit(&mut conn, vec![log]).await;
         });
 
         result
@@ -287,9 +277,7 @@ where
                 }
             };
 
-            if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
-                tracing::error!("Failed to insert audit logs: {}", e);
-            }
+            crate::crud::audit(&mut conn, vec![log]).await;
         });
 
         result

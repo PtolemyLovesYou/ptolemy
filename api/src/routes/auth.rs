@@ -2,7 +2,7 @@ use crate::{
     crypto::{ClaimType, Claims, GenerateSha256},
     error::ApiError,
     models::{
-        audit::{AuthAuditLogCreate, AuthMethodEnum}, middleware::AccessAuditId, AuditLog, User
+        audit::{AuthAuditLogCreate, AuthMethodEnum}, middleware::AccessAuditId, User
     },
     state::ApiAppState,
 };
@@ -91,9 +91,7 @@ pub async fn login(
             }
         };
 
-        if let Err(e) = AuditLog::insert_many(&mut conn, vec![log.into()]).await {
-            tracing::error!("Failed to write audit log: {}", e);
-        }
+        crate::crud::audit(&mut conn, vec![log]).await;
     });
 
     Ok(Json(
