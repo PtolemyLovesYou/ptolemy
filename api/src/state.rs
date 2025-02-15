@@ -4,7 +4,6 @@ use crate::{
     env_settings::get_env_var,
     error::{ApiError, ServerError},
 };
-use axum::http::StatusCode;
 use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -153,7 +152,10 @@ impl AppState {
         ))
         .execute(&mut conn)
         .await
-        .expect("Failed to set current_api_access_audit_log_id");
+        .map_err(|e| {
+            error!("Failed to set current_api_access_audit_log_id: {}", e);
+            ApiError::ConnectionError
+        })?;
 
         if let Some(user_query_id) = user_query_id {
             diesel::sql_query(format!(
@@ -162,16 +164,13 @@ impl AppState {
             ))
             .execute(&mut conn)
             .await
-            .expect("Failed to set current_api_access_id");
+            .map_err(|e| {
+                error!("Failed to set current_user_query_id: {}", e);
+                ApiError::ConnectionError
+            })?;
         }
 
         Ok(conn)
-    }
-
-    pub async fn get_conn_http(&self) -> Result<DbConnection<'_>, StatusCode> {
-        self.get_conn()
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
     }
 
     pub async fn get_redis_conn(&self) -> Result<MultiplexedConnection, ApiError> {
