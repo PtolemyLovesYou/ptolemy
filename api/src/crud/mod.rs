@@ -19,6 +19,6 @@ pub async fn audit<L: self::prelude::InsertObjReturningId + serde::Serialize>(
     };
 
     if failed_records.len() > 0 {
-        tracing::error!("Audit logs failed: {:?}", failed_records);
+        tracing::error!("Logging failed records: {:?}", serde_json::json!(failed_records).to_string());
     }
 }
