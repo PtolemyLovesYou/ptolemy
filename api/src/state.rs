@@ -44,11 +44,13 @@ pub fn run_migrations() -> Result<(), ServerError> {
 }
 
 fn get_env_var(name: &str) -> Result<String, ServerError> {
-    std::env::var(name)
-        .map_err(|_| {
+    match std::env::var(name) {
+        Ok(val) => Ok(val),
+        Err(_) => {
             tracing::error!("{} must be set.", name);
-            ServerError::ConfigError
-        })
+            Err(ServerError::ConfigError)
+        }
+    }
 }
 
 pub type ApiAppState = Arc<AppState>;
@@ -133,10 +135,13 @@ impl AppState {
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
-        self.pg_pool.get().await.map_err(|e| {
-            error!("Failed to get connection: {}", e);
-            ApiError::ConnectionError
-        })
+        match self.pg_pool.get().await {
+            Ok(c) => Ok(c),
+            Err(e) => {
+                error!("Failed to get connection: {}", e);
+                Err(ApiError::ConnectionError)
+            }
+        }
     }
 
     pub async fn get_conn_with_vars(

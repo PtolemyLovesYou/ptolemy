@@ -27,22 +27,24 @@ fn get_header(
     header: HeaderName,
     prefix: Option<&str>,
 ) -> AuthResult<Option<String>> {
-    if let Some(h) = req.headers().get(header) {
-        let token = h.to_str()
-            .map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
+    match req.headers().get(header) {
+        Some(h) => {
+            let token = h
+                .to_str()
+                .map_err(|_| ApiError::AuthError("Malformed header".to_string()))?;
 
-        match prefix {
-            Some(p) => return Ok(Some(
-                token
-                    .strip_prefix(p)
-                    .ok_or(ApiError::AuthError("Malformed header".to_string()))?
-                    .to_string(),
-            )),
-            None => return Ok(Some(token.to_string())),
+            match prefix {
+                Some(p) => Ok(Some(
+                    token
+                        .strip_prefix(p)
+                        .ok_or(ApiError::AuthError("Malformed header".to_string()))?
+                        .to_string(),
+                )),
+                None => Ok(Some(token.to_string())),
+            }
         }
+        None => Ok(None),
     }
-
-    Ok(None)
 }
 
 fn insert_headers(req: &mut Request<axum::body::Body>, state: &ApiAppState) -> (JWT, ApiKey) {

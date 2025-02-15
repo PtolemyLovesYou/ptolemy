@@ -10,7 +10,7 @@ use ptolemy::generated::query_engine::{
     CancelQueryResponse,
 };
 use crate::{
-    models::{middleware::AuthContext, query::UserQuery}, state::ApiAppState, crud::prelude::*,
+    models::middleware::AuthContext, state::ApiAppState
 };
 use tonic::{
     Request,
@@ -68,37 +68,15 @@ impl QueryEngine for MyQueryEngine {
             }
         }
 
-        let start_time = chrono::Utc::now();
-
         let (success, error) = match handler.send_query(
             &request.get_ref().query,
-            &allowed_workspace_ids,
+            allowed_workspace_ids,
             None,
             None
         ).await {
             Ok(()) => (true, None),
             Err(e) => (false, Some(e.to_string())),
         };
-
-        let query = UserQuery::sql(
-            handler.query_id.clone(),
-            allowed_workspace_ids.clone(),
-            None,
-            None,
-            request.get_ref().query.clone(),
-            None,
-            start_time,
-            error.as_ref().map(|e| serde_json::json!({"error": e})),
-        );
-
-        if let Ok(mut conn) = self.state.get_conn().await {
-            match UserQuery::insert_one_returning_id(&mut conn, &query).await {
-                Ok(_) => (),
-                Err(e) => {
-                    tracing::error!("Failed to insert query log: {}", e);
-                }
-            };
-        }
 
         Ok(Response::new(QueryResponse {
             query_id: handler.query_id.to_string(),

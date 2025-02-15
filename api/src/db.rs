@@ -10,10 +10,13 @@ use redis::aio::MultiplexedConnection;
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
 fn get_env_var(name: &str) -> Result<String, ServerError> {
-    std::env::var(name).map_err(|_| {
-        tracing::error!("{} must be set.", name);
-        ServerError::ConfigError
-    })
+    match std::env::var(name) {
+        Ok(val) => Ok(val),
+        Err(_) => {
+            tracing::error!("{} must be set.", name);
+            Err(ServerError::ConfigError)
+        }
+    }
 }
 
 #[derive(Debug)]
