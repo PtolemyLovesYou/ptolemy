@@ -125,20 +125,15 @@ impl QueryEngine for MyQueryEngine {
         let conn = self.state.get_redis_conn().await.unwrap();
         let query_id = Uuid::try_parse(request.get_ref().query_id.as_str()).unwrap();
 
-        match QueryEngineRedisHandler::new(conn, query_id).await.cancel_query().await {
-            Ok(_) => {
-                Ok(Response::new(CancelQueryResponse {
-                    success: true,
-                    error: None,
-                }))
-            },
-            Err(e) => {
-                Ok(Response::new(CancelQueryResponse {
-                    success: false,
-                    error: Some(e.to_string()),
-                }))
-            }
-        }
+        let (success, error) = match QueryEngineRedisHandler::new(conn, query_id).await.cancel_query().await {
+            Ok(()) => (true, None),
+            Err(e) => (false, Some(e.to_string())),
+        };
+
+        Ok(Response::new(CancelQueryResponse {
+            success,
+            error,
+        }))
     }
 
     async fn get_query_status(&self, request: Request<QueryStatusRequest>) -> QueryEngineResult<QueryStatusResponse> {
