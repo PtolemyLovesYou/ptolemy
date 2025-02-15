@@ -97,9 +97,6 @@ BEGIN
     ELSIF TG_OP = 'DELETE' THEN
         _operation := 'delete';      -- Hard delete
         SELECT array_agg(id) INTO _entity_ids FROM old;
-    ELSIF TG_OP = 'SELECT' THEN
-        _operation := 'read';
-        SELECT array_agg(id) INTO _entity_ids FROM new;
     END IF;
 
     INSERT INTO record_access_audit_logs (
