@@ -162,9 +162,7 @@ impl QueryEngine for MyQueryEngine {
 
         let state_clone = self.state.clone();
 
-        self.state
-            .jobs_rt
-            .spawn(log_status_trigger(state_clone, handler.clone(), 30));
+        self.state.spawn(log_status_trigger(state_clone, handler.clone(), 30));
 
         if let Ok(mut conn) = self
             .state

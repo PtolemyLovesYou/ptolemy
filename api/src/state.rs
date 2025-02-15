@@ -9,7 +9,7 @@ use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use redis::aio::MultiplexedConnection;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use tracing::error;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
@@ -38,6 +38,21 @@ pub fn run_migrations() -> Result<(), ServerError> {
     Ok(())
 }
 
+#[derive(Debug)]
+struct JobsRuntime {
+    rt: tokio::runtime::Runtime,
+    jobs: RwLock<Vec<tokio::task::JoinHandle<()>>>,
+}
+
+impl JobsRuntime {
+    fn new(rt: tokio::runtime::Runtime) -> Self {
+        Self {
+            rt,
+            jobs: RwLock::new(Vec::new()),
+        }
+    }
+}
+
 pub type ApiAppState = Arc<AppState>;
 
 #[derive(Debug, Clone)]
@@ -50,7 +65,7 @@ pub struct AppState {
     pub ptolemy_env: String,
     pub jwt_secret: String,
     pub redis_conn: MultiplexedConnection,
-    pub jobs_rt: Arc<tokio::runtime::Runtime>,
+    jobs_rt: Arc<JobsRuntime>,
 }
 
 impl AppState {
@@ -74,13 +89,13 @@ impl AppState {
 
         let password_handler = PasswordHandler::new();
 
-        let jobs_rt = Arc::new(
-            tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(1)
-                .enable_all()
-                .build()
-                .unwrap(),
-        );
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .unwrap();
+
+        let jobs_rt = Arc::new(JobsRuntime::new(rt));
 
         let redis_conn = RedisConfig::from_env()?.get_connection().await?;
 
@@ -108,7 +123,12 @@ impl AppState {
     }
 
     pub fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
-        self.jobs_rt.spawn(fut);
+        let mut futures = self.jobs_rt.jobs.write().unwrap();
+        futures.push(self.jobs_rt.rt.spawn(fut));
+
+        // clean up completed futures
+        futures.retain(|f| !f.is_finished());
+        drop(futures);
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
