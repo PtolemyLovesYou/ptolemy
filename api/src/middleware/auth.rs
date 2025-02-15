@@ -203,7 +203,7 @@ pub async fn master_auth_middleware(
             }
         };
 
-        crate::crud::audit(&mut conn, vec![api_access_audit_log]).await;
+        crate::crud::audit(&mut conn, api_access_audit_log).await;
     });
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
@@ -257,7 +257,7 @@ pub async fn master_auth_middleware(
                 }
             };
 
-            crate::crud::audit(&mut conn, vec![log]).await;
+            crate::crud::audit(&mut conn, log).await;
         });
 
         req.extensions_mut().insert(AuthContext {
@@ -309,7 +309,7 @@ pub async fn master_auth_middleware(
                 }
             };
 
-            crate::crud::audit(&mut conn, vec![log]).await;
+            crate::crud::audit(&mut conn, log).await;
         });
 
         req.extensions_mut().insert(AuthContext {

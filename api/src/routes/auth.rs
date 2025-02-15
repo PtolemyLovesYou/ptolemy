@@ -91,7 +91,7 @@ pub async fn login(
             }
         };
 
-        crate::crud::audit(&mut conn, vec![log]).await;
+        crate::crud::audit(&mut conn, log).await;
     });
 
     Ok(Json(

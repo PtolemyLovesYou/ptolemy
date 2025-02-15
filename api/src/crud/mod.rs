@@ -4,15 +4,29 @@ pub mod prelude;
 pub mod query;
 pub mod records;
 
+pub struct AuditableVec<L: self::prelude::Auditable>(Vec<L>);
+
+impl<L: self::prelude::Auditable> From<Vec<L>> for AuditableVec<L> {
+    fn from(value: Vec<L>) -> Self {
+        Self(value)
+    }
+}
+
+impl<L: self::prelude::Auditable> From<L> for AuditableVec<L> {
+    fn from(value: L) -> Self {
+        Self(vec![value])
+    }
+}
+
 pub async fn audit<L: self::prelude::Auditable>(
     conn: &mut super::db::DbConnection<'_>,
-    records: Vec<L>,
+    records: impl Into<AuditableVec<L>>,
 ) {
     const MAX_RETRIES: u32 = 3;
     const BASE_DELAY_MS: u64 = 100;
     
     let mut failed_records = Vec::new();
-    let mut current_records = records;
+    let AuditableVec(mut current_records) = records.into();
     
     for retry_count in 0..MAX_RETRIES {
         if current_records.is_empty() {
@@ -46,7 +60,7 @@ pub async fn audit<L: self::prelude::Auditable>(
 
     // If we still have records after all retries, they're considered failed
     if !current_records.is_empty() {
-        failed_records.extend(current_records.into_iter().map(|l| serde_json::json!(l)));
+        failed_records.extend(current_records.iter().map(|l| serde_json::json!(l)));
         tracing::error!(
             "Failed to insert audit logs after {} attempts. Logging failed records: table=\"{}\" records={:?}",
             MAX_RETRIES,

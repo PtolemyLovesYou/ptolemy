@@ -159,7 +159,7 @@ where
                 }
             };
 
-            crate::crud::audit(&mut conn, vec![log]).await;
+            crate::crud::audit(&mut conn, log).await;
         });
 
         result.map(|(_, o)| o)
