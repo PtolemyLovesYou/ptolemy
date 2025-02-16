@@ -39,16 +39,19 @@ pub fn run_migrations() -> Result<(), ServerError> {
 
 #[derive(Debug)]
 struct JobsRuntime {
-    rt: tokio::runtime::Runtime,
     jobs: RwLock<Vec<tokio::task::JoinHandle<()>>>,
 }
 
+impl Default for JobsRuntime {
+    fn default() -> Self {
+        Self { jobs: Default::default() }
+    }
+}
+
 impl JobsRuntime {
-    fn new(rt: tokio::runtime::Runtime) -> Self {
-        Self {
-            rt,
-            jobs: RwLock::new(Vec::new()),
-        }
+    fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+        let mut jobs = self.jobs.write().unwrap();
+        jobs.push(tokio::spawn(fut));
     }
 }
 
@@ -88,13 +91,7 @@ impl AppState {
 
         let password_handler = PasswordHandler::new();
 
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(1)
-            .enable_all()
-            .build()
-            .unwrap();
-
-        let jobs_rt = Arc::new(JobsRuntime::new(rt));
+        let jobs_rt = Arc::new(JobsRuntime::default());
 
         let redis_conn = RedisConfig::from_env()?.get_connection().await?;
 
@@ -122,12 +119,7 @@ impl AppState {
     }
 
     pub fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
-        let mut futures = self.jobs_rt.jobs.write().unwrap();
-        futures.push(self.jobs_rt.rt.spawn(fut));
-
-        // clean up completed futures
-        futures.retain(|f| !f.is_finished());
-        drop(futures);
+        self.jobs_rt.spawn(fut);
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
