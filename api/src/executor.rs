@@ -87,7 +87,7 @@ where
 
         let state_clone = self.ctx.state().clone();
 
-        self.ctx.state().spawn(async move {
+        self.ctx.state().queue(async move {
             let mut conn = match state_clone.get_conn().await {
                 Ok(c) => c,
                 Err(e) => {
@@ -150,7 +150,7 @@ where
 
         let state_clone = self.ctx.state().clone();
 
-        self.ctx.state().spawn(async move {
+        self.ctx.state().queue(async move {
             let mut conn = match state_clone.get_conn().await {
                 Ok(c) => c,
                 Err(e) => {
@@ -208,7 +208,7 @@ where
 
         let state_clone = self.ctx.state().clone();
 
-        self.ctx.state().spawn(async move {
+        self.ctx.state().queue(async move {
             let mut conn = match state_clone.get_conn().await {
                 Ok(c) => c,
                 Err(e) => {
@@ -268,7 +268,7 @@ where
 
         let state_clone = self.ctx.state().clone();
 
-        self.ctx.state().spawn(async move {
+        self.ctx.state().queue(async move {
             let mut conn = match state_clone.get_conn().await {
                 Ok(c) => c,
                 Err(e) => {

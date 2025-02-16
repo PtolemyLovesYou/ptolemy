@@ -75,7 +75,7 @@ async fn log_status_trigger(
 
                         let state_clone = state.clone();
 
-                        state.spawn(async move {
+                        state.queue(async move {
                             let mut conn = match state_clone.get_conn().await {
                                 Ok(conn) => conn,
                                 Err(e) => {

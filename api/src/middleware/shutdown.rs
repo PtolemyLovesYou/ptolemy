@@ -1,4 +1,4 @@
-use crate::state::ApiAppState;
+use crate::state::{ApiAppState, AppState};
 use tokio::signal;
 
 pub async fn shutdown_signal(state: ApiAppState) {
@@ -19,10 +19,12 @@ pub async fn shutdown_signal(state: ApiAppState) {
 
     tokio::select! {
         _ = ctrl_c => {
+            let state = std::sync::Arc::<AppState>::into_inner(state).unwrap();
             tracing::error!("Shutting down");
             state.shutdown().await.ok();
         },
         _ = terminate => {
+            let state = std::sync::Arc::<AppState>::into_inner(state).unwrap();
             tracing::error!("Shutting down");
             state.shutdown().await.ok();
         },

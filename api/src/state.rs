@@ -9,7 +9,10 @@ use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl}
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use redis::aio::MultiplexedConnection;
 use std::sync::{Arc, RwLock};
+use std::future::Future;
+use std::pin::Pin;
 use tracing::error;
+use tokio::sync::mpsc;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
@@ -37,21 +40,54 @@ pub fn run_migrations() -> Result<(), ServerError> {
     Ok(())
 }
 
-#[derive(Debug)]
-struct JobsRuntime {
-    jobs: RwLock<Vec<tokio::task::JoinHandle<()>>>,
+type JobsFuture = Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
+
+pub enum JobMessage {
+    Queue(JobsFuture),
+    Shutdown,
+}
+
+#[derive(Debug, Clone)]
+struct JobsRuntime{
+    jobs: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
+    tx: mpsc::Sender<JobMessage>,
+    consumer_handle: Arc<tokio::task::JoinHandle<()>>,
 }
 
 impl Default for JobsRuntime {
     fn default() -> Self {
-        Self { jobs: Default::default() }
+        let (tx, mut rx) = mpsc::channel(100);
+
+        let jobs = Arc::new(Default::default());
+
+        let consumer_handle = Arc::new(tokio::spawn(async move {
+            while let Some(fut) = rx.recv().await {
+                match fut {
+                    JobMessage::Queue(f) => f.await,
+                    JobMessage::Shutdown => {
+                        break;
+                    }
+                }
+            }
+        }));
+
+        Self { jobs, tx, consumer_handle }
     }
 }
 
 impl JobsRuntime {
-    fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+    fn spawn(&self, fut: JobsFuture) {
         let mut jobs = self.jobs.write().unwrap();
         jobs.push(tokio::spawn(fut));
+    }
+
+    fn queue(&self, fut: JobsFuture) {
+        let _ = self.tx.send(JobMessage::Queue(fut));
+    }
+
+    async fn shutdown(self) {
+        let _ = self.tx.send(JobMessage::Shutdown);
+        // join all jobs
     }
 }
 
@@ -67,7 +103,7 @@ pub struct AppState {
     pub ptolemy_env: String,
     pub jwt_secret: String,
     pub redis_conn: MultiplexedConnection,
-    jobs_rt: Arc<JobsRuntime>,
+    jobs_rt: JobsRuntime,
 }
 
 impl AppState {
@@ -91,7 +127,7 @@ impl AppState {
 
         let password_handler = PasswordHandler::new();
 
-        let jobs_rt = Arc::new(JobsRuntime::default());
+        let jobs_rt = JobsRuntime::default();
 
         let redis_conn = RedisConfig::from_env()?.get_connection().await?;
 
@@ -114,12 +150,17 @@ impl AppState {
         Ok(Arc::new(Self::new().await?))
     }
 
-    pub async fn shutdown(&self) -> Result<(), ServerError> {
+    pub async fn shutdown(self) -> Result<(), ServerError> {
+        self.jobs_rt.shutdown().await;
         Ok(())
     }
 
     pub fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
-        self.jobs_rt.spawn(fut);
+        self.jobs_rt.spawn(Box::pin(fut));
+    }
+
+    pub fn queue<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+        self.jobs_rt.queue(Box::pin(fut));
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {

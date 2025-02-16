@@ -194,7 +194,7 @@ pub async fn master_auth_middleware(
 
     let state_clone = state.clone();
 
-    state.spawn(async move {
+    state.queue(async move {
         let mut conn = match state_clone.get_conn().await {
             Ok(c) => c,
             Err(e) => {
@@ -248,7 +248,7 @@ pub async fn master_auth_middleware(
 
         let state_clone = state.clone();
 
-        state.spawn(async move {
+        state.queue(async move {
             let mut conn = match state_clone.get_conn().await {
                 Ok(c) => c,
                 Err(e) => {
@@ -300,7 +300,7 @@ pub async fn master_auth_middleware(
 
         let state_clone = state.clone();
 
-        state.spawn(async move {
+        state.queue(async move {
             let mut conn = match state_clone.get_conn().await {
                 Ok(c) => c,
                 Err(e) => {
