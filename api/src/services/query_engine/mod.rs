@@ -87,7 +87,7 @@ async fn log_status_trigger(
                             if let Err(e) = UserQueryResult::insert_one_returning_id(&mut conn, &obj).await {
                                 tracing::error!("Failed to insert query result: {}", e);
                             }
-                        });
+                        }).await;
 
                         break;
                     },

@@ -81,12 +81,12 @@ impl JobsRuntime {
         jobs.push(tokio::spawn(fut));
     }
 
-    fn queue(&self, fut: JobsFuture) {
-        let _ = self.tx.send(JobMessage::Queue(fut));
+    async fn queue(&self, fut: JobsFuture) {
+        let _ = self.tx.send(JobMessage::Queue(fut)).await;
     }
 
     async fn shutdown(self) {
-        let _ = self.tx.send(JobMessage::Shutdown);
+        let _ = self.tx.send(JobMessage::Shutdown).await;
         // join all jobs
     }
 }
@@ -159,8 +159,8 @@ impl AppState {
         self.jobs_rt.spawn(Box::pin(fut));
     }
 
-    pub fn queue<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
-        self.jobs_rt.queue(Box::pin(fut));
+    pub async fn queue<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+        self.jobs_rt.queue(Box::pin(fut)).await;
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {

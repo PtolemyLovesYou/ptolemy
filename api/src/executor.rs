@@ -97,7 +97,7 @@ where
             };
 
             crate::crud::audit(&mut conn, logs).await;
-        });
+        }).await;
 
         result
     }
@@ -160,7 +160,7 @@ where
             };
 
             crate::crud::audit(&mut conn, log).await;
-        });
+        }).await;
 
         result.map(|(_, o)| o)
     }
@@ -218,7 +218,7 @@ where
             };
 
             crate::crud::audit(&mut conn, vec![log]).await;
-        });
+        }).await;
 
         result
     }
@@ -278,7 +278,7 @@ where
             };
 
             crate::crud::audit(&mut conn, vec![log]).await;
-        });
+        }).await;
 
         result
     }

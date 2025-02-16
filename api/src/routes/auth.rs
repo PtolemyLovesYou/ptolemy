@@ -92,7 +92,7 @@ pub async fn login(
         };
 
         crate::crud::audit(&mut conn, log).await;
-    });
+    }).await;
 
     Ok(Json(
         response
