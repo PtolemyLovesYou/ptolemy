@@ -82,7 +82,7 @@ create table iam_audit_logs (
 
 create table user_query (
     id uuid primary key default gen_random_uuid(),
-    api_access_audit_log_id uuid not null references api_access_audit_logs(id),
+    api_access_audit_log_id uuid not null, -- references api_access_audit_logs(id),
     allowed_workspace_ids uuid[],
     query_type query_type not null,
     access_reason access_reason not null,
