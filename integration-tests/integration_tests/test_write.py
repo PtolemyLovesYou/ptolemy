@@ -2,11 +2,32 @@
 
 import time
 import pandas as pd
-from ptolemy import Ptolemy # pylint: disable=no-name-in-module
-from .base import IntegrationTestBase
+import pytest
+from ptolemy import Ptolemy, get_client # pylint: disable=no-name-in-module
+from .base import IntegrationTestBase, BASE_URL
 
 class TestSql(IntegrationTestBase):
     """Test sql functionality."""
+    def test_user_client(self, admin_api_key: str):
+        """Test user client."""
+        client = get_client(
+            base_url=BASE_URL,
+            api_key=admin_api_key,
+        )
+
+        client.sql("SELECT 1;")
+
+    def test_user_client_disable_writing(self, admin_api_key: str):
+        """Test user client."""
+        client = get_client(
+            base_url=BASE_URL,
+            api_key=admin_api_key,
+            autoflush=False,
+        )
+
+        with pytest.raises(ValueError):
+            client.trace("asdf")
+
     def test_write_logs(self, client: Ptolemy):
         """Test workspaces"""
 

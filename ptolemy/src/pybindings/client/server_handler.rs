@@ -1,3 +1,4 @@
+use crate::generated::observer::ApiKeyType as ApiKeyTypeEnum;
 use crate::generated::observer::{
     observer_authentication_client::ObserverAuthenticationClient, observer_client::ObserverClient,
     AuthenticationRequest, PublishRequest, PublishResponse, Record,
@@ -16,6 +17,12 @@ use std::str::FromStr;
 use tonic::transport::Channel;
 
 #[derive(Debug)]
+enum ApiKeyType {
+    User,
+    Service
+}
+
+#[derive(Debug)]
 pub struct ServerHandler {
     client: ObserverClient<Channel>,
     auth_client: ObserverAuthenticationClient<Channel>,
@@ -26,6 +33,7 @@ pub struct ServerHandler {
     api_key: String,
     token: Option<String>,
     workspace_id: Option<Id>,
+    api_key_type: Option<ApiKeyType>,
 }
 
 impl ServerHandler {
@@ -55,6 +63,7 @@ impl ServerHandler {
             api_key,
             token: None,
             workspace_id: None,
+            api_key_type: None,
         })
     }
 }
@@ -72,7 +81,7 @@ impl ServerHandler {
             timeout_seconds
         });
 
-        let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
+        let token = self.token.clone().ok_or_else(|| "Not authenticated: no token")?;
 
         query_request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("Authorization")?,
@@ -135,7 +144,7 @@ impl ServerHandler {
 
     pub fn authenticate(
         &mut self,
-        workspace_name: String,
+        workspace_name: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut request = tonic::Request::new(AuthenticationRequest { workspace_name });
 
@@ -149,8 +158,13 @@ impl ServerHandler {
             .block_on(self.auth_client.authenticate(request))?
             .into_inner();
 
-        self.token = Some(resp.token);
-        self.workspace_id = Some(TryFrom::try_from(resp.workspace_id).unwrap());
+        self.token = Some(resp.token.clone());
+        self.workspace_id = resp.workspace_id.clone().map(|i| TryFrom::try_from(i).unwrap());
+        self.api_key_type = match resp.api_key_type() {
+            ApiKeyTypeEnum::User => Some(ApiKeyType::User),
+            ApiKeyTypeEnum::Service => Some(ApiKeyType::Service),
+            _ => panic!("Unknown api key type")
+        };
 
         Ok(())
     }
@@ -159,6 +173,20 @@ impl ServerHandler {
         &mut self,
         records: Vec<Record>,
     ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
+        match &self.api_key_type {
+            Some(ApiKeyType::User) => {
+                return Err("A service API is required to write data.".into())
+            }
+            Some(ApiKeyType::Service) => {
+                if self.workspace_id.is_none() {
+                    return Err("Not authenticated".into());
+                }
+            }
+            None => {
+                return Err("Not authenticated".into());
+            }
+        }
+
         let mut publish_request = tonic::Request::new(PublishRequest { records });
 
         let token = self.token.clone().ok_or_else(|| "Not authenticated")?;

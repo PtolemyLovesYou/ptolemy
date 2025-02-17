@@ -5,7 +5,7 @@ import time
 from typing import Generator
 import requests
 import pytest
-from ptolemy import Ptolemy # pylint: disable=no-name-in-module
+from ptolemy import get_client, Ptolemy # pylint: disable=no-name-in-module
 
 SYSADMIN_USERNAME = os.getenv("SYSADMIN_USERNAME", "admin")
 SYSADMIN_PASSWORD = os.getenv("SYSADMIN_PASSWORD", "admin")
@@ -246,7 +246,7 @@ class IntegrationTestBase:
     @pytest.fixture
     def client(self, rw_service_api_key: str, workspace_name: str) -> Ptolemy:
         """Ptolemy Client."""
-        return Ptolemy(
+        return get_client(
             base_url=BASE_URL,
             api_key=rw_service_api_key,
             workspace_name=workspace_name,

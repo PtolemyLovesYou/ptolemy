@@ -77,8 +77,8 @@ macro_rules! set_io {
 #[pyclass(name = "Ptolemy")]
 pub struct PtolemyClient {
     base_url: String,
-    workspace_id: Id,
-    workspace_name: String,
+    workspace_id: Option<Id>,
+    workspace_name: Option<String>,
     parent_id: Option<Id>,
     tier: Option<Tier>,
     autoflush: bool,
@@ -89,10 +89,11 @@ pub struct PtolemyClient {
 #[pymethods]
 impl PtolemyClient {
     #[new]
+    #[pyo3(signature=(base_url, api_key, workspace_name = None, autoflush = true, batch_size = 1024))]
     fn new(
         base_url: String,
         api_key: String,
-        workspace_name: String,
+        workspace_name: Option<String>,
         autoflush: bool,
         batch_size: usize,
     ) -> PyResult<Self> {
@@ -111,7 +112,7 @@ impl PtolemyClient {
 
         let workspace_id = client
             .workspace_id()
-            .map_err(|e| PyValueError::new_err(format!("Failed to get workspace id: {}", e)))?;
+            .ok();
 
         drop(client);
 
@@ -219,6 +220,13 @@ impl PtolemyClient {
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<Self> {
+        let workspace_id = match self.workspace_id {
+            Some(w) => w,
+            None => {
+                return Err(PyValueError::new_err("You need to authenticate with a service API key to create a trace."));
+            }
+        };
+
         let mut client = Self {
             base_url: self.base_url.clone(),
             workspace_id: self.workspace_id,
@@ -232,7 +240,7 @@ impl PtolemyClient {
 
         client.state.set_event(ProtoRecord::new(
             Tier::System,
-            self.workspace_id.into(),
+            workspace_id,
             Uuid::new_v4().into(),
             ProtoEvent::new(name, parameters, version, environment),
         ));
@@ -305,8 +313,15 @@ impl PtolemyClient {
             }
         };
 
+        let workspace_id = match self.workspace_id {
+            Some(w) => w,
+            None => {
+                return Err(PyValueError::new_err("You need to authenticate with a service API key to create an event."));
+            }
+        };
+
         let parent_id = match tier {
-            Tier::System => self.workspace_id,
+            Tier::System => workspace_id,
             Tier::Subsystem | Tier::Component | Tier::Subcomponent => match self.parent_id {
                 Some(id) => id,
                 None => {

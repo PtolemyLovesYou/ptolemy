@@ -9,12 +9,19 @@ service ObserverAuthentication {
 }
 
 message AuthenticationRequest {
-    string workspace_name = 1;
+    optional string workspace_name = 1;
 }
 
 message AuthenticationResponse {
-    string workspace_id = 1;
+    optional string workspace_id = 1;
     string token = 2;
+    ApiKeyType api_key_type = 3;
+}
+
+enum ApiKeyType {
+    UNDECLARED = 0;
+    USER = 1;
+    SERVICE = 2;
 }
 
 service Observer {

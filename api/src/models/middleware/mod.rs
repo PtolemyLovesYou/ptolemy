@@ -11,6 +11,7 @@ pub struct WorkspacePermission {
     pub workspace: ptolemy::models::auth::Workspace,
     pub permissions: Option<ptolemy::models::enums::ApiKeyPermission>,
     pub role: Option<ptolemy::models::enums::WorkspaceRole>,
+    pub user: Option<ptolemy::models::auth::User>,
 }
 
 #[derive(Clone, Debug)]
@@ -180,3 +181,29 @@ macro_rules! auth_header {
 
 auth_header!(ApiKey, String);
 auth_header!(JWT, Claims<Uuid>);
+
+impl ApiKey {
+    pub fn content(&self) -> Result<String, ApiError> {
+        match self {
+            ApiKey::Ok(s) => Ok(s.clone()),
+            _ => Err(ApiError::InternalError),
+        }
+    }
+
+    pub fn api_key_type(&self) -> Result<ptolemy::generated::observer::ApiKeyType, ApiError> {
+        match self {
+            ApiKey::Ok(s) => {
+                if s.starts_with("pt-pa") {
+                    return Ok(ptolemy::generated::observer::ApiKeyType::User);
+                }
+
+                if s.starts_with("pt-sk") {
+                    return Ok(ptolemy::generated::observer::ApiKeyType::Service);
+                }
+
+                Err(ApiError::InternalError)
+            },
+            _ => Err(ApiError::InternalError),
+        }
+    }
+}
