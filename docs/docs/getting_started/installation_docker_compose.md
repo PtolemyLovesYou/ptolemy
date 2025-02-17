@@ -8,12 +8,12 @@ To deploy Ptolemy with Docker, you must have Docker installed on your computer. 
 
 First, make a directory and navigate to it:
 ```sh
-mkdir ptolemy && cd ptolemy
+mkdir ptolemy-quickstart && cd ptolemy-quickstart
 ```
 
 Then, download the `docker-compose.yml` file:
 ```sh
-wget -O docker-compose.yaml https://raw.githubusercontent.com/PtolemyLovesYou/argilla/main/docker-compose.yml
+wget -O docker-compose.yml https://raw.githubusercontent.com/PtolemyLovesYou/ptolemy/main/docker-compose.quickstart.yml
 ```
 
 Run `docker compose` to start the containers:
@@ -21,9 +21,4 @@ Run `docker compose` to start the containers:
 docker compose up -d # omit the -d flag to keep the docker compose logs in your terminal
 ```
 
-Once everything is up and running, run the following command to configure Postgres:
-```sh
-make setup
-```
-
-To verify that everything is up and running, navigate to `http://localhost:3000` in your web browser and verify that the UI loads.
+To verify that everything is up and running, navigate to `http://localhost:8501` in your web browser and verify that the UI loads.
