@@ -11,7 +11,7 @@ sequenceDiagram
     API->>Client: Return authentication credentials
     User->>Client: Enters SQL Query
 
-    Client->>API: Call QueryEngine.Query
+    Client->>API: Calls QueryEngine.Query to start sql execution
     API->>Redis: Submit query job to Redis stream
     API-)API: Spawn job status check job
     API--)Postgres: Log query execution to Postgres
@@ -22,23 +22,21 @@ sequenceDiagram
         QueryEngine-)QueryEngine: Spawn query job
         
         alt Query Cancelled
-            User-->>Client: Call query cancellation method
-            Client-->>API: Call QueryEngine.CancelQuery
-            API-->>Redis: Submit cancellation request to Redis stream
-            Redis-->>QueryEngine: Pull cancellation request
+            API->>Redis: Submit cancellation request to Redis stream
+            Redis->>QueryEngine: Pull cancellation request
             QueryEngine--)QueryEngine: Cancel query execution
-            QueryEngine-->>Redis: Load cancellation status into Redis hash
+            QueryEngine->>Redis: Load cancellation status into Redis hash
         else Query Succeeded
-            QueryEngine-->>Redis: Load query results into Redis hash
+            QueryEngine->>Redis: Load query results into Redis hash
         else Query Failed
-            QueryEngine-->>Redis: Load error information into Redis hash
+            QueryEngine->>Redis: Load error information into Redis hash
         end
     end
 
     critical Wait for Results
-        API->>Redis: Check status
-        opt Pending | Running
-            API->>API: Sleep w/ backoff
+        loop While status is Pending or Running
+            API->>Redis: Check status
+            API->>API: Sleep with backoff
         end
         alt Success
             API->>Redis: Pull Results
