@@ -13,7 +13,7 @@ mkdir ptolemy && cd ptolemy
 
 Then, download the `docker-compose.yml` file:
 ```sh
-wget -O docker-compose.yaml https://raw.githubusercontent.com/PtolemyLovesYou/argilla/main/docker-compose.yml
+wget -O docker-compose.yaml https://raw.githubusercontent.com/PtolemyLovesYou/ptolemy/main/docker-compose.yml
 ```
 
 Run `docker compose` to start the containers:
