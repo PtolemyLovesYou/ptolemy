@@ -36,7 +36,7 @@ macro_rules! graphql_response {
                 pub fn $req_field(&self) -> Result<$req_type, $crate::error::GraphQLError> {
                     match &self.$req_field {
                         Some(r) => Ok(r.clone().into()),
-                        None => Err(crate::error::GraphQLError::BadResponse(format!("Missing field: {}", stringify!($req_field)))),
+                        None => Err($crate::error::GraphQLError::BadResponse(format!("Missing field: {}", stringify!($req_field)))),
                     }
                 }
             )*
