@@ -1,7 +1,7 @@
 use crate::{
     crypto::PasswordHandler,
-    db::{DbConnection, PostgresConfig, RedisConfig},
-    env_settings::get_env_var,
+    db::DbConnection,
+    env_settings::ApiConfig,
     error::{ApiError, ServerError},
 };
 use diesel::{pg::PgConnection, prelude::*};
@@ -17,7 +17,7 @@ use tokio::sync::mpsc;
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
 pub fn run_migrations() -> Result<(), ServerError> {
-    let pg_url = PostgresConfig::from_env()?.url();
+    let pg_url = ApiConfig::from_env()?.postgres.url();
 
     let mut conn = PgConnection::establish(&pg_url).map_err(|e| {
         error!("Failed to connect to Postgres for migrations: {}", e);
@@ -103,37 +103,24 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new() -> Result<Self, ServerError> {
-        let port = get_env_var("API_PORT").unwrap_or("8000".to_string());
-        let ptolemy_env = get_env_var("PTOLEMY_ENV").unwrap_or("PROD".to_string());
-        let jwt_secret = get_env_var("JWT_SECRET")?;
+        let config = ApiConfig::from_env()?;
 
-        // Default to false if the env var is not set
-        let enable_prometheus = std::env::var("ENABLE_PROMETHEUS")
-            .map(|v| v.to_lowercase() == "true")
-            .unwrap_or(false);
-
-        // Default to false if env var is not set and PTOLEMY_ENV is set to 'PROD'
-        let enable_graphiql = std::env::var("PTOLEMY_ENABLE_GRAPHIQL")
-            .map(|v| v.to_lowercase() == "true")
-            .unwrap_or(ptolemy_env != "PROD");
-
-        let pg_config = PostgresConfig::from_env()?;
-        let pg_pool = pg_config.diesel_conn().await?;
+        let pg_pool = config.postgres.diesel_conn().await?;
 
         let password_handler = PasswordHandler::new();
 
         let jobs_rt = JobsRuntime::default();
 
-        let redis_conn = RedisConfig::from_env()?.get_connection().await?;
+        let redis_conn = config.redis.get_connection().await?;
 
         let state = Self {
-            port,
+            port: config.port,
             pg_pool,
-            enable_prometheus,
+            enable_prometheus: config.enable_prometheus,
             password_handler,
-            enable_graphiql,
-            ptolemy_env,
-            jwt_secret,
+            enable_graphiql: config.enable_graphql,
+            ptolemy_env: config.ptolemy_env,
+            jwt_secret: config.jwt_secret,
             redis_conn,
             jobs_rt,
         };
