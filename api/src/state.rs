@@ -51,7 +51,7 @@ pub enum JobMessage {
 struct JobsRuntime{
     jobs: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
     tx: mpsc::Sender<JobMessage>,
-    consumer_handle: Arc<tokio::task::JoinHandle<()>>,
+    // consumer_handle: Arc<tokio::task::JoinHandle<()>>,
 }
 
 impl Default for JobsRuntime {
@@ -60,7 +60,7 @@ impl Default for JobsRuntime {
 
         let jobs = Arc::new(Default::default());
 
-        let consumer_handle = Arc::new(tokio::spawn(async move {
+        let _consumer_handle = Arc::new(tokio::spawn(async move {
             while let Some(fut) = rx.recv().await {
                 match fut {
                     JobMessage::Queue(f) => f.await,
@@ -71,7 +71,7 @@ impl Default for JobsRuntime {
             }
         }));
 
-        Self { jobs, tx, consumer_handle }
+        Self { jobs, tx }
     }
 }
 
@@ -83,11 +83,6 @@ impl JobsRuntime {
 
     async fn queue(&self, fut: JobsFuture) {
         let _ = self.tx.send(JobMessage::Queue(fut)).await;
-    }
-
-    async fn shutdown(self) {
-        let _ = self.tx.send(JobMessage::Shutdown).await;
-        // join all jobs
     }
 }
 
@@ -151,7 +146,7 @@ impl AppState {
     }
 
     pub async fn shutdown(self) -> Result<(), ServerError> {
-        self.jobs_rt.shutdown().await;
+        // self.jobs_rt.shutdown().await;
         Ok(())
     }
 
