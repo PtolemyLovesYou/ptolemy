@@ -18,7 +18,7 @@ api/graphql/schema.gql -linguist-detectable
 ptolemy/graphql/schema.gql -linguist-detectable
 
 # Set migrations as detectable
-api/diesel/**/*.sql linguist-detectable
+# api/diesel/**/*.sql linguist-detectable
 
 # *.sql linguist-language=SQL
 
