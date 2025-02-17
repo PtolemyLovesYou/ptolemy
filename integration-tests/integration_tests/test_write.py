@@ -24,7 +24,7 @@ class TestSql(IntegrationTestBase):
         client.flush()
 
         # Wait for all events to be processed
-        time.sleep(5)
+        time.sleep(2)
         try:
             result = pd.concat(client.sql("SELECT id FROM ptolemy.system_event"))
 
