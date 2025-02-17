@@ -9,7 +9,7 @@ ML/Engineering | :material-map-marker: Tbilisi/NYC
 
 [:material-linkedin:](https://linkedin.com/in/rbesaleli) [:material-account:](https://besaleli.io) [:material-github:](https://github.com/besaleli)
 
-### Anton Kalmysh
+### Anton Calmîș
 Design | :material-map-marker: Tbilisi
 
 [:material-linkedin:](https://www.linkedin.com/in/anton-kalmysh-91b35018b/)
