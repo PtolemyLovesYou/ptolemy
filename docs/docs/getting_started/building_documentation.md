@@ -15,14 +15,9 @@ To generate Ptolemy's docs, clone the `ptolemy` GitHub repo:
 git clone https://github.com/PtolemyLovesYou/ptolemy.git
 ```
 
-Then, `cd` into the `docs` directory:
+Then, start the mkdocs server:
 ```sh
-cd docs
+make docs
 ```
 
-To start the docs server, run the following command:
-```sh
-uv run mkdocs serve
-```
-
-You should be able to find the docs at `http://localhost:8000` in your web browser.
+You should be able to find the docs at `http://localhost:8080` in your web browser.
