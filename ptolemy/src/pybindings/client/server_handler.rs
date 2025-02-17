@@ -16,6 +16,75 @@ use std::collections::VecDeque;
 use std::str::FromStr;
 use tonic::transport::Channel;
 
+pub struct QueryEngine {
+    pub client: QueryEngineClient<Channel>,
+    pub token: Option<String>,
+}
+
+impl QueryEngine {
+    pub async fn query(
+        &mut self,
+        query: String,
+        batch_size: Option<u32>,
+        timeout_seconds: Option<u32>
+    ) -> Result<Vec<Vec<u8>>, Box<dyn std::error::Error>> {
+        let mut query_request = tonic::Request::new(QueryRequest {
+            query,
+            batch_size,
+            timeout_seconds
+        });
+
+        let token = self.token.clone().ok_or_else(|| "Not authenticated: no token")?;
+
+        query_request.metadata_mut().insert(
+            tonic::metadata::MetadataKey::from_str("Authorization")?,
+            tonic::metadata::MetadataValue::from_str(&format!("Bearer {}", token))?,
+        );
+        let query_response = self.client.query(query_request).await?.into_inner();
+
+        let query_id = query_response.query_id;
+
+        let mut status = QueryStatus::Pending;
+
+        while let QueryStatus::Pending | QueryStatus::Running = status {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            status = self.client.get_query_status(QueryStatusRequest { query_id: query_id.clone() })
+                .await?
+                .into_inner()
+                .status();
+        }
+
+        if status == QueryStatus::Completed {
+            let mut arrs = Vec::new();
+            let mut batches = self.client
+                .fetch_batch(FetchBatchRequest { query_id: query_id.clone(), batch_id: None }).await?
+                .into_inner();
+
+            while let Some(data) = batches.message().await? {
+                arrs.push(data.data);
+            }
+
+            return Ok(arrs);
+        }
+
+        if status == QueryStatus::Failed {
+            let query_status = self.client
+                .get_query_status(QueryStatusRequest { query_id: query_id.clone() })
+                .await?
+                .into_inner();
+
+            return Err(format!("Query failed: {}", query_status.error()).into());
+        }
+
+        if status == QueryStatus::Cancelled {
+            return Err("Query was cancelled".into());
+        }
+
+        
+        Ok(Vec::new())
+    }
+}
+
 #[derive(Debug)]
 enum ApiKeyType {
     User,
@@ -75,62 +144,11 @@ impl ServerHandler {
         batch_size: Option<u32>,
         timeout_seconds: Option<u32>
     ) -> Result<Vec<Vec<u8>>, Box<dyn std::error::Error>> {
-        let mut query_request = tonic::Request::new(QueryRequest {
-            query,
-            batch_size,
-            timeout_seconds
-        });
-
-        let token = self.token.clone().ok_or_else(|| "Not authenticated: no token")?;
-
-        query_request.metadata_mut().insert(
-            tonic::metadata::MetadataKey::from_str("Authorization")?,
-            tonic::metadata::MetadataValue::from_str(&format!("Bearer {}", token))?,
-        );
-
-        let query_response = self.rt
-            .block_on(self.query_engine_client.query(query_request))?
-            .into_inner();
-
-        let query_id = query_response.query_id;
-
-        let mut status = QueryStatus::Pending;
-
-        while let QueryStatus::Pending | QueryStatus::Running = status {
-            std::thread::sleep(std::time::Duration::from_millis(100));
-            status = self.rt
-                .block_on(self.query_engine_client.get_query_status(QueryStatusRequest { query_id: query_id.clone() }))?
-                .into_inner()
-                .status();
-        }
-
-        if status == QueryStatus::Completed {
-            let mut arrs = Vec::new();
-            let mut batches = self.rt
-                .block_on(self.query_engine_client.fetch_batch(FetchBatchRequest { query_id: query_id.clone(), batch_id: None }))?
-                .into_inner();
-
-            while let Some(data) = self.rt.block_on(batches.message())? {
-                arrs.push(data.data);
-            }
-
-            return Ok(arrs);
-        }
-
-        if status == QueryStatus::Failed {
-            let query_status = self.rt
-                .block_on(self.query_engine_client.get_query_status(QueryStatusRequest { query_id: query_id.clone() }))?
-                .into_inner();
-
-            return Err(format!("Query failed: {}", query_status.error()).into());
-        }
-
-        if status == QueryStatus::Cancelled {
-            return Err("Query was cancelled".into());
-        }
-
-        
-        Ok(Vec::new())
+        let mut handler = QueryEngine {
+            client: self.query_engine_client.clone(),
+            token: self.token.clone(),
+        };
+        self.rt.block_on(handler.query(query, batch_size, timeout_seconds))
     }
 }
 
