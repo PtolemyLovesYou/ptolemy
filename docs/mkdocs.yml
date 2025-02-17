@@ -50,7 +50,6 @@ nav:
   - Contributing:
     - Introduction: contributing/index.md
     - Code of Conduct: contributing/code_of_conduct.md
-    - Core Maintainers: contributing/core_maintainers.md
 
 plugins:
   - search
