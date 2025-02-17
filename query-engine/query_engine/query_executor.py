@@ -27,7 +27,7 @@ call postgres_execute('ptolemy', 'set ptolemy.current_workspaces = ''{}''');
 """
 
 SET_ROLE = """
-call postgres_execute('ptolemy', 'set role = ptolemy_duckdb');
+call postgres_execute('ptolemy', 'set role = ptolemy_query_engine');
 """
 
 

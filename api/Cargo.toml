@@ -11,6 +11,10 @@ path = "src/main.rs"
 name = "generate-gql-schema"
 path = "src/bin/generate_gql_schema.rs"
 
+[[bin]]
+name = "create-query-engine-role"
+path = "src/bin/create_query_engine_role.rs"
+
 [dependencies]
 axum = { workspace = true }
 bb8 = { workspace = true }
