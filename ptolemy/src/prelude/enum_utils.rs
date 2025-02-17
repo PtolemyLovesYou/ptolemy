@@ -82,25 +82,25 @@ mod tests {
 
     #[derive(Clone, Debug, PartialEq)]
     enum MyEnum {
-        MyEnumOne,
-        MyEnumTwo,
-        MyEnumThree,
+        OneFoo,
+        TwoBar,
+        ThreeBaz,
     }
 
-    serialize_enum!(MyEnum, ShoutySnakeCase, [MyEnumOne, MyEnumTwo, MyEnumThree]);
+    serialize_enum!(MyEnum, ShoutySnakeCase, [OneFoo, TwoBar, ThreeBaz]);
 
     #[test]
     fn test_serialize_enum() {
         // serialize enum with serde
-        let serialized_val = serde_json::to_string(&MyEnum::MyEnumOne.clone()).unwrap();
-        assert_eq!(serialized_val, "\"MY_ENUM_ONE\"");
+        let serialized_val = serde_json::to_string(&MyEnum::OneFoo.clone()).unwrap();
+        assert_eq!(serialized_val, "\"ONE_FOO\"");
     }
 
     #[test]
     fn test_deserialize_enum() {
         // deserialize enum with serde
-        let deserialized_val: MyEnum = serde_json::from_str("\"MY_ENUM_ONE\"").unwrap();
-        assert_eq!(deserialized_val, MyEnum::MyEnumOne);
+        let deserialized_val: MyEnum = serde_json::from_str("\"ONE_FOO\"").unwrap();
+        assert_eq!(deserialized_val, MyEnum::OneFoo);
     }
 
     #[test]
