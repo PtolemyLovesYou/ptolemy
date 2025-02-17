@@ -1,0 +1,57 @@
+sequenceDiagram
+    actor User
+    participant Client
+    participant API
+    participant Redis
+    participant QueryEngine
+    participant Postgres
+
+    User->>Client: Create client
+    Client->>API: Authenticate
+    API->>Client: Return authentication credentials
+    User->>Client: Enters SQL Query
+
+    Client->>API: Calls QueryEngine.Query to start sql execution
+    API->>Redis: Submit query job to Redis stream
+    API-)API: Spawn job status check job
+    API--)Postgres: Log query execution to Postgres
+
+    critical Execute Query
+        Redis->>QueryEngine: Pull query job
+        QueryEngine->>Postgres: Initiate Postgres connector
+        QueryEngine-)QueryEngine: Spawn query job
+        
+        alt Query Cancelled
+            API->>Redis: Submit cancellation request to Redis stream
+            Redis->>QueryEngine: Pull cancellation request
+            QueryEngine--)QueryEngine: Cancel query execution
+            QueryEngine->>Redis: Load cancellation status into Redis hash
+        else Query Succeeded
+            QueryEngine->>Redis: Load query results into Redis hash
+        else Query Failed
+            QueryEngine->>Redis: Load error information into Redis hash
+        end
+    end
+
+    critical Wait for Results
+        loop While status is Pending or Running
+            API->>Redis: Check status
+            API->>API: Sleep with backoff
+        end
+        alt Success
+            API->>Redis: Pull Results
+            API->>Client: Stream results
+            Client->>User: Return data to user
+        else Failed | Cancelled
+            API->>Redis: Pull error information
+            API->>Client: Stream error information
+            Client->>User: Throw error
+        else Timeout
+            API->>Redis: Submit cancellation to request to Redis stream
+            Redis->>QueryEngine: Pull cancellation request from Redis stream
+            QueryEngine--)QueryEngine: Cancel query execution
+            API->>Redis: Pull timeout error information
+            API->>Client: Stream timeout error information
+            Client->>User: Throw error
+        end
+    end

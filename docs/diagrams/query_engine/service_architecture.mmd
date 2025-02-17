@@ -1,0 +1,19 @@
+flowchart LR
+    client(Client)
+    api(API)
+    qe{{Query Engine}}
+
+    pg[(Postgres)]
+
+    subgraph Redis
+        jobs_stream([Jobs Stream])
+        results[(Results Hashes)]
+        end
+
+    client <--> api
+    api --> jobs_stream
+    api <--> results
+    api <--> pg
+    jobs_stream --> qe
+    qe --> results
+    pg -.-> qe

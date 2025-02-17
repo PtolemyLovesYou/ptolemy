@@ -37,6 +37,7 @@ nav:
   - Concepts:
     - Introduction: concepts/introduction.md
     - Identity & Access Management: concepts/iam.md
+    - Query Engine: concepts/query_engine.md
   - Guides:
     - Introduction: guides/index.md
   - API Reference:
@@ -44,12 +45,12 @@ nav:
     - GraphQL Schema: api_reference/gql_schema.md
     - System Diagrams:
       - Database Schema: api_reference/system_diagrams/database_schema.md
+      - Query Engine Service Architecture: api_reference/system_diagrams/query_engine.md
   - Integrations:
     - integrations.md
   - Contributing:
     - Introduction: contributing/index.md
     - Code of Conduct: contributing/code_of_conduct.md
-    - Core Maintainers: contributing/core_maintainers.md
 
 plugins:
   - search
