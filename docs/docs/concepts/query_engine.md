@@ -11,14 +11,16 @@ This SQL interface is ideal for ad-hoc queries, simple analytics tasks, and ligh
 We recognize that engineers often have strong preferences about their analytics tooling. That's why we've made integration with external tools a priority - our philosophy is to make Ptolemy as flexible and interoperable as possible.
 Looking ahead, we're focused on making your observability data even more accessible. We're developing data streaming capabilities to support integrations with message brokers like Kafka and GCP Pub/Sub, ensuring your data can flow seamlessly to where it's needed most.
 
-To learn more about the query engine's service architecture and technical specifications, you can visit [Query Engine Service Architecture](../api_reference/system_diagrams/query_engine.md) in the API reference.
+!!! question ":lock: Compliance & Security"
+    Balancing data security with powerful querying shouldn't require a full data warehouse setup. We've built a security framework for Ptolemy's query engine that keeps things simple while ensuring your data stays safe through:
 
-# Compliance & Security
-Balancing data security with powerful querying shouldn't require a full data warehouse setup. We've built a security framework for Ptolemy's query engine that keeps things simple while ensuring your data stays safe through:
+    - Fine-grained application-layer access controls to help you manage who sees what
+    - Custom Postgres permission schemes that make it easy to set boundaries
+    - Configurable resource quotas to keep everything running smoothly
+    - Network and filesystem isolation to keep your queries in their own secure space
 
-- Fine-grained application-layer access controls to help you manage who sees what
-- Custom Postgres permission schemes that make it easy to set boundaries
-- Configurable resource quotas to keep everything running smoothly
-- Network and filesystem isolation to keep your queries in their own secure space
+    We've designed Ptolemy with security and compliance in mind, but we know there's always room for improvement! If you're passionate about cybersecurity or data governance, we'd love to hear your thoughts - check out our contribution guidelines to learn how you can help make Ptolemy even better.
 
-We've designed Ptolemy with security and compliance in mind, but we know there's always room for improvement! If you're passionate about cybersecurity or data governance, we'd love to hear your thoughts - check out our contribution guidelines to learn how you can help make Ptolemy even better.
+The query engine is an optional feature and can be disabled. To learn more, visit [Configuration](../getting_started/configuration.md).
+
+To learn more about the query engine's service architecture and technical specifications, visit [Query Engine Service Architecture](../api_reference/system_diagrams/query_engine.md).
