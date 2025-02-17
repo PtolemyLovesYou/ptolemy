@@ -4,6 +4,16 @@ Ptolemy provides a comprehensive access management system that helps teams colla
 
 # Workspaces
 Ptolemy organizes observability data into workspaces, providing a flexible way to manage access and permissions. Think of workspaces as separate environments where you can group related data and team members. Users can belong to multiple workspaces, and each workspace can have as many users as needed.
+
+!!! info "Decentralized Design"
+    We've designed Ptolemy's workspace management with clear boundaries and distributed control in mind. Here's how it works:
+
+    When creating a workspace, you must specify its initial admin - this can be yourself or another user. From there, workspace management is fully independent. Even system-level admins can create workspaces but can't delete them - only workspace admins have that power. This ensures each workspace maintains its autonomy and data governance.
+
+    Most teams operate perfectly well with a single workspace. Multiple workspaces are primarily useful when you need strict isolation between different sets of observability data - for example, separating development and production environments, or maintaining boundaries between different business units.
+
+    For some organizations, multiple Ptolemy deployments might make more sense than multiple workspaces. Consider this approach if you have distinct VPCs, different compliance requirements across teams, or need to optimize for latency across geographic regions.
+
 # Roles and Permissions
 ## Workspace Roles
 Each workspace member is assigned one of these roles:
