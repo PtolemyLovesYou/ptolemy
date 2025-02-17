@@ -24,6 +24,7 @@ def login(username: str, password: str):
         st.session_state.authenticated = True
         st.session_state.user_info = user
         st.session_state.client = client
+        st.session_state.jwt_token = token
 
         st.rerun()
     except ValueError as e:
