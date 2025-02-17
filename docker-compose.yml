@@ -59,6 +59,8 @@ services:
     container_name: query_engine
     build:
       dockerfile: query-engine/Dockerfile
+    environment:
+      REDIS_HOST: redis
     volumes:
       - ./query-engine:/app/query-engine
     networks:
@@ -69,6 +71,8 @@ services:
     container_name: app
     build:
       dockerfile: prototype/Dockerfile
+    environment:
+      REDIS_HOST: redis
     ports:
       - "8501:8501"
     volumes:
