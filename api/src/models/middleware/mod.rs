@@ -36,12 +36,13 @@ impl AuthContext {
         }
     }
 
-    pub fn can_create_delete_user(&self, other_user_is_admin: bool, other_user_is_sysadmin: bool) -> bool {
+    pub fn can_create_delete_user(
+        &self,
+        other_user_is_admin: bool,
+        other_user_is_sysadmin: bool,
+    ) -> bool {
         match &self.user {
-            Some(u) => {
-                !(other_user_is_admin || other_user_is_sysadmin)
-                || u.is_sysadmin
-            },
+            Some(u) => !(other_user_is_admin || other_user_is_sysadmin) || u.is_sysadmin,
             None => false,
         }
     }
@@ -49,10 +50,7 @@ impl AuthContext {
     pub fn can_update_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.role {
-                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
-                    _ => false,
-                }
+                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin));
             }
         }
 
@@ -62,10 +60,7 @@ impl AuthContext {
     pub fn can_add_remove_update_user_to_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.role {
-                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
-                    _ => false,
-                }
+                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin));
             }
         }
 
@@ -75,11 +70,7 @@ impl AuthContext {
     pub fn can_create_delete_service_api_key(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.role {
-                    Some(ptolemy::models::enums::WorkspaceRole::Admin) => true,
-                    Some(ptolemy::models::enums::WorkspaceRole::Manager) => true,
-                    _ => false,
-                }
+                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin) | Some(ptolemy::models::enums::WorkspaceRole::Manager));
             }
         }
 
@@ -89,17 +80,15 @@ impl AuthContext {
     pub fn can_read_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         if self.user.is_some() {
             for workspace in &self.workspaces {
-                return workspace.workspace.id.as_uuid() == workspace_id
+                if workspace.workspace.id.as_uuid() == workspace_id {
+                    return true;
+                }
             }
         }
 
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.permissions {
-                    Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) => true,
-                    Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
-                    _ => false,
-                }
+                return matches!(workspace.permissions, Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) | Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite));
             }
         }
 
@@ -109,11 +98,7 @@ impl AuthContext {
     pub fn can_write_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return match workspace.permissions {
-                    Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite) => true,
-                    Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) => true,
-                    _ => false,
-                }
+                return matches!(workspace.permissions, Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) | Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite));
             }
         }
 
@@ -171,9 +156,9 @@ macro_rules! auth_header {
             }
         }
 
-        impl Into<AuthResult<Option<$ty>>> for $name {
-            fn into(self) -> AuthResult<Option<$ty>> {
-                match self {
+        impl From<$name> for AuthResult<Option<$ty>> {
+            fn from(header: $name) -> AuthResult<Option<$ty>> {
+                match header {
                     $name::Ok(t) => AuthResult::Ok(Some(t)),
                     $name::Undeclared => AuthResult::Ok(None),
                     $name::Err(e) => AuthResult::Err(e),

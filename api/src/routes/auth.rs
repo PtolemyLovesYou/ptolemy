@@ -2,9 +2,7 @@ use crate::{
     crypto::{ClaimType, Claims, GenerateSha256},
     error::ApiError,
     models::{
-        audit::{AuthAuditLogCreate, AuthMethodEnum},
-        middleware::AccessAuditId,
-        User,
+        audit::{AuthAuditLogCreate, AuthMethodEnum}, middleware::AccessAuditId, User
     },
     state::ApiAppState,
 };
@@ -53,10 +51,10 @@ pub async fn login(
 
     let log = match &response {
         Ok((user, _)) => AuthAuditLogCreate::ok(
-            access_audit_id.0.clone(),
+            access_audit_id.0,
             None,
             None,
-            Some(user.id.clone()),
+            Some(user.id),
             AuthMethodEnum::UsernamePassword,
             Some(
                 json!({
@@ -67,7 +65,7 @@ pub async fn login(
             ),
         ),
         Err(e) => AuthAuditLogCreate::err(
-            access_audit_id.0.clone(),
+            access_audit_id.0,
             AuthMethodEnum::UsernamePassword,
             Some(
                 json!({
@@ -82,7 +80,19 @@ pub async fn login(
         ),
     };
 
-    state.audit_writer.write(log.into()).await;
+    let state_clone = state.clone();
+
+    state.queue(async move {
+        let mut conn = match state_clone.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to get connection: {}", e);
+                return;
+            }
+        };
+
+        crate::crud::audit(&mut conn, log).await;
+    }).await;
 
     Ok(Json(
         response

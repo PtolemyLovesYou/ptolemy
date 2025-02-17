@@ -1,4 +1,4 @@
-use crate::{crud::prelude::*, models::records::*, db::DbConnection};
+use crate::{crud::prelude::*, db::DbConnection, models::records::*};
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record, Tier};
 use tracing::error;
@@ -41,6 +41,7 @@ impl EventRecords {
         let mut io_records: Vec<IORecord> = Vec::new();
         let mut metadata_records: Vec<MetadataRecord> = Vec::new();
 
+        #[allow(clippy::unnecessary_filter_map)] // we can get to this later
         let _ = records
             .into_iter()
             .filter_map(|record| {

@@ -43,12 +43,12 @@ impl WorkspaceUser {
 
 crate::impl_has_id!(WorkspaceUser);
 
-impl Into<ptolemy::models::auth::WorkspaceUser> for WorkspaceUser {
-    fn into(self) -> ptolemy::models::auth::WorkspaceUser {
+impl From<WorkspaceUser> for ptolemy::models::auth::WorkspaceUser {
+    fn from(val: WorkspaceUser) -> Self {
         ptolemy::models::auth::WorkspaceUser {
-            user_id: self.user_id.into(),
-            workspace_id: self.workspace_id.into(),
-            role: self.role.into(),
+            user_id: val.user_id.into(),
+            workspace_id: val.workspace_id.into(),
+            role: val.role.into(),
         }
     }
 }

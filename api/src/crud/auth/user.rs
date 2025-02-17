@@ -1,10 +1,13 @@
 use crate::{
     crypto::PasswordHandler,
+    db::DbConnection,
     error::ApiError,
     generated::auth_schema::{user_api_key, users, workspace, workspace_user},
     map_diesel_err,
-    models::{User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum, WorkspaceUser},
-    db::DbConnection,
+    models::{
+        User, UserApiKey, UserCreate, UserStatusEnum, UserUpdate, Workspace, WorkspaceRoleEnum,
+        WorkspaceUser,
+    },
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -133,8 +136,8 @@ impl User {
 
     pub async fn auth_user(
         conn: &mut DbConnection<'_>,
-        uname: &String,
-        password: &String,
+        uname: &str,
+        password: &str,
         password_handler: &PasswordHandler,
     ) -> Result<Option<User>, ApiError> {
         let user = users::table
@@ -147,7 +150,7 @@ impl User {
             return Ok(None);
         }
 
-        let pass_correct = password_handler.verify_password(&password, &user.password_hash);
+        let pass_correct = password_handler.verify_password(password, &user.password_hash);
 
         match pass_correct {
             true => Ok(Some(user)),

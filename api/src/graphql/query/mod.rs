@@ -50,11 +50,7 @@ impl Query {
         JuniperExecutor::from_juniper_app_state(ctx, "me", |_| async move { Ok(true) })
             .read(async move {
                 let mut conn = ctx.state.get_conn().await?;
-                User::get_by_id(
-                    &mut conn,
-                    &ctx.auth_context.user()?.id.into(),
-                )
-                .await
+                User::get_by_id(&mut conn, &ctx.auth_context.user()?.id.into()).await
             })
             .await
     }

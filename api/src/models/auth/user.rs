@@ -22,15 +22,15 @@ pub struct User {
 
 crate::impl_has_id!(User);
 
-impl Into<ptolemy::models::auth::User> for User {
-    fn into(self) -> ptolemy::models::auth::User {
+impl From<User> for ptolemy::models::auth::User {
+    fn from(val: User) -> Self {
         ptolemy::models::auth::User {
-            id: self.id.into(),
-            username: self.username,
-            display_name: self.display_name,
-            status: self.status.into(),
-            is_admin: self.is_admin,
-            is_sysadmin: self.is_sysadmin,
+            id: val.id.into(),
+            username: val.username,
+            display_name: val.display_name,
+            status: val.status.into(),
+            is_admin: val.is_admin,
+            is_sysadmin: val.is_sysadmin,
         }
     }
 }

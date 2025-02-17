@@ -6,7 +6,10 @@ use crate::{
     crypto::{ClaimType, GenerateSha256, UuidClaims},
     error::ApiError,
     models::{
-        middleware::{AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, WorkspacePermission, JWT}, ApiAccessAuditLogCreate, AuditLog, AuthAuditLogCreate, AuthMethodEnum, User, Workspace
+        middleware::{
+            AccessAuditId, ApiKey, AuthContext, AuthHeader, AuthResult, WorkspacePermission, JWT,
+        },
+        ApiAccessAuditLogCreate, AuthAuditLogCreate, AuthMethodEnum, User, Workspace,
     },
     state::ApiAppState,
 };
@@ -53,7 +56,7 @@ fn insert_headers(req: &mut Request<axum::body::Body>, state: &ApiAppState) -> (
         HeaderName::from_str("Authorization").unwrap(),
         Some("Bearer "),
     )
-    .and_then(|header| UuidClaims::from_token(header, &state.jwt_secret.as_bytes()))
+    .and_then(|header| UuidClaims::from_token(header, state.jwt_secret.as_bytes()))
     .into();
 
     req.extensions_mut().insert(jwt_header.clone());
@@ -86,13 +89,18 @@ async fn validate_api_key_header(
             "asdf",
             &api_key,
             &state.password_handler,
-        ).await?;
+        )
+        .await?;
 
         return Ok((
             None,
-            vec![WorkspacePermission { workspace: workspace.into(), permissions: Some(sak.permissions.clone().into()), role: None}],
+            vec![WorkspacePermission {
+                workspace: workspace.into(),
+                permissions: Some(sak.permissions.clone().into()),
+                role: None,
+            }],
             Some(sak.into()),
-        ))
+        ));
     }
 
     if api_key.starts_with(USER_API_KEY_PREFIX) {
@@ -161,11 +169,14 @@ async fn validate_jwt_header(
                     let workspace =
                         crate::models::Workspace::get_by_id(&mut conn, &sak.workspace_id).await?;
 
-                    Ok((None, vec![WorkspacePermission {
-                        workspace: workspace.into(),
-                        permissions: Some(sak.permissions.clone().into()),
-                        role: None,
-                    }]))
+                    Ok((
+                        None,
+                        vec![WorkspacePermission {
+                            workspace: workspace.into(),
+                            permissions: Some(sak.permissions.clone().into()),
+                            role: None,
+                        }],
+                    ))
                 }
                 Err(_) => Err(ApiError::NotFoundError),
             }
@@ -179,11 +190,21 @@ pub async fn master_auth_middleware(
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
     let api_access_audit_log = ApiAccessAuditLogCreate::from_axum_request(&req, None);
-    let api_access_audit_log_id = api_access_audit_log.id.clone();
-    state
-        .audit_writer
-        .write(AuditLog::ApiAccess(api_access_audit_log))
-        .await;
+    let api_access_audit_log_id = api_access_audit_log.id;
+
+    let state_clone = state.clone();
+
+    state.queue(async move {
+        let mut conn = match state_clone.get_conn().await {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to get db connection: {}", e);
+                return;
+            }
+        };
+
+        crate::crud::audit(&mut conn, api_access_audit_log).await;
+    }).await;
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
 
@@ -202,8 +223,8 @@ pub async fn master_auth_middleware(
         let (user_id, service_api_key_id) = match jwt_header.ok() {
             None => (None, None),
             Some(jwt) => match jwt.claim_type() {
-                ClaimType::UserJWT => (Some(jwt.sub().clone()), None),
-                ClaimType::ServiceAPIKeyJWT => (None, Some(jwt.sub().clone())),
+                ClaimType::UserJWT => (Some(*jwt.sub()), None),
+                ClaimType::ServiceAPIKeyJWT => (None, Some(*jwt.sub())),
             },
         };
 
@@ -213,7 +234,7 @@ pub async fn master_auth_middleware(
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
-            api_access_audit_log_id: api_access_audit_log_id.clone(),
+            api_access_audit_log_id,
             user_id,
             service_api_key_id,
             user_api_key_id: None,
@@ -223,9 +244,22 @@ pub async fn master_auth_middleware(
             failure_details,
         };
 
-        let api_auth_audit_log_id = log.id.clone();
+        let api_auth_audit_log_id = log.id;
 
-        state.audit_writer.write(AuditLog::Auth(log)).await;
+        let state_clone = state.clone();
+
+        state.queue(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get db connection: {}", e);
+                    return;
+                }
+            };
+
+            crate::crud::audit(&mut conn, log).await;
+        }).await;
+
         req.extensions_mut().insert(AuthContext {
             api_access_audit_log_id,
             api_auth_audit_log_id,
@@ -252,7 +286,7 @@ pub async fn master_auth_middleware(
 
         let log = AuthAuditLogCreate {
             id: Uuid::new_v4(),
-            api_access_audit_log_id: api_access_audit_log_id.clone(),
+            api_access_audit_log_id,
             user_id: user.as_ref().map(|u| u.id.into()),
             service_api_key_id: sak.as_ref().map(|sak| sak.id.into()),
             user_api_key_id: None,
@@ -262,9 +296,22 @@ pub async fn master_auth_middleware(
             failure_details,
         };
 
-        let api_auth_audit_log_id = log.id.clone();
+        let api_auth_audit_log_id = log.id;
 
-        state.audit_writer.write(AuditLog::Auth(log)).await;
+        let state_clone = state.clone();
+
+        state.queue(async move {
+            let mut conn = match state_clone.get_conn().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to get db connection: {}", e);
+                    return;
+                }
+            };
+
+            crate::crud::audit(&mut conn, log).await;
+        }).await;
+
         req.extensions_mut().insert(AuthContext {
             api_access_audit_log_id,
             api_auth_audit_log_id,

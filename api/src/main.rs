@@ -15,7 +15,7 @@ async fn main() -> Result<(), ServerError> {
 
     run_migrations()?;
 
-    let shared_state = AppState::new_with_arc().await?;
+    let shared_state = std::sync::Arc::new(AppState::new().await?);
 
     // ensure sysadmin
     match ensure_sysadmin(&shared_state).await {
@@ -35,7 +35,7 @@ async fn main() -> Result<(), ServerError> {
     tracing::info!("Ptolemy running on {} <3", server_url);
 
     match axum::serve(listener, service)
-        .with_graceful_shutdown(shutdown_signal(shared_state.clone()))
+        .with_graceful_shutdown(shutdown_signal(shared_state))
         .await
     {
         Ok(_) => Ok(()),

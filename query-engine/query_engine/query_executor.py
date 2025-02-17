@@ -92,7 +92,14 @@ class QueryExecutor(BaseModel):
         self.logger.info("Setting status to running")
         self.redis_conn.hset(self.keyspace, "status", QueryStatus.RUNNING)
 
-        self.setup_conn()
+        try:
+            self.setup_conn()
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.info("Error setting up connection for query %s", self.query_id, exc_info=e)
+            self.redis_conn.hset(
+                self.keyspace, mapping={"status": QueryStatus.FAILED, "error": "Internal Error"}
+            )
+            return 1
 
         try:
             self.logger.debug("Executing query %s", self.query_id)
@@ -129,7 +136,8 @@ class QueryExecutor(BaseModel):
                 )
                 batches[f"result:{batch_id}"] = buf.getvalue()
 
-        self.redis_conn.hset(self.keyspace, mapping=batches)
+        if batches:
+            self.redis_conn.hset(self.keyspace, mapping=batches)
 
         self.logger.info(
             "Query %s executed with %d result batches of size %.2f kB",

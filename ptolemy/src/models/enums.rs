@@ -32,46 +32,6 @@ pub enum WorkspaceRole {
 serialize_enum!(WorkspaceRole, ShoutySnakeCase, [User, Manager, Admin]);
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum OperationType {
-    Create,
-    Read,
-    Update,
-    Delete,
-    Grant,
-    Revoke,
-}
-
-serialize_enum!(
-    OperationType,
-    ShoutySnakeCase,
-    [Create, Read, Update, Delete, Grant, Revoke]
-);
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum IoType {
-    Input,
-    Output,
-    Feedback,
-}
-
-serialize_enum!(IoType, ShoutySnakeCase, [Input, Output, Feedback]);
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum FieldValueType {
-    String,
-    Int,
-    Float,
-    Bool,
-    Json,
-}
-
-serialize_enum!(
-    FieldValueType,
-    ShoutySnakeCase,
-    [String, Int, Float, Bool, Json]
-);
-
-#[derive(Clone, Debug, PartialEq)]
 pub enum Tier {
     System,
     Subsystem,
@@ -84,12 +44,3 @@ serialize_enum!(
     ShoutySnakeCase,
     [System, Subsystem, Component, Subcomponent]
 );
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AuthMethod {
-    ApiKey,
-    JWT,
-    UsernamePassword,
-}
-
-serialize_enum!(AuthMethod, ShoutySnakeCase, [ApiKey, JWT, UsernamePassword]);

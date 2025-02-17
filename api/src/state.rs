@@ -1,20 +1,18 @@
 use crate::{
     crypto::PasswordHandler,
+    db::{DbConnection, PostgresConfig, RedisConfig},
+    env_settings::get_env_var,
     error::{ApiError, ServerError},
-    models::AuditLog,
-    db::{RedisConfig, PostgresConfig, DbConnection},
 };
-use axum::http::StatusCode;
 use diesel::{pg::PgConnection, prelude::*};
-use diesel_async::{
-    pooled_connection::bb8::Pool,
-    AsyncPgConnection,
-};
+use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use ptolemy::writer::Writer;
-use std::sync::Arc;
-use tracing::error;
 use redis::aio::MultiplexedConnection;
+use std::sync::{Arc, RwLock};
+use std::future::Future;
+use std::pin::Pin;
+use tracing::error;
+use tokio::sync::mpsc;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
@@ -42,13 +40,49 @@ pub fn run_migrations() -> Result<(), ServerError> {
     Ok(())
 }
 
-fn get_env_var(name: &str) -> Result<String, ServerError> {
-    match std::env::var(name) {
-        Ok(val) => Ok(val),
-        Err(_) => {
-            tracing::error!("{} must be set.", name);
-            Err(ServerError::ConfigError)
-        }
+type JobsFuture = Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
+
+pub enum JobMessage {
+    Queue(JobsFuture),
+    Shutdown,
+}
+
+#[derive(Debug, Clone)]
+struct JobsRuntime{
+    jobs: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
+    tx: mpsc::Sender<JobMessage>,
+    // consumer_handle: Arc<tokio::task::JoinHandle<()>>,
+}
+
+impl Default for JobsRuntime {
+    fn default() -> Self {
+        let (tx, mut rx) = mpsc::channel(100);
+
+        let jobs = Arc::new(Default::default());
+
+        let _consumer_handle = Arc::new(tokio::spawn(async move {
+            while let Some(fut) = rx.recv().await {
+                match fut {
+                    JobMessage::Queue(f) => f.await,
+                    JobMessage::Shutdown => {
+                        break;
+                    }
+                }
+            }
+        }));
+
+        Self { jobs, tx }
+    }
+}
+
+impl JobsRuntime {
+    fn spawn(&self, fut: JobsFuture) {
+        let mut jobs = self.jobs.write().unwrap();
+        jobs.push(tokio::spawn(fut));
+    }
+
+    async fn queue(&self, fut: JobsFuture) {
+        let _ = self.tx.send(JobMessage::Queue(fut)).await;
     }
 }
 
@@ -63,8 +97,8 @@ pub struct AppState {
     pub enable_graphiql: bool,
     pub ptolemy_env: String,
     pub jwt_secret: String,
-    pub audit_writer: Arc<Writer<AuditLog>>,
     pub redis_conn: MultiplexedConnection,
+    jobs_rt: JobsRuntime,
 }
 
 impl AppState {
@@ -81,36 +115,14 @@ impl AppState {
         // Default to false if env var is not set and PTOLEMY_ENV is set to 'PROD'
         let enable_graphiql = std::env::var("PTOLEMY_ENABLE_GRAPHIQL")
             .map(|v| v.to_lowercase() == "true")
-            .unwrap_or(!(ptolemy_env == "PROD"));
+            .unwrap_or(ptolemy_env != "PROD");
 
         let pg_config = PostgresConfig::from_env()?;
         let pg_pool = pg_config.diesel_conn().await?;
 
         let password_handler = PasswordHandler::new();
 
-        let pool_clone = pg_pool.clone();
-
-        let audit_writer = Arc::new(Writer::new(
-            move |msg: Vec<AuditLog>| {
-                let pool = pool_clone.clone();
-                let fut = async move {
-                    let n_msgs = msg.len();
-                    let mut conn = pool.get().await.unwrap();
-                    match AuditLog::insert_many(&mut conn, msg).await {
-                        Ok(_) => {
-                            tracing::debug!("Successfully inserted {} audit logs", n_msgs);
-                        }
-                        Err(e) => {
-                            tracing::error!("Failed to insert audit logs: {}", e.to_string());
-                        }
-                    }
-                };
-
-                tokio::spawn(fut);
-            },
-            128,
-            24,
-        ));
+        let jobs_rt = JobsRuntime::default();
 
         let redis_conn = RedisConfig::from_env()?.get_connection().await?;
 
@@ -122,8 +134,8 @@ impl AppState {
             enable_graphiql,
             ptolemy_env,
             jwt_secret,
-            audit_writer,
             redis_conn,
+            jobs_rt,
         };
 
         Ok(state)
@@ -131,6 +143,19 @@ impl AppState {
 
     pub async fn new_with_arc() -> Result<Arc<Self>, ServerError> {
         Ok(Arc::new(Self::new().await?))
+    }
+
+    pub async fn shutdown(&self) -> Result<(), ServerError> {
+        // self.jobs_rt.shutdown().await;
+        Ok(())
+    }
+
+    pub fn spawn<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+        self.jobs_rt.spawn(Box::pin(fut));
+    }
+
+    pub async fn queue<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
+        self.jobs_rt.queue(Box::pin(fut)).await;
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
@@ -143,10 +168,37 @@ impl AppState {
         }
     }
 
-    pub async fn get_conn_http(&self) -> Result<DbConnection<'_>, StatusCode> {
-        self.get_conn()
+    pub async fn get_conn_with_vars(
+        &self,
+        api_access_audit_log_id: &uuid::Uuid,
+        user_query_id: Option<&uuid::Uuid>,
+    ) -> Result<DbConnection<'_>, ApiError> {
+        let mut conn = self.get_conn().await?;
+        diesel::sql_query(format!(
+            "SET app.current_api_access_audit_log_id = '{}'",
+            api_access_audit_log_id
+        ))
+        .execute(&mut conn)
+        .await
+        .map_err(|e| {
+            error!("Failed to set current_api_access_audit_log_id: {}", e);
+            ApiError::ConnectionError
+        })?;
+
+        if let Some(user_query_id) = user_query_id {
+            diesel::sql_query(format!(
+                "SET app.current_user_query_id = '{}'",
+                user_query_id
+            ))
+            .execute(&mut conn)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+            .map_err(|e| {
+                error!("Failed to set current_user_query_id: {}", e);
+                ApiError::ConnectionError
+            })?;
+        }
+
+        Ok(conn)
     }
 
     pub async fn get_redis_conn(&self) -> Result<MultiplexedConnection, ApiError> {

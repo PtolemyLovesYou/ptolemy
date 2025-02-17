@@ -2,22 +2,20 @@ use crate::{
     define_enum,
     generated::records_schema::sql_types::{FieldValueType, IoType, Tier},
 };
-use diesel::deserialize::FromSql;
-use diesel::serialize::{IsNull, Output, ToSql};
-use diesel::{
-    AsExpression, FromSqlRow,
-    {pg::Pg, pg::PgValue},
-};
-use juniper::GraphQLEnum;
 use ptolemy::generated::observer;
 use std::io::Write;
 
 define_enum!(IoTypeEnum, IoType, [Input, Output, Feedback]);
-define_enum!(TierEnum, Tier, [System, Subsystem, Component, Subcomponent]);
+define_enum!(
+    TierEnum,
+    Tier,
+    [System, Subsystem, Component, Subcomponent],
+    WithConversion
+);
 
-impl Into<observer::Tier> for TierEnum {
-    fn into(self) -> observer::Tier {
-        match self {
+impl From<TierEnum> for observer::Tier {
+    fn from(val: TierEnum) -> Self {
+        match val {
             TierEnum::System => observer::Tier::System,
             TierEnum::Subsystem => observer::Tier::Subsystem,
             TierEnum::Component => observer::Tier::Component,

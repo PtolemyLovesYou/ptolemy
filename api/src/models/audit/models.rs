@@ -1,12 +1,10 @@
-use crate::{crypto::GenerateSha256, generated::audit_schema::*};
+use crate::generated::audit_schema::*;
 use axum::{body::Body, extract::ConnectInfo, http::Request};
 use diesel::prelude::*;
 use ipnet::IpNet;
 use serde::Serialize;
 use std::net::SocketAddr;
 use uuid::Uuid;
-
-use super::OperationTypeEnum;
 
 #[derive(Debug, Insertable, Serialize)]
 #[diesel(table_name = api_access_audit_logs)]
@@ -190,90 +188,5 @@ impl IAMAuditLogCreate {
                 })
                 .collect(),
         }
-    }
-}
-
-#[derive(Debug, Insertable, Serialize)]
-#[diesel(table_name = record_audit_logs)]
-pub struct RecordAuditLogCreate {
-    pub id: Uuid,
-    pub api_access_audit_log_id: Uuid,
-    pub workspace_id: Uuid,
-    pub table_name: String,
-    pub hashed_id: Vec<Vec<u8>>,
-    pub operation_type: super::enums::OperationTypeEnum,
-    pub batch_id: Option<Uuid>,
-    pub failure_reason: Option<String>,
-    pub query_metadata: Option<serde_json::Value>,
-}
-
-crate::impl_has_id!(RecordAuditLogCreate);
-
-impl RecordAuditLogCreate {
-    pub fn new_read(
-        table_name: String,
-        api_access_audit_log_id: Uuid,
-        workspace_id: Uuid,
-        hashed_id: Vec<Uuid>,
-        failure_reason: Option<String>,
-        query_metadata: Option<serde_json::Value>,
-    ) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            api_access_audit_log_id,
-            workspace_id,
-            table_name,
-            hashed_id: hashed_id.into_iter().map(|i| i.sha256()).collect(),
-            operation_type: OperationTypeEnum::Read,
-            batch_id: None,
-            failure_reason,
-            query_metadata,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum AuditLog {
-    ApiAccess(ApiAccessAuditLogCreate),
-    Auth(AuthAuditLogCreate),
-    IAM(IAMAuditLogCreate),
-    Record(RecordAuditLogCreate),
-}
-
-impl Serialize for AuditLog {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            AuditLog::ApiAccess(t) => t.serialize(serializer),
-            AuditLog::Auth(t) => t.serialize(serializer),
-            AuditLog::IAM(t) => t.serialize(serializer),
-            AuditLog::Record(t) => t.serialize(serializer),
-        }
-    }
-}
-
-impl Into<AuditLog> for ApiAccessAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::ApiAccess(self)
-    }
-}
-
-impl Into<AuditLog> for AuthAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::Auth(self)
-    }
-}
-
-impl Into<AuditLog> for IAMAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::IAM(self)
-    }
-}
-
-impl Into<AuditLog> for RecordAuditLogCreate {
-    fn into(self) -> AuditLog {
-        AuditLog::Record(self)
     }
 }

@@ -1,9 +1,9 @@
 use crate::{
     crypto::PasswordHandler,
+    db::DbConnection,
     error::ApiError,
     generated::auth_schema::{service_api_key, users, workspace, workspace_user},
     models::{ServiceApiKey, User, Workspace, WorkspaceCreate, WorkspaceUpdate, WorkspaceUser},
-    db::DbConnection,
 };
 use diesel::prelude::*;
 use diesel::BelongingToDsl;
@@ -83,7 +83,7 @@ impl Workspace {
             .map_err(crate::map_diesel_err!(GetError, "get", ServiceApiKey))?;
 
         for (ak, workspace) in results {
-            if password_handler.verify_password(&api_key, ak.key_hash.as_str()) {
+            if password_handler.verify_password(api_key, ak.key_hash.as_str()) {
                 return Ok((ak, workspace));
             }
         }

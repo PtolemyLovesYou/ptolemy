@@ -49,7 +49,7 @@ macro_rules! result_model {
             pub fn err(field: &str, message: String) -> Self {
                 $name(Err(vec![ValidationError {
                     field: field.to_string(),
-                    message: message,
+                    message,
                 }]))
             }
 

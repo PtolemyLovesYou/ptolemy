@@ -1,10 +1,10 @@
 use crate::{
     crud::prelude::*,
+    db::DbConnection,
     error::ApiError,
     generated::auth_schema::workspace_user,
     map_diesel_err,
     models::{WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate},
-    db::DbConnection,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -55,7 +55,7 @@ impl InsertObjReturningId for WorkspaceUser {
 
     async fn insert_many_returning_id(
         conn: &mut DbConnection<'_>,
-        records: &Vec<Self>,
+        records: &[Self],
     ) -> Result<Vec<Uuid>, ApiError> {
         let mut objs = Vec::new();
         for record in records {
@@ -102,7 +102,7 @@ impl InsertObjReturningObj for WorkspaceUser {
 
     async fn insert_many_returning_obj(
         conn: &mut DbConnection<'_>,
-        records: &Vec<Self>,
+        records: &[Self],
     ) -> Result<Vec<Self::Target>, ApiError> {
         let mut objs = Vec::new();
         for record in records {

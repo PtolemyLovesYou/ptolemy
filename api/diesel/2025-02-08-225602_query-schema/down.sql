@@ -1,5 +1,7 @@
 -- This file should undo anything in `up.sql`
 -- Drop all views in duckdb schema
+drop view if exists duckdb.user_query;
+
 drop view if exists duckdb.subcomponent_metadata;
 drop view if exists duckdb.component_metadata;
 drop view if exists duckdb.subsystem_metadata;
@@ -36,41 +38,3 @@ drop view if exists duckdb.workspace;
 
 -- Drop duckdb schema
 drop schema if exists duckdb;
-
--- Drop all soft delete rules
-drop rule if exists soft_delete_metadata on metadata;
-drop rule if exists soft_delete_io on io;
-drop rule if exists soft_delete_runtime on runtime;
-drop rule if exists soft_delete_subcomponent_event on subcomponent_event;
-drop rule if exists soft_delete_component_event on component_event;
-drop rule if exists soft_delete_subsystem_event on subsystem_event;
-drop rule if exists soft_delete_system_event on system_event;
-
--- Remove deleted_at and deletion_reason columns
-alter table metadata
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;
-
-alter table io
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;
-
-alter table runtime
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;
-
-alter table subcomponent_event
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;
-
-alter table component_event
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;
-
-alter table subsystem_event
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;
-
-alter table system_event
-    drop column if exists deleted_at,
-    drop column if exists deletion_reason;

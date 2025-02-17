@@ -162,7 +162,7 @@ impl UserApiKey {
     }
 
     async fn expires_at(&self) -> Option<DateTime<Utc>> {
-        self.expires_at.clone()
+        self.expires_at
     }
 }
 
