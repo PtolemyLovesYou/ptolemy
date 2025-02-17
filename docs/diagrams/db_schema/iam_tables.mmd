@@ -1,0 +1,61 @@
+erDiagram
+workspace_user }o--|| workspace : workspace_id
+workspace_user }o--|| users : user_id
+
+workspace ||--o{ service_api_key : workspace_id
+
+users ||--o{ user_api_key: user_id
+
+workspace {
+    id uuid PK
+    name varchar
+    archived bool
+    created_at timestamp
+    updated_at timestamp
+    deleted_at timestamptz
+    deletion_reason varchar
+}
+
+users {
+    id uuid PK
+    username varchar
+    password_hash varchar
+    display_name varchar
+    status user_status
+    is_sysadmin bool
+    is_admin bool
+    deleted_at timestamptz
+    deletion_reason varchar
+}
+
+workspace_user {
+    id uuid PK
+    user_id uuid FK
+    workspace_id uuid FK
+    workspace_role workspace_role
+    deleted_at timestamptz
+    deletion_reason varchar
+}
+
+service_api_key {
+    id uuid PK
+    workspace_id uuid FK
+    name varchar
+    key_hash varchar
+    key_preview varchar(16)
+    permissions api_key_permission
+    expires_at timestamptz(6)
+    deleted_at timestamptz
+    deletion_reason varchar
+}
+
+user_api_key {
+    id uuid PK
+    user_id uuid FK
+    name varchar
+    key_hash varchar
+    key_preview varchar
+    expires_at timestamptz(6)
+    deleted_at timestamptz
+    deletion_reason varchar
+}

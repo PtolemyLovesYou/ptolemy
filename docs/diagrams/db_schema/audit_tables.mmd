@@ -1,0 +1,64 @@
+erDiagram
+
+api_access_audit_logs ||--o{ api_auth_audit_logs : api_access_audit_log_id
+api_access_audit_logs ||--o{ iam_audit_logs : api_access_audit_log_id
+api_access_audit_logs ||--o{ record_access_audit_logs : api_access_audit_log_id
+
+service_api_key ||--o{ api_auth_audit_logs : service_api_key_id
+user_api_key ||--o{ api_auth_audit_logs : user_api_key_id
+users ||--o{ api_auth_audit_logs : user_id
+
+record_access_audit_logs ||--|| user_query : user_query_id
+user_query ||--|| user_query_results : user_query_id
+
+api_access_audit_logs {
+    id uuid PK
+    created_at timestamptz
+    source varchar
+    request_id uuid
+    ip_address inet
+    archive_status archive_status
+}
+
+api_auth_audit_logs {
+    id uuid PK
+    api_access_audit_log_id uuid FK
+    service_api_key_id uuid FK
+    user_api_key_id uuid FK
+    user_id uuid FK
+    auth_method auth_method
+    auth_payload_hash bytea
+    success boolean
+    failure_details jsonb
+}
+
+iam_audit_logs {
+    id uuid PK
+    api_access_audit_log_id uuid FK
+    resource_id uuid
+    table_name varchar
+    operation_type operation_type
+    old_state bytea
+    new_state bytea
+    failure_reason varchar
+    query_metadata jsonb
+}
+
+user_query_results {
+    id uuid PK
+    user_query_id uuid FK
+    failure_details jsonb
+    query_end_time timestamptz
+    query_status query_status
+    resource_usage jsonb
+}
+
+record_access_audit_logs {
+    id uuid PK
+    api_access_audit_log_id uuid FK
+    user_query_id uuid FK
+    operation_type operation_type
+    schema_name name
+    table_name name
+    entity_ids uuid[]
+}

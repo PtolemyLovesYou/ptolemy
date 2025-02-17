@@ -1,0 +1,80 @@
+erDiagram
+
+workspace ||--o{ system_event : workspace_id
+
+system_event ||--|{ data : system_event_id
+subsystem_event ||--|{ data : subsystem_event_id
+component_event ||--|{ data: component_event_id
+subcomponent_event ||--|{ data: subcomponent_event_id
+
+data ||--|{ runtime : ""
+data ||--o{ io : ""
+data ||--o{ metadata : ""
+
+api_access_audit_logs ||--o| user_query : api_access_audit_log_id
+workspace ||--o{ user_query : allowed_workspace_ids
+
+system_event {
+    id uuid PK
+    workspace_id uuid FK
+}
+
+subsystem_event {
+    id uuid PK
+    system_event_id uuid FK
+}
+
+component_event {
+    id uuid PK
+    system_event_id uuid FK
+}
+
+subcomponent_event {
+    id uuid PK
+    system_event_id uuid FK
+}
+
+runtime {
+    id uuid PK
+    system_event_id uuid FK
+    subsystem_event_id uuid FK
+    component_event_id uuid FK
+    subcomponent_event_id uuid FK
+    start_time timestamp
+    end_time timestamp
+    error_type varchar
+    error_content varchar
+}
+
+io {
+    id uuid PK
+    system_event_id uuid FK
+    subsystem_event_id uuid FK
+    component_event_id uuid FK
+    subcomponent_event_id uuid FK
+}
+
+metadata {
+    id uuid PK
+    system_event_id uuid FK
+    subsystem_event_id uuid FK
+    component_event_id uuid FK
+    subcomponent_event_id uuid FK
+    field_name varchar
+    field_value varchar
+}
+
+user_query {
+    id uuid PK
+    api_access_audit_log_id uuid FK
+    allowed_workspace_ids uuid[] FK
+    query_type query_type
+    access_reason access_reason
+    query_access_details varchar
+    query_text varchar
+    operation_name varchar
+    variables jsonb
+    query_metadata jsonb
+    query_start_time timestamptz not null
+    failure_details jsonb
+}

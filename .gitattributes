@@ -1,5 +1,6 @@
 # For my own vanity...
 *.gql linguist-detectable
+*.mmd linguist-detectable
 # *.sql.j2 linguist-detectable
 # *.yaml linguist-detectable
 # *.yml linguist-detectable
