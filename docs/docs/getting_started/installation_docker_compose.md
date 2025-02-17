@@ -8,12 +8,12 @@ To deploy Ptolemy with Docker, you must have Docker installed on your computer. 
 
 First, make a directory and navigate to it:
 ```sh
-mkdir ptolemy && cd ptolemy
+mkdir ptolemy-quickstart && cd ptolemy-quickstart
 ```
 
 Then, download the `docker-compose.yml` file:
 ```sh
-wget -O docker-compose.yml https://raw.githubusercontent.com/PtolemyLovesYou/ptolemy/main/docker-compose.yml
+wget -O docker-compose.yml https://raw.githubusercontent.com/PtolemyLovesYou/ptolemy/main/docker-compose.quickstart.yml
 ```
 
 Run `docker compose` to start the containers:
