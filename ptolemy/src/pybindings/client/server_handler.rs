@@ -81,7 +81,7 @@ impl ServerHandler {
             timeout_seconds
         });
 
-        let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
+        let token = self.token.clone().ok_or_else(|| "Not authenticated: no token")?;
 
         query_request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("Authorization")?,
