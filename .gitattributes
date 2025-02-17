@@ -21,5 +21,3 @@ ptolemy/graphql/schema.gql -linguist-detectable
 api/diesel/**/*.sql linguist-detectable
 
 # *.sql linguist-language=SQL
-
-docs/**/* linguist-documentation
