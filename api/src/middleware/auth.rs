@@ -98,6 +98,7 @@ async fn validate_api_key_header(
                 workspace: workspace.into(),
                 permissions: Some(sak.permissions.clone().into()),
                 role: None,
+                user: None,
             }],
             Some(sak.into()),
         ));
@@ -114,16 +115,21 @@ async fn validate_api_key_header(
             Ok(u) => {
                 let workspaces = u
                     .get_workspaces_with_roles(&mut state.get_conn().await.unwrap())
-                    .await?
+                    .await?;
+
+                let u_model: ptolemy::models::auth::User = u.into();
+
+                let workspaces_d = workspaces
                     .into_iter()
                     .map(|(i, r)| WorkspacePermission {
                         workspace: i.into(),
                         permissions: None,
                         role: Some(r.into()),
+                        user: Some(u_model.clone()),
                     })
                     .collect();
 
-                return Ok((Some(u.into()), workspaces, None));
+                return Ok((Some(u_model), workspaces_d, None));
             }
             Err(_) => return Err(ApiError::NotFoundError),
         }
@@ -152,16 +158,21 @@ async fn validate_jwt_header(
             let user = crate::models::User::get_by_id(&mut conn, claims.sub()).await?;
             let workspaces = user
                 .get_workspaces_with_roles(&mut conn)
-                .await?
+                .await?;
+
+                let user_model: ptolemy::models::auth::User = user.into();
+
+            let workspaces_d = workspaces
                 .into_iter()
                 .map(|(i, r)| WorkspacePermission {
                     workspace: i.into(),
                     permissions: None,
                     role: Some(r.into()),
+                    user: Some(user_model.clone()),
                 })
                 .collect();
 
-            Ok((Some(user.into()), workspaces))
+            Ok((Some(user_model), workspaces_d))
         }
         ClaimType::ServiceAPIKeyJWT => {
             match crate::models::ServiceApiKey::get_by_id(&mut conn, claims.sub()).await {
@@ -175,6 +186,7 @@ async fn validate_jwt_header(
                             workspace: workspace.into(),
                             permissions: Some(sak.permissions.clone().into()),
                             role: None,
+                            user: None,
                         }],
                     ))
                 }

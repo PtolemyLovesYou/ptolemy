@@ -78,7 +78,7 @@ macro_rules! set_io {
 pub struct PtolemyClient {
     base_url: String,
     workspace_id: Id,
-    workspace_name: String,
+    workspace_name: Option<String>,
     parent_id: Option<Id>,
     tier: Option<Tier>,
     autoflush: bool,
@@ -89,10 +89,11 @@ pub struct PtolemyClient {
 #[pymethods]
 impl PtolemyClient {
     #[new]
+    #[pyo3(signature=(base_url, api_key, workspace_name = None, autoflush = true, batch_size = 1024))]
     fn new(
         base_url: String,
         api_key: String,
-        workspace_name: String,
+        workspace_name: Option<String>,
         autoflush: bool,
         batch_size: usize,
     ) -> PyResult<Self> {
