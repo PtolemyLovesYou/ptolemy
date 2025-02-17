@@ -134,7 +134,7 @@ impl IntoModel<'_> for GQLUser {
     type ReturnType = crate::models::auth::User;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
-            id: self.id()?.into(),
+            id: self.id()?,
             username: self.username()?,
             display_name: self.display_name.clone(),
             status: self.status()?,
@@ -192,7 +192,7 @@ impl IntoModel<'_> for GQLWorkspace {
     type ReturnType = crate::models::auth::Workspace;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
-            id: self.id()?.into(),
+            id: self.id()?,
             name: self.name()?,
             description: self.description.clone(),
             archived: self.archived()?,
@@ -240,8 +240,8 @@ impl IntoModel<'_> for GQLWorkspaceUser {
     type ReturnType = crate::models::auth::WorkspaceUser;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
-            workspace_id: self.workspace()?.id()?.into(),
-            user_id: self.user()?.id()?.into(),
+            workspace_id: self.workspace()?.id()?,
+            user_id: self.user()?.id()?,
             role: self.role()?,
         })
     }
@@ -290,8 +290,8 @@ impl IntoModel<'_> for GQLServiceApiKey {
     type ReturnType = crate::models::auth::ServiceApiKey;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
-            id: self.id()?.into(),
-            workspace_id: self.workspace_id()?.into(),
+            id: self.id()?,
+            workspace_id: self.workspace_id()?,
             name: self.name()?,
             key_preview: self.key_preview()?,
             permissions: self.permissions()?,
@@ -327,8 +327,8 @@ impl IntoModel<'_> for GQLUserApiKey {
 
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
-            id: self.id()?.into(),
-            user_id: self.user_id()?.into(),
+            id: self.id()?,
+            user_id: self.user_id()?,
             name: self.name()?,
             key_preview: self.key_preview()?,
             expires_at: self.expires_at,
@@ -431,7 +431,7 @@ pub struct MutationResponse {
     pub errors: Option<Value>,
 }
 
-impl<'de> GQLResponse<'de> for MutationResponse {
+impl GQLResponse<'_> for MutationResponse {
     type Error = GraphQLError;
     type ReturnType = Mutation;
 
@@ -457,7 +457,7 @@ pub struct QueryResponse {
     pub errors: Option<Value>,
 }
 
-impl<'de> GQLResponse<'de> for QueryResponse {
+impl GQLResponse<'_> for QueryResponse {
     type Error = GraphQLError;
     type ReturnType = Query;
 

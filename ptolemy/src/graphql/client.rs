@@ -93,7 +93,7 @@ impl GraphQLClient {
 
         let resp = rt_clone.block_on(self.query_graphql(query, operation_name, variables));
 
-        Ok(resp.map_err(|e| GraphQLError::ClientError(format!("GraphQL server error: {}", e)))?)
+        resp.map_err(|e| GraphQLError::ClientError(format!("GraphQL server error: {}", e)))
     }
 
     pub fn query(&self, query_name: &str, variables: Value) -> Result<Query, GraphQLError> {
@@ -127,13 +127,13 @@ impl GraphQLClient {
             }
         );
 
-        Ok(self
+        self
             .mutation(CREATE_WORKSPACE_MUTATION, data)?
             .workspace()?
             .create()?
             .propagate_errors()?
             .workspace()?
-            .to_model()?)
+            .to_model()
     }
 
     pub fn delete_workspace(&self, workspace_id: Id) -> Result<(), GraphQLError> {
@@ -231,13 +231,13 @@ impl GraphQLClient {
             }
         );
 
-        Ok(self
+        self
             .mutation(CREATE_SERVICE_API_KEY_MUTATION, data)?
             .workspace()?
             .create_service_api_key()?
             .propagate_errors()?
             .api_key()?
-            .api_key()?)
+            .api_key()
     }
 
     pub fn delete_service_api_key(
@@ -272,7 +272,7 @@ impl GraphQLClient {
             .one()?
             .service_api_keys()?
             .inner()
-            .into_iter()
+            .iter()
             .map(|api_key| api_key.to_model().unwrap())
             .collect::<Vec<ServiceApiKey>>())
     }
@@ -284,13 +284,13 @@ impl GraphQLClient {
     ) -> Result<WorkspaceRole, GraphQLError> {
         let data = json!({"workspaceId": workspace_id, "userId": user_id});
 
-        Ok(self
+        self
             .query(WORKSPACE_USERS_QUERY, data)?
             .workspace()?
             .one()?
             .users()?
             .one()?
-            .role()?)
+            .role()
     }
 
     pub fn get_workspace_users_by_name(
@@ -356,13 +356,13 @@ impl GraphQLClient {
             }
         );
 
-        Ok(self
+        self
             .mutation(CREATE_USER_MUTATION, data)?
             .user()?
             .create()?
             .propagate_errors()?
             .user()?
-            .to_model()?)
+            .to_model()
     }
 
     pub fn delete_user(&self, user_id: Id) -> Result<(), GraphQLError> {
@@ -383,13 +383,13 @@ impl GraphQLClient {
     ) -> Result<String, GraphQLError> {
         let data = json!({"name": name, "durationDays": duration_days});
 
-        Ok(self
+        self
             .mutation(CREATE_USER_API_KEY_MUTATION, data)?
             .user()?
             .create_user_api_key()?
             .propagate_errors()?
             .api_key()?
-            .api_key()?)
+            .api_key()
     }
 
     pub fn delete_user_api_key(&self, api_key_id: Id) -> Result<(), GraphQLError> {
@@ -418,11 +418,11 @@ impl GraphQLClient {
     pub fn get_user_by_name(&self, username: String) -> Result<User, GraphQLError> {
         let data = json!({"username": username});
 
-        Ok(self
+        self
             .query(SEARCH_USERS_QUERY, data)?
             .user()?
             .one()?
-            .to_model()?)
+            .to_model()
     }
 
     pub fn get_user_workspaces(&self, user_id: Id) -> Result<Vec<Workspace>, GraphQLError> {
@@ -486,6 +486,6 @@ impl GraphQLClient {
 // Auth functions
 impl GraphQLClient {
     pub fn me(&self) -> Result<User, GraphQLError> {
-        Ok(self.query(ME_QUERY, json!({}))?.me()?.to_model()?)
+        self.query(ME_QUERY, json!({}))?.me()?.to_model()
     }
 }
