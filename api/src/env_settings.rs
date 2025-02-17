@@ -19,6 +19,7 @@ pub struct ApiConfig {
     pub jwt_secret: String,
     pub postgres: PostgresConfig,
     pub redis: RedisConfig,
+    pub enable_auditing: bool,
 }
 
 impl ApiConfig {
@@ -35,6 +36,9 @@ impl ApiConfig {
             jwt_secret: get_env_var("JWT_SECRET")?,
             postgres: PostgresConfig::from_env()?,
             redis: RedisConfig::from_env()?,
+            enable_auditing: std::env::var("ENABLE_AUDITING")
+                .map(|v| v.to_lowercase() == "true")
+                .unwrap_or(false),
         })
     }
 }

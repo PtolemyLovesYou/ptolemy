@@ -85,19 +85,12 @@ where
             ),
         };
 
-        let state_clone = self.ctx.state().clone();
+        let state = self.ctx.state();
 
-        self.ctx.state().queue(async move {
-            let mut conn = match state_clone.get_conn().await {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!("Failed to get connection: {}", e);
-                    return;
-                }
-            };
-
-            crate::crud::audit(&mut conn, logs).await;
-        }).await;
+        if state.enable_auditing {
+            let state_clone = state.clone();
+            state.queue(crate::crud::audit(state_clone, logs)).await;
+        }
 
         result
     }
@@ -148,19 +141,12 @@ where
             ),
         };
 
-        let state_clone = self.ctx.state().clone();
+        let state = self.ctx.state();
 
-        self.ctx.state().queue(async move {
-            let mut conn = match state_clone.get_conn().await {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!("Failed to get connection: {}", e);
-                    return;
-                }
-            };
-
-            crate::crud::audit(&mut conn, log).await;
-        }).await;
+        if state.enable_auditing {
+            let state_clone = state.clone();
+            state.queue(crate::crud::audit(state_clone, log)).await;
+        }
 
         result.map(|(_, o)| o)
     }
@@ -206,19 +192,10 @@ where
             ),
         };
 
-        let state_clone = self.ctx.state().clone();
-
-        self.ctx.state().queue(async move {
-            let mut conn = match state_clone.get_conn().await {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!("Failed to get connection: {}", e);
-                    return;
-                }
-            };
-
-            crate::crud::audit(&mut conn, vec![log]).await;
-        }).await;
+        if self.ctx.state().enable_auditing {
+            let state_clone = self.ctx.state().clone();
+            self.ctx.state().queue(crate::crud::audit(state_clone, log)).await;
+        }
 
         result
     }
@@ -266,19 +243,10 @@ where
             ),
         };
 
-        let state_clone = self.ctx.state().clone();
-
-        self.ctx.state().queue(async move {
-            let mut conn = match state_clone.get_conn().await {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!("Failed to get connection: {}", e);
-                    return;
-                }
-            };
-
-            crate::crud::audit(&mut conn, vec![log]).await;
-        }).await;
+        if self.ctx.state().enable_auditing {
+            let state_clone = self.ctx.state().clone();
+            self.ctx.state().queue(crate::crud::audit(state_clone, log)).await;
+        }
 
         result
     }

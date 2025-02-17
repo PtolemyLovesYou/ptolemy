@@ -91,6 +91,7 @@ pub type ApiAppState = Arc<AppState>;
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub port: String,
+    pub enable_auditing: bool,
     pub pg_pool: Pool<AsyncPgConnection>,
     pub password_handler: PasswordHandler,
     pub enable_prometheus: bool,
@@ -116,6 +117,7 @@ impl AppState {
         let state = Self {
             port: config.port,
             pg_pool,
+            enable_auditing: config.enable_auditing,
             enable_prometheus: config.enable_prometheus,
             password_handler,
             enable_graphiql: config.enable_graphql,
