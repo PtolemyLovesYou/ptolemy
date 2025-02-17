@@ -145,7 +145,7 @@ impl AppState {
         Ok(Arc::new(Self::new().await?))
     }
 
-    pub async fn shutdown(self) -> Result<(), ServerError> {
+    pub async fn shutdown(&self) -> Result<(), ServerError> {
         // self.jobs_rt.shutdown().await;
         Ok(())
     }
