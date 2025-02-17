@@ -22,7 +22,7 @@ To run outside of docker, you must have:
 
 ```sh
 # Start API
-> cargo run -p api --bin api
+> make run-api
 
 # Build Python client (necessary for running the prototype frontend)
 > make build-client
