@@ -1,4 +1,4 @@
-use crate::{env_settings::get_env_var, error::ServerError};
+use crate::{env_settings::{RedisConfig, PostgresConfig}, error::ServerError};
 use bb8::PooledConnection;
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
@@ -9,22 +9,7 @@ use tracing::error;
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
 
-#[derive(Debug)]
-pub struct RedisConfig {
-    host: String,
-    port: String,
-    db: String,
-}
-
 impl RedisConfig {
-    pub fn from_env() -> Result<Self, ServerError> {
-        Ok(Self {
-            host: get_env_var("REDIS_HOST")?,
-            port: get_env_var("REDIS_PORT")?,
-            db: get_env_var("REDIS_DB")?,
-        })
-    }
-
     pub fn url(&self) -> String {
         format!("redis://{}:{}/{}", self.host, self.port, self.db)
     }
@@ -45,26 +30,7 @@ impl RedisConfig {
     }
 }
 
-#[derive(Debug)]
-pub struct PostgresConfig {
-    pub user: String,
-    pub password: String,
-    pub host: String,
-    pub port: String,
-    pub db: String,
-}
-
 impl PostgresConfig {
-    pub fn from_env() -> Result<Self, ServerError> {
-        Ok(Self {
-            user: get_env_var("POSTGRES_USER")?,
-            password: get_env_var("POSTGRES_PASSWORD")?,
-            host: get_env_var("POSTGRES_HOST")?,
-            port: get_env_var("POSTGRES_PORT")?,
-            db: get_env_var("POSTGRES_DB")?,
-        })
-    }
-
     pub fn url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",

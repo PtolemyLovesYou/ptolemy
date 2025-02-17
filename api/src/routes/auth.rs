@@ -82,17 +82,7 @@ pub async fn login(
 
     let state_clone = state.clone();
 
-    state.queue(async move {
-        let mut conn = match state_clone.get_conn().await {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::error!("Failed to get connection: {}", e);
-                return;
-            }
-        };
-
-        crate::crud::audit(&mut conn, log).await;
-    }).await;
+    state.queue(crate::crud::audit(state_clone, log)).await;
 
     Ok(Json(
         response

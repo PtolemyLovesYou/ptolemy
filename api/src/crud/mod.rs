@@ -19,11 +19,23 @@ impl<L: self::prelude::Auditable> From<L> for AuditableVec<L> {
 }
 
 pub async fn audit<L: self::prelude::Auditable>(
-    conn: &mut super::db::DbConnection<'_>,
+    state: crate::state::ApiAppState,
     records: impl Into<AuditableVec<L>>,
 ) {
     const MAX_RETRIES: u32 = 3;
     const BASE_DELAY_MS: u64 = 100;
+
+    if !state.enable_auditing {
+        return;
+    }
+
+    let mut conn = match state.get_conn().await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to get db connection: {}", e);
+            return;
+        }
+    };
     
     let mut failed_records = Vec::new();
     let AuditableVec(mut current_records) = records.into();
@@ -33,7 +45,7 @@ pub async fn audit<L: self::prelude::Auditable>(
             break;
         }
 
-        match L::insert_many_returning_id(conn, &current_records).await {
+        match L::insert_many_returning_id(&mut conn, &current_records).await {
             Ok(_) => {
                 // If successful, clear the current records and break
                 tracing::debug!("Inserted {} logs to {}", current_records.len(), L::table_name());
