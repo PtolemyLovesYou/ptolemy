@@ -8,7 +8,7 @@ pub struct Id(Uuid);
 
 impl Id {
     pub fn as_uuid(&self) -> Uuid {
-        self.0.clone()
+        self.0
     }
 }
 
@@ -26,9 +26,9 @@ impl From<Uuid> for Id {
     }
 }
 
-impl Into<Uuid> for Id {
-    fn into(self) -> Uuid {
-        self.0
+impl From<Id> for Uuid {
+    fn from(val: Id) -> Self {
+        val.0
     }
 }
 

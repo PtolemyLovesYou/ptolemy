@@ -60,10 +60,7 @@ impl TryFrom<RecordData> for ProtoEvent {
 impl Proto for ProtoEvent {
     fn proto(&self) -> RecordData {
         let name = self.name.clone();
-        let parameters = match &self.parameters {
-            Some(p) => Some(p.clone().into()),
-            None => None,
-        };
+        let parameters = self.parameters.as_ref().map(|p| p.clone().into());
 
         let version = self.version.clone();
         let environment = self.environment.clone();

@@ -40,7 +40,7 @@ macro_rules! serialize_enum {
         }
 
         impl TryFrom<String> for $enum_name {
-            type Error = crate::error::ParseError;
+            type Error = $crate::error::ParseError;
 
             fn try_from(value: String) -> Result<Self, Self::Error> {
                 match value.as_str() {

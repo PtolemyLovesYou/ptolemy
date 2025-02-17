@@ -12,9 +12,9 @@ pub enum JsonSerializable {
     List(Vec<Option<JsonSerializable>>),
 }
 
-impl Into<Value> for JsonSerializable {
-    fn into(self) -> Value {
-        json_serializable_to_value(&Some(self)).unwrap()
+impl From<JsonSerializable> for Value {
+    fn from(val: JsonSerializable) -> Self {
+        json_serializable_to_value(&Some(val)).unwrap()
     }
 }
 
@@ -29,24 +29,24 @@ impl TryFrom<Value> for JsonSerializable {
     }
 }
 
-impl Into<serde_json::Value> for JsonSerializable {
-    fn into(self) -> serde_json::Value {
-        json_serializable_to_serde_value(&Some(self)).unwrap()
+impl From<JsonSerializable> for serde_json::Value {
+    fn from(val: JsonSerializable) -> Self {
+        json_serializable_to_serde_value(&Some(val)).unwrap()
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct Parameters(pub BTreeMap<String, Option<JsonSerializable>>);
 
-impl Into<serde_json::Value> for Parameters {
-    fn into(self) -> serde_json::Value {
-        json_serializable_to_serde_value(&Some(JsonSerializable::Dict(self.0))).unwrap()
+impl From<Parameters> for serde_json::Value {
+    fn from(val: Parameters) -> Self {
+        json_serializable_to_serde_value(&Some(JsonSerializable::Dict(val.0))).unwrap()
     }
 }
 
-impl Into<Value> for Parameters {
-    fn into(self) -> Value {
-        json_serializable_to_value(&Some(JsonSerializable::Dict(self.0))).unwrap()
+impl From<Parameters> for Value {
+    fn from(val: Parameters) -> Self {
+        json_serializable_to_value(&Some(JsonSerializable::Dict(val.0))).unwrap()
     }
 }
 
@@ -83,7 +83,7 @@ fn json_serializable_to_serde_value(json: &Option<JsonSerializable>) -> Option<s
         }
         Some(JsonSerializable::List(l)) => Some(serde_json::Value::Array(
             l.iter()
-                .filter_map(|v| json_serializable_to_serde_value(v))
+                .filter_map(json_serializable_to_serde_value)
                 .collect(),
         )),
     }
@@ -118,7 +118,7 @@ fn json_serializable_to_value(json: &Option<JsonSerializable>) -> Option<Value> 
         Some(JsonSerializable::List(l)) => {
             let values: Vec<Value> = l
                 .iter()
-                .filter_map(|v| json_serializable_to_value(v))
+                .filter_map(json_serializable_to_value)
                 .collect();
             Some(Value {
                 kind: Some(Kind::ListValue(ListValue { values })),
