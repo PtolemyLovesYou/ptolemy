@@ -29,11 +29,11 @@ impl CasingStyle {
 #[macro_export]
 macro_rules! serialize_enum {
     ($enum_name:ident, $casing:ident, [$($variant:ident),+ $(,)?]) => {
-        impl Into<String> for $enum_name {
-            fn into(self) -> String {
-                match self {
+        impl From<$enum_name> for String {
+            fn from(value: $enum_name) -> Self {
+                match value {
                     $(
-                        Self::$variant => CasingStyle::$casing.format(stringify!($variant)),
+                        $enum_name::$variant => CasingStyle::$casing.format(stringify!($variant)),
                     )+
                 }
             }

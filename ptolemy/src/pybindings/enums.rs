@@ -105,12 +105,12 @@ mod tests {
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum MyEnum {
-        Val1,
-        Val2,
-        Val3,
+        Foo,
+        Bar,
+        Baz,
     }
 
-    serialize_enum!(MyEnum, ShoutySnakeCase, [Val1, Val2, Val3]);
+    serialize_enum!(MyEnum, ShoutySnakeCase, [Foo, Bar, Baz]);
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum MyEnumCased {
@@ -125,7 +125,7 @@ mod tests {
         [ValCasedOne, ValCasedTwo, ValCasedThree]
     );
 
-    pywrap_enum!(my_enum, MyEnum, [Val1, Val2, Val3]);
+    pywrap_enum!(my_enum, MyEnum, [Foo, Bar, Baz]);
     pywrap_enum!(
         my_enum_cased,
         MyEnumCased,
@@ -151,13 +151,13 @@ mod tests {
         init();
 
         Python::with_gil(|py| {
-            let val1 = get_enum_py_string(py, MyEnum::Val1).unwrap();
-            let val2 = get_enum_py_string(py, MyEnum::Val2).unwrap();
-            let val3 = get_enum_py_string(py, MyEnum::Val3).unwrap();
+            let val1 = get_enum_py_string(py, MyEnum::Foo).unwrap();
+            let val2 = get_enum_py_string(py, MyEnum::Bar).unwrap();
+            let val3 = get_enum_py_string(py, MyEnum::Baz).unwrap();
 
-            assert_eq!(val1, "VAL1");
-            assert_eq!(val2, "VAL2");
-            assert_eq!(val3, "VAL3");
+            assert_eq!(val1, "FOO");
+            assert_eq!(val2, "BAR");
+            assert_eq!(val3, "BAZ");
         })
     }
 
@@ -182,13 +182,13 @@ mod tests {
 
         Python::with_gil(|py| {
             // test valid values
-            let val1 = PyString::new(py, "VAL1");
-            let val2 = PyString::new(py, "VAL2");
-            let val3 = PyString::new(py, "VAL3");
+            let val1 = PyString::new(py, "FOO");
+            let val2 = PyString::new(py, "BAR");
+            let val3 = PyString::new(py, "BAZ");
 
-            assert_eq!(val1.extract::<MyEnum>().unwrap(), MyEnum::Val1);
-            assert_eq!(val2.extract::<MyEnum>().unwrap(), MyEnum::Val2);
-            assert_eq!(val3.extract::<MyEnum>().unwrap(), MyEnum::Val3);
+            assert_eq!(val1.extract::<MyEnum>().unwrap(), MyEnum::Foo);
+            assert_eq!(val2.extract::<MyEnum>().unwrap(), MyEnum::Bar);
+            assert_eq!(val3.extract::<MyEnum>().unwrap(), MyEnum::Baz);
 
             // test invalid values
             let bad_str = PyString::new(py, "BadValue");
@@ -201,12 +201,12 @@ mod tests {
         init();
 
         Python::with_gil(|py| {
-            let val1_to = MyEnum::Val1
+            let val1_to = MyEnum::Foo
                 .into_pyobject(py)
                 .expect("Failed to convert to PyAny");
             let val1_from = my_enum::get_enum_py_cls(py)
                 .unwrap()
-                .getattr("VAL1")
+                .getattr("FOO")
                 .expect("Failed to get attribute");
 
             assert!(val1_to
