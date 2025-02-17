@@ -22,4 +22,5 @@ api/diesel/**/*.sql linguist-detectable
 
 # *.sql linguist-language=SQL
 
+docs/**/* linguist-documentation
 *.mmd -linguist-documentation
