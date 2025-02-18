@@ -12,14 +12,14 @@ sequenceDiagram
     User->>Client: Enters SQL Query
 
     Client->>API: Calls QueryEngine.Query to start sql execution
-    API->>Redis: Submit query job to Redis stream
-    API-)API: Spawn job status check job
+    API->>Redis: Submit query request to Redis stream
+    API-)API: Spawn query status check request
     API--)Postgres: Log query execution to Postgres
 
     critical Execute Query
-        Redis->>QueryEngine: Pull query job
+        Redis->>QueryEngine: Pull query request
         QueryEngine->>Postgres: Initiate Postgres connector
-        QueryEngine-)QueryEngine: Spawn query job
+        QueryEngine-)QueryEngine: Spawn query execution job
         
         alt Query Cancelled
             API->>Redis: Submit cancellation request to Redis stream
