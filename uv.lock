@@ -1811,7 +1811,6 @@ name = "prototype"
 version = "0.1.0"
 source = { virtual = "prototype" }
 dependencies = [
-    { name = "duckdb" },
     { name = "ptolemy" },
     { name = "pydantic" },
     { name = "requests" },
@@ -1820,7 +1819,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "duckdb", specifier = ">=1.1.3" },
     { name = "ptolemy", editable = "ptolemy" },
     { name = "pydantic", specifier = ">=2.10.4" },
     { name = "requests", specifier = ">=2.32.3" },

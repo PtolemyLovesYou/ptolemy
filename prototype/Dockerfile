@@ -72,4 +72,4 @@ COPY pyproject.toml uv.lock ./
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
     STREAMLIT_BROWSER_ADDRESS=0.0.0.0
 
-CMD ["uv", "run", "--package", "prototype", "--directory", "prototype", "-m", "streamlit", "run", "app.py"]
+CMD ["uv", "run", "--no-sync", "--frozen", "--package", "prototype", "--directory", "prototype", "-m", "streamlit", "run", "app.py"]
