@@ -64,7 +64,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
-          build_metadata: "$(git rev-parse --short HEAD)"
           build: false
 
       - name: Action | Semantic Version [Prerelease]
@@ -76,4 +75,5 @@ jobs:
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
           build: false
+          build_metadata: "$(git rev-parse --short HEAD)"
           force: prerelease
