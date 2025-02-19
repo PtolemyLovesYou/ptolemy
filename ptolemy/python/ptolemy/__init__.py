@@ -16,6 +16,8 @@ from ._core import (
     UserApiKey,
 )
 
+__version__ = "0.1.0+beta.test.1"
+
 def get_client(
     base_url: str = "http://localhost:8000",
     api_key: str = None,
