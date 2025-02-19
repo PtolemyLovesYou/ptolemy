@@ -1,7 +1,7 @@
 # CHANGELOG
 
 
-## v0.0.0-setup_test.1+beta.test.2 (2025-02-19)
+## v0.0.0-setup_test.1+113-python-semantic-versioning.20250219 (2025-02-19)
 
 ### Bug Fixes
 
