@@ -1,0 +1,43 @@
+name: Version
+on:
+  push:
+    branches:
+        - dev
+        - beta
+        - main
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    env:
+      RUST_VERSION: 1.82.0
+      MATURIN_VERSION: 1.8.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup | Force correct release branch on workflow sha
+        run: |
+          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
+      
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+      
+      - name: Install Maturin
+        run: |
+          cargo install --version ${{ env.MATURIN_VERSION }} --force maturin
+      
+      - name: Action | Semantic Version Release
+        id: release
+        # Adjust tag with desired version if applicable.
+        uses: python-semantic-release/python-semantic-release@v9.20.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+          build_metadata: "$(git rev-parse --short HEAD)"
