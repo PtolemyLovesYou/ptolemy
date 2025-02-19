@@ -31,7 +31,6 @@ nav:
   - Getting Started:
     - Introduction: getting_started/index.md
     - Install with Docker Compose: getting_started/installation_docker_compose.md
-    - Configuration: getting_started/configuration.md
     - Building Documentation: getting_started/building_documentation.md
     - Usage: getting_started/usage.md
   - Concepts:
@@ -41,7 +40,8 @@ nav:
   - Guides:
     - Introduction: guides/index.md
   - API Reference:
-    - Introduction: api_reference/introduction.md
+    - Overview: api_reference/index.md
+    - Configuration: api_reference/configuration.md
     - GraphQL Schema: api_reference/gql_schema.md
     - System Diagrams:
       - Database Schema: api_reference/system_diagrams/database_schema.md
@@ -53,6 +53,7 @@ nav:
     - Code of Conduct: contributing/code_of_conduct.md
 
 plugins:
+  - table-reader
   - search
   - plantuml:
         puml_url: https://www.plantuml.com/plantuml/

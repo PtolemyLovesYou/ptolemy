@@ -21,6 +21,6 @@ Looking ahead, we're focused on making your observability data even more accessi
 
     We've designed Ptolemy with security and compliance in mind, but we know there's always room for improvement! If you're passionate about cybersecurity or data governance, we'd love to hear your thoughts - check out our contribution guidelines to learn how you can help make Ptolemy even better.
 
-The query engine is an optional feature and can be disabled. To learn more, visit [Configuration](../getting_started/configuration.md).
+The query engine is an optional feature and can be disabled. To learn more, visit [Configuration](../api_reference/configuration.md).
 
 To learn more about the query engine's service architecture and technical specifications, visit [Query Engine Service Architecture](../api_reference/system_diagrams/query_engine.md).

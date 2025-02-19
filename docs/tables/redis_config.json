@@ -1,0 +1,26 @@
+[
+    {
+        "Name": "`REDIS_HOST`",
+        "Description": "Redis host",
+        "Default Value": "`localhost`",
+        "Required": false
+    },
+    {
+        "Name": "`REDIS_PORT`",
+        "Description": "Redis port",
+        "Default Value": "`6379`",
+        "Required": false
+    },
+    {
+        "Name": "`REDIS_PASSWORD`",
+        "Description": "Redis password",
+        "Default Value": "",
+        "Required": false
+    },
+    {
+        "Name": "`REDIS_DB`",
+        "Description": "Redis database",
+        "Default Value": "`0`",
+        "Required": false
+    }
+]

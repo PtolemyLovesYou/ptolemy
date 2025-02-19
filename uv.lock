@@ -520,6 +520,7 @@ dependencies = [
     { name = "mkdocs" },
     { name = "mkdocs-material", extra = ["imaging"] },
     { name = "mkdocs-puml" },
+    { name = "mkdocs-table-reader-plugin" },
 ]
 
 [package.metadata]
@@ -527,6 +528,7 @@ requires-dist = [
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "mkdocs-material", extras = ["imaging"], specifier = ">=9.5.48" },
     { name = "mkdocs-puml", specifier = ">=2.3.0" },
+    { name = "mkdocs-table-reader-plugin", specifier = ">=3.1.0" },
 ]
 
 [[package]]
@@ -1424,6 +1426,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4c/61/f742f25cb6c301bf283355bcf0e9db0e5d0c9217a7e5deb97f8684bf3097/mkdocs_puml-2.3.0.tar.gz", hash = "sha256:51c7f742eb6384e4e48db880a638869dff9b39a7d42cc42d86aaf25f0ffdb5aa", size = 14410 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/12/4f/8db4743bbe04a9e2ee09cddacf2b7ffd5e214899a974481fb1481de44711/mkdocs_puml-2.3.0-py3-none-any.whl", hash = "sha256:8fb6a3bceaa9d20020d274b5b6d8acd2f18b809511604c0d2fcb450ac3f3a160", size = 17313 },
+]
+
+[[package]]
+name = "mkdocs-table-reader-plugin"
+version = "3.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mkdocs" },
+    { name = "pandas" },
+    { name = "pyyaml" },
+    { name = "tabulate" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a1/1b/ca35e4b51a1814924153f7c8afa5a9c2f961688a9c275fa9f4afe7f5083a/mkdocs_table_reader_plugin-3.1.0.tar.gz", hash = "sha256:eb15688ee8c0cd1a842f506f18973b87be22bd7baa5e2e551089de6b7f9ec25b", size = 12510 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/6f/dcc966874f74f8580b99d2ffecbdc85dfd00c4a5039fedbee4ddd7fc8c7f/mkdocs_table_reader_plugin-3.1.0-py3-none-any.whl", hash = "sha256:50a1302661c14d96b90ba0434ae96110441e0c653ce23559e3c6911fe79e7bd2", size = 10564 },
 ]
 
 [[package]]

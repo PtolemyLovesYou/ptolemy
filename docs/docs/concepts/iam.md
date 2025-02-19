@@ -80,6 +80,6 @@ Ptolemy offers two types of API keys to fit different authentication needs:
     - Read-write: For full data access
 - Intended for deployments, data integrations, and automations
 
-Both types of API keys can be configured with optional expiration dates, which can be made mandatory at the system level. For detailed configuration options, check out our guide on [Configuration](../getting_started/configuration.md).
+Both types of API keys can be configured with optional expiration dates, which can be made mandatory at the system level. For detailed configuration options, check out our guide on [Configuration](../api_reference/configuration.md).
 
 This role-based access control system ensures that your data remains secure while staying accessible to those who need it. Each permission level is carefully designed to balance security with usability, making it easy to manage access as your team and data needs grow.
