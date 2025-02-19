@@ -40,8 +40,8 @@ dev = [
 
 [tool.semantic_release]
 assets = []
-version_toml = [
-    "pyproject.toml:tool.poetry.version:nf"
+version_variables = [
+    "ptolemy/python/ptolemy/__init__.py:__version__",
 ]
 build_command = """
 maturin build --release
@@ -73,9 +73,9 @@ prerelease_token = "beta"
 prerelease = true
 prerelease_offset = "patch"
 
-[tool.semantic_release.branches.rc]
-match = "^rc$"
-prerelease_token = "rc"
+[tool.semantic_release.branches.test]
+match = "^113-python-semantic-versioning$"
+prerelease_token = "test"
 prerelease = true
 prerelease_offset = "patch"
 
