@@ -65,6 +65,7 @@ jobs:
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
           build: false
+          vcs_release: false
 
       - name: Action | Semantic Version [Prerelease]
         if: github.ref != 'refs/heads/main'
@@ -77,3 +78,4 @@ jobs:
           build: false
           build_metadata: "$(git rev-parse --short HEAD)"
           force: prerelease
+          vcs_release: false
