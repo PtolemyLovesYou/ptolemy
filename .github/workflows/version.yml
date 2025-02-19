@@ -1,0 +1,31 @@
+name: Version
+on:
+    push:
+        branches:
+            - dev
+            - beta
+            - rc
+            - main
+jobs:
+    version:
+        runs-on: ubuntu-latest
+        env:
+            RUST_VERSION: 1.82.0
+            MATURIN_VERSION: 1.8.1
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
+                token: ${{ secrets.GITHUB_TOKEN }}
+            
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                toolchain: ${{ env.RUST_VERSION }}
+                override: true
+            
+            - name: Install Maturin
+              run: |
+                cargo install --version ${{ env.MATURIN_VERSION }} --force maturin
+            
