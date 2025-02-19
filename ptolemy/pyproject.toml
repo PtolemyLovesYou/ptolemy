@@ -122,7 +122,7 @@ name = "origin"
 type = "github"
 ignore_token_for_push = false
 insecure = false
-token = { env = "GH_TOKEN" }
+token = { env = "GITHUB_TOKEN" }
 
 [tool.semantic_release.publish]
 dist_glob_patterns = ["dist/*"]
