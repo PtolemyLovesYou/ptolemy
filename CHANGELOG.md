@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.1+4dcc90c (2025-02-19)
+
+### Bug Fixes
+
+- Remove build metadata from releases
+  ([`4dcc90c`](https://github.com/PtolemyLovesYou/ptolemy/commit/4dcc90c060960a5544a73ce72dedc5eb82aa4d41))
+
+
 ## v0.1.0+22793b2 (2025-02-19)
 
 ### Bug Fixes
