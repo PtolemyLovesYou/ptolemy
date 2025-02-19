@@ -56,11 +56,24 @@ jobs:
             cargo install --version ${{ env.MATURIN_VERSION }} --force maturin
           fi
       
-      - name: Action | Semantic Version Release
-        id: release
+      - name: Action | Semantic Version
+        if: github.ref == 'refs/heads/main'
+        id: version-main
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
           build_metadata: "$(git rev-parse --short HEAD)"
+          build: false
+
+      - name: Action | Semantic Version [Prerelease]
+        if: github.ref != 'refs/heads/main'
+        id: version-prerelease
+        uses: python-semantic-release/python-semantic-release@v9.20.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+          build: false
+          force: prerelease
