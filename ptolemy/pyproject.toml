@@ -1,6 +1,6 @@
 [project]
 name = "ptolemy"
-version = "0.1.0"
+version = "0.0.1"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -40,7 +40,9 @@ dev = [
 
 [tool.semantic_release]
 assets = []
-version_variables = ["python/ptolemy/__init__.py:__version__"]
+version_toml = [
+    "pyproject.toml:tool.poetry.version:nf"
+]
 build_command = """
 maturin build --release
 """
