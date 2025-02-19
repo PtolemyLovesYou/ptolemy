@@ -1,0 +1,32 @@
+[
+    {
+        "Name": "`POSTGRES_USER`",
+        "Description": "Postgres username",
+        "Default Value": "",
+        "Required": true
+    },
+    {
+        "Name": "`POSTGRES_PASSWORD`",
+        "Description": "Postgres password",
+        "Default Value": "",
+        "Required": true
+    },
+    {
+        "Name": "`POSTGRES_HOST`",
+        "Description": "Postgres host",
+        "Default Value": "`localhost`",
+        "Required": false
+    },
+    {
+        "Name": "`POSTGRES_PORT`",
+        "Description": "Postgres port",
+        "Default Value": "`5432`",
+        "Required": false
+    },
+    {
+        "Name": "`POSTGRES_DATABASE`",
+        "Description": "Postgres database",
+        "Default Value": "`ptolemy`",
+        "Required": false
+    }
+]

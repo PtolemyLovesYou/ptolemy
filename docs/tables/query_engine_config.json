@@ -1,0 +1,14 @@
+[
+    {
+        "Name": "`STREAM_NAME`",
+        "Description": "Redis stream name.",
+        "Default Value": "`ptolemy:query`",
+        "Required": false
+    },
+    {
+        "Name": "`GROUP_NAME`",
+        "Description": "Redis group name.",
+        "Default Value": "`ptolemy:query`",
+        "Required": false
+    }
+]
