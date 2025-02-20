@@ -28,132 +28,23 @@ jobs:
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
       
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-          components: rustfmt, clippy
-      
-      - name: Cache Rust Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-
-      
-      - name: Cache Maturin
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/maturin
-          key: ${{ runner.os }}-maturin-${{ env.MATURIN_VERSION }}
-      
-      - name: Install Maturin
-        run: |
-          if [ ! -f ~/.cargo/bin/maturin ]; then
-            cargo install --version ${{ env.MATURIN_VERSION }} --force maturin
-          fi
-      
-      - name: Action | Semantic Version [Main]
-        if: github.ref == 'refs/heads/main'
-        id: version-main
-        uses: python-semantic-release/python-semantic-release@v9.20.0
-        with:
-          directory: ./ptolemy
-          commit: false
-          build: false
-          vcs_release: false
-          tag: false
-          push: false
-      
-      - name: Action | Semantic Version [Beta]
-        if: github.ref == 'refs/heads/beta'
-        id: version-beta
-        uses: python-semantic-release/python-semantic-release@v9.20.0
-        with:
-          directory: ./ptolemy
-          commit: false
-          build: false
-          vcs_release: false
-          force: prerelease
-          tag: false
-          push: false
-
-      - name: Action | Semantic Version [Prerelease]
-        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta'
-        id: version-prerelease
-        uses: python-semantic-release/python-semantic-release@v9.20.0
-        with:
-          directory: ./ptolemy
-          commit: false
-          build: false
-          build_metadata: "$(git rev-parse --short HEAD)"
-          force: prerelease
-          vcs_release: false
-          tag: false
-          push: false
-
-      - name: Update Cargo Versions
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            VERSION="${{ steps.version-main.outputs.version }}"
-          elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-            VERSION="${{ steps.version-main.outputs.version }}"
-          else
-            VERSION="${{ steps.version-prerelease.outputs.version }}"
-          fi
-      
-          # Early return if version is none
-          if [[ "$VERSION" == "" ]]; then
-            echo "Version is none, skipping version update"
-            exit 0
-          fi
-          
-          echo "Updating Cargo.toml files to version: $VERSION"
-          
-          find . -name Cargo.toml -not -path "*/target/*" | while read -r file; do
-            if ! grep -q "^\[workspace\]" "$file"; then
-              sed -i "s/^version = \".*\"/version = \"$VERSION\"/" "$file"
-              echo "Updated $file"
-            fi
-          done
+          - name: Install GitVersion
+          uses: gittools/actions/gitversion/setup@v0.9.7
+          with:
+            versionSpec: '5.x'
         
-      - name: Commit and Release
-        if: github.event_name == 'push'
+        # Calculate the version
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+      
+      # Use the version in your builds
+      - name: Build Python Package
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            VERSION="${{ steps.version-main.outputs.version }}"
-          elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-            VERSION="${{ steps.version-main.outputs.version }}"
-          else
-            VERSION="${{ steps.version-prerelease.outputs.version }}"
-          fi
-      
-          # Early return if version is none
-          if [[ "$VERSION" == "" ]]; then
-            echo "Version is none, skipping commit and release"
-            exit 0
-          fi
-      
-          git config --local user.email "actions@users.noreply.github.com"
-          git config --local user.name "github-actions"
-          git add "**/Cargo.toml"
-          
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: release $VERSION"
-            # Only create and push tags for main and beta branches
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-              git tag -a "v$VERSION" -m "Release $VERSION"
-              git push --tags
-            fi
-            git push
-          else
-            echo "No version changes needed"
-          fi
+          # For Python setup.py
+          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml
+          && sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml
+          && sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
 
       - name: Create Pull Request
         if: github.event_name == 'workflow_dispatch'

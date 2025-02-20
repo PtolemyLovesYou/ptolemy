@@ -1,0 +1,33 @@
+mode: ContinuousDeployment
+major-version-bump-message: "^(breaking|major)(\([^)]*\))?:"
+minor-version-bump-message: "^(feature|feat|minor)(\([^)]*\))?:"
+patch-version-bump-message: "^(fix|patch)(\([^)]*\))?:"
+commit-message-incrementing: Enabled
+assembly-informational-format: '{SemVer}+{ShortHash}'
+branches:
+  main:
+    regex: ^main$
+    tag: ''
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    source-branches: ['beta']
+  beta:
+    regex: ^beta$
+    tag: beta
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    source-branches: ['dev']
+  dev:
+    regex: ^dev$
+    tag: dev
+    increment: Patch
+    track-merge-target: true
+    tracks-release-branches: true
+    source-branches: ['main', 'beta', 'feature']
+    commit-message-incrementing: Enabled
+    assembly-informational-format: '{SemVer}+{ShortHash}'
+  feature:
+    regex: ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)/
+    tag: useBranchName
+    increment: Inherit
+    source-branches: ['dev']
