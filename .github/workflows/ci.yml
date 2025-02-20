@@ -6,6 +6,14 @@ on:
       - beta
       - main
   workflow_dispatch:
+    inputs:
+      promotion:
+        description: 'Branch to promote (dev->beta or beta->main)'
+        required: true
+        type: choice
+        options:
+          - dev-to-beta
+          - beta-to-main
 
 permissions:
   contents: write
@@ -26,6 +34,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup | Force correct release branch on workflow sha
+        if: github.event_name == 'push'
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
       
@@ -38,16 +47,60 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
       
-      - name: Build Python Package
+      # Only update versions on push events, not on promotion
+      - name: Update Version Numbers
+        if: github.event_name == 'push'
         run: |
-          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml \
-          && sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml \
-          && sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
+          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml
+          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml
+          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
 
       - name: Commit Version Changes
+        if: github.event_name == 'push'
         run: |
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
           git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
           git commit -m "chore: update version to ${GITVERSION_SEMVER}"
           git push origin ${{ github.ref_name }}
+
+      - name: Create Promotion PR
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config --local user.email "actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
+          
+          # Set source and target based on promotion input
+          if [[ "${{ inputs.promotion }}" == "dev-to-beta" ]]; then
+            SOURCE_BRANCH="dev"
+            TARGET_BRANCH="beta"
+            PR_TITLE="chore: promote dev to beta"
+          elif [[ "${{ inputs.promotion }}" == "beta-to-main" ]]; then
+            SOURCE_BRANCH="beta"
+            TARGET_BRANCH="main"
+            PR_TITLE="chore: promote beta to main"
+          else
+            echo "Invalid promotion type"
+            exit 1
+          fi
+          
+          # Create a new branch for the promotion
+          PROMOTION_BRANCH="${SOURCE_BRANCH}-to-${TARGET_BRANCH}-${GITVERSION_SEMVER}"
+          
+          # Fetch and checkout target branch first
+          git fetch origin ${TARGET_BRANCH}
+          git checkout -b ${PROMOTION_BRANCH} origin/${TARGET_BRANCH}
+          
+          # Merge source branch
+          git fetch origin ${SOURCE_BRANCH}
+          git merge origin/${SOURCE_BRANCH} --no-commit
+          
+          # Create pull request using GitHub CLI
+          gh pr create \
+            --base ${TARGET_BRANCH} \
+            --head ${PROMOTION_BRANCH} \
+            --title "${PR_TITLE}" \
+            --body "Automated PR for version promotion" \
+            --label "automated"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
