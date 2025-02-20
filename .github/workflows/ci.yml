@@ -62,7 +62,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
           root_options: "-vv"
-          directory: ptolemy
+          directory: ./ptolemy
           commit: false
           build: false
           vcs_release: false
@@ -75,7 +75,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
           root_options: "-vv"
-          directory: ptolemy
+          directory: ./ptolemy
           commit: false
           build: false
           vcs_release: false
@@ -89,7 +89,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
           root_options: "-vv"
-          directory: ptolemy
+          directory: ./ptolemy
           commit: false
           build: false
           build_metadata: "$(git rev-parse --short HEAD)"
