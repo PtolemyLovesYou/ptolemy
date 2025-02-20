@@ -28,10 +28,10 @@ jobs:
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
       
-          - name: Install GitVersion
-          uses: gittools/actions/gitversion/setup@v0.9.7
-          with:
-            versionSpec: '5.x'
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          versionSpec: '5.x'
         
         # Calculate the version
       - name: Determine Version
