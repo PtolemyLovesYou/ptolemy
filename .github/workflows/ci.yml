@@ -5,15 +5,6 @@ on:
       - dev
       - beta
       - main
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: 'Type of promotion to perform'
-        required: true
-        type: choice
-        options:
-          - beta
-          - release
 
 permissions:
   contents: write
@@ -171,11 +162,11 @@ jobs:
           git config --local user.name "github-actions"
           
           # Determine target branch and PR title based on promotion type
-          if [[ "${{ github.event.inputs.release_type }}" == "beta" ]]; then
+          if [[ "${{ github.base_ref }}" == "/refs/heads/dev" ]]; then
             SOURCE_BRANCH="dev"
             TARGET_BRANCH="beta"
             PR_TITLE="chore: promote dev to beta"
-          elif [[ "${{ github.event.inputs.release_type }}" == "release" ]]; then
+          elif [[ "${{ github.base_ref }}" == "/refs/heads/beta" ]]; then
             SOURCE_BRANCH="beta"
             TARGET_BRANCH="main"
             PR_TITLE="chore: promote beta to main"
