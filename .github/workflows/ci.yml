@@ -94,6 +94,12 @@ jobs:
           else
             VERSION="${{ steps.version-prerelease.outputs.version }}"
           fi
+      
+          # Early return if version is none
+          if [[ "$VERSION" == "none" ]]; then
+            echo "Version is none, skipping version update"
+            exit 0
+          fi
           
           echo "Updating Cargo.toml files to version: $VERSION"
           
@@ -103,22 +109,28 @@ jobs:
               echo "Updated $file"
             fi
           done
-
+        
       - name: Commit and Release
         run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          else
+            VERSION="${{ steps.version-prerelease.outputs.version }}"
+          fi
+      
+          # Early return if version is none
+          if [[ "$VERSION" == "none" ]]; then
+            echo "Version is none, skipping commit and release"
+            exit 0
+          fi
+      
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
           git add "**/Cargo.toml"
           
           if ! git diff --staged --quiet; then
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              VERSION="${{ steps.version-main.outputs.version }}"
-            elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-              VERSION="${{ steps.version-main.outputs.version }}"
-            else
-              VERSION="${{ steps.version-prerelease.outputs.version }}"
-            fi
-            
             git commit -m "chore: release $VERSION"
             git tag -a "v$VERSION" -m "Release $VERSION"
             git push
