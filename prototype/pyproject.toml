@@ -1,15 +1,10 @@
 [project]
 name = "prototype"
-version = "0.1.0"
+version = "0.1.0-alpha.1+asdf"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "streamlit>=1.41.1",
-    "requests>=2.32.3",
-    "pydantic>=2.10.4",
-    "ptolemy",
-]
+dependencies = [ "streamlit>=1.41.1", "requests>=2.32.3", "pydantic>=2.10.4", "ptolemy",]
 
-[tool.uv.sources]
-ptolemy = { workspace = true }
+[tool.uv.sources.ptolemy]
+workspace = true

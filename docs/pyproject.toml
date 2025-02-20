@@ -1,12 +1,7 @@
 [project]
 name = "docs"
-version = "0.1.0"
+version = "0.1.0-alpha.1+asdf"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "mkdocs-puml>=2.3.0",
-    "mkdocs>=1.6.1",
-    "mkdocs-material[imaging]>=9.5.48",
-    "mkdocs-table-reader-plugin>=3.1.0",
-]
+dependencies = [ "mkdocs-puml>=2.3.0", "mkdocs>=1.6.1", "mkdocs-material[imaging]>=9.5.48", "mkdocs-table-reader-plugin>=3.1.0",]

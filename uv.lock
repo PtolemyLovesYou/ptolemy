@@ -1921,7 +1921,7 @@ wheels = [
 
 [[package]]
 name = "ptolemy"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "ptolemy" }
 dependencies = [
     { name = "aiohttp" },
@@ -1976,6 +1976,7 @@ dev = [
     { name = "pylint-pydantic" },
     { name = "pytest" },
     { name = "python-semantic-release" },
+    { name = "pytoml" },
     { name = "tqdm" },
 ]
 
@@ -1992,6 +1993,7 @@ dev = [
     { name = "pylint-pydantic", specifier = ">=0.3.4" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "python-semantic-release", specifier = ">=9.20.0" },
+    { name = "pytoml", specifier = ">=0.1.21" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
@@ -2270,6 +2272,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/30/51/cdd1d8d3eae29cdca5d59087106050d0c9eaf767ca2b3c0c0dde5f16c405/python_semantic_release-9.20.0.tar.gz", hash = "sha256:56bd78d39b59be1741e4783bd857110590166f08e7dcae1c951d14d7ac6076f3", size = 306483 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/80/706dfddba4b99d6821bf769cfc28aef1365db63f2a94967004ff4cd8bca9/python_semantic_release-9.20.0-py3-none-any.whl", hash = "sha256:75de18044e6ca11d0298414a02f66c50cbde3c76af63ca7375de04198f462e95", size = 132553 },
+]
+
+[[package]]
+name = "pytoml"
+version = "0.1.21"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/ba/98ee2054a2d7b8bebd367d442e089489250b6dc2aee558b000e961467212/pytoml-0.1.21.tar.gz", hash = "sha256:8eecf7c8d0adcff3b375b09fe403407aa9b645c499e5ab8cac670ac4a35f61e7", size = 8783 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/47/c7f8a0f210ad18576840922e0b504f0b7f5f73aea4a52ab14c5b58517edf/pytoml-0.1.21-py2.py3-none-any.whl", hash = "sha256:57a21e6347049f73bfb62011ff34cd72774c031b9828cb628a752225136dfc33", size = 8537 },
 ]
 
 [[package]]
