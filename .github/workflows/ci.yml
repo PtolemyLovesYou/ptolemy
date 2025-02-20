@@ -44,6 +44,8 @@ jobs:
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
           
+          echo "Setting up promotion to ${{ inputs.target_branch }}"
+          
           # Set source based on target
           SOURCE_BRANCH=""
           if [[ "${{ inputs.target_branch }}" == "beta" ]]; then
@@ -54,9 +56,12 @@ jobs:
           
           # Checkout target branch and merge from source
           git fetch origin ${{ inputs.target_branch }}
-          git checkout ${{ inputs.target_branch }}
+          git checkout -B ${{ inputs.target_branch }} origin/${{ inputs.target_branch }}
           git fetch origin ${SOURCE_BRANCH}
           git merge origin/${SOURCE_BRANCH} --no-edit
+          
+          echo "Current branch after setup:"
+          git branch --show-current
       
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.7
