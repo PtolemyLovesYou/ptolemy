@@ -87,7 +87,14 @@ jobs:
 
       - name: Update Cargo Versions
         run: |
-          VERSION="${{ github.ref == 'refs/heads/main' && steps.version-main.outputs.version || steps.version-prerelease.outputs.version }}"
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          else
+            VERSION="${{ steps.version-prerelease.outputs.version }}"
+          fi
+          
           echo "Updating Cargo.toml files to version: $VERSION"
           
           find . -name Cargo.toml -not -path "*/target/*" | while read -r file; do
@@ -104,7 +111,14 @@ jobs:
           git add "**/Cargo.toml"
           
           if ! git diff --staged --quiet; then
-            VERSION="${{ github.ref == 'refs/heads/main' && steps.version-main.outputs.version || steps.version-prerelease.outputs.version }}"
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              VERSION="${{ steps.version-main.outputs.version }}"
+            elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
+              VERSION="${{ steps.version-main.outputs.version }}"
+            else
+              VERSION="${{ steps.version-prerelease.outputs.version }}"
+            fi
+            
             git commit -m "chore: release $VERSION"
             git tag -a "v$VERSION" -m "Release $VERSION"
             git push
