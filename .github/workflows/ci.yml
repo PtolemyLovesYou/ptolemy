@@ -81,5 +81,10 @@ jobs:
           git config --local user.name "github-actions"
           git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
           git commit -m "chore: update version to ${GITVERSION_SEMVER}"
-          PUSH_BRANCH="${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || github.ref_name }}"
-          git push origin ${PUSH_BRANCH}
+          
+          # Determine which branch to push to
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            git push origin ${{ inputs.target_branch }}
+          else
+            git push origin ${{ github.ref_name }}
+          fi
