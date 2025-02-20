@@ -1,6 +1,6 @@
 [project]
 name = "ptolemy"
-version = "0.2.0-alpha.45"
+version = "0.2.0-alpha.46"
 description = "Add your description here"
 readme = "README.md"
 authors = [
