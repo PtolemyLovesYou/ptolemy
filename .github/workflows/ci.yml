@@ -64,6 +64,8 @@ jobs:
           commit: false
           build: false
           vcs_release: false
+          tag: false
+          push: false
       
       - name: Action | Semantic Version [Beta]
         if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta'
@@ -73,6 +75,8 @@ jobs:
           commit: false
           build: false
           vcs_release: false
+          tag: false
+          push: false
 
       - name: Action | Semantic Version [Prerelease]
         if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta'
@@ -84,6 +88,8 @@ jobs:
           build_metadata: "$(git rev-parse --short HEAD)"
           force: prerelease
           vcs_release: false
+          tag: false
+          push: false
 
       - name: Update Cargo Versions
         run: |
