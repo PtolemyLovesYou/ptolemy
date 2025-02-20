@@ -41,7 +41,7 @@ dev = [
 [tool.semantic_release]
 assets = []
 version_variables = [
-    "ptolemy/python/ptolemy/__init__.py:__version__",
+    "python/ptolemy/__init__.py:__version__",
 ]
 build_command = """
 maturin build --release
