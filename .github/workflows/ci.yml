@@ -75,7 +75,6 @@ jobs:
           commit: false
           build: false
           vcs_release: false
-          build_metadata: "$(git rev-parse --short HEAD)"
           force: prerelease
           tag: false
           push: false
