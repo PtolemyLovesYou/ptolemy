@@ -5,6 +5,7 @@ on:
       - dev
       - beta
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -52,7 +53,7 @@ jobs:
           git push origin ${{ github.ref_name }}
 
       - name: Create Pull Request
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && (github.base_ref == '/refs/heads/dev' || github.base_ref == '/refs/heads/beta')
         run: |
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
