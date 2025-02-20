@@ -61,7 +61,6 @@ jobs:
         id: version-main
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
-          root_options: "-vv"
           directory: ./ptolemy
           commit: false
           build: false
@@ -74,7 +73,6 @@ jobs:
         id: version-beta
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
-          root_options: "-vv"
           directory: ./ptolemy
           commit: false
           build: false
@@ -88,7 +86,6 @@ jobs:
         id: version-prerelease
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
-          root_options: "-vv"
           directory: ./ptolemy
           commit: false
           build: false
