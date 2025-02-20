@@ -142,9 +142,12 @@ jobs:
           
           if ! git diff --staged --quiet; then
             git commit -m "chore: release $VERSION"
-            git tag -a "v$VERSION" -m "Release $VERSION"
+            # Only create and push tags for main and beta branches
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
+              git tag -a "v$VERSION" -m "Release $VERSION"
+              git push --tags
+            fi
             git push
-            git push --tags
           else
             echo "No version changes needed"
           fi
