@@ -32,12 +32,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install toml
+          python -m pip install --upgrade pip uv
+          uv pip install toml pydantic
 
       - name: Configure Git
         run: |
@@ -56,7 +56,7 @@ jobs:
 
       - name: Bump alpha version (on push)
         if: github.event_name == 'push'
-        run: python bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
+        run: uv run bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
 
       # Handle workflow dispatch for beta/rc/release
       - name: Bump version (beta/rc/release)
@@ -65,7 +65,7 @@ jobs:
           (github.event.inputs.version_type == 'beta' || 
            github.event.inputs.version_type == 'rc' || 
            github.event.inputs.version_type == 'release')
-        run: python bump_version.py ${{ github.event.inputs.version_type }}
+        run: uv run bump_version.py ${{ github.event.inputs.version_type }}
 
       # Handle workflow dispatch for major/minor/patch
       - name: Bump version (major/minor/patch)
@@ -76,11 +76,11 @@ jobs:
            github.event.inputs.version_type == 'patch')
         run: |
           if [ "${{ github.event.inputs.version_type }}" = "major" ]; then
-            python bump_version.py mjr
+            uv run bump_version.py mjr
           elif [ "${{ github.event.inputs.version_type }}" = "minor" ]; then
-            python bump_version.py mnr
+            uv run bump_version.py mnr
           else
-            python bump_version.py patch
+            uv run bump_version.py patch
           fi
 
       # Get new version after bump
