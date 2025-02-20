@@ -79,15 +79,21 @@ jobs:
         run: |
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
+          
+          echo "Current branch:"
+          git branch --show-current
+          
           git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
           git commit -m "chore: update version to ${GITVERSION_SEMVER}"
-
-          echo ${{ github.ref_name }};
-          echo ${{ inputs.target_branch }};
           
-          # Determine which branch to push to
+          echo "Status after commit:"
+          git status
+          
+          # Try force push since we're rewriting branch history
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            git push origin ${{ inputs.target_branch }}
+            echo "Pushing to ${{ inputs.target_branch }}"
+            git push --force origin ${{ inputs.target_branch }}
           else
+            echo "Pushing to ${{ github.ref_name }}"
             git push origin ${{ github.ref_name }}
           fi
