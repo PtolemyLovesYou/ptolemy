@@ -1,10 +1,8 @@
 name: Version
 on:
-  # Only allow automatic version updates on dev
   push:
     branches:
       - dev
-  # Manual promotions required for beta and main
   workflow_dispatch:
     inputs:
       target_branch:
@@ -31,38 +29,6 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      # For dev branch pushes
-      - name: Setup | Force correct release branch on workflow sha
-        if: github.event_name == 'push'
-        run: |
-          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
-      
-      # For manual promotions to beta/main
-      - name: Setup promotion branches
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          git config --local user.email "actions@users.noreply.github.com"
-          git config --local user.name "github-actions"
-          
-          echo "Setting up promotion to ${{ inputs.target_branch }}"
-          
-          # Set source based on target
-          SOURCE_BRANCH=""
-          if [[ "${{ inputs.target_branch }}" == "beta" ]]; then
-            SOURCE_BRANCH="dev"
-          else
-            SOURCE_BRANCH="beta"
-          fi
-          
-          # Checkout target branch and merge from source
-          git fetch origin ${{ inputs.target_branch }}
-          git checkout -B ${{ inputs.target_branch }} origin/${{ inputs.target_branch }}
-          git fetch origin ${SOURCE_BRANCH}
-          git merge origin/${SOURCE_BRANCH} --no-edit
-          
-          echo "Current branch after setup:"
-          git branch --show-current
-      
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.7
         with:
@@ -71,34 +37,62 @@ jobs:
       - name: Determine Version
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
-      
-      # Update version numbers
-      - name: Update Version Numbers
-        run: |
-          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml
-          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml
-          sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
 
-      # Commit and push changes
-      - name: Commit Version Changes
+      # Handle promotions (beta/main) differently than dev pushes
+      - name: Process Version Changes
         run: |
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
-          
-          echo "Current branch:"
-          git branch --show-current
-          
-          git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
-          git commit -m "chore: update version to ${GITVERSION_SEMVER}"
-          
-          echo "Status after commit:"
-          git status
-          
-          # Try force push since we're rewriting branch history
+
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "Pushing to ${{ inputs.target_branch }}"
-            git push --force origin ${{ inputs.target_branch }}
+            # Promotion workflow
+            echo "Setting up promotion to ${{ inputs.target_branch }}"
+            
+            # Determine source branch
+            SOURCE_BRANCH=""
+            if [[ "${{ inputs.target_branch }}" == "beta" ]]; then
+              SOURCE_BRANCH="dev"
+            else
+              SOURCE_BRANCH="beta"
+            fi
+            
+            # Fetch all branches
+            git fetch origin
+            
+            # Checkout target branch tracking remote
+            git checkout -B ${{ inputs.target_branch }} origin/${{ inputs.target_branch }}
+            
+            # Merge source into target
+            git merge origin/${SOURCE_BRANCH} --no-edit
+            
+            echo "Current branch after merge:"
+            git branch --show-current
+            
+            # Update versions on target branch
+            sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml
+            sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml
+            sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
+            
+            # Commit and push to target
+            git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
+            git commit -m "chore: update version to ${GITVERSION_SEMVER}"
+            
+            echo "Current branch before push:"
+            git branch --show-current
+            
+            git push origin ${{ inputs.target_branch }}
           else
-            echo "Pushing to ${{ github.ref_name }}"
-            git push origin ${{ github.ref_name }}
+            # Normal dev push workflow
+            echo "Processing dev branch update"
+            git checkout -B dev ${{ github.sha }}
+            
+            # Update versions
+            sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml
+            sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml
+            sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
+            
+            # Commit and push to dev
+            git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
+            git commit -m "chore: update version to ${GITVERSION_SEMVER}"
+            git push origin dev
           fi
