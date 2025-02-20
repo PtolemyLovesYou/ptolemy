@@ -1,24 +1,22 @@
 name: Version
 on:
+  # Only allow automatic version updates on dev
   push:
     branches:
       - dev
-      - beta
-      - main
+  # Manual promotions required for beta and main
   workflow_dispatch:
     inputs:
-      promotion:
-        description: 'Branch to promote (dev->beta or beta->main)'
+      target_branch:
+        description: 'Branch to merge into (beta or main)'
         required: true
         type: choice
         options:
-          - dev-to-beta
-          - beta-to-main
+          - beta
+          - main
 
 permissions:
   contents: write
-  pull-requests: write
-  statuses: write
 
 jobs:
   version:
@@ -33,10 +31,32 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      # For dev branch pushes
       - name: Setup | Force correct release branch on workflow sha
         if: github.event_name == 'push'
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
+      
+      # For manual promotions to beta/main
+      - name: Setup promotion branches
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config --local user.email "actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
+          
+          # Set source based on target
+          SOURCE_BRANCH=""
+          if [[ "${{ inputs.target_branch }}" == "beta" ]]; then
+            SOURCE_BRANCH="dev"
+          else
+            SOURCE_BRANCH="beta"
+          fi
+          
+          # Checkout target branch and merge from source
+          git fetch origin ${{ inputs.target_branch }}
+          git checkout ${{ inputs.target_branch }}
+          git fetch origin ${SOURCE_BRANCH}
+          git merge origin/${SOURCE_BRANCH} --no-edit
       
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.7
@@ -47,66 +67,19 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
       
-      # Only update versions on push events, not on promotion
+      # Update version numbers
       - name: Update Version Numbers
-        if: github.event_name == 'push'
         run: |
           sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml
           sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml
           sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
 
+      # Commit and push changes
       - name: Commit Version Changes
-        if: github.event_name == 'push'
         run: |
           git config --local user.email "actions@users.noreply.github.com"
           git config --local user.name "github-actions"
           git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
           git commit -m "chore: update version to ${GITVERSION_SEMVER}"
-          git push origin ${{ github.ref_name }}
-
-      - name: Create Promotion PR
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          git config --local user.email "actions@users.noreply.github.com"
-          git config --local user.name "github-actions"
-          
-          # Set source and target based on promotion input
-          if [[ "${{ inputs.promotion }}" == "dev-to-beta" ]]; then
-            SOURCE_BRANCH="dev"
-            TARGET_BRANCH="beta"
-            PR_TITLE="chore: promote dev to beta"
-          elif [[ "${{ inputs.promotion }}" == "beta-to-main" ]]; then
-            SOURCE_BRANCH="beta"
-            TARGET_BRANCH="main"
-            PR_TITLE="chore: promote beta to main"
-          else
-            echo "Invalid promotion type"
-            exit 1
-          fi
-          
-          # Create a new branch for the promotion
-          PROMOTION_BRANCH="${SOURCE_BRANCH}-to-${TARGET_BRANCH}-${GITVERSION_SEMVER}"
-          
-          # Fetch and checkout target branch first
-          git fetch origin ${TARGET_BRANCH}
-          git checkout -b ${PROMOTION_BRANCH} origin/${TARGET_BRANCH}
-          
-          # Merge source branch
-          git fetch origin ${SOURCE_BRANCH}
-          git merge origin/${SOURCE_BRANCH}
-          
-          # Push the new branch with changes
-          git push origin ${PROMOTION_BRANCH}
-          
-          # Ensure the automated label exists
-          gh label create automated --color "#0E8A16" --description "Automated PR" || true
-          
-          # Create pull request using GitHub CLI
-          gh pr create \
-            --base ${TARGET_BRANCH} \
-            --head ${PROMOTION_BRANCH} \
-            --title "${PR_TITLE}" \
-            --body "Automated PR for version promotion" \
-            --label "automated"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUSH_BRANCH="${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || github.ref_name }}"
+          git push origin ${PUSH_BRANCH}
