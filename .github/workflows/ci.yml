@@ -93,7 +93,13 @@ jobs:
           
           # Merge source branch
           git fetch origin ${SOURCE_BRANCH}
-          git merge origin/${SOURCE_BRANCH} --no-commit
+          git merge origin/${SOURCE_BRANCH}
+          
+          # Push the new branch with changes
+          git push origin ${PROMOTION_BRANCH}
+          
+          # Ensure the automated label exists
+          gh label create automated --color "#0E8A16" --description "Automated PR" || true
           
           # Create pull request using GitHub CLI
           gh pr create \
