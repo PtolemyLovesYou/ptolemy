@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
   statuses: write
 jobs:
-  version-client:
+  version:
     runs-on: ubuntu-latest
     env:
       RUST_VERSION: 1.82.0
