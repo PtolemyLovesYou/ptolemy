@@ -57,7 +57,7 @@ jobs:
           fi
       
       - name: Action | Semantic Version [Main]
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta'
+        if: github.ref == 'refs/heads/main'
         id: version-main
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
@@ -70,7 +70,7 @@ jobs:
           push: false
       
       - name: Action | Semantic Version [Beta]
-        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta'
+        if: github.ref == 'refs/heads/beta'
         id: version-beta
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
