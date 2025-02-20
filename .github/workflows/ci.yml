@@ -36,8 +36,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          uv pip install toml pydantic
+          python -m pip install --upgrade pip uv \
+          && uv venv \
+          && uv pip install toml pydantic
 
       - name: Configure Git
         run: |
