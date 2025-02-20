@@ -18,9 +18,6 @@ on:
           - minor
           - patch
 
-permissions:
-  contents: write
-
 jobs:
   bump-version:
     runs-on: ubuntu-latest
@@ -39,9 +36,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip uv \
-          && uv venv \
-          && uv pip install toml pydantic
+          python -m pip install --upgrade pip
+          pip install toml
 
       - name: Configure Git
         run: |
@@ -51,7 +47,7 @@ jobs:
       - name: Get current version
         id: current_version
         run: |
-          echo "version=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")" >> $GITHUB_OUTPUT
+          echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
 
       # Handle automatic alpha bump on push to dev
       - name: Get git hash
@@ -60,7 +56,7 @@ jobs:
 
       - name: Bump alpha version (on push)
         if: github.event_name == 'push'
-        run: uv run bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
+        run: python bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
 
       # Handle workflow dispatch for beta/rc/release
       - name: Bump version (beta/rc/release)
@@ -69,7 +65,7 @@ jobs:
           (github.event.inputs.version_type == 'beta' || 
            github.event.inputs.version_type == 'rc' || 
            github.event.inputs.version_type == 'release')
-        run: uv run bump_version.py ${{ github.event.inputs.version_type }}
+        run: python bump_version.py ${{ github.event.inputs.version_type }}
 
       # Handle workflow dispatch for major/minor/patch
       - name: Bump version (major/minor/patch)
@@ -80,18 +76,18 @@ jobs:
            github.event.inputs.version_type == 'patch')
         run: |
           if [ "${{ github.event.inputs.version_type }}" = "major" ]; then
-            uv run bump_version.py mjr
+            python bump_version.py mjr
           elif [ "${{ github.event.inputs.version_type }}" = "minor" ]; then
-            uv run bump_version.py mnr
+            python bump_version.py mnr
           else
-            uv run bump_version.py patch
+            python bump_version.py patch
           fi
 
       # Get new version after bump
       - name: Get new version
         id: new_version
         run: |
-          echo "version=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")" >> $GITHUB_OUTPUT
+          echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
 
       # Commit and push changes
       - name: Commit version bump
@@ -112,7 +108,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.new_version.outputs.version }}
-          name: Release v${{ steps.new_version.outputs.version }}
+          name: ${{ steps.new_version.outputs.version }}
           draft: false
           prerelease: ${{ github.event.inputs.version_type != 'release' }}
           generate_release_notes: true
