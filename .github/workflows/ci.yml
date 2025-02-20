@@ -51,37 +51,3 @@ jobs:
           git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
           git commit -m "chore: update version to ${GITVERSION_SEMVER}"
           git push origin ${{ github.ref_name }}
-
-      - name: Create Pull Request
-        if: github.event_name == 'workflow_dispatch' && (github.base_ref == '/refs/heads/dev' || github.base_ref == '/refs/heads/beta')
-        run: |
-          git config --local user.email "actions@users.noreply.github.com"
-          git config --local user.name "github-actions"
-          
-          # Determine target branch and PR title based on promotion type
-          if [[ "${{ github.base_ref }}" == "/refs/heads/dev" ]]; then
-            SOURCE_BRANCH="dev"
-            TARGET_BRANCH="beta"
-            PR_TITLE="chore: promote dev to beta"
-          elif [[ "${{ github.base_ref }}" == "/refs/heads/beta" ]]; then
-            SOURCE_BRANCH="beta"
-            TARGET_BRANCH="main"
-            PR_TITLE="chore: promote beta to main"
-          else
-            echo "Invalid promotion type"
-            exit 1
-          fi
-          
-          # Checkout the source branch
-          git fetch origin $SOURCE_BRANCH
-          git checkout -B $SOURCE_BRANCH origin/$SOURCE_BRANCH
-          
-          # Create pull request using GitHub CLI
-          gh pr create \
-            --base $TARGET_BRANCH \
-            --head ${{ github.ref_name }} \
-            --title "$PR_TITLE" \
-            --body "Automated PR for version promotion" \
-            --label "automated"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
