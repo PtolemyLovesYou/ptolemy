@@ -5,10 +5,21 @@ on:
       - dev
       - beta
       - main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of promotion to perform'
+        required: true
+        type: choice
+        options:
+          - beta
+          - release
+
 permissions:
   contents: write
   pull-requests: write
   statuses: write
+
 jobs:
   version:
     runs-on: ubuntu-latest
@@ -121,6 +132,7 @@ jobs:
           done
         
       - name: Commit and Release
+        if: github.event_name == 'push'
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             VERSION="${{ steps.version-main.outputs.version }}"
@@ -151,3 +163,37 @@ jobs:
           else
             echo "No version changes needed"
           fi
+
+      - name: Create Pull Request
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config --local user.email "actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
+          
+          # Determine target branch and PR title based on promotion type
+          if [[ "${{ github.event.inputs.release_type }}" == "beta" ]]; then
+            SOURCE_BRANCH="dev"
+            TARGET_BRANCH="beta"
+            PR_TITLE="chore: promote dev to beta"
+          elif [[ "${{ github.event.inputs.release_type }}" == "release" ]]; then
+            SOURCE_BRANCH="beta"
+            TARGET_BRANCH="main"
+            PR_TITLE="chore: promote beta to main"
+          else
+            echo "Invalid promotion type"
+            exit 1
+          fi
+          
+          # Checkout the source branch
+          git fetch origin $SOURCE_BRANCH
+          git checkout -B $SOURCE_BRANCH origin/$SOURCE_BRANCH
+          
+          # Create pull request using GitHub CLI
+          gh pr create \
+            --base $TARGET_BRANCH \
+            --head ${{ github.ref_name }} \
+            --title "$PR_TITLE" \
+            --body "Automated PR for version promotion" \
+            --label "automated"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
