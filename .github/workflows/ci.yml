@@ -102,7 +102,7 @@ jobs:
           fi
       
           # Early return if version is none
-          if [[ "$VERSION" == "none" ]]; then
+          if [[ "$VERSION" == "" ]]; then
             echo "Version is none, skipping version update"
             exit 0
           fi
@@ -127,7 +127,7 @@ jobs:
           fi
       
           # Early return if version is none
-          if [[ "$VERSION" == "none" ]]; then
+          if [[ "$VERSION" == "" ]]; then
             echo "Version is none, skipping commit and release"
             exit 0
           fi
