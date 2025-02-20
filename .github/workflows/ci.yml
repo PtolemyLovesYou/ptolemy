@@ -33,17 +33,23 @@ jobs:
         with:
           versionSpec: '5.x'
         
-        # Calculate the version
       - name: Determine Version
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
       
-      # Use the version in your builds
       - name: Build Python Package
         run: |
           sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/pyproject.toml \
           && sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" ptolemy/Cargo.toml \
           && sed -i "s/^version = .*/version = \"${GITVERSION_SEMVER}\"/" api/Cargo.toml
+
+      - name: Commit Version Changes
+        run: |
+          git config --local user.email "actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
+          git add ptolemy/pyproject.toml ptolemy/Cargo.toml api/Cargo.toml
+          git commit -m "chore: update version to ${GITVERSION_SEMVER}"
+          git push origin ${{ github.ref_name }}
 
       - name: Create Pull Request
         if: github.event_name == 'workflow_dispatch'
