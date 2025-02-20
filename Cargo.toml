@@ -43,3 +43,19 @@ jsonwebtoken = "9.3.0"
 ipnet = {version = "2.10.1", features = ["json", "serde"]}
 pin-project-lite = "0.2.16"
 reqwest = { version = "0.12.12", features = ["json"] }
+
+[workspace.dev-dependencies]
+cargo-release = "0.24.11"
+git-cliff = "1.4.0"
+
+[workspace.metadata.release]
+shared-version = true
+dependent-version = "upgrade"
+publish = false
+pre-release-hook = ["cargo", "test", "--workspace"]
+pre-release-replacements = [
+    {file = "README.md", search = "Current release: [a-z0-9\\.-]+", replace = "Current release: {{version}}"},
+    {file = "CHANGELOG.md", search = "Unreleased", replace = "{{version}}"},
+]
+pre-release-commit-message = "chore(release): prepare for {{version}}"
+tag-message = "chore(release): {{version}} tagged"
