@@ -1,6 +1,6 @@
 [package]
 name = "api"
-version = "0.2.0-alpha.56"
+version = "0.2.0-alpha.58"
 edition = "2021"
 
 [[bin]]
