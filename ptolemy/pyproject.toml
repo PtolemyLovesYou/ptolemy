@@ -73,12 +73,6 @@ prerelease_token = "beta"
 prerelease = true
 prerelease_offset = "patch"
 
-[tool.semantic_release.branches.test]
-match = "^113-python-semantic-versioning$"
-prerelease_token = "test"
-prerelease = true
-prerelease_offset = "patch"
-
 [tool.semantic_release.changelog]
 exclude_commit_patterns = []
 mode = "init"

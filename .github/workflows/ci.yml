@@ -56,26 +56,92 @@ jobs:
             cargo install --version ${{ env.MATURIN_VERSION }} --force maturin
           fi
       
-      - name: Action | Semantic Version
-        if: github.ref == 'refs/heads/main'
+      - name: Action | Semantic Version [Main]
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta'
         id: version-main
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
+          commit: false
           build: false
           vcs_release: false
+          tag: false
+          push: false
+      
+      - name: Action | Semantic Version [Beta]
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta'
+        id: version-beta
+        uses: python-semantic-release/python-semantic-release@v9.20.0
+        with:
+          commit: false
+          build: false
+          vcs_release: false
+          force: prerelease
+          tag: false
+          push: false
 
       - name: Action | Semantic Version [Prerelease]
-        if: github.ref != 'refs/heads/main'
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta'
         id: version-prerelease
         uses: python-semantic-release/python-semantic-release@v9.20.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
+          commit: false
           build: false
           build_metadata: "$(git rev-parse --short HEAD)"
           force: prerelease
           vcs_release: false
+          tag: false
+          push: false
+
+      - name: Update Cargo Versions
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          else
+            VERSION="${{ steps.version-prerelease.outputs.version }}"
+          fi
+      
+          # Early return if version is none
+          if [[ "$VERSION" == "" ]]; then
+            echo "Version is none, skipping version update"
+            exit 0
+          fi
+          
+          echo "Updating Cargo.toml files to version: $VERSION"
+          
+          find . -name Cargo.toml -not -path "*/target/*" | while read -r file; do
+            if ! grep -q "^\[workspace\]" "$file"; then
+              sed -i "s/^version = \".*\"/version = \"$VERSION\"/" "$file"
+              echo "Updated $file"
+            fi
+          done
+        
+      - name: Commit and Release
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
+            VERSION="${{ steps.version-main.outputs.version }}"
+          else
+            VERSION="${{ steps.version-prerelease.outputs.version }}"
+          fi
+      
+          # Early return if version is none
+          if [[ "$VERSION" == "" ]]; then
+            echo "Version is none, skipping commit and release"
+            exit 0
+          fi
+      
+          git config --local user.email "actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
+          git add "**/Cargo.toml"
+          
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: release $VERSION"
+            git tag -a "v$VERSION" -m "Release $VERSION"
+            git push
+            git push --tags
+          else
+            echo "No version changes needed"
+          fi
