@@ -51,6 +51,7 @@ nav:
   - Contributing:
     - Introduction: contributing/index.md
     - Code of Conduct: contributing/code_of_conduct.md
+    - Development Process: contributing/development_process.md
 
 plugins:
   - table-reader
