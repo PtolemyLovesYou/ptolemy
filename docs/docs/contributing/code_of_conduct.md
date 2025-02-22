@@ -1,6 +1,6 @@
 # Code of Conduct
 
-Ptolemy is a queer-led open source project building tools to make building robust, safe AI easier for everyone. As an ML tooling project, we have a responsibility to actively combat bias and promote inclusion in AI development. We recognize that understanding the diversity of human experience is critical to our development as a scientific field – our goal is to build not just monitoring tools, but a community where everyone can contribute their unique perspectives to make AI better and more equitable.
+Ptolemy is a queer-led open team creating tools to make building robust, safe AI easier for everyone. As an ML tooling project, we have a responsibility to actively combat bias and promote inclusion in AI development. We recognize that understanding the diversity of human experience is critical to our development as a scientific field – our goal is to build not just monitoring tools, but a community where everyone can contribute their unique perspectives to make AI better and more equitable.
 
 In the interest of fostering an open and welcoming environment, we as contributors and maintainers are committed to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
