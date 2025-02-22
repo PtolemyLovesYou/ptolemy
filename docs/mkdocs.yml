@@ -29,7 +29,7 @@ nav:
   - Home:
     - index.md
   - Getting Started:
-    - Introduction: getting_started/index.md
+    - Overview: getting_started/index.md
     - Install with Docker Compose: getting_started/installation_docker_compose.md
     - Building Documentation: getting_started/building_documentation.md
     - Usage: getting_started/usage.md
