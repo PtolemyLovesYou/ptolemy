@@ -51,6 +51,8 @@ nav:
   - Contributing:
     - Introduction: contributing/index.md
     - Code of Conduct: contributing/code_of_conduct.md
+    - Development Process: contributing/development_process.md
+    - Issue, Pull Request, & Commit Guidelines: contributing/issues_commits_prs.md
 
 plugins:
   - table-reader
