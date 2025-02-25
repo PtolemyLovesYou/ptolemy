@@ -36,10 +36,10 @@ pub async fn audit<L: self::prelude::Auditable>(
             return;
         }
     };
-    
+
     let mut failed_records = Vec::new();
     let AuditableVec(mut current_records) = records.into();
-    
+
     for retry_count in 0..MAX_RETRIES {
         if current_records.is_empty() {
             break;
@@ -74,7 +74,7 @@ pub async fn audit<L: self::prelude::Auditable>(
     if !current_records.is_empty() {
         failed_records.extend(current_records.iter().map(|l| serde_json::json!(l)));
         tracing::error!(
-            "Failed to insert audit logs after {} attempts. Logging failed records: table=\"{}\" records={:?}",
+            "Failed to insert audit logs after {} attempts. Logging failed records: table=\"{}\" records=\"{}\"",
             MAX_RETRIES,
             L::table_name(),
             serde_json::json!(failed_records).to_string()
