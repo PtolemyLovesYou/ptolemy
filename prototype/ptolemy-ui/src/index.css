@@ -189,3 +189,15 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+div#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
