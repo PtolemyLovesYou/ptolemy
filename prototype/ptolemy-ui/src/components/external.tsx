@@ -1,13 +1,11 @@
 import { Link } from 'react-router'
 import {
     NavigationMenu,
-    NavigationMenuContent,
-    NavigationMenuIndicator,
+
     NavigationMenuItem,
     NavigationMenuLink,
     NavigationMenuList,
-    NavigationMenuTrigger,
-    NavigationMenuViewport,
+    navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 
 interface MenuItemProps{
@@ -18,11 +16,11 @@ interface MenuItemProps{
 function MenuItem({ name, href }: MenuItemProps) {
     return (
         <NavigationMenuItem>
-            <Link to={href}>
-                <NavigationMenuLink>
-                    {name}
-                </NavigationMenuLink>
-            </Link>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                <Link to={href}>
+                        {name}
+                </Link>
+            </NavigationMenuLink>
         </NavigationMenuItem>
     )
 }

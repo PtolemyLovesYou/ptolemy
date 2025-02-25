@@ -1,9 +1,11 @@
 import { Routes, Route } from 'react-router'
-import './App.css'
+import './index.css'
 import Menu from './components/menu'
 import Home from './Home'
+import IDE from './Ide'
 import ExternalLinks from './components/external'
 import ProfileIcon from './components/profile-icon'
+
 function App() {
   return (
     <>
@@ -14,11 +16,11 @@ function App() {
           <ProfileIcon name="José" profilePictureUrl="https://github.com/shadcn.png/" />
         </div>
       </div>
-      <main>
+      <main className="p-10">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<div>Events</div>} />
-          <Route path="/ide" element={<div>IDE</div>} />
+          <Route path="/ide" element={<IDE />} />
           <Route path="/settings" element={<div>Settings</div>} />
         </Routes>
       </main>

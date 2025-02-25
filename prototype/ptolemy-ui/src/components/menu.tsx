@@ -1,4 +1,4 @@
-import { NavLink } from "react-router"
+import { NavLink } from 'react-router'
 import {
     NavigationMenu,
     NavigationMenuContent,
@@ -8,9 +8,11 @@ import {
     NavigationMenuList,
     NavigationMenuTrigger,
     NavigationMenuViewport,
-    navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import ptolemyLogo from '/logomark_lime.svg'
+import Link from "./Link"
+
+
 
 interface MenuItemProps{
     name: string,
@@ -20,11 +22,7 @@ interface MenuItemProps{
 function MenuItem({ name, href }: MenuItemProps) {
     return (
         <NavigationMenuItem>
-            <NavLink to={href} end>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    {name}
-                </NavigationMenuLink>
-            </NavLink>
+            <Link name={name} href={href} />
         </NavigationMenuItem>
     )
 }
@@ -33,8 +31,8 @@ function Logo() {
     return (
       <div>
         <NavLink to="/" end>
-                <img src={ptolemyLogo} className="logo" alt="Ptolemy logo" />
-            </NavLink>
+            <img src={ptolemyLogo} className="logo" alt="Ptolemy logo" />
+        </NavLink>
       </div>
     )
 }
