@@ -31,7 +31,6 @@ const ExternalLinks: React.FC = () => {
   <NavigationMenuList>
                 <MenuItem name="Feedback" href="mailto:raz@gmail.com" />
                 <MenuItem name="Docs" href={import.meta.env.VITE_PTOLEMY_DOCS} />
-
   </NavigationMenuList>
 </NavigationMenu>
     )

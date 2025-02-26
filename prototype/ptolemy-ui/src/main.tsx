@@ -12,11 +12,11 @@ const httpLink = createHttpLink({ uri: `${import.meta.env.VITE_PTOLEMY_API}/grap
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  console.log('token is', token)
   return {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : '',
-      'access-control-allow-origin': `${window.location.origin}/`,
     }
   };
 });

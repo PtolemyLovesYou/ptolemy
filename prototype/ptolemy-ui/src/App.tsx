@@ -29,7 +29,7 @@ function App() {
     <>
       <div className="header-container">
         <Menu />
-        <div className="flex align-right">
+        <div className="flex align-right gap-5">
           <ExternalLinks />
           <ProfileDropdown name="José" profilePictureUrl="https://github.com/shadcn.png/" />
         </div>

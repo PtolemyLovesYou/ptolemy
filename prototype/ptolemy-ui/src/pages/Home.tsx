@@ -4,7 +4,7 @@ function Home() {
     <h1>Ptolemy</h1>
         <div className="card">
           <p>
-            Edit <code>src/App.tsx</code> and save to test HMR
+            Some content here!
           </p>
         </div>
     </>)

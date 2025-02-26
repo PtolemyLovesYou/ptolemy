@@ -14,6 +14,11 @@ export const authenticate = async (username: string, password: string) => {
     const { token } = await response.json();
     if (token) {
         localStorage.setItem(AUTH_TOKEN_KEY, token)
-        return token
+        window.location.reload()
     }
+}
+
+export const logout = () => {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    window.location.reload()
 }

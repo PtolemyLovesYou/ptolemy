@@ -1,4 +1,6 @@
 import { useQuery, gql } from '@apollo/client';
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 const GET_USER_PROFILE = gql`
     query Me {
@@ -21,13 +23,23 @@ const Profile: React.FC = () => {
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
-    const { userProfile } = data;
-
+    const { me } = data;
+    const mapToInput = ([key, value]: [string, unknown]) => {
+        if (key === '__typename') return null;
+        return (
+            <div>
+                <Label htmlFor={key.toLowerCase()}>{key}</Label>
+                <Input type="text" id={key.toLowerCase()} placeholder="(empty)" value={String(value)} disabled />
+            </div>
+        )
+    }
     return (
-        <div>
-            <h1>User Profile</h1>
-            <p>Name: {userProfile.displayName}</p>
-            <p>Username: {userProfile.username}</p>
+        <div className="grid gap-5">
+            <h1>Profile</h1>
+            {Object.entries(me).map(mapToInput)}
+
+            <h2>API Keys</h2>
+            <p>Coming soon...</p>
         </div>
     );
 };

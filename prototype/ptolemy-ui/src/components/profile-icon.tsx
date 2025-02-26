@@ -9,6 +9,8 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Button } from "./ui/button"
 import { NavLink } from "react-router"
+import { logout } from "./Auth"
+import { User, LogOut, Settings } from "lucide-react"
 
 const fallbackFromName = (name: string) => {
     return name.split(" ").map((word) => word[0].toUpperCase()).join("").slice(0, 2)
@@ -37,17 +39,18 @@ function ProfileDropdown({ name, profilePictureUrl }: ProfileIconProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-                <DropdownMenuItem>
-                    <DropdownMenuLabel>
-                        <NavLink to="/profile" end>Profile</NavLink>
+                <DropdownMenuItem asChild>
+                    <DropdownMenuLabel asChild>
+                        <NavLink to="/profile" end><User />Profile</NavLink>
                     </DropdownMenuLabel>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                    <DropdownMenuLabel>Settings</DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                    <DropdownMenuLabel><Settings /> Settings</DropdownMenuLabel>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                    <DropdownMenuLabel>Logout</DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                    <DropdownMenuLabel onClick={logout}><LogOut />
+                    Log out</DropdownMenuLabel>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
