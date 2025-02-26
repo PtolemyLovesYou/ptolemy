@@ -15,14 +15,16 @@ const authLink = setContext((_, { headers }) => {
   return {
     headers: {
       ...headers,
-      authorization: token ? `Bearer ${token}` : ''
+      authorization: token ? `Bearer ${token}` : '',
+      'access-control-allow-origin': `${window.location.origin}/`,
     }
   };
 });
 
 const client = new ApolloClient({
   link: authLink.concat(httpLink),
-  cache: new InMemoryCache()
+  cache: new InMemoryCache(),
+  credentials: 'include',
 });
 
 createRoot(document.getElementById('root')!).render(

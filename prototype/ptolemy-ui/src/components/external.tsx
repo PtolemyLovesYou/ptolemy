@@ -27,7 +27,7 @@ function MenuItem({ name, href }: MenuItemProps) {
 
 const ExternalLinks: React.FC = () => {
     return (
-<NavigationMenu>
+<NavigationMenu aria-label="External Links">
   <NavigationMenuList>
                 <MenuItem name="Feedback" href="mailto:raz@gmail.com" />
                 <MenuItem name="Docs" href={import.meta.env.VITE_PTOLEMY_DOCS} />

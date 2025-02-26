@@ -1,4 +1,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+  } from "@/components/ui/dropdown-menu"
+import { Button } from "./ui/button"
+import { NavLink } from "react-router"
 
 const fallbackFromName = (name: string) => {
     return name.split(" ").map((word) => word[0].toUpperCase()).join("").slice(0, 2)
@@ -18,4 +28,30 @@ function ProfileIcon({ name, profilePictureUrl }: ProfileIconProps) {
     )
 }
 
-export default ProfileIcon
+function ProfileDropdown({ name, profilePictureUrl }: ProfileIconProps) {
+    return (
+        <DropdownMenu aria-label="Profile and Settings Dropdown">
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <ProfileIcon name={name} profilePictureUrl={profilePictureUrl} />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuItem>
+                    <DropdownMenuLabel>
+                        <NavLink to="/profile" end>Profile</NavLink>
+                    </DropdownMenuLabel>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <DropdownMenuLabel>Settings</DropdownMenuLabel>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                    <DropdownMenuLabel>Logout</DropdownMenuLabel>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
+export default ProfileDropdown

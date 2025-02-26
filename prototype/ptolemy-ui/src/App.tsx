@@ -5,9 +5,10 @@ import Home from './pages/Home'
 import IDE from './pages/Ide'
 import Login from './pages/Login'
 import ExternalLinks from './components/external'
-import ProfileIcon from './components/profile-icon'
+import ProfileDropdown from './components/profile-icon'
 import { useEffect, useState } from 'react'
 import { AUTH_TOKEN_KEY } from './constants'
+import Profile from './pages/Profile'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,7 +31,7 @@ function App() {
         <Menu />
         <div className="flex align-right">
           <ExternalLinks />
-          <ProfileIcon name="José" profilePictureUrl="https://github.com/shadcn.png/" />
+          <ProfileDropdown name="José" profilePictureUrl="https://github.com/shadcn.png/" />
         </div>
       </div>
       <main className="p-10">
@@ -39,6 +40,7 @@ function App() {
           <Route path="/events" element={<div>Events</div>} />
           <Route path="/ide" element={<IDE />} />
           <Route path="/settings" element={<div>Settings</div>} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>
     </>

@@ -38,7 +38,7 @@ function Logo() {
 }
 
 function Menu() {
-return (<NavigationMenu>
+return (<NavigationMenu aria-label="Main Menu">
     <NavigationMenuList>
     <NavigationMenuItem><Logo /></NavigationMenuItem>
         <MenuItem name="Events" href="/events" />
