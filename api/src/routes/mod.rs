@@ -12,6 +12,8 @@ use axum::{
     Router,
 };
 use juniper_axum::graphiql;
+use http::{Method, header::{CONTENT_TYPE, AUTHORIZATION}};
+use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth;
 pub mod graphql;
@@ -53,6 +55,11 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
 }
 
 pub async fn get_router(state: &ApiAppState) -> Router {
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_origin(Any)
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION]);
+
     let http_router = Router::new()
         .route("/auth", axum::routing::post(self::auth::login))
         .nest("/", get_base_router(state).await)
@@ -71,4 +78,5 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .merge(http_router)
         .layer(from_fn_with_state(state.clone(), master_auth_middleware))
         .layer(crate::trace_layer!(Http))
+        .layer(cors)
 }
