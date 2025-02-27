@@ -16,6 +16,7 @@ version = "0.1.0-alpha.10+e7fe34f"
 edition = "2021"
 
 [dependencies]
+http = "1.2.0"
 r2d2 = "0.8.10"
 tokio-stream = "0.1.17"
 
@@ -87,6 +88,7 @@ workspace = true
 
 [dependencies.tower-http]
 workspace = true
+features = ["cors",]
 
 [dependencies.argon2]
 workspace = true
