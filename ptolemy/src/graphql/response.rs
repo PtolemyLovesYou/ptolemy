@@ -1,7 +1,6 @@
 use crate::error::GraphQLError;
 use crate::graphql_response;
-use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
-use crate::models::id::Id;
+use crate::models::{ApiKeyPermission, UserStatus, WorkspaceRole, Id};
 use crate::prelude::{GraphQLResponse, IntoModel};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
@@ -131,7 +130,7 @@ graphql_response!(
 );
 
 impl IntoModel<'_> for GQLUser {
-    type ReturnType = crate::models::auth::User;
+    type ReturnType = crate::models::User;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
             id: self.id()?,
@@ -189,7 +188,7 @@ graphql_response!(
 );
 
 impl IntoModel<'_> for GQLWorkspace {
-    type ReturnType = crate::models::auth::Workspace;
+    type ReturnType = crate::models::Workspace;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
             id: self.id()?,
@@ -237,7 +236,7 @@ graphql_response!(
 );
 
 impl IntoModel<'_> for GQLWorkspaceUser {
-    type ReturnType = crate::models::auth::WorkspaceUser;
+    type ReturnType = crate::models::WorkspaceUser;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
             workspace_id: self.workspace()?.id()?,
@@ -287,7 +286,7 @@ graphql_response!(
 );
 
 impl IntoModel<'_> for GQLServiceApiKey {
-    type ReturnType = crate::models::auth::ServiceApiKey;
+    type ReturnType = crate::models::ServiceApiKey;
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {
             id: self.id()?,
@@ -323,7 +322,7 @@ graphql_response!(
 );
 
 impl IntoModel<'_> for GQLUserApiKey {
-    type ReturnType = crate::models::auth::UserApiKey;
+    type ReturnType = crate::models::UserApiKey;
 
     fn to_model(&self) -> Result<Self::ReturnType, GraphQLError> {
         Ok(Self::ReturnType {

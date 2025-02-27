@@ -142,10 +142,10 @@ impl QueryEngine for MyQueryEngine {
         for workspace in auth_ctx.workspaces.iter() {
             if let Some(perms) = &workspace.permissions {
                 match perms {
-                    ptolemy::models::enums::ApiKeyPermission::ReadOnly => {
+                    ptolemy::models::ApiKeyPermission::ReadOnly => {
                         allowed_workspace_ids.push(workspace.workspace.id.into());
                     }
-                    ptolemy::models::enums::ApiKeyPermission::ReadWrite => {
+                    ptolemy::models::ApiKeyPermission::ReadWrite => {
                         allowed_workspace_ids.push(workspace.workspace.id.into());
                     }
                     _ => {

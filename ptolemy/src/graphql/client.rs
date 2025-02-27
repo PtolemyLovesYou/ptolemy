@@ -2,11 +2,7 @@ use crate::{
     error::GraphQLError,
     generated::gql::*,
     graphql::response::{GQLResponse, GraphQLResult, MutationResponse, QueryResponse},
-    models::{
-        auth::{ServiceApiKey, User, UserApiKey, Workspace},
-        enums::{ApiKeyPermission, WorkspaceRole},
-        id::Id,
-    },
+    models::{ServiceApiKey, User, UserApiKey, Workspace, ApiKeyPermission, WorkspaceRole, Id},
     prelude::graphql::IntoModel,
 };
 use std::sync::Arc;
