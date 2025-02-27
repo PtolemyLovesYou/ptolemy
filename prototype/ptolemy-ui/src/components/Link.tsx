@@ -1,4 +1,5 @@
-import { NavLink } from "react-router"
+import { NavLink, Link as ExtLink } from "react-router"
+import { ExternalLinkIcon } from "lucide-react"
 import {
     NavigationMenuLink,
     navigationMenuTriggerStyle,
@@ -10,7 +11,7 @@ interface LinkProps {
     props?: object
 }
 
-const Link = ({ href, name, ...props }: LinkProps) => {
+export const InternalLink = ({ href, name, ...props }: LinkProps) => {
     return (
         <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
             <NavLink to={href} end {...props}>
@@ -20,4 +21,12 @@ const Link = ({ href, name, ...props }: LinkProps) => {
     );
 }
 
-export default Link
+export const ExternalLink = ({ href, name, ...props }: LinkProps) => {
+    return (
+        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href={href} {...props} className="flex flex-row align-middle">
+                {name} <ExternalLinkIcon />
+            </a>
+        </NavigationMenuLink>
+    )
+}

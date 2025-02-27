@@ -1,10 +1,9 @@
 import { Routes, Route } from 'react-router'
 import './index.css'
-import Menu from './components/menu'
+import {Menu, ExternalLinks} from './components/menu'
 import Home from './pages/Home'
 import IDE from './pages/Ide'
 import Login from './pages/Login'
-import ExternalLinks from './components/external'
 import ProfileDropdown from './components/profile-icon'
 import { useEffect, useState } from 'react'
 import { AUTH_TOKEN_KEY } from './constants'
@@ -29,10 +28,10 @@ function App() {
     <>
       <div className="header-container">
         <Menu />
-        <div className="flex align-right gap-5">
+        <div className="flex justify-end gap-5">
           <ExternalLinks />
           <ProfileDropdown name="José" profilePictureUrl="https://github.com/shadcn.png/" />
-        </div>
+          </div>
       </div>
       <main className="p-10">
         <Routes>
