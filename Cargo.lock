@@ -2034,6 +2034,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ptolemy-client"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "ptolemy",
+ "pyo3",
+ "pyo3-ffi",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tonic",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "pyo3"
 version = "0.23.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
