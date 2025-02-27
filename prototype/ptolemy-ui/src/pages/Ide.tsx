@@ -1,19 +1,34 @@
 import { useState } from "react"
-import { gql, useQuery } from "@apollo/client"
+
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+
+import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
+import { QueryEngineClient } from "@/generated/query_engine.client"
 
 
 interface DataProps {
     query: string
 }
-function Data({ query }: DataProps) {
-    const { data, loading, error } = useQuery(gql`${query}`);
-    if (loading) return "Loading...";
-    if (error) return <pre>{error.message}</pre>
-    return (
-        <pre>{data}</pre>
-    )
+async function Data({ query }: DataProps) {
+    const transport = new GrpcWebFetchTransport({ baseUrl: import.meta.env.VITE_PTOLEMY_API})
+    const client = new QueryEngineClient(transport);
+
+    const { response: { queryId, error, success } } = await client.query({ query })
+    if (error) return <pre>{error}</pre>
+    if (success) {
+        const array = []
+        const call = client.fetchBatch({ queryId })
+        for await (const message of call.responses) {
+            array.concat(<pre>{message.data.toString()}</pre>)
+        }
+        return array
+    }
+    // if (loading) return "Loading...";
+
+    // return (
+    //     <pre>{data}</pre>
+    // )
 }
 
 function IDE() {
