@@ -8,6 +8,7 @@ import ProfileDropdown from './components/profile-icon'
 import { useEffect, useState } from 'react'
 import { AUTH_TOKEN_KEY } from './constants'
 import Profile from './pages/Profile'
+import Events from './pages/Events'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,7 +37,7 @@ function App() {
       <main className="p-10">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/events" element={<div>Events</div>} />
+          <Route path="/events" element={<Events />} />
           <Route path="/ide" element={<IDE />} />
           <Route path="/settings" element={<div>Settings</div>} />
           <Route path="/profile" element={<Profile />} />
