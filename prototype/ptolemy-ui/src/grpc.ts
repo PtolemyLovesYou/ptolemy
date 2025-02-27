@@ -46,7 +46,7 @@ Promise<QueryStatusResponse> => {
     return response
 }
 
-export const processData = (data: Uint16Array[]): JSON => {
+export const processData = (data: Uint8Array[]): JSON => {
     // TODO - implement this somehow cc: @besaleli
 }
 
