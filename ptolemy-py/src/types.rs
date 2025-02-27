@@ -3,11 +3,11 @@ use ptolemy::models::{Id, JSON};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
-use serde_json::json;
-use serde::{Serialize, Deserialize};
 
 #[derive(FromPyObject)]
 pub struct PyUUIDWrapper {
@@ -28,7 +28,9 @@ pub enum PyId {
 
 impl Into<PyId> for Id {
     fn into(self) -> PyId {
-        PyId::UUID(PyUUIDWrapper { hex: self.to_string() })
+        PyId::UUID(PyUUIDWrapper {
+            hex: self.to_string(),
+        })
     }
 }
 
@@ -44,7 +46,7 @@ impl<'py> IntoPyObject<'py> for PyId {
             PyId::UUID(u) => u.hex,
             PyId::String(s) => s,
         };
-        
+
         uuid.call1((hex,))
     }
 }

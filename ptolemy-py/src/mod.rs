@@ -8,7 +8,7 @@ pub mod models;
 pub mod types;
 
 use ptolemy::generated::query_engine::query_engine_client::QueryEngineClient;
-use crate::pybindings::{
+use crate::{
     client::{client::PtolemyClient, server_handler::QueryEngine},
     graphql::PyGraphQLClient,
     models::add_models_to_module,

@@ -71,7 +71,11 @@ impl AuthContext {
     pub fn can_create_delete_service_api_key(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.role, Some(ptolemy::models::WorkspaceRole::Admin) | Some(ptolemy::models::WorkspaceRole::Manager));
+                return matches!(
+                    workspace.role,
+                    Some(ptolemy::models::WorkspaceRole::Admin)
+                        | Some(ptolemy::models::WorkspaceRole::Manager)
+                );
             }
         }
 
@@ -89,7 +93,11 @@ impl AuthContext {
 
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.permissions, Some(ptolemy::models::ApiKeyPermission::ReadOnly) | Some(ptolemy::models::ApiKeyPermission::ReadWrite));
+                return matches!(
+                    workspace.permissions,
+                    Some(ptolemy::models::ApiKeyPermission::ReadOnly)
+                        | Some(ptolemy::models::ApiKeyPermission::ReadWrite)
+                );
             }
         }
 
@@ -99,7 +107,11 @@ impl AuthContext {
     pub fn can_write_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.permissions, Some(ptolemy::models::ApiKeyPermission::WriteOnly) | Some(ptolemy::models::ApiKeyPermission::ReadWrite));
+                return matches!(
+                    workspace.permissions,
+                    Some(ptolemy::models::ApiKeyPermission::WriteOnly)
+                        | Some(ptolemy::models::ApiKeyPermission::ReadWrite)
+                );
             }
         }
 
@@ -202,7 +214,7 @@ impl ApiKey {
                 }
 
                 Err(ApiError::InternalError)
-            },
+            }
             _ => Err(ApiError::InternalError),
         }
     }

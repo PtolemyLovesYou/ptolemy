@@ -1,9 +1,7 @@
 use self::graphql::graphql_handler;
 use crate::{
-    middleware::master_auth_middleware,
-    services::auth::authentication_service,
-    services::observer::observer_service,
-    services::query_engine::query_engine_service,
+    middleware::master_auth_middleware, services::auth::authentication_service,
+    services::observer::observer_service, services::query_engine::query_engine_service,
     state::ApiAppState,
 };
 use axum::{
@@ -11,8 +9,11 @@ use axum::{
     routing::{get, on, MethodFilter},
     Router,
 };
+use http::{
+    header::{AUTHORIZATION, CONTENT_TYPE},
+    Method,
+};
 use juniper_axum::graphiql;
-use http::{Method, header::{CONTENT_TYPE, AUTHORIZATION}};
 use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth;

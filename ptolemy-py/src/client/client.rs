@@ -1,27 +1,32 @@
+use crate::client::server_handler::ServerHandler;
+use crate::client::state::PtolemyClientState;
+use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
+use crate::types::PyJSON;
 use ptolemy::generated::observer::Tier;
-use ptolemy::models::{Id, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,};
-use crate::pybindings::client::server_handler::ServerHandler;
-use crate::pybindings::client::state::PtolemyClientState;
-use crate::pybindings::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
-use crate::pybindings::types::PyJSON;
+use ptolemy::models::{
+    Id, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
+    ProtoRuntime,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 use pyo3::sync::GILOnceCell;
+use pyo3::types::PyDict;
 use pyo3_ffi::c_str;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-const BYTES_TO_DF_FN_STR: &'static CStr = c_str!(r###"
+const BYTES_TO_DF_FN_STR: &'static CStr = c_str!(
+    r###"
 import pandas as pd
 from io import BytesIO
 
 def bytes_to_df(by: bytes):
     buf = BytesIO(by)
     return pd.read_feather(buf)
-"###);
+"###
+);
 static BYTES_TO_DF_FN: GILOnceCell<PyObject> = GILOnceCell::new();
 
 pub fn bytes_to_df(py: Python<'_>, by: Vec<u8>) -> PyResult<PyObject> {
@@ -105,9 +110,7 @@ impl PtolemyClient {
             pyo3::exceptions::PyPermissionError::new_err(format!("Failed to authenticate: {}", e))
         })?;
 
-        let workspace_id = client
-            .workspace_id()
-            .ok();
+        let workspace_id = client.workspace_id().ok();
 
         drop(client);
 
@@ -188,15 +191,13 @@ impl PtolemyClient {
         batch_size: Option<u32>,
         timeout_seconds: Option<u32>,
     ) -> PyResult<Vec<PyObject>> {
-        let mut client = self
-            .grpc_client
-            .lock()
-            .unwrap();
+        let mut client = self.grpc_client.lock().unwrap();
 
-        let result = client.query(query, batch_size, timeout_seconds)
+        let result = client
+            .query(query, batch_size, timeout_seconds)
             .map_err(|e| PyValueError::new_err(e.to_string()))?
             .into_iter();
-        
+
         let mut data = Vec::new();
 
         for r in result {
@@ -218,7 +219,9 @@ impl PtolemyClient {
         let workspace_id = match self.workspace_id {
             Some(w) => w,
             None => {
-                return Err(PyValueError::new_err("You need to authenticate with a service API key to create a trace."));
+                return Err(PyValueError::new_err(
+                    "You need to authenticate with a service API key to create a trace.",
+                ));
             }
         };
 
@@ -311,7 +314,9 @@ impl PtolemyClient {
         let workspace_id = match self.workspace_id {
             Some(w) => w,
             None => {
-                return Err(PyValueError::new_err("You need to authenticate with a service API key to create an event."));
+                return Err(PyValueError::new_err(
+                    "You need to authenticate with a service API key to create an event.",
+                ));
             }
         };
 

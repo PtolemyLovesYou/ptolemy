@@ -75,22 +75,26 @@ async fn log_status_trigger(
 
                         let state_clone = state.clone();
 
-                        state.queue(async move {
-                            let mut conn = match state_clone.get_conn().await {
-                                Ok(conn) => conn,
-                                Err(e) => {
-                                    tracing::error!("Failed to get Postgres connection: {}", e);
-                                    return;
-                                }
-                            };
+                        state
+                            .queue(async move {
+                                let mut conn = match state_clone.get_conn().await {
+                                    Ok(conn) => conn,
+                                    Err(e) => {
+                                        tracing::error!("Failed to get Postgres connection: {}", e);
+                                        return;
+                                    }
+                                };
 
-                            if let Err(e) = UserQueryResult::insert_one_returning_id(&mut conn, &obj).await {
-                                tracing::error!("Failed to insert query result: {}", e);
-                            }
-                        }).await;
+                                if let Err(e) =
+                                    UserQueryResult::insert_one_returning_id(&mut conn, &obj).await
+                                {
+                                    tracing::error!("Failed to insert query result: {}", e);
+                                }
+                            })
+                            .await;
 
                         break;
-                    },
+                    }
                 }
             }
             Err(e) => {
@@ -167,7 +171,8 @@ impl QueryEngine for MyQueryEngine {
 
         let state_clone = self.state.clone();
 
-        self.state.spawn(log_status_trigger(state_clone, handler.clone(), 30));
+        self.state
+            .spawn(log_status_trigger(state_clone, handler.clone(), 30));
 
         if let Ok(mut conn) = self
             .state

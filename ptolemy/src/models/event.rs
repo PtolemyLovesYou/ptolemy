@@ -5,8 +5,8 @@ use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     Record, RuntimeRecord, Tier,
 };
-use crate::models::Id;
 use crate::models::json::JSON;
+use crate::models::Id;
 
 pub trait Proto: TryFrom<RecordData, Error = ParseError> {
     fn proto(&self) -> RecordData;

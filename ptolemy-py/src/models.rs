@@ -98,31 +98,35 @@ pymodel!(
     Workspace,
     PyWorkspace,
     [name = "Workspace"],
-    [(id, crate::pybindings::types::PyId), (name, String), (description, Option<String>), (archived, bool), (created_at, chrono::DateTime<chrono::Utc>), (updated_at, chrono::DateTime<chrono::Utc>)]
+    [(id, crate::types::PyId), (name, String), (description, Option<String>), (archived, bool), (created_at, chrono::DateTime<chrono::Utc>), (updated_at, chrono::DateTime<chrono::Utc>)]
 );
 pymodel!(
     User,
     PyUser,
     [name = "User"],
-    [(id, crate::pybindings::types::PyId), (username, String), (display_name, Option<String>), (status, crate::pybindings::enums::user_status::UserStatus), (is_admin, bool), (is_sysadmin, bool)]
+    [(id, crate::types::PyId), (username, String), (display_name, Option<String>), (status, crate::enums::user_status::UserStatus), (is_admin, bool), (is_sysadmin, bool)]
 );
 pymodel!(
     UserApiKey,
     PyUserApiKey,
     [name = "UserApiKey"],
-    [(id, crate::pybindings::types::PyId), (user_id, crate::pybindings::types::PyId), (name, String), (key_preview, String), (expires_at, Option<chrono::DateTime<chrono::Utc>>)]
+    [(id, crate::types::PyId), (user_id, crate::types::PyId), (name, String), (key_preview, String), (expires_at, Option<chrono::DateTime<chrono::Utc>>)]
 );
 pymodel!(
     ServiceApiKey,
     PyServiceApiKey,
     [name = "ServiceApiKey"],
-    [(id, crate::pybindings::types::PyId), (workspace_id, crate::pybindings::types::PyId), (name, String), (key_preview, String), (expires_at, Option<chrono::DateTime<chrono::Utc>>), (permissions, crate::pybindings::enums::api_key_permission::ApiKeyPermission)]
+    [(id, crate::types::PyId), (workspace_id, crate::types::PyId), (name, String), (key_preview, String), (expires_at, Option<chrono::DateTime<chrono::Utc>>), (permissions, crate::enums::api_key_permission::ApiKeyPermission)]
 );
 pymodel!(
     WorkspaceUser,
     PyWorkspaceUser,
     [name = "WorkspaceUser"],
-    [(workspace_id, crate::pybindings::types::PyId), (user_id, crate::pybindings::types::PyId), (role, crate::pybindings::enums::workspace_role::WorkspaceRole)]
+    [
+        (workspace_id, crate::types::PyId),
+        (user_id, crate::types::PyId),
+        (role, crate::enums::workspace_role::WorkspaceRole)
+    ]
 );
 
 pub fn add_models_to_module<'a>(_py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {

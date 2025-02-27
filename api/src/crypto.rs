@@ -129,9 +129,9 @@ where
 
     pub fn generate_auth_token(&self, secret: &[u8]) -> ClaimsResult<String> {
         encode(&Header::default(), &self, &EncodingKey::from_secret(secret)).map_err(|e| {
-                error!("Failed to generate auth token: {}", e);
-                ApiError::InternalError
-            })
+            error!("Failed to generate auth token: {}", e);
+            ApiError::InternalError
+        })
     }
 
     pub fn from_token(token: Option<String>, secret: &[u8]) -> ClaimsResult<Option<Self>> {

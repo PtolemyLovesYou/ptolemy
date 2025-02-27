@@ -1,6 +1,6 @@
-use crate::pybindings::models::{PyServiceApiKey, PyUser, PyUserApiKey, PyWorkspace};
-use crate::pybindings::enums::{api_key_permission::ApiKeyPermission, workspace_role::WorkspaceRole};
-use crate::pybindings::types::PyId;
+use crate::enums::{api_key_permission::ApiKeyPermission, workspace_role::WorkspaceRole};
+use crate::models::{PyServiceApiKey, PyUser, PyUserApiKey, PyWorkspace};
+use crate::types::PyId;
 use ptolemy::graphql::client::GraphQLClient;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -89,7 +89,10 @@ impl PyGraphQLClient {
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
-    pub fn get_workspace_service_api_keys(&self, workspace_id: PyId) -> PyResult<Vec<PyServiceApiKey>> {
+    pub fn get_workspace_service_api_keys(
+        &self,
+        workspace_id: PyId,
+    ) -> PyResult<Vec<PyServiceApiKey>> {
         self.0
             .get_workspace_service_api_keys(workspace_id.into())
             .map(|x| x.into_iter().map(|x| x.into()).collect())
@@ -121,7 +124,10 @@ impl PyGraphQLClient {
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
-    pub fn get_workspace_users(&self, workspace_id: PyId) -> PyResult<Vec<(WorkspaceRole, PyUser)>> {
+    pub fn get_workspace_users(
+        &self,
+        workspace_id: PyId,
+    ) -> PyResult<Vec<(WorkspaceRole, PyUser)>> {
         self.0
             .get_workspace_users(workspace_id.into())
             .map(|data| {

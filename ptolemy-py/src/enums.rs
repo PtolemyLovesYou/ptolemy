@@ -7,7 +7,7 @@ pub trait PyEnumCompatible<'py, 'de>:
     + FromPyObject<'py>
     + Clone
     + PartialEq
-    // + SerializableEnum<'de>
+// + SerializableEnum<'de>
 where
     Self: Sized,
 {
@@ -30,7 +30,7 @@ macro_rules! pywrap_enum {
             use pyo3::types::PyType;
             use pyo3::sync::GILOnceCell;
             use std::collections::HashMap;
-            use crate::pybindings::enums::str_enum_python_class;
+            use crate::enums::str_enum_python_class;
             use ptolemy::prelude::enum_utils::CasingStyle;
 
             pub const ENUM_CLS_NAME: &'static str = stringify!($enum_name);
@@ -58,11 +58,11 @@ macro_rules! pywrap_enum {
 
                 Ok(py_cls.bind(py))
                 }
-            
+
             #[derive(Clone, Debug, PartialEq)]
             pub struct $enum_name(pub ptolemy::models::$enum_name);
             }
-        
+
         impl Into<$mod_name::$enum_name> for ptolemy::models::$enum_name {
             fn into(self) -> $mod_name::$enum_name {
                 $mod_name::$enum_name(self)
@@ -75,7 +75,7 @@ macro_rules! pywrap_enum {
             }
         }
 
-        impl<'py, 'de> crate::pybindings::enums::PyEnumCompatible<'py, 'de> for $mod_name::$enum_name {}
+        impl<'py, 'de> crate::enums::PyEnumCompatible<'py, 'de> for $mod_name::$enum_name {}
 
         impl <'py> FromPyObject<'py> for $mod_name::$enum_name {
                 fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
