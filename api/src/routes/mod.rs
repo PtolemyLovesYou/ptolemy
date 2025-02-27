@@ -12,7 +12,7 @@ use axum::{
     Router,
 };
 use juniper_axum::graphiql;
-use http::{Method, header::{CONTENT_TYPE, AUTHORIZATION}};
+use http::{Method, header::{HeaderName, CONTENT_TYPE, AUTHORIZATION}};
 use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth;
@@ -55,10 +55,14 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
 }
 
 pub async fn get_router(state: &ApiAppState) -> Router {
+    let api_key = HeaderName::from_lowercase(b"x-api-key").unwrap();
+    let grpc_web = HeaderName::from_lowercase(b"x-grpc-web").unwrap();
+    let grpc_accept = HeaderName::from_lowercase(b"grpc-accept-encoding").unwrap();
+    let grpc_encoding = HeaderName::from_lowercase(b"grpc-encoding").unwrap();
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_origin(Any)
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION]);
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION, api_key, grpc_web, grpc_accept, grpc_encoding]);
 
     let http_router = Router::new()
         .route("/auth", axum::routing::post(self::auth::login))
@@ -70,7 +74,7 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .routes()
         .add_service(authentication_service(state.clone()).await)
         .add_service(observer_service(state.clone()).await)
-        .add_service(query_engine_service(state.clone()).await)
+        .add_service(tonic_web::enable(query_engine_service(state.clone()).await))
         .into_axum_router();
 
     Router::new()
