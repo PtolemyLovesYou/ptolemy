@@ -2019,8 +2019,6 @@ dependencies = [
  "log",
  "prost",
  "prost-types",
- "pyo3",
- "pyo3-ffi",
  "reqwest",
  "serde",
  "serde_json",
