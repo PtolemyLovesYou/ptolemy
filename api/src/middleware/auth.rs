@@ -74,9 +74,9 @@ async fn validate_api_key_header(
     _req: &mut Request<axum::body::Body>,
     header: ApiKey,
 ) -> AuthResult<(
-    Option<ptolemy::models::auth::User>,
+    Option<ptolemy::models::User>,
     Vec<WorkspacePermission>,
-    Option<ptolemy::models::auth::ServiceApiKey>,
+    Option<ptolemy::models::ServiceApiKey>,
 )> {
     let api_key = match header {
         ApiKey::Undeclared | ApiKey::Err(_) => return Ok((None, Vec::new(), None)),
@@ -117,7 +117,7 @@ async fn validate_api_key_header(
                     .get_workspaces_with_roles(&mut state.get_conn().await.unwrap())
                     .await?;
 
-                let u_model: ptolemy::models::auth::User = u.into();
+                let u_model: ptolemy::models::User = u.into();
 
                 let workspaces_d = workspaces
                     .into_iter()
@@ -143,7 +143,7 @@ async fn validate_jwt_header(
     _req: &mut Request<axum::body::Body>,
     header: JWT,
 ) -> AuthResult<(
-    Option<ptolemy::models::auth::User>,
+    Option<ptolemy::models::User>,
     Vec<WorkspacePermission>,
 )> {
     let mut conn = state.get_conn().await.unwrap();
@@ -160,7 +160,7 @@ async fn validate_jwt_header(
                 .get_workspaces_with_roles(&mut conn)
                 .await?;
 
-                let user_model: ptolemy::models::auth::User = user.into();
+                let user_model: ptolemy::models::User = user.into();
 
             let workspaces_d = workspaces
                 .into_iter()

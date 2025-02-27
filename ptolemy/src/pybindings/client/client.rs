@@ -1,11 +1,5 @@
 use crate::generated::observer::Tier;
-use crate::models::event::{
-    ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,
-};
-use crate::models::{
-    id::Id,
-    json_serializable::{JsonSerializable, Parameters},
-};
+use crate::models::{Id, JSON, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,};
 use crate::pybindings::client::server_handler::ServerHandler;
 use crate::pybindings::client::state::PtolemyClientState;
 use crate::pybindings::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
@@ -216,7 +210,7 @@ impl PtolemyClient {
     fn trace(
         &mut self,
         name: String,
-        parameters: Option<Parameters>,
+        parameters: Option<JSON>,
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<Self> {
@@ -255,7 +249,7 @@ impl PtolemyClient {
     fn child(
         &mut self,
         name: String,
-        parameters: Option<Parameters>,
+        parameters: Option<JSON>,
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<Self> {
@@ -302,7 +296,7 @@ impl PtolemyClient {
     fn event(
         &mut self,
         name: String,
-        parameters: Option<Parameters>,
+        parameters: Option<JSON>,
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<()> {
@@ -374,17 +368,17 @@ impl PtolemyClient {
 
     #[pyo3(signature = (**kwds))]
     fn inputs(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        set_io!(self, kwds, JsonSerializable, ProtoInput, set_input)
+        set_io!(self, kwds, JSON, ProtoInput, set_input)
     }
 
     #[pyo3(signature = (**kwds))]
     fn outputs(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        set_io!(self, kwds, JsonSerializable, ProtoOutput, set_output)
+        set_io!(self, kwds, JSON, ProtoOutput, set_output)
     }
 
     #[pyo3(signature = (**kwds))]
     fn feedback(&mut self, kwds: Option<Bound<'_, PyDict>>) -> PyResult<()> {
-        set_io!(self, kwds, JsonSerializable, ProtoFeedback, set_feedback)
+        set_io!(self, kwds, JSON, ProtoFeedback, set_feedback)
     }
 
     #[pyo3(signature = (**kwds))]

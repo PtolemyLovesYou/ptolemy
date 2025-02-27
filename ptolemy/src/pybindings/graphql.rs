@@ -1,7 +1,5 @@
-use crate::models::auth::{ServiceApiKey, User, UserApiKey};
-use crate::models::enums::{ApiKeyPermission, WorkspaceRole};
-use crate::models::id::Id;
-use crate::{graphql::client::GraphQLClient, models::auth::Workspace};
+use crate::models::{ServiceApiKey, User, UserApiKey, Workspace, ApiKeyPermission, WorkspaceRole, Id};
+use crate::graphql::client::GraphQLClient;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 

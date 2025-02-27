@@ -10,7 +10,7 @@ use crate::generated::query_engine::{
     QueryStatusRequest,
     FetchBatchRequest,
 };
-use crate::models::id::Id;
+use crate::models::Id;
 use pyo3::prelude::*;
 use std::collections::VecDeque;
 use std::str::FromStr;

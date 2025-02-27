@@ -1,12 +1,12 @@
 // use crate::generated::observer;
-use crate::models::id::Id;
-use crate::models::json_serializable::{JsonSerializable, Parameters};
+use crate::models::{Id, JSON};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
+use serde_json::json;
 
 #[derive(FromPyObject)]
 pub struct PyUUIDWrapper {
@@ -55,40 +55,33 @@ impl<'py> IntoPyObject<'py> for Id {
     }
 }
 
-impl<'py> FromPyObject<'py> for JsonSerializable {
-    fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<JsonSerializable> {
+impl<'py> FromPyObject<'py> for JSON {
+    fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<JSON> {
         if let Ok(s) = obj.downcast::<PyString>() {
-            Ok(JsonSerializable::String(s.extract()?))
+            Ok(JSON(json!(s.extract::<String>()?)))
         } else if let Ok(i) = obj.downcast::<PyInt>() {
-            Ok(JsonSerializable::Int(i.extract()?))
+            Ok(JSON(json!(i.extract::<i32>()?)))
         } else if let Ok(f) = obj.downcast::<PyFloat>() {
-            Ok(JsonSerializable::Float(f.extract()?))
+            Ok(JSON(json!(f.extract::<f32>()?)))
         } else if let Ok(b) = obj.downcast::<PyBool>() {
-            Ok(JsonSerializable::Bool(b.extract()?))
+            Ok(JSON(json!(b.extract::<bool>()?)))
         } else if let Ok(d) = obj.downcast::<PyDict>() {
             let mut inner = BTreeMap::new();
             for (k, v) in d.iter() {
-                inner.insert(k.extract()?, v.extract()?);
+                inner.insert(k.extract::<String>()?, v.extract::<JSON>()?);
             }
-            Ok(JsonSerializable::Dict(inner))
+            Ok(JSON(json!((inner))))
         } else if let Ok(l) = obj.downcast::<PyList>() {
             let mut inner = Vec::new();
             for v in l.iter() {
-                inner.push(v.extract()?);
+                inner.push(v.extract::<JSON>()?);
             }
-            Ok(JsonSerializable::List(inner))
+            Ok(JSON(json!(inner)))
         } else {
             Err(PyValueError::new_err(format!(
                 "Unsupported type: {}",
                 obj.get_type().name()?.extract::<String>()?
             )))
         }
-    }
-}
-
-impl<'py> FromPyObject<'py> for Parameters {
-    fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Parameters> {
-        let inner = obj.extract::<BTreeMap<String, Option<JsonSerializable>>>()?;
-        Ok(Parameters(inner))
     }
 }

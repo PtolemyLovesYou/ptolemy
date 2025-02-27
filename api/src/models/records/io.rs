@@ -8,8 +8,8 @@ use crate::models::records::{
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record};
-use ptolemy::models::event::{ProtoFeedback, ProtoInput, ProtoOutput, ProtoRecord};
-use ptolemy::models::json_serializable::JsonSerializable;
+use ptolemy::models::{ProtoFeedback, ProtoInput, ProtoOutput, ProtoRecord};
+use serde_json::{Value, json};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
@@ -87,13 +87,21 @@ impl TryFrom<Record> for IORecord {
         let (system_event_id, subsystem_event_id, component_event_id, subcomponent_event_id) =
             get_foreign_keys(parent_id, &tier)?;
 
-        let field_value_type = match &field_value {
-            JsonSerializable::String(_) => FieldValueTypeEnum::String,
-            JsonSerializable::Int(_) => FieldValueTypeEnum::Int,
-            JsonSerializable::Float(_) => FieldValueTypeEnum::Float,
-            JsonSerializable::Bool(_) => FieldValueTypeEnum::Bool,
-            JsonSerializable::Dict(_) => FieldValueTypeEnum::Json,
-            JsonSerializable::List(_) => FieldValueTypeEnum::Json,
+        let field_value_type = match &field_value.0 {
+            Value::String(_) => FieldValueTypeEnum::String,
+            Value::Number(i) => {
+                match i.as_i64() {
+                    Some(_) => FieldValueTypeEnum::Int,
+                    None => FieldValueTypeEnum::Float,
+                }
+            },
+            Value::Bool(_) => FieldValueTypeEnum::Bool,
+            Value::Object(_) => FieldValueTypeEnum::Json,
+            Value::Array(_) => FieldValueTypeEnum::Json,
+            Value::Null => {
+                error!("Null field value. This shouldn't happen.");
+                return Err(ParseError::UnexpectedNull);
+            }
         };
 
         let (
@@ -102,13 +110,19 @@ impl TryFrom<Record> for IORecord {
             field_value_float,
             field_value_bool,
             field_value_json,
-        ) = match &field_value {
-            JsonSerializable::String(s) => (Some(s.clone()), None, None, None, None),
-            JsonSerializable::Int(i) => (None, Some(*i as i64), None, None, None),
-            JsonSerializable::Float(f) => (None, None, Some(*f), None, None),
-            JsonSerializable::Bool(b) => (None, None, None, Some(*b), None),
-            JsonSerializable::Dict(_) => (None, None, None, None, Some(field_value.into())),
-            JsonSerializable::List(_) => (None, None, None, None, Some(field_value.into())),
+        ) = match &field_value.0 {
+            Value::String(s) => (Some(s.clone()), None, None, None, None),
+            Value::Number(i) => match i.as_i64() {
+                Some(i) => (None, Some(i), None, None, None),
+                None => (None, None, Some(i.as_f64().unwrap()), None, None),
+            },
+            Value::Bool(b) => (None, None, None, Some(*b), None),
+            Value::Object(o) => (None, None, None, None, Some(json!(o.clone()))),
+            Value::Array(a) => (None, None, None, None, Some(json!(a.clone()))),
+            Value::Null => {
+                error!("Null field value. This shouldn't happen.");
+                return Err(ParseError::UnexpectedNull);
+            }
         };
 
         let rec = IORecord {

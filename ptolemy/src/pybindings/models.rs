@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use crate::models::auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
+use crate::models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
 use pyo3::ffi::c_str;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList};

@@ -1,4 +1,4 @@
-use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
+use crate::models::{ApiKeyPermission, UserStatus, WorkspaceRole};
 use crate::prelude::enum_utils::*;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
