@@ -1,8 +1,23 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { runQueryAndGetData } from "@/grpc";
 
+function Data({ query }: { query: string }) {
+    const [data, setData] = useState('')
+    useEffect(() => {
+        if (!query) {
+            return
+        }
+        const fetchData = async () => {
+            const result = await runQueryAndGetData(query)
+            setData(result)
+        }
+        fetchData()
+    })
+    return <pre>{data || 'No data available'}</pre>
+}
 
 function IDE() {
     const [query, setQuery] = useState("");
@@ -17,7 +32,8 @@ function IDE() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your SQL query here."
             />
-            <Button onClick={() => alert('Not implemented yet!')}>Search</Button>
+            <Button onClick={() => setQuery(input)}>Run</Button>
+            {query ? <Data query={query} /> : null}
         </div>
     );
 }

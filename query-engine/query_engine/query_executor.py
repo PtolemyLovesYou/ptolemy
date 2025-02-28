@@ -115,6 +115,7 @@ class QueryExecutor(BaseModel):
             self.logger.debug("Closing connection")
             self.conn.close()
 
+        self.logger.info(f"query result {results.to_json()}")
         total_rows = results.shape[0]
         est_size = results.memory_usage(deep=True).sum()
 
