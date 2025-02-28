@@ -1960,7 +1960,7 @@ dev = [
     { name = "black", specifier = ">=24.10.0" },
     { name = "duckdb", specifier = ">=1.1.3" },
     { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "maturin", specifier = ">=1.8.2" },
+    { name = "maturin", specifier = "==1.8.2" },
     { name = "pylint", specifier = ">=3.3.3" },
     { name = "pylint-pydantic", specifier = ">=0.3.4" },
     { name = "pytest", specifier = ">=8.3.4" },
