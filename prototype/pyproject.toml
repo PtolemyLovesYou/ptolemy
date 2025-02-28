@@ -1,10 +1,10 @@
 [project]
 name = "prototype"
-version = "0.1.0-alpha.12+2e4c291"
+version = "0.1.0-alpha.13+2312472"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [ "streamlit>=1.41.1", "requests>=2.32.3", "pydantic>=2.10.4", "ptolemy-client",]
 
-[tool.uv.sources]
-ptolemy-client = { path = "../ptolemy-py" }
+[tool.uv.sources.ptolemy-client]
+path = "../ptolemy-py"

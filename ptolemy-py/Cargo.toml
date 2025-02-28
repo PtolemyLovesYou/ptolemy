@@ -1,12 +1,11 @@
 [package]
 name = "ptolemy-client"
-version = "0.1.0"
+version = "0.1.0-alpha.13+2312472"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "ptolemy_client"
-crate-type = ["cdylib"]
+crate-type = [ "cdylib",]
 
 [dependencies.pyo3]
 version = "0.23.3"
