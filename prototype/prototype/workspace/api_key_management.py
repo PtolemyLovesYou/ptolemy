@@ -1,7 +1,7 @@
 """Service API key management form."""
 
 import streamlit as st
-from ptolemy import Workspace, WorkspaceRole, ApiKeyPermission
+from ptolemy_client import Workspace, WorkspaceRole, ApiKeyPermission
 from ..client import get_client
 
 

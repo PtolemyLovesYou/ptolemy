@@ -75,7 +75,10 @@ mod json {
             },
             JsonValue::Object(m) => ProtoValue {
                 kind: Some(Kind::StructValue(Struct {
-                    fields: m.iter().map(|(k, v)| (k.clone(), serde_value_to_protobuf(v))).collect(),
+                    fields: m
+                        .iter()
+                        .map(|(k, v)| (k.clone(), serde_value_to_protobuf(v)))
+                        .collect(),
                 })),
             },
         }
@@ -84,7 +87,9 @@ mod json {
     fn protobuf_to_serde_value(value: &ProtoValue) -> Option<JsonValue> {
         match &value.kind {
             Some(Kind::NullValue(_)) => Some(JsonValue::Null),
-            Some(Kind::NumberValue(v)) => Some(JsonValue::Number(serde_json::Number::from_f64(*v)?)),
+            Some(Kind::NumberValue(v)) => {
+                Some(JsonValue::Number(serde_json::Number::from_f64(*v)?))
+            }
             Some(Kind::StringValue(v)) => Some(JsonValue::String(v.clone())),
             Some(Kind::BoolValue(v)) => Some(JsonValue::Bool(v.clone())),
             Some(Kind::StructValue(v)) => {
@@ -107,8 +112,11 @@ mod json {
     }
 }
 
-pub use json::JSON;
+pub use auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
+pub use enums::{ApiKeyPermission, Tier, UserStatus, WorkspaceRole};
+pub use event::{
+    Proto, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
+    ProtoRuntime,
+};
 pub use id::Id;
-pub use auth::{ServiceApiKey, UserApiKey, Workspace, WorkspaceUser, User};
-pub use enums::{ApiKeyPermission, UserStatus, WorkspaceRole, Tier};
-pub use event::{ProtoEvent, ProtoFeedback, ProtoInput, ProtoOutput, ProtoMetadata, ProtoRuntime, ProtoRecord, Proto};
+pub use json::JSON;

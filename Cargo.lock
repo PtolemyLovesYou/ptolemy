@@ -2019,8 +2019,6 @@ dependencies = [
  "log",
  "prost",
  "prost-types",
- "pyo3",
- "pyo3-ffi",
  "reqwest",
  "serde",
  "serde_json",
@@ -2029,6 +2027,22 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tonic-types",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "ptolemy-client"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "ptolemy",
+ "pyo3",
+ "pyo3-ffi",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tonic",
  "tracing",
  "uuid",
 ]

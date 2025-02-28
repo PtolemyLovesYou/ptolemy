@@ -1,0 +1,40 @@
+[package]
+name = "ptolemy-client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "ptolemy_client"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.23.3"
+features = [ "chrono", "abi3-py311", "multiple-pymethods",]
+
+[dependencies.pyo3-ffi]
+version = "0.23.3"
+
+[dependencies.uuid]
+workspace = true
+
+[dependencies.serde_json]
+workspace = true
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.tokio]
+workspace = true
+
+[dependencies.tonic]
+workspace = true
+
+[dependencies.tracing]
+workspace = true
+
+[dependencies.chrono]
+workspace = true
+
+[dependencies.ptolemy]
+path = "../ptolemy"

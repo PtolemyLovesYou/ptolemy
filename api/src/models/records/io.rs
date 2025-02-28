@@ -9,8 +9,8 @@ use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::{record::RecordData, Record};
 use ptolemy::models::{ProtoFeedback, ProtoInput, ProtoOutput, ProtoRecord};
-use serde_json::{Value, json};
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use tracing::error;
 use uuid::Uuid;
 
@@ -89,11 +89,9 @@ impl TryFrom<Record> for IORecord {
 
         let field_value_type = match &field_value.0 {
             Value::String(_) => FieldValueTypeEnum::String,
-            Value::Number(i) => {
-                match i.as_i64() {
-                    Some(_) => FieldValueTypeEnum::Int,
-                    None => FieldValueTypeEnum::Float,
-                }
+            Value::Number(i) => match i.as_i64() {
+                Some(_) => FieldValueTypeEnum::Int,
+                None => FieldValueTypeEnum::Float,
             },
             Value::Bool(_) => FieldValueTypeEnum::Bool,
             Value::Object(_) => FieldValueTypeEnum::Json,

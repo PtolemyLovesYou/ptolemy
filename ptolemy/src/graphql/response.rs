@@ -1,6 +1,6 @@
 use crate::error::GraphQLError;
 use crate::graphql_response;
-use crate::models::{ApiKeyPermission, UserStatus, WorkspaceRole, Id};
+use crate::models::{ApiKeyPermission, Id, UserStatus, WorkspaceRole};
 use crate::prelude::{GraphQLResponse, IntoModel};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;

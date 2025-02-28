@@ -1,12 +1,13 @@
 // use crate::generated::observer;
-use crate::models::{Id, JSON};
+use ptolemy::models::{Id, JSON};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
-use serde_json::json;
 
 #[derive(FromPyObject)]
 pub struct PyUUIDWrapper {
@@ -25,6 +26,31 @@ pub enum PyId {
     String(String),
 }
 
+impl Into<PyId> for Id {
+    fn into(self) -> PyId {
+        PyId::UUID(PyUUIDWrapper {
+            hex: self.to_string(),
+        })
+    }
+}
+
+impl<'py> IntoPyObject<'py> for PyId {
+    type Target = PyAny;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> PyResult<Self::Output> {
+        let uuid = py.import("uuid")?.getattr("UUID")?;
+
+        let hex = match self {
+            PyId::UUID(u) => u.hex,
+            PyId::String(s) => s,
+        };
+
+        uuid.call1((hex,))
+    }
+}
+
 impl Into<Id> for PyId {
     fn into(self) -> Id {
         match self {
@@ -34,49 +60,44 @@ impl Into<Id> for PyId {
     }
 }
 
-impl<'py> FromPyObject<'py> for Id {
-    fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Id> {
-        let uuid = obj
-            .extract::<PyId>()
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
-        Ok(uuid.into())
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct PyJSON(pub JSON);
+
+impl From<JSON> for PyJSON {
+    fn from(json: JSON) -> Self {
+        PyJSON(json)
     }
 }
 
-impl<'py> IntoPyObject<'py> for Id {
-    type Target = PyAny;
-    type Output = Bound<'py, Self::Target>;
-    type Error = std::convert::Infallible;
-
-    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-        let import = py.import("uuid").unwrap();
-        let uuid_type = import.getattr("UUID").unwrap();
-        Ok(uuid_type.call1((self.to_string(),)).unwrap())
+impl From<PyJSON> for JSON {
+    fn from(pyjson: PyJSON) -> Self {
+        pyjson.0
     }
 }
 
-impl<'py> FromPyObject<'py> for JSON {
-    fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<JSON> {
+impl<'py> FromPyObject<'py> for PyJSON {
+    fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<PyJSON> {
         if let Ok(s) = obj.downcast::<PyString>() {
-            Ok(JSON(json!(s.extract::<String>()?)))
+            Ok(PyJSON(JSON(json!(s.extract::<String>()?))))
         } else if let Ok(i) = obj.downcast::<PyInt>() {
-            Ok(JSON(json!(i.extract::<i32>()?)))
+            Ok(PyJSON(JSON(json!(i.extract::<i32>()?))))
         } else if let Ok(f) = obj.downcast::<PyFloat>() {
-            Ok(JSON(json!(f.extract::<f32>()?)))
+            Ok(PyJSON(JSON(json!(f.extract::<f32>()?))))
         } else if let Ok(b) = obj.downcast::<PyBool>() {
-            Ok(JSON(json!(b.extract::<bool>()?)))
+            Ok(PyJSON(JSON(json!(b.extract::<bool>()?))))
         } else if let Ok(d) = obj.downcast::<PyDict>() {
             let mut inner = BTreeMap::new();
             for (k, v) in d.iter() {
-                inner.insert(k.extract::<String>()?, v.extract::<JSON>()?);
+                inner.insert(k.extract::<String>()?, v.extract::<PyJSON>()?);
             }
-            Ok(JSON(json!((inner))))
+            Ok(PyJSON(JSON(json!((inner)))))
         } else if let Ok(l) = obj.downcast::<PyList>() {
             let mut inner = Vec::new();
             for v in l.iter() {
-                inner.push(v.extract::<JSON>()?);
+                inner.push(v.extract::<PyJSON>()?);
             }
-            Ok(JSON(json!(inner)))
+            Ok(PyJSON(JSON(json!(inner))))
         } else {
             Err(PyValueError::new_err(format!(
                 "Unsupported type: {}",

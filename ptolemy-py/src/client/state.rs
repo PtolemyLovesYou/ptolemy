@@ -1,5 +1,8 @@
-use crate::generated::observer::Record;
-use crate::models::{Id, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord, ProtoRuntime,};
+use ptolemy::generated::observer::Record;
+use ptolemy::models::{
+    Id, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
+    ProtoRuntime,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};

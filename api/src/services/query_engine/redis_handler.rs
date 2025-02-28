@@ -123,13 +123,23 @@ impl QueryEngineRedisHandler {
                     total_batches,
                     column_names_raw,
                     column_types_raw,
-                    estimated_size_bytes
-                ): ( u32, u32, String, String, u32) = redis::pipe()
-                    .cmd("HGET").arg(self.keyspace()).arg("metadata:total_rows")
-                    .cmd("HGET").arg(self.keyspace()).arg("metadata:total_batches")
-                    .cmd("HGET").arg(self.keyspace()).arg("metadata:column_names")
-                    .cmd("HGET").arg(self.keyspace()).arg("metadata:column_types")
-                    .cmd("HGET").arg(self.keyspace()).arg("metadata:est_size_bytes")
+                    estimated_size_bytes,
+                ): (u32, u32, String, String, u32) = redis::pipe()
+                    .cmd("HGET")
+                    .arg(self.keyspace())
+                    .arg("metadata:total_rows")
+                    .cmd("HGET")
+                    .arg(self.keyspace())
+                    .arg("metadata:total_batches")
+                    .cmd("HGET")
+                    .arg(self.keyspace())
+                    .arg("metadata:column_names")
+                    .cmd("HGET")
+                    .arg(self.keyspace())
+                    .arg("metadata:column_types")
+                    .cmd("HGET")
+                    .arg(self.keyspace())
+                    .arg("metadata:est_size_bytes")
                     .query_async(&mut self.conn)
                     .await
                     .map_err(|e| {
@@ -137,15 +147,17 @@ impl QueryEngineRedisHandler {
                         ApiError::InternalError
                     })?;
 
-                let column_names = serde_json::from_str(column_names_raw.as_str()).map_err(|e| {
-                    tracing::error!("Failed to deserialize column names: {}", e);
-                    ApiError::InternalError
-                })?;
+                let column_names =
+                    serde_json::from_str(column_names_raw.as_str()).map_err(|e| {
+                        tracing::error!("Failed to deserialize column names: {}", e);
+                        ApiError::InternalError
+                    })?;
 
-                let column_types = serde_json::from_str(column_types_raw.as_str()).map_err(|e| {
-                    tracing::error!("Failed to deserialize column types: {}", e);
-                    ApiError::InternalError
-                })?;
+                let column_types =
+                    serde_json::from_str(column_types_raw.as_str()).map_err(|e| {
+                        tracing::error!("Failed to deserialize column types: {}", e);
+                        ApiError::InternalError
+                    })?;
 
                 Some(QueryMetadata {
                     total_rows,
