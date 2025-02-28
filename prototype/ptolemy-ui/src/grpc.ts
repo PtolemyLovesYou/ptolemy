@@ -1,3 +1,4 @@
+import { Table, tableFromIPC } from "@apache-arrow/ts"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport";
 import { QueryEngineClient } from "./generated/query_engine.client";
 import { RpcOptions, UnaryCall } from "@protobuf-ts/runtime-rpc";
@@ -46,29 +47,49 @@ Promise<QueryStatusResponse> => {
     return response
 }
 
-export const processData = (data: Uint8Array[]): JSON => {
-    // TODO - implement this somehow cc: @besaleli
+const readDataFromRow = (fields, row) => {
+    return fields
+      .map((_, i) => row.get(i))
+      .join(',');
+  };
+
+export const processData = (data: Uint8Array[]): string => {
+    const table: Table = data.reduce((prev: Table | null, curr: Uint8Array) => {
+        if (prev === null) {
+            return tableFromIPC(curr)
+        } else {
+            return prev.concat(tableFromIPC(curr))
+        }
+    }, null) as Table
+    if (table === null) throw 'No data received!'
+    const columns = table.schema.fields.map((f) => f.name)
+    let dataStr = columns.join(',') + '\n';
+
+    for (let i = 0; i < table.numRows; i++) {
+      const rowData = readDataFromRow(columns, table.getChildAt(i));
+      dataStr += `${rowData}\n`;
+    }
+
+    return dataStr
 }
 
-export const fetchData = async (client: QueryEngineClient, queryId: string): Promise<Uint8Array[]> => {
+export const fetchData = async (client: QueryEngineClient, queryId: string): Promise<string> => {
     const batches: Uint8Array[] = []
     const call = client.fetchBatch({ queryId })
     for await (const message of call.responses) {
-        console.log("newData", message.data)
         batches.push(message.data)
         if (message.isLastBatch) break
     }
 
     await call.status
     await call.trailers
-    console.log(batches, "final table")
     if (!batches.length) {
         throw 'gRPCError: Did not get any data from API!'
     }
     return processData(batches)
 }
 
-export async function runQueryAndGetData(query: string): Promise<Table> {
+export async function runQueryAndGetData(query: string): Promise<string> {
     const client = grpcClient()
     const table = await runQuery(client, query).then(async (queryId) => {
         return await waitForQuery(client, queryId).then(

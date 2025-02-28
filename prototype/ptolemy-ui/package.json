@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@apache-arrow/ts": "^19.0.1",
     "@apollo/client": "^3.13.1",
     "@hookform/resolvers": "^4.1.2",
     "@protobuf-ts/grpcweb-transport": "^2.9.4",
