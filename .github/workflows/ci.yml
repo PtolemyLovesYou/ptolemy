@@ -20,7 +20,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   bump-version:
@@ -54,17 +53,10 @@ jobs:
         run: |
           echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
 
-      # Handle automatic alpha bump on push to main
+      # Handle automatic alpha bump on push to dev
       - name: Get git hash
         id: git_hash
         run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      # Create a new branch for version bump
-      - name: Create version bump branch
-        run: |
-          BRANCH_NAME="version-bump-$(date +%Y%m%d%H%M%S)"
-          git checkout -b $BRANCH_NAME
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Bump alpha version (on push)
         if: github.event_name == 'push'
@@ -101,43 +93,16 @@ jobs:
         run: |
           echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
 
-      # Commit changes to the new branch
+      # Commit and push changes
       - name: Commit version bump
         run: |
           git add pyproject.toml
           git add **/pyproject.toml || true
           git add **/Cargo.toml || true
           git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
-          git push --set-upstream origin ${{ env.BRANCH_NAME }}
+          git push
 
-      # Create pull request using GitHub CLI
-      - name: Create Pull Request
-        id: create_pr
-        run: |
-          PR_URL=$(gh pr create \
-            --base main \
-            --head ${{ env.BRANCH_NAME }} \
-            --title "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}" \
-            --body "Automated version bump by GitHub Actions
-            
-            - From: ${{ steps.current_version.outputs.version }}
-            - To: ${{ steps.new_version.outputs.version }}
-            - Type: ${{ github.event.inputs.version_type || 'alpha' }}" \
-            --label "version-bump,automated-pr")
-          echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Auto-merge PR if possible (requires branch protection rules to allow it)
-      - name: Enable PR Auto-Merge
-        if: steps.create_pr.outputs.PR_URL
-        run: |
-          PR_NUMBER=$(echo "${{ steps.create_pr.outputs.PR_URL }}" | awk -F/ '{print $NF}')
-          gh pr merge $PR_NUMBER --auto --squash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Create release for beta/rc/release - will run after PR is merged
+      # Create release for beta/rc/release
       - name: Create Release
         if: |
           github.event_name == 'workflow_dispatch' && 
