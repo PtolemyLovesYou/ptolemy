@@ -137,14 +137,29 @@ jobs:
           ref: ${{ needs.bump-version.outputs.branch_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      # Create a lightweight tag for alpha versions
+      # Create a lightweight tag for alpha versions (without creating a GitHub release)
       - name: Create Alpha Tag
         if: needs.bump-version.outputs.is_alpha == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a v${{ needs.bump-version.outputs.new_version }} -m "Alpha version ${{ needs.bump-version.outputs.new_version }}"
+          
+          # Create lightweight tag (no -a flag)
+          git tag v${{ needs.bump-version.outputs.new_version }}
           git push origin v${{ needs.bump-version.outputs.new_version }}
+          
+          # Delete the auto-created GitHub release if it exists
+          # First get the release ID if it exists
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ needs.bump-version.outputs.new_version }}" | \
+            grep -o '"id": [0-9]*' | head -1 | awk '{print $2}')
+          
+          # If a release ID was found, delete the release but keep the tag
+          if [ ! -z "$RELEASE_ID" ]; then
+            curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID"
+            echo "Deleted auto-created release for alpha tag"
+          fi
       
       # Only run this step for beta/rc/release versions
       - name: Create Release
