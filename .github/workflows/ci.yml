@@ -109,8 +109,19 @@ jobs:
       - name: Update Cargo.lock
         run: cargo update ptolemy --precise ${{ steps.new_version.outputs.version }}
 
+      # Check if there are changes
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
       # Commit changes to the branch
       - name: Commit version bump
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           git add pyproject.toml
           git add Cargo.lock
@@ -121,6 +132,7 @@ jobs:
 
       # Create PR
       - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
@@ -140,5 +152,11 @@ jobs:
             
             ![version bump](https://giphy.com/gifs/kiszkiloszki-3oEjI53nBYOOEQgDcY)
           commit-message: "chore: Version Bump: ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }} [skip ci]"
-          delete-branch: true
+          delete-branch: false
           base: main
+          
+      # Fail gracefully if no changes were made
+      - name: No changes needed
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo "No changes were detected in the files. No PR needed."
