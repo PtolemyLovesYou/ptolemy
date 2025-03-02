@@ -25,10 +25,6 @@ jobs:
   bump-version:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    outputs:
-      new_version: ${{ steps.new_version.outputs.version }}
-      branch_name: ${{ steps.create_branch.outputs.branch_name }}
-      is_alpha: ${{ github.event_name == 'push' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -118,35 +114,7 @@ jobs:
           git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
           git push --set-upstream origin ${{ steps.create_branch.outputs.branch_name }}
 
-  create-tag-or-release:
-    needs: bump-version
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' && 
-      (github.event.inputs.version_type == 'beta' || 
-       github.event.inputs.version_type == 'rc' || 
-       github.event.inputs.version_type == 'release') || 
-      needs.bump-version.outputs.is_alpha == 'true'
-    
-    steps:
-      # Only run this step for alpha versions (push to main)
-      - name: Checkout code for alpha tag
-        if: needs.bump-version.outputs.is_alpha == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.bump-version.outputs.branch_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      # Create a lightweight tag for alpha versions
-      - name: Create Alpha Tag
-        if: needs.bump-version.outputs.is_alpha == 'true'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a v${{ needs.bump-version.outputs.new_version }} -m "Alpha version ${{ needs.bump-version.outputs.new_version }}"
-          git push origin v${{ needs.bump-version.outputs.new_version }}
-      
-      # Only run this step for beta/rc/release versions
+      # Create release for beta/rc/release on the version branch
       - name: Create Release
         if: |
           github.event_name == 'workflow_dispatch' && 
@@ -155,11 +123,11 @@ jobs:
            github.event.inputs.version_type == 'release')
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.bump-version.outputs.new_version }}
-          name: ${{ needs.bump-version.outputs.new_version }}
+          tag_name: v${{ steps.new_version.outputs.version }}
+          name: ${{ steps.new_version.outputs.version }}
           draft: false
           prerelease: ${{ github.event.inputs.version_type != 'release' }}
           generate_release_notes: true
-          target_commitish: ${{ needs.bump-version.outputs.branch_name }}
+          target_commitish: ${{ steps.create_branch.outputs.branch_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
