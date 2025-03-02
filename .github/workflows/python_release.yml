@@ -53,19 +53,23 @@ jobs:
               g++-aarch64-linux-gnu \
               libc6-dev-arm64-cross
             
+            # Install OpenSSL for arm64
+            # Use dpkg foreign architecture to install arm64 packages
+            sudo dpkg --add-architecture arm64
+            sudo apt-get update -y
+            sudo apt-get install -y libssl-dev:arm64
+            
             # Set up cross-compilation environment variables
             echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
             
-            # Create a wrapper for pkg-config that handles cross-compilation
-            mkdir -p ~/.cargo/bin
-            echo '#!/bin/bash' > ~/.cargo/bin/aarch64-linux-gnu-pkg-config
-            echo 'PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig pkg-config "$@"' >> ~/.cargo/bin/aarch64-linux-gnu-pkg-config
-            chmod +x ~/.cargo/bin/aarch64-linux-gnu-pkg-config
-            echo "PKG_CONFIG=aarch64-linux-gnu-pkg-config" >> $GITHUB_ENV
+            # Set OpenSSL dirs directly instead of relying on pkg-config
+            echo "OPENSSL_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "OPENSSL_INCLUDE_DIR=/usr/include/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu" >> $GITHUB_ENV
             
-            # Show debug info
-            echo "Created pkg-config wrapper:"
-            cat ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            # For extra debugging
+            ls -la /usr/include/aarch64-linux-gnu || echo "Directory does not exist"
+            ls -la /usr/lib/aarch64-linux-gnu || echo "Directory does not exist"
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -119,19 +123,23 @@ jobs:
               g++-aarch64-linux-gnu \
               libc6-dev-arm64-cross
             
+            # Install OpenSSL for arm64
+            # Use dpkg foreign architecture to install arm64 packages
+            sudo dpkg --add-architecture arm64
+            sudo apt-get update -y
+            sudo apt-get install -y libssl-dev:arm64
+            
             # Set up cross-compilation environment variables
             echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
             
-            # Create a wrapper for pkg-config that handles cross-compilation
-            mkdir -p ~/.cargo/bin
-            echo '#!/bin/bash' > ~/.cargo/bin/aarch64-linux-gnu-pkg-config
-            echo 'PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig pkg-config "$@"' >> ~/.cargo/bin/aarch64-linux-gnu-pkg-config
-            chmod +x ~/.cargo/bin/aarch64-linux-gnu-pkg-config
-            echo "PKG_CONFIG=aarch64-linux-gnu-pkg-config" >> $GITHUB_ENV
+            # Set OpenSSL dirs directly instead of relying on pkg-config
+            echo "OPENSSL_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "OPENSSL_INCLUDE_DIR=/usr/include/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu" >> $GITHUB_ENV
             
-            # Show debug info
-            echo "Created pkg-config wrapper:"
-            cat ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            # For extra debugging
+            ls -la /usr/include/aarch64-linux-gnu || echo "Directory does not exist"
+            ls -la /usr/lib/aarch64-linux-gnu || echo "Directory does not exist"
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
