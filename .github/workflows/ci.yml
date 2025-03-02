@@ -160,5 +160,5 @@ jobs:
             
             ![version bump](https://giphy.com/gifs/kiszkiloszki-3oEjI53nBYOOEQgDcY)
           commit-message: "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
-          # delete-branch: true
+          delete-branch: true
           base: main
