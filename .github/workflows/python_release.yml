@@ -30,26 +30,17 @@ jobs:
             target: x86
           - runner: ubuntu-22.04
             target: aarch64
-          - runner: ubuntu-22.04
-            target: armv7
-          - runner: ubuntu-22.04
-            target: s390x
-          - runner: ubuntu-22.04
-            target: ppc64le
+          # - runner: ubuntu-22.04
+          #   target: armv7
+          # - runner: ubuntu-22.04
+          #   target: s390x
+          # - runner: ubuntu-22.04
+          #   target: ppc64le
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            protobuf-compiler \
-            libssl-dev \
-            pkg-config \
-            build-essential \
-            patchelf
+          python-version: 3.12
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -57,6 +48,14 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
+          before-script-linux: |
+            sudo apt-get update && \
+            sudo apt-get install -y --no-install-recommends \
+              libssl-dev \
+              pkg-config \
+              patchelf \
+              protobuf-compiler \
+              build-essential
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -64,6 +63,14 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
+          before-script-linux: |
+            sudo apt-get update && \
+            sudo apt-get install -y --no-install-recommends \
+              libssl-dev \
+              pkg-config \
+              patchelf \
+              protobuf-compiler \
+              build-essential
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -81,22 +88,13 @@ jobs:
             target: x86
           - runner: ubuntu-22.04
             target: aarch64
-          - runner: ubuntu-22.04
-            target: armv7
+          # - runner: ubuntu-22.04
+          #   target: armv7
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            protobuf-compiler \
-            libssl-dev \
-            pkg-config \
-            build-essential \
-            patchelf
+          python-version: 3.12
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -104,6 +102,14 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
+          before-script-linux: |
+            sudo apt-get update && \
+            sudo apt-get install -y --no-install-recommends \
+              libssl-dev \
+              pkg-config \
+              patchelf \
+              protobuf-compiler \
+              build-essential
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -111,6 +117,14 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
+          before-script-linux: |
+            sudo apt-get update && \
+            sudo apt-get install -y --no-install-recommends \
+              libssl-dev \
+              pkg-config \
+              patchelf \
+              protobuf-compiler \
+              build-essential
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -130,7 +144,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: 3.12
           architecture: ${{ matrix.platform.target }}
       - name: Install Windows dependencies
         run: |
@@ -168,7 +182,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: 3.12
       - name: Install macOS dependencies
         run: |
           brew install openssl@3 protobuf pkg-config
