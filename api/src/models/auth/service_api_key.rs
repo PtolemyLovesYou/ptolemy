@@ -33,9 +33,9 @@ pub struct ServiceApiKey {
 
 crate::impl_has_id!(ServiceApiKey);
 
-impl From<ServiceApiKey> for ptolemy::models::auth::ServiceApiKey {
+impl From<ServiceApiKey> for ptolemy::models::ServiceApiKey {
     fn from(val: ServiceApiKey) -> Self {
-        ptolemy::models::auth::ServiceApiKey {
+        ptolemy::models::ServiceApiKey {
             id: val.id.into(),
             workspace_id: val.workspace_id.into(),
             name: val.name,

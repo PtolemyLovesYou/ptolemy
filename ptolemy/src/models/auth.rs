@@ -1,5 +1,5 @@
 use crate::models::enums::{ApiKeyPermission, UserStatus, WorkspaceRole};
-use crate::models::id::Id;
+use crate::models::Id;
 use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone)]

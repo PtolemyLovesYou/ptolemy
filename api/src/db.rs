@@ -1,4 +1,7 @@
-use crate::{env_settings::{RedisConfig, PostgresConfig}, error::ServerError};
+use crate::{
+    env_settings::{PostgresConfig, RedisConfig},
+    error::ServerError,
+};
 use bb8::PooledConnection;
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},

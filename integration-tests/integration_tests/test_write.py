@@ -3,7 +3,7 @@
 import time
 import pandas as pd
 import pytest
-from ptolemy import Ptolemy, get_client # pylint: disable=no-name-in-module
+from ptolemy_client import Ptolemy, get_client # pylint: disable=no-name-in-module
 from .base import IntegrationTestBase, BASE_URL
 
 class TestSql(IntegrationTestBase):

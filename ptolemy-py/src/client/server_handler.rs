@@ -1,16 +1,13 @@
-use crate::generated::observer::ApiKeyType as ApiKeyTypeEnum;
-use crate::generated::observer::{
+use ptolemy::generated::observer::ApiKeyType as ApiKeyTypeEnum;
+use ptolemy::generated::observer::{
     observer_authentication_client::ObserverAuthenticationClient, observer_client::ObserverClient,
     AuthenticationRequest, PublishRequest, PublishResponse, Record,
 };
-use crate::generated::query_engine::{
-    query_engine_client::QueryEngineClient,
-    QueryRequest,
-    QueryStatus,
+use ptolemy::generated::query_engine::{
+    query_engine_client::QueryEngineClient, FetchBatchRequest, QueryRequest, QueryStatus,
     QueryStatusRequest,
-    FetchBatchRequest,
 };
-use crate::models::id::Id;
+use ptolemy::models::Id;
 use pyo3::prelude::*;
 use std::collections::VecDeque;
 use std::str::FromStr;
@@ -26,15 +23,18 @@ impl QueryEngine {
         &mut self,
         query: String,
         batch_size: Option<u32>,
-        timeout_seconds: Option<u32>
+        timeout_seconds: Option<u32>,
     ) -> Result<Vec<Vec<u8>>, Box<dyn std::error::Error>> {
         let mut query_request = tonic::Request::new(QueryRequest {
             query,
             batch_size,
-            timeout_seconds
+            timeout_seconds,
         });
 
-        let token = self.token.clone().ok_or_else(|| "Not authenticated: no token")?;
+        let token = self
+            .token
+            .clone()
+            .ok_or_else(|| "Not authenticated: no token")?;
 
         query_request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("Authorization")?,
@@ -48,7 +48,11 @@ impl QueryEngine {
 
         while let QueryStatus::Pending | QueryStatus::Running = status {
             std::thread::sleep(std::time::Duration::from_millis(100));
-            status = self.client.get_query_status(QueryStatusRequest { query_id: query_id.clone() })
+            status = self
+                .client
+                .get_query_status(QueryStatusRequest {
+                    query_id: query_id.clone(),
+                })
                 .await?
                 .into_inner()
                 .status();
@@ -56,8 +60,13 @@ impl QueryEngine {
 
         if status == QueryStatus::Completed {
             let mut arrs = Vec::new();
-            let mut batches = self.client
-                .fetch_batch(FetchBatchRequest { query_id: query_id.clone(), batch_id: None }).await?
+            let mut batches = self
+                .client
+                .fetch_batch(FetchBatchRequest {
+                    query_id: query_id.clone(),
+                    batch_id: None,
+                })
+                .await?
                 .into_inner();
 
             while let Some(data) = batches.message().await? {
@@ -68,8 +77,11 @@ impl QueryEngine {
         }
 
         if status == QueryStatus::Failed {
-            let query_status = self.client
-                .get_query_status(QueryStatusRequest { query_id: query_id.clone() })
+            let query_status = self
+                .client
+                .get_query_status(QueryStatusRequest {
+                    query_id: query_id.clone(),
+                })
                 .await?
                 .into_inner();
 
@@ -80,7 +92,6 @@ impl QueryEngine {
             return Err("Query was cancelled".into());
         }
 
-        
         Ok(Vec::new())
     }
 }
@@ -88,7 +99,7 @@ impl QueryEngine {
 #[derive(Debug)]
 enum ApiKeyType {
     User,
-    Service
+    Service,
 }
 
 #[derive(Debug)]
@@ -142,13 +153,14 @@ impl ServerHandler {
         &mut self,
         query: String,
         batch_size: Option<u32>,
-        timeout_seconds: Option<u32>
+        timeout_seconds: Option<u32>,
     ) -> Result<Vec<Vec<u8>>, Box<dyn std::error::Error>> {
         let mut handler = QueryEngine {
             client: self.query_engine_client.clone(),
             token: self.token.clone(),
         };
-        self.rt.block_on(handler.query(query, batch_size, timeout_seconds))
+        self.rt
+            .block_on(handler.query(query, batch_size, timeout_seconds))
     }
 }
 
@@ -177,11 +189,14 @@ impl ServerHandler {
             .into_inner();
 
         self.token = Some(resp.token.clone());
-        self.workspace_id = resp.workspace_id.clone().map(|i| TryFrom::try_from(i).unwrap());
+        self.workspace_id = resp
+            .workspace_id
+            .clone()
+            .map(|i| TryFrom::try_from(i).unwrap());
         self.api_key_type = match resp.api_key_type() {
             ApiKeyTypeEnum::User => Some(ApiKeyType::User),
             ApiKeyTypeEnum::Service => Some(ApiKeyType::Service),
-            _ => panic!("Unknown api key type")
+            _ => panic!("Unknown api key type"),
         };
 
         Ok(())
@@ -192,9 +207,7 @@ impl ServerHandler {
         records: Vec<Record>,
     ) -> Result<PublishResponse, Box<dyn std::error::Error>> {
         match &self.api_key_type {
-            Some(ApiKeyType::User) => {
-                return Err("A service API is required to write data.".into())
-            }
+            Some(ApiKeyType::User) => return Err("A service API is required to write data.".into()),
             Some(ApiKeyType::Service) => {
                 if self.workspace_id.is_none() {
                     return Err("Not authenticated".into());

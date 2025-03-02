@@ -1,7 +1,6 @@
 .PHONY: format
 format:
-	black ptolemy prototype \
-	&& black ptolemy/python \
+	&& black ptolemy-py/python prototype \
 	&& cargo fmt
 
 .PHONY: diesel
@@ -28,7 +27,7 @@ test-client:
 
 .PHONY: build-client
 build-client:
-	maturin develop --uv -m ptolemy/Cargo.toml
+	maturin develop --uv -m ptolemy-py/Cargo.toml
 
 .PHONY: setup-client-dev
 setup-client-dev:

@@ -1,7 +1,7 @@
 """Client."""
 
 import streamlit as st
-from ptolemy import GraphQLClient, User
+from ptolemy_client import GraphQLClient, User
 
 
 def get_client() -> GraphQLClient:

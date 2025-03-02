@@ -57,7 +57,7 @@ where
                     Message::Shutdown => break,
                     Message::Flush => {
                         func(buffer.drain(..).map(|m: Message<T>| m.unwrap()).collect());
-                    },
+                    }
                     Message::Write(_) => {
                         buffer.push(msg);
                         if buffer.len() == batch_size {
@@ -94,7 +94,7 @@ where
         }
     }
 
-    pub async fn shutdown(&self)  {
+    pub async fn shutdown(&self) {
         match self.tx.send(Message::Shutdown).await {
             Ok(_) => (),
             Err(e) => {

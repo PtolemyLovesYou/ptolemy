@@ -9,7 +9,7 @@ use chrono::{naive::serde::ts_microseconds, NaiveDateTime};
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::Record;
-use ptolemy::models::event::{ProtoRecord, ProtoRuntime};
+use ptolemy::models::{ProtoRecord, ProtoRuntime};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

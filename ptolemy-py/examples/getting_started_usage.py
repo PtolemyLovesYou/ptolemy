@@ -1,7 +1,7 @@
 """Basic usage example."""
 import logging
 import pandas as pd
-import ptolemy as pt
+import ptolemy_client as pt
 
 # Initialize the client with configuration
 client = pt.Ptolemy(
@@ -100,5 +100,5 @@ finally:
     client.flush()
 
 # Example of using the SQL interface
-df = pd.concat(client.sql("SELECT * FROM ptolemy.system_event WHERE name = 'chat-completion'"))
+df = pd.concat(client.sql("SELECT * from ptolemy.system_event WHERE name = 'chat-completion'"))
 print(df.head())

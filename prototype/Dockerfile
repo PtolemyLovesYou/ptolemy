@@ -2,7 +2,7 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
 
 ARG RUST_VERSION=1.82.0
-ARG MATURIN_VERSION=1.8.1
+ARG MATURIN_VERSION=1.8.2
 ARG TARGETARCH
 
 WORKDIR /app
@@ -48,15 +48,18 @@ COPY pyproject.toml uv.lock ./
 
 COPY ./api/ ./api/
 COPY ./ptolemy/ ./ptolemy/
+COPY ./ptolemy-py/ ./ptolemy-py/
 
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/root/.cache/uv \
-    maturin develop --uv -m /app/ptolemy/Cargo.toml
+# RUN --mount=type=cache,target=/usr/local/cargo/registry \
+#     --mount=type=cache,target=/usr/local/cargo/git \
+#     --mount=type=cache,target=/root/.cache/uv \
+#     maturin develop --uv -m /app/ptolemy-py/Cargo.toml
 
 COPY ./prototype ./prototype
 
 RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
     uv sync --frozen --package prototype --inexact
 
 # Runtime stage
@@ -65,8 +68,11 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
-COPY --from=builder /app/ptolemy /app/ptolemy
+COPY --from=builder /app/ptolemy-py /app/ptolemy-py
 COPY --from=builder /app/prototype /app/prototype
+
+RUN uv init query-engine
+
 COPY pyproject.toml uv.lock ./
 
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \

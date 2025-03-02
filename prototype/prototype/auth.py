@@ -2,7 +2,7 @@
 
 import streamlit as st
 import requests
-from ptolemy import GraphQLClient
+from ptolemy_client import GraphQLClient
 from prototype.env_settings import API_URL
 
 

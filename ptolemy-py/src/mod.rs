@@ -7,8 +7,12 @@ pub mod graphql;
 pub mod models;
 pub mod types;
 
+use ptolemy::generated::query_engine::query_engine_client::QueryEngineClient;
 use crate::{
-    generated::query_engine::query_engine_client::QueryEngineClient, pybindings::{client::{client::PtolemyClient, server_handler::QueryEngine}, enums::{api_key_permission, user_status, workspace_role}, graphql::PyGraphQLClient, models::add_models_to_module}
+    client::{client::PtolemyClient, server_handler::QueryEngine},
+    graphql::PyGraphQLClient,
+    models::add_models_to_module,
+    enums::{api_key_permission, user_status, workspace_role}
 };
 
 #[pyfunction(signature=(base_url, token, query, batch_size=None, timeout_seconds=None))]

@@ -20,9 +20,9 @@ pub struct Workspace {
 
 crate::impl_has_id!(Workspace);
 
-impl From<Workspace> for ptolemy::models::auth::Workspace {
+impl From<Workspace> for ptolemy::models::Workspace {
     fn from(val: Workspace) -> Self {
-        ptolemy::models::auth::Workspace {
+        ptolemy::models::Workspace {
             id: val.id.into(),
             name: val.name,
             description: val.description,

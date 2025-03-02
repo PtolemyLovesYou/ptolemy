@@ -98,7 +98,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .out_dir("src/generated")
             .compile_protos(
                 &["proto/observer.proto", "proto/query_engine.proto"],
-                &["proto/observer", "proto/query_engine"]
+                &["proto/observer", "proto/query_engine"],
             )?;
     }
 

@@ -32,9 +32,9 @@ pub struct UserApiKey {
 
 crate::impl_has_id!(UserApiKey);
 
-impl From<UserApiKey> for ptolemy::models::auth::UserApiKey {
+impl From<UserApiKey> for ptolemy::models::UserApiKey {
     fn from(val: UserApiKey) -> Self {
-        ptolemy::models::auth::UserApiKey {
+        ptolemy::models::UserApiKey {
             id: val.id.into(),
             user_id: val.user_id.into(),
             name: val.name,

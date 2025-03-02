@@ -8,11 +8,11 @@ use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use redis::aio::MultiplexedConnection;
-use std::sync::{Arc, RwLock};
 use std::future::Future;
 use std::pin::Pin;
-use tracing::error;
+use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
+use tracing::error;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
 
@@ -48,7 +48,7 @@ pub enum JobMessage {
 }
 
 #[derive(Debug, Clone)]
-struct JobsRuntime{
+struct JobsRuntime {
     jobs: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
     tx: mpsc::Sender<JobMessage>,
     // consumer_handle: Arc<tokio::task::JoinHandle<()>>,

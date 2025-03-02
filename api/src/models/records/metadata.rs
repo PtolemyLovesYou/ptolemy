@@ -7,7 +7,7 @@ use crate::models::records::{
 use diesel::prelude::*;
 use ptolemy::error::ParseError;
 use ptolemy::generated::observer::Record;
-use ptolemy::models::event::{ProtoMetadata, ProtoRecord};
+use ptolemy::models::{ProtoMetadata, ProtoRecord};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

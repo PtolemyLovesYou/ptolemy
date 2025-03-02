@@ -2,11 +2,7 @@ use crate::{
     error::GraphQLError,
     generated::gql::*,
     graphql::response::{GQLResponse, GraphQLResult, MutationResponse, QueryResponse},
-    models::{
-        auth::{ServiceApiKey, User, UserApiKey, Workspace},
-        enums::{ApiKeyPermission, WorkspaceRole},
-        id::Id,
-    },
+    models::{ApiKeyPermission, Id, ServiceApiKey, User, UserApiKey, Workspace, WorkspaceRole},
     prelude::graphql::IntoModel,
 };
 use std::sync::Arc;
@@ -127,8 +123,7 @@ impl GraphQLClient {
             }
         );
 
-        self
-            .mutation(CREATE_WORKSPACE_MUTATION, data)?
+        self.mutation(CREATE_WORKSPACE_MUTATION, data)?
             .workspace()?
             .create()?
             .propagate_errors()?
@@ -231,8 +226,7 @@ impl GraphQLClient {
             }
         );
 
-        self
-            .mutation(CREATE_SERVICE_API_KEY_MUTATION, data)?
+        self.mutation(CREATE_SERVICE_API_KEY_MUTATION, data)?
             .workspace()?
             .create_service_api_key()?
             .propagate_errors()?
@@ -284,8 +278,7 @@ impl GraphQLClient {
     ) -> Result<WorkspaceRole, GraphQLError> {
         let data = json!({"workspaceId": workspace_id, "userId": user_id});
 
-        self
-            .query(WORKSPACE_USERS_QUERY, data)?
+        self.query(WORKSPACE_USERS_QUERY, data)?
             .workspace()?
             .one()?
             .users()?
@@ -356,8 +349,7 @@ impl GraphQLClient {
             }
         );
 
-        self
-            .mutation(CREATE_USER_MUTATION, data)?
+        self.mutation(CREATE_USER_MUTATION, data)?
             .user()?
             .create()?
             .propagate_errors()?
@@ -383,8 +375,7 @@ impl GraphQLClient {
     ) -> Result<String, GraphQLError> {
         let data = json!({"name": name, "durationDays": duration_days});
 
-        self
-            .mutation(CREATE_USER_API_KEY_MUTATION, data)?
+        self.mutation(CREATE_USER_API_KEY_MUTATION, data)?
             .user()?
             .create_user_api_key()?
             .propagate_errors()?
@@ -418,8 +409,7 @@ impl GraphQLClient {
     pub fn get_user_by_name(&self, username: String) -> Result<User, GraphQLError> {
         let data = json!({"username": username});
 
-        self
-            .query(SEARCH_USERS_QUERY, data)?
+        self.query(SEARCH_USERS_QUERY, data)?
             .user()?
             .one()?
             .to_model()

@@ -1,11 +1,12 @@
 use crate::{
     crypto::{ClaimType, Claims},
     error::ApiError,
-    models::{middleware::ApiKey, Workspace, User},
+    models::{middleware::ApiKey, User, Workspace},
     state::ApiAppState,
 };
 use ptolemy::generated::observer::{
-    observer_authentication_server::ObserverAuthentication, ApiKeyType, AuthenticationRequest, AuthenticationResponse
+    observer_authentication_server::ObserverAuthentication, ApiKeyType, AuthenticationRequest,
+    AuthenticationResponse,
 };
 use tonic::{Request, Response, Status};
 use tracing::error;
@@ -21,7 +22,11 @@ impl MyObserverAuthentication {
         Self { state }
     }
 
-    fn generate_auth_token(&self, api_key_id: Uuid, api_key_type: &ApiKeyType) -> Result<String, Status> {
+    fn generate_auth_token(
+        &self,
+        api_key_id: Uuid,
+        api_key_type: &ApiKeyType,
+    ) -> Result<String, Status> {
         let claim_type = match api_key_type {
             ApiKeyType::User => ClaimType::UserJWT,
             ApiKeyType::Service => ClaimType::ServiceAPIKeyJWT,
@@ -68,9 +73,12 @@ impl ObserverAuthentication for MyObserverAuthentication {
                 let (sak, workspace) = Workspace::from_service_api_key(
                     &mut conn,
                     &data.workspace_name.clone().unwrap(),
-                    &api_key.content().map_err(|e| Status::internal(e.to_string()))?,
+                    &api_key
+                        .content()
+                        .map_err(|e| Status::internal(e.to_string()))?,
                     &self.state.password_handler,
-                ).await
+                )
+                .await
                 .map_err(|e| match e {
                     ApiError::NotFoundError => Status::not_found("Invalid API key."),
                     _ => {
@@ -79,13 +87,16 @@ impl ObserverAuthentication for MyObserverAuthentication {
                     }
                 })?;
                 (sak.id, Some(workspace.id), ApiKeyType::Service)
-            },
+            }
             Some(ApiKeyType::User) => {
                 let user = User::from_user_api_key(
                     &mut conn,
-                    &api_key.content().map_err(|e| Status::internal(e.to_string()))?,
+                    &api_key
+                        .content()
+                        .map_err(|e| Status::internal(e.to_string()))?,
                     &self.state.password_handler,
-                ).await
+                )
+                .await
                 .map_err(|e| match e {
                     ApiError::NotFoundError => Status::not_found("Invalid API key."),
                     _ => {
@@ -95,7 +106,7 @@ impl ObserverAuthentication for MyObserverAuthentication {
                 })?;
 
                 (user.id, None, ApiKeyType::User)
-            },
+            }
             None | Some(ApiKeyType::Undeclared) => {
                 error!("API key type not found");
                 return Err(Status::internal("API key type not found"));
