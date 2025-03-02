@@ -46,19 +46,26 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libssl-dev pkg-config
           # For cross-compilation
-          if [ "${{ matrix.platform.target }}" != "x86_64" ]; then
+          if [ "${{ matrix.platform.target }}" == "aarch64" ]; then
+            # Install cross-compilation tools
             sudo apt-get install -y \
               gcc-aarch64-linux-gnu \
               g++-aarch64-linux-gnu \
-              libc6-dev-arm64-cross \
-              libssl-dev:arm64 \
-              pkg-config-aarch64-linux-gnu
+              libc6-dev-arm64-cross
             
             # Set up cross-compilation environment variables
-            echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
-            echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
-            echo "PKG_CONFIG=/usr/bin/pkg-config-aarch64-linux-gnu" >> $GITHUB_ENV
             echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+            
+            # Create a wrapper for pkg-config that handles cross-compilation
+            mkdir -p ~/.cargo/bin
+            echo '#!/bin/bash' > ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            echo 'PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig pkg-config "$@"' >> ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            chmod +x ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            echo "PKG_CONFIG=aarch64-linux-gnu-pkg-config" >> $GITHUB_ENV
+            
+            # Show debug info
+            echo "Created pkg-config wrapper:"
+            cat ~/.cargo/bin/aarch64-linux-gnu-pkg-config
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -105,19 +112,26 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libssl-dev pkg-config
           # For cross-compilation
-          if [ "${{ matrix.platform.target }}" != "x86_64" ]; then
+          if [ "${{ matrix.platform.target }}" == "aarch64" ]; then
+            # Install cross-compilation tools
             sudo apt-get install -y \
               gcc-aarch64-linux-gnu \
               g++-aarch64-linux-gnu \
-              libc6-dev-arm64-cross \
-              libssl-dev:arm64 \
-              pkg-config-aarch64-linux-gnu
+              libc6-dev-arm64-cross
             
             # Set up cross-compilation environment variables
-            echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
-            echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
-            echo "PKG_CONFIG=/usr/bin/pkg-config-aarch64-linux-gnu" >> $GITHUB_ENV
             echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+            
+            # Create a wrapper for pkg-config that handles cross-compilation
+            mkdir -p ~/.cargo/bin
+            echo '#!/bin/bash' > ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            echo 'PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig pkg-config "$@"' >> ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            chmod +x ~/.cargo/bin/aarch64-linux-gnu-pkg-config
+            echo "PKG_CONFIG=aarch64-linux-gnu-pkg-config" >> $GITHUB_ENV
+            
+            # Show debug info
+            echo "Created pkg-config wrapper:"
+            cat ~/.cargo/bin/aarch64-linux-gnu-pkg-config
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -167,12 +181,12 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-      - name: Build free-threaded wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.platform.target }}
-          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
-          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      # - name: Build free-threaded wheels
+      #   uses: PyO3/maturin-action@v1
+      #   with:
+      #     target: ${{ matrix.platform.target }}
+      #     args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
+      #     sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
