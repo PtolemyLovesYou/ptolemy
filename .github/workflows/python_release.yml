@@ -43,14 +43,11 @@ jobs:
           python-version: 3.12
       - name: Install Linux dependencies
         run: |
-          set -ex && \
-          if [ "$(dpkg --print-architecture)" != "aarch64" ]; then \
-              sudo dpkg --add-architecture aarch64 && \
-              sudo apt-get update -y && \
-              suod apt-get install -y libssl-dev:aarch64 pkg-config; \
-          else \
-              sudo apt-get update -y && \
-              sudo apt-get install -y libssl-dev pkg-config; \
+          # if target is aarch64, install libssl-dev:arm64
+          if [ "${{ matrix.platform.target }}" = "aarch64" ]; then
+            sudo apt-get update -y && sudo apt-get install -y libssl-dev:arm64
+          else
+            sudo apt-get update -y && sudo apt-get install -y libssl-dev
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -94,14 +91,11 @@ jobs:
           python-version: 3.12
       - name: Install Linux dependencies
         run: |
-          set -ex && \
-          if [ "$(dpkg --print-architecture)" != "aarch64" ]; then \
-              sudo dpkg --add-architecture aarch64 && \
-              sudo apt-get update -y && \
-              sudo apt-get install -y libssl-dev:aarch64 pkg-config; \
-          else \
-              sudo apt-get update -y && \
-              sudo apt-get install -y libssl-dev pkg-config; \
+          # if target is aarch64, install libssl-dev:arm64
+          if [ "${{ matrix.platform.target }}" = "aarch64" ]; then
+            sudo apt-get update -y && sudo apt-get install -y libssl-dev:arm64
+          else
+            sudo apt-get update -y && sudo apt-get install -y libssl-dev
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
