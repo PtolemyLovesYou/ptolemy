@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
 @tailwind utilities;
@@ -62,6 +62,9 @@ body {
 
   h1 {
     @apply text-4xl font-bold mb-5;
+  }
+  h2 {
+    @apply text-2xl font-bold my-5;
   }
 }
 

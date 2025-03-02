@@ -1,0 +1,120 @@
+name: Version Management
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Type of version bump to perform'
+        required: true
+        type: choice
+        options:
+          - beta
+          - rc
+          - release
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip uv \
+            && uv venv \
+            && uv pip install toml pydantic
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+
+      # Handle automatic alpha bump on push to dev
+      - name: Get git hash
+        id: git_hash
+        run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Bump alpha version (on push)
+        if: github.event_name == 'push'
+        run: uv run bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
+
+      # Handle workflow dispatch for beta/rc/release
+      - name: Bump version (beta/rc/release)
+        if: |
+          github.event_name == 'workflow_dispatch' && 
+          (github.event.inputs.version_type == 'beta' || 
+           github.event.inputs.version_type == 'rc' || 
+           github.event.inputs.version_type == 'release')
+        run: uv run bump_version.py ${{ github.event.inputs.version_type }}
+
+      # Handle workflow dispatch for major/minor/patch
+      - name: Bump version (major/minor/patch)
+        if: |
+          github.event_name == 'workflow_dispatch' && 
+          (github.event.inputs.version_type == 'major' || 
+           github.event.inputs.version_type == 'minor' || 
+           github.event.inputs.version_type == 'patch')
+        run: |
+          if [ "${{ github.event.inputs.version_type }}" = "major" ]; then
+            uv run bump_version.py mjr
+          elif [ "${{ github.event.inputs.version_type }}" = "minor" ]; then
+            uv run bump_version.py mnr
+          else
+            uv run bump_version.py patch
+          fi
+
+      # Get new version after bump
+      - name: Get new version
+        id: new_version
+        run: |
+          echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+
+      # Commit and push changes
+      - name: Commit version bump
+        run: |
+          git add pyproject.toml
+          git add **/pyproject.toml || true
+          git add **/Cargo.toml || true
+          git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+          git push
+
+      # Create release for beta/rc/release
+      - name: Create Release
+        if: |
+          github.event_name == 'workflow_dispatch' && 
+          (github.event.inputs.version_type == 'beta' || 
+           github.event.inputs.version_type == 'rc' || 
+           github.event.inputs.version_type == 'release')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.new_version.outputs.version }}
+          name: ${{ steps.new_version.outputs.version }}
+          draft: false
+          prerelease: ${{ github.event.inputs.version_type != 'release' }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
