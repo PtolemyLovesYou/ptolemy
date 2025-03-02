@@ -45,12 +45,12 @@ jobs:
         run: |
           set -ex && \
           if [ "$(dpkg --print-architecture)" != "arm64" ]; then \
-              dpkg --add-architecture arm64 && \
-              apt-get update -y && \
-              apt-get install -y libssl-dev:arm64 pkg-config; \
+              sudo dpkg --add-architecture arm64 && \
+              sudo apt-get update -y && \
+              suod apt-get install -y libssl-dev:arm64 pkg-config; \
           else \
-              apt-get update -y && \
-              apt-get install -y libssl-dev pkg-config; \
+              sudo apt-get update -y && \
+              sudo apt-get install -y libssl-dev pkg-config; \
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -96,12 +96,12 @@ jobs:
         run: |
           set -ex && \
           if [ "$(dpkg --print-architecture)" != "arm64" ]; then \
-              dpkg --add-architecture arm64 && \
-              apt-get update -y && \
-              apt-get install -y libssl-dev:arm64 pkg-config; \
+              sudo dpkg --add-architecture arm64 && \
+              sudo apt-get update -y && \
+              sudo apt-get install -y libssl-dev:arm64 pkg-config; \
           else \
-              apt-get update -y && \
-              apt-get install -y libssl-dev pkg-config; \
+              sudo apt-get update -y && \
+              sudo apt-get install -y libssl-dev pkg-config; \
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
