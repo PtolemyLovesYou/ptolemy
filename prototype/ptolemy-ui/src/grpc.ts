@@ -49,7 +49,13 @@ Promise<QueryStatusResponse> => {
 
 const readDataFromRow = (fields, row) => {
     return fields
-      .map((_, i) => row.get(i))
+      .map((_, i) => {
+        const value = row.get(i);
+        // Single generic conversion approach for all types
+        // This handles all primitive types including booleans, numbers, strings
+        // null/undefined are converted to empty strings
+        return value === null || value === undefined ? '' : String(value);
+      })
       .join(',');
   };
 
@@ -184,79 +190,88 @@ const readDataFromRow = (fields, row) => {
 // Enhanced processData function with more debugging and safety
 export const processData = (data: Uint8Array[]): string => {
     try {
-        console.log(`Processing ${data.length} data batches`);
-        
-        if (data.length === 0) {
-            return "";
+      console.log(`Processing ${data.length} data batches`);
+      
+      if (data.length === 0) {
+        return "";
+      }
+      
+      const table: Table = data.reduce((prev: Table | null, curr: Uint8Array, index) => {
+        if (curr.byteLength === 0) {
+          console.warn(`Empty batch at index ${index}, skipping`);
+          return prev;
         }
         
-        // Debug info about the first batch
-        console.log(`First batch size: ${data[0].byteLength} bytes`);
-        // Show the first few bytes for debugging
-        const firstFewBytes = Array.from(data[0].slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log(`First few bytes: ${firstFewBytes}`);
-        
-        const table: Table = data.reduce((prev: Table | null, curr: Uint8Array, index) => {
-            if (curr.byteLength === 0) {
-                console.warn(`Empty batch at index ${index}, skipping`);
-                return prev;
-            }
-            
+        try {
+          if (prev === null) {
+            console.log(`Creating first table from batch ${index}`);
             try {
-                if (prev === null) {
-                    console.log(`Creating first table from batch ${index}`);
-                    // Try multiple options for reading the IPC format
-                    try {
-                        return tableFromIPC(curr);
-                    } catch (e) {
-                        console.warn(`Error with default tableFromIPC: ${e.message}`);
-                        if (e.message && e.message.includes('compression not implemented')) {
-                            console.warn('Trying with decompress:false option');
-                            return tableFromIPC(curr, { decompress: false });
-                        }
-                        throw e;
-                    }
-                } else {
-                    console.log(`Concatenating batch ${index}`);
-                    try {
-                        return prev.concat(tableFromIPC(curr));
-                    } catch (e) {
-                        console.warn(`Error concatenating batch ${index}: ${e.message}`);
-                        if (e.message && e.message.includes('compression not implemented')) {
-                            console.warn('Trying with decompress:false option');
-                            return prev.concat(tableFromIPC(curr, { decompress: false }));
-                        }
-                        throw e;
-                    }
-                }
+              return tableFromIPC(curr);
             } catch (e) {
-                console.error(`Failed to process batch ${index}:`, e);
-                throw e;
+              console.warn(`Error with default tableFromIPC: ${e.message}`);
+              if (e.message && e.message.includes('compression not implemented')) {
+                console.warn('Trying with decompress:false option');
+                return tableFromIPC(curr, { decompress: false });
+              }
+              throw e;
             }
-        }, null) as Table;
-        
-        if (table === null) {
-            console.error('No valid table created from batches');
-            throw new Error('No data received or all batches invalid!');
+          } else {
+            console.log(`Concatenating batch ${index}`);
+            try {
+              return prev.concat(tableFromIPC(curr));
+            } catch (e) {
+              console.warn(`Error concatenating batch ${index}: ${e.message}`);
+              if (e.message && e.message.includes('compression not implemented')) {
+                console.warn('Trying with decompress:false option');
+                return prev.concat(tableFromIPC(curr, { decompress: false }));
+              }
+              throw e;
+            }
+          }
+        } catch (e) {
+          console.error(`Failed to process batch ${index}:`, e);
+          throw e;
         }
+      }, null) as Table;
+      
+      if (table === null) {
+        console.error('No valid table created from batches');
+        throw new Error('No data received or all batches invalid!');
+      }
+      
+      console.log(`Successfully created table with schema: ${JSON.stringify(table.schema.fields.map(f => f.name))}`);
+      console.log(`Table has ${table.numRows} rows and ${table.schema.fields.length} columns`);
+      
+      // Use Arrow's built-in toArray method to get the data as an array of objects
+      const records = table.toArray();
+      
+      // Convert the array of objects to CSV
+      const columns = table.schema.fields.map(f => f.name);
+      let csv = columns.join(',') + '\n';
+      
+      for (const record of records) {
+        // Ensure all values are properly stringified
+        const row = columns.map(col => {
+          const value = record[col];
+          if (value === null || value === undefined) {
+            return '';
+          }
+          // Ensure booleans are properly stringified
+          if (typeof value === 'boolean') {
+            return value.toString();
+          }
+          return String(value);
+        });
         
-        console.log(`Successfully created table with schema: ${JSON.stringify(table.schema.fields.map(f => f.name))}`);
-        console.log(`Table has ${table.numRows} rows`);
-        
-        const columns = table.schema.fields.map((f) => f.name);
-        let dataStr = columns.join(',') + '\n';
-        
-        for (let i = 0; i < table.numRows; i++) {
-            const rowData = readDataFromRow(columns, table.getChildAt(i));
-            dataStr += `${rowData}\n`;
-        }
-        
-        return dataStr;
+        csv += row.join(',') + '\n';
+      }
+      
+      return csv;
     } catch (error) {
-        console.error('Error in processData:', error);
-        throw error;
+      console.error('Error in processData:', error);
+      throw error;
     }
-}
+  }
 
 export async function runQueryAndGetData(query: string): Promise<string> {
     const client = grpcClient();
