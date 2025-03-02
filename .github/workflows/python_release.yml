@@ -52,23 +52,23 @@ jobs:
             # Try to determine the right package manager and installation method
             if command -v yum &> /dev/null; then
               # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
               # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
               # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif [ -f /etc/alpine-release ]; then
               # Alpine Linux
-              apk add openssl-dev pkgconfig patchelf protobuf-compiler gcc g++ make
+              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
             else
               # Ubuntu/Debian
               apt-get update && \
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                patchelf \
+                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -83,23 +83,23 @@ jobs:
             # Try to determine the right package manager and installation method
             if command -v yum &> /dev/null; then
               # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
               # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
               # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif [ -f /etc/alpine-release ]; then
               # Alpine Linux
-              apk add openssl-dev pkgconfig patchelf protobuf-compiler gcc g++ make
+              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
             else
               # Ubuntu/Debian
               apt-get update && \
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                patchelf \
+                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -138,23 +138,23 @@ jobs:
             # Try to determine the right package manager and installation method
             if command -v yum &> /dev/null; then
               # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
               # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
               # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif [ -f /etc/alpine-release ]; then
               # Alpine Linux
-              apk add openssl-dev pkgconfig patchelf protobuf-compiler gcc g++ make
+              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
             else
               # Ubuntu/Debian
               apt-get update && \
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                patchelf \
+                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -169,23 +169,23 @@ jobs:
             # Try to determine the right package manager and installation method
             if command -v yum &> /dev/null; then
               # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
               # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
               # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig patchelf protobuf-compiler gcc gcc-c++ make
+              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
             elif [ -f /etc/alpine-release ]; then
               # Alpine Linux
-              apk add openssl-dev pkgconfig patchelf protobuf-compiler gcc g++ make
+              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
             else
               # Ubuntu/Debian
               apt-get update && \
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                patchelf \
+                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -275,14 +275,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Linux dependencies
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            protobuf-compiler \
-            libssl-dev \
-            pkg-config \
-            build-essential \
-            patchelf
+        before-script-linux: |
+            # Try to determine the right package manager and installation method
+            if command -v yum &> /dev/null; then
+              # CentOS/RHEL based (manylinux)
+              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+            elif command -v dnf &> /dev/null; then
+              # Newer Fedora/RHEL
+              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+            elif command -v microdnf &> /dev/null; then
+              # Minimal DNF sometimes used in containers
+              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+            elif [ -f /etc/alpine-release ]; then
+              # Alpine Linux
+              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
+            else
+              # Ubuntu/Debian
+              apt-get update && \
+              apt-get install -y --no-install-recommends \
+                libssl-dev \
+                pkg-config \
+                \
+                protobuf-compiler \
+                build-essential
+            fi
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
