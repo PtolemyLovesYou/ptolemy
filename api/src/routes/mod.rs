@@ -14,7 +14,6 @@ use http::{
     Method,
 };
 use juniper_axum::graphiql;
-use http::{Method, header::{HeaderName, CONTENT_TYPE, AUTHORIZATION}};
 use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth;
