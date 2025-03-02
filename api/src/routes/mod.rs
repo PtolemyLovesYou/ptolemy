@@ -12,7 +12,7 @@ use axum::{
 use http::{
     header::{AUTHORIZATION, CONTENT_TYPE},
     Method,
-    HeaderName,
+    HeaderName
 };
 use juniper_axum::graphiql;
 use tower_http::cors::{Any, CorsLayer};
