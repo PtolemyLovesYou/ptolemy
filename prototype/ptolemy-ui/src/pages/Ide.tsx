@@ -2,22 +2,49 @@ import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from "@/components/ui/table"
 import { runQueryAndGetData } from "@/grpc";
 
+
 function Data({ query }: { query: string }) {
-    const [data, setData] = useState('')
+    const [schema, setSchema] = useState<string[]>([])
+    const [data, setData] = useState<string[][]>([])
     useEffect(() => {
         if (!query) {
             return
         }
         const fetchData = async () => {
-            const result = await runQueryAndGetData(query)
-            setData(result)
+            const [schema, data] = await runQueryAndGetData(query)
+            setSchema(schema)
+            setData(data)
         }
         fetchData()
     }, [query])
-    console.log(data)
-    return <pre>{data || 'No data available'}</pre>
+
+    return (<Table>
+    <TableHeader>
+        <TableRow>
+            {schema.map((field, i) => <TableHead key={i}>{field}</TableHead>)}
+        </TableRow>
+    </TableHeader>
+    <TableBody>
+            {data.map(
+                (row, i) =>
+                    <TableRow key={i}>
+                        {row.map(
+                            (cell, j) => <TableCell key={j}>{cell}</TableCell>
+                        )}
+                    </TableRow>
+            )}
+    </TableBody>
+  </Table>)
 }
 
 function IDE() {
