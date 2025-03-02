@@ -43,7 +43,23 @@ jobs:
           python-version: 3.12
       - name: Install Linux dependencies
         run: |
-          sudo apt-get update -y && sudo apt-get install -y libssl-dev pkg-config
+          sudo apt-get update -y
+          sudo apt-get install -y libssl-dev pkg-config
+          # For cross-compilation
+          if [ "${{ matrix.platform.target }}" != "x86_64" ]; then
+            sudo apt-get install -y \
+              gcc-aarch64-linux-gnu \
+              g++-aarch64-linux-gnu \
+              libc6-dev-arm64-cross \
+              libssl-dev:arm64 \
+              pkg-config-aarch64-linux-gnu
+            
+            # Set up cross-compilation environment variables
+            echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+            echo "PKG_CONFIG=/usr/bin/pkg-config-aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -86,7 +102,23 @@ jobs:
           python-version: 3.12
       - name: Install Linux dependencies
         run: |
-          sudo apt-get update -y && sudo apt-get install -y libssl-dev pkg-config
+          sudo apt-get update -y
+          sudo apt-get install -y libssl-dev pkg-config
+          # For cross-compilation
+          if [ "${{ matrix.platform.target }}" != "x86_64" ]; then
+            sudo apt-get install -y \
+              gcc-aarch64-linux-gnu \
+              g++-aarch64-linux-gnu \
+              libc6-dev-arm64-cross \
+              libssl-dev:arm64 \
+              pkg-config-aarch64-linux-gnu
+            
+            # Set up cross-compilation environment variables
+            echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+            echo "PKG_CONFIG=/usr/bin/pkg-config-aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
