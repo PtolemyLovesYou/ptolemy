@@ -32,15 +32,22 @@ jobs:
         with:
           fetch-depth: 2
       
-      - name: Check if commit message contains "bump version"
+      - name: Check trigger event or commit message
         id: check
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if echo "$COMMIT_MSG" | grep -i "bump version" > /dev/null; then
-            echo "Skipping workflow as commit message contains 'bump version'"
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          else
+          # Always run if triggered by workflow_dispatch
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "Running because this is a manual workflow dispatch"
             echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            # Check commit message only if triggered by push
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            if echo "$COMMIT_MSG" | grep -i "bump version" > /dev/null; then
+              echo "Skipping workflow as commit message contains 'bump version'"
+              echo "should_run=false" >> $GITHUB_OUTPUT
+            else
+              echo "should_run=true" >> $GITHUB_OUTPUT
+            fi
           fi
 
   bump-version:
