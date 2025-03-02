@@ -49,27 +49,31 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
           before-script-linux: |
-            # Try to determine the right package manager and installation method
+            # For CentOS/RHEL based systems (manylinux)
             if command -v yum &> /dev/null; then
-              # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # Enable EPEL repository which often has newer packages
+              yum install -y epel-release
+              # Enable PowerTools/CodeReady repository for CentOS 8/RHEL 8
+              if [ -f /etc/centos-release ] || [ -f /etc/redhat-release ]; then
+                if grep -q "release 8" /etc/centos-release 2>/dev/null || grep -q "release 8" /etc/redhat-release 2>/dev/null; then
+                  yum install -y dnf-plugins-core
+                  yum config-manager --set-enabled powertools || yum config-manager --set-enabled PowerTools || yum config-manager --set-enabled crb
+                fi
+              fi
+              # Update and install newer protobuf
+              yum update -y
+              yum install -y protobuf3-devel protobuf3-compiler || yum install -y protobuf-devel protobuf-compiler
+              # Install other dependencies
+              yum install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
-              # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # For newer Fedora/RHEL systems
+              dnf install -y epel-release
+              dnf update -y
+              dnf install -y protobuf-devel protobuf-compiler
+              dnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
-              # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
-            elif [ -f /etc/alpine-release ]; then
-              # Alpine Linux
-              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
-            else
-              # Ubuntu/Debian
-              apt-get update && \
-              apt-get install -y --no-install-recommends \
-                libssl-dev \
-                pkg-config \
-                protobuf-compiler \
-                build-essential
+              microdnf install -y protobuf-devel protobuf-compiler
+              microdnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             fi
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
@@ -79,27 +83,31 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
           before-script-linux: |
-            # Try to determine the right package manager and installation method
+            # For CentOS/RHEL based systems (manylinux)
             if command -v yum &> /dev/null; then
-              # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # Enable EPEL repository which often has newer packages
+              yum install -y epel-release
+              # Enable PowerTools/CodeReady repository for CentOS 8/RHEL 8
+              if [ -f /etc/centos-release ] || [ -f /etc/redhat-release ]; then
+                if grep -q "release 8" /etc/centos-release 2>/dev/null || grep -q "release 8" /etc/redhat-release 2>/dev/null; then
+                  yum install -y dnf-plugins-core
+                  yum config-manager --set-enabled powertools || yum config-manager --set-enabled PowerTools || yum config-manager --set-enabled crb
+                fi
+              fi
+              # Update and install newer protobuf
+              yum update -y
+              yum install -y protobuf3-devel protobuf3-compiler || yum install -y protobuf-devel protobuf-compiler
+              # Install other dependencies
+              yum install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
-              # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # For newer Fedora/RHEL systems
+              dnf install -y epel-release
+              dnf update -y
+              dnf install -y protobuf-devel protobuf-compiler
+              dnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
-              # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
-            elif [ -f /etc/alpine-release ]; then
-              # Alpine Linux
-              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
-            else
-              # Ubuntu/Debian
-              apt-get update && \
-              apt-get install -y --no-install-recommends \
-                libssl-dev \
-                pkg-config \
-                protobuf-compiler \
-                build-essential
+              microdnf install -y protobuf-devel protobuf-compiler
+              microdnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             fi
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -133,27 +141,31 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
           before-script-linux: |
-            # Try to determine the right package manager and installation method
+            # For CentOS/RHEL based systems (manylinux)
             if command -v yum &> /dev/null; then
-              # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # Enable EPEL repository which often has newer packages
+              yum install -y epel-release
+              # Enable PowerTools/CodeReady repository for CentOS 8/RHEL 8
+              if [ -f /etc/centos-release ] || [ -f /etc/redhat-release ]; then
+                if grep -q "release 8" /etc/centos-release 2>/dev/null || grep -q "release 8" /etc/redhat-release 2>/dev/null; then
+                  yum install -y dnf-plugins-core
+                  yum config-manager --set-enabled powertools || yum config-manager --set-enabled PowerTools || yum config-manager --set-enabled crb
+                fi
+              fi
+              # Update and install newer protobuf
+              yum update -y
+              yum install -y protobuf3-devel protobuf3-compiler || yum install -y protobuf-devel protobuf-compiler
+              # Install other dependencies
+              yum install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
-              # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # For newer Fedora/RHEL systems
+              dnf install -y epel-release
+              dnf update -y
+              dnf install -y protobuf-devel protobuf-compiler
+              dnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
-              # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
-            elif [ -f /etc/alpine-release ]; then
-              # Alpine Linux
-              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
-            else
-              # Ubuntu/Debian
-              apt-get update && \
-              apt-get install -y --no-install-recommends \
-                libssl-dev \
-                pkg-config \
-                protobuf-compiler \
-                build-essential
+              microdnf install -y protobuf-devel protobuf-compiler
+              microdnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             fi
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
@@ -163,27 +175,31 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
           before-script-linux: |
-            # Try to determine the right package manager and installation method
+            # For CentOS/RHEL based systems (manylinux)
             if command -v yum &> /dev/null; then
-              # CentOS/RHEL based (manylinux)
-              yum install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # Enable EPEL repository which often has newer packages
+              yum install -y epel-release
+              # Enable PowerTools/CodeReady repository for CentOS 8/RHEL 8
+              if [ -f /etc/centos-release ] || [ -f /etc/redhat-release ]; then
+                if grep -q "release 8" /etc/centos-release 2>/dev/null || grep -q "release 8" /etc/redhat-release 2>/dev/null; then
+                  yum install -y dnf-plugins-core
+                  yum config-manager --set-enabled powertools || yum config-manager --set-enabled PowerTools || yum config-manager --set-enabled crb
+                fi
+              fi
+              # Update and install newer protobuf
+              yum update -y
+              yum install -y protobuf3-devel protobuf3-compiler || yum install -y protobuf-devel protobuf-compiler
+              # Install other dependencies
+              yum install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v dnf &> /dev/null; then
-              # Newer Fedora/RHEL
-              dnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
+              # For newer Fedora/RHEL systems
+              dnf install -y epel-release
+              dnf update -y
+              dnf install -y protobuf-devel protobuf-compiler
+              dnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             elif command -v microdnf &> /dev/null; then
-              # Minimal DNF sometimes used in containers
-              microdnf install -y openssl-devel pkgconfig protobuf-compiler gcc gcc-c++ make
-            elif [ -f /etc/alpine-release ]; then
-              # Alpine Linux
-              apk add openssl-dev pkgconfig protobuf-compiler gcc g++ make
-            else
-              # Ubuntu/Debian
-              apt-get update && \
-              apt-get install -y --no-install-recommends \
-                libssl-dev \
-                pkg-config \
-                protobuf-compiler \
-                build-essential
+              microdnf install -y protobuf-devel protobuf-compiler
+              microdnf install -y openssl-devel pkgconfig patchelf gcc gcc-c++ make
             fi
       - name: Upload wheels
         uses: actions/upload-artifact@v4

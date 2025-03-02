@@ -9,7 +9,7 @@ crate-type = [ "cdylib",]
 
 [dependencies.pyo3]
 version = "0.23.3"
-features = [ "chrono", "abi3-py311", "multiple-pymethods",]
+features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module"]
 
 [dependencies.pyo3-ffi]
 version = "0.23.3"
