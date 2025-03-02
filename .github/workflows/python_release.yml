@@ -50,7 +50,7 @@ jobs:
           manylinux: auto
           before-script-linux: |
             yum install -y openssl-devel
-            yum install -y autoconf automake libtook curl make gcc-c++ unzip
+            yum install -y curl make gcc-c++ unzip
             echo "Installing protoc ${PROTOC_VERSION} from binary..."
             curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
             unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local
@@ -65,7 +65,7 @@ jobs:
           container: off
           before-script-linux: |
             yum install -y openssl-devel
-            yum install -y autoconf automake libtook curl make gcc-c++ unzip
+            yum install -y curl make gcc-c++ unzip
             echo "Installing protoc ${PROTOC_VERSION} from binary..."
             curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
             unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local
