@@ -1,6 +1,6 @@
 [project]
 name = "integration-tests"
-version = "0.1.0-alpha.21+0b3ceda"
+version = "0.1.0-alpha.22+4451703"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
