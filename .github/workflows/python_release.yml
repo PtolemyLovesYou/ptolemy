@@ -43,33 +43,14 @@ jobs:
           python-version: 3.12
       - name: Install Linux dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libssl-dev pkg-config
-          # For cross-compilation
-          if [ "${{ matrix.platform.target }}" == "aarch64" ]; then
-            # Install cross-compilation tools
-            sudo apt-get install -y \
-              gcc-aarch64-linux-gnu \
-              g++-aarch64-linux-gnu \
-              libc6-dev-arm64-cross
-            
-            # Install OpenSSL for arm64
-            # Use dpkg foreign architecture to install arm64 packages
-            sudo dpkg --add-architecture arm64
-            sudo apt-get update -y
-            sudo apt-get install -y libssl-dev:arm64
-            
-            # Set up cross-compilation environment variables
-            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-            
-            # Set OpenSSL dirs directly instead of relying on pkg-config
-            echo "OPENSSL_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
-            echo "OPENSSL_INCLUDE_DIR=/usr/include/aarch64-linux-gnu" >> $GITHUB_ENV
-            echo "OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu" >> $GITHUB_ENV
-            
-            # For extra debugging
-            ls -la /usr/include/aarch64-linux-gnu || echo "Directory does not exist"
-            ls -la /usr/lib/aarch64-linux-gnu || echo "Directory does not exist"
+          set -ex && \
+          if [ "$(dpkg --print-architecture)" != "arm64" ]; then \
+              dpkg --add-architecture arm64 && \
+              apt-get update -y && \
+              apt-get install -y libssl-dev:arm64 pkg-config; \
+          else \
+              apt-get update -y && \
+              apt-get install -y libssl-dev pkg-config; \
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -113,33 +94,14 @@ jobs:
           python-version: 3.12
       - name: Install Linux dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libssl-dev pkg-config
-          # For cross-compilation
-          if [ "${{ matrix.platform.target }}" == "aarch64" ]; then
-            # Install cross-compilation tools
-            sudo apt-get install -y \
-              gcc-aarch64-linux-gnu \
-              g++-aarch64-linux-gnu \
-              libc6-dev-arm64-cross
-            
-            # Install OpenSSL for arm64
-            # Use dpkg foreign architecture to install arm64 packages
-            sudo dpkg --add-architecture arm64
-            sudo apt-get update -y
-            sudo apt-get install -y libssl-dev:arm64
-            
-            # Set up cross-compilation environment variables
-            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-            
-            # Set OpenSSL dirs directly instead of relying on pkg-config
-            echo "OPENSSL_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
-            echo "OPENSSL_INCLUDE_DIR=/usr/include/aarch64-linux-gnu" >> $GITHUB_ENV
-            echo "OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu" >> $GITHUB_ENV
-            
-            # For extra debugging
-            ls -la /usr/include/aarch64-linux-gnu || echo "Directory does not exist"
-            ls -la /usr/lib/aarch64-linux-gnu || echo "Directory does not exist"
+          set -ex && \
+          if [ "$(dpkg --print-architecture)" != "arm64" ]; then \
+              dpkg --add-architecture arm64 && \
+              apt-get update -y && \
+              apt-get install -y libssl-dev:arm64 pkg-config; \
+          else \
+              apt-get update -y && \
+              apt-get install -y libssl-dev pkg-config; \
           fi
       - name: Build wheels
         uses: PyO3/maturin-action@v1
