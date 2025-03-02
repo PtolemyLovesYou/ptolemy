@@ -3,16 +3,16 @@
 #
 #    maturin generate-ci github -m ptolemy-py/Cargo.toml -o test.yml
 #
-name: Python Release
+name: CI
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #     - master
-  #   tags:
-  #     - '*'
-  # pull_request:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - '*'
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -41,15 +41,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            protobuf-compiler \
-            libssl-dev \
-            pkg-config \
-            build-essential \
-            patchelf
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -88,15 +79,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            protobuf-compiler \
-            libssl-dev \
-            pkg-config \
-            build-essential \
-            patchelf
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -132,11 +114,6 @@ jobs:
         with:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
-      - name: Install Windows dependencies
-        run: |
-          choco install openssl protoc
-          echo "PKG_CONFIG_PATH=C:\Program Files\OpenSSL-Win64\lib\pkgconfig" >> $env:GITHUB_ENV
-          echo "OPENSSL_DIR=C:\Program Files\OpenSSL-Win64" >> $env:GITHUB_ENV
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -169,11 +146,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install macOS dependencies
-        run: |
-          brew install openssl@3 protobuf pkg-config
-          echo "OPENSSL_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$(brew --prefix openssl@3)/lib/pkgconfig" >> $GITHUB_ENV
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -196,15 +168,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            protobuf-compiler \
-            libssl-dev \
-            pkg-config \
-            build-essential \
-            patchelf
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -234,13 +197,6 @@ jobs:
         uses: actions/attest-build-provenance@v1
         with:
           subject-path: 'wheels-*/*'
-      
-      # MANUALLY ADDED: for tag name
-      - name: Get current version
-        id: current_version
-        run: |
-          echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
-
       - name: Publish to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
