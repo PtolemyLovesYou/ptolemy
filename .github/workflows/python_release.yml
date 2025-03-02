@@ -47,6 +47,7 @@ jobs:
           if [ "${{ matrix.platform.target }}" = "aarch64" ]; then
             sudo apt-get update -y && sudo apt-get install -y libssl-dev:arm64
           else
+            sudo dpkg --add-architecture arm64
             sudo apt-get update -y && sudo apt-get install -y libssl-dev
           fi
       - name: Build wheels
@@ -95,6 +96,7 @@ jobs:
           if [ "${{ matrix.platform.target }}" = "aarch64" ]; then
             sudo apt-get update -y && sudo apt-get install -y libssl-dev:arm64
           else
+            sudo dpkg --add-architecture arm64
             sudo apt-get update -y && sudo apt-get install -y libssl-dev
           fi
       - name: Build wheels
