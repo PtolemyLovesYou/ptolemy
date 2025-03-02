@@ -9,7 +9,7 @@ from functools import cached_property
 import redis
 import duckdb
 from pydantic import BaseModel, ConfigDict
-import pandas as pd
+import pyarrow as pa
 from .status import QueryStatus
 from .env_settings import REDIS_DB, REDIS_HOST, REDIS_PORT, STREAM_NAME
 
@@ -103,8 +103,9 @@ class QueryExecutor(BaseModel):
 
         try:
             self.logger.debug("Executing query %s", self.query_id)
-            results: pd.DataFrame = self.conn.sql(self.query).arrow().to_pandas()
-
+            # Get results directly as Arrow table
+            arrow_table = self.conn.sql(self.query).arrow()
+            
         except Exception as e:  # pylint: disable=broad-except
             self.logger.info("Error executing query %s", self.query_id, exc_info=e)
             self.redis_conn.hset(
@@ -115,22 +116,31 @@ class QueryExecutor(BaseModel):
             self.logger.debug("Closing connection")
             self.conn.close()
 
-        self.logger.info(f"query result {results.to_json()}")
-        total_rows = results.shape[0]
-        est_size = results.memory_usage(deep=True).sum()
-
-        column_names = results.columns.tolist()
-        column_types = results.dtypes.tolist()
+        # Extract metadata directly from Arrow table
+        total_rows = arrow_table.num_rows
+        # Estimate memory usage - this is approximate
+        est_size = sum(arrow_table.nbytes for batch in arrow_table.to_batches())
+        
+        # Extract column information
+        column_names = arrow_table.column_names
+        column_types = [str(field.type) for field in arrow_table.schema]
+        
+        self.logger.info(f"Query result: {total_rows} rows")
         total_batches = 0
-
         batches = {}
 
-        for batch_id, i in enumerate(range(0, len(results), self.batch_size)):
-            buf = BytesIO()
-            dff = results[i : i + self.batch_size]
-            if len(dff) > 0:
+        # Process in batches, using Arrow IPC format
+        for batch_id, i in enumerate(range(0, total_rows, self.batch_size)):
+            # Create slice of the Arrow table
+            batch_size = min(self.batch_size, total_rows - i)
+            if batch_size > 0:
+                dff = arrow_table.slice(i, batch_size)
                 total_batches += 1
-                dff.to_feather(buf)
+                
+                # Serialize directly to Arrow IPC format
+                buf = BytesIO()
+                with pa.ipc.new_stream(buf, dff.schema) as writer:
+                    writer.write_table(dff)
 
                 self.logger.debug(
                     "Storing result batch %d for query %s", batch_id, self.query_id
@@ -153,7 +163,7 @@ class QueryExecutor(BaseModel):
             "metadata:total_batches": total_batches,
             "metadata:est_size_bytes": int(est_size),
             "metadata:column_names": json.dumps(column_names),
-            "metadata:column_types": json.dumps([str(i) for i in column_types]),
+            "metadata:column_types": json.dumps(column_types),
         }
 
         # Store the total number of result batches

@@ -15,7 +15,8 @@ function Data({ query }: { query: string }) {
             setData(result)
         }
         fetchData()
-    })
+    }, [query])
+    console.log(data)
     return <pre>{data || 'No data available'}</pre>
 }
 
