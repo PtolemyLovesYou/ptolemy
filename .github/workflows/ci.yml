@@ -101,6 +101,7 @@ jobs:
       - name: Commit version bump
         run: |
           git add pyproject.toml
+          git add Cargo.lock
           git add **/pyproject.toml || true
           git add **/Cargo.toml || true
           git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
