@@ -68,7 +68,6 @@ jobs:
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -99,7 +98,6 @@ jobs:
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -154,7 +152,6 @@ jobs:
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -185,7 +182,6 @@ jobs:
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                \
                 protobuf-compiler \
                 build-essential
             fi
@@ -295,7 +291,6 @@ jobs:
               apt-get install -y --no-install-recommends \
                 libssl-dev \
                 pkg-config \
-                \
                 protobuf-compiler \
                 build-essential
             fi
