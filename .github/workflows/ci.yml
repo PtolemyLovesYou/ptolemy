@@ -76,12 +76,12 @@ jobs:
           echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
 
       # Create a new branch for version bump
-      - name: Create version bump branch
-        id: create_branch
-        run: |
-          BRANCH_NAME="version-bump-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b $BRANCH_NAME
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+      # - name: Create version bump branch
+      #   id: create_branch
+      #   run: |
+      #     BRANCH_NAME="version-bump-$(date +%Y%m%d-%H%M%S)"
+      #     git checkout -b $BRANCH_NAME
+      #     echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
       # Handle automatic alpha bump on push to dev
       - name: Get git hash
@@ -128,14 +128,14 @@ jobs:
         run: cargo update ptolemy --precise ${{ steps.new_version.outputs.version }}
 
       # Commit changes to the branch
-      - name: Commit version bump
-        run: |
-          git add pyproject.toml
-          git add Cargo.lock
-          git add **/pyproject.toml || true
-          git add **/Cargo.toml || true
-          git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
-          git push --set-upstream origin ${{ steps.create_branch.outputs.branch_name }}
+      # - name: Commit version bump
+      #   run: |
+      #     git add pyproject.toml
+      #     git add Cargo.lock
+      #     git add **/pyproject.toml || true
+      #     git add **/Cargo.toml || true
+      #     git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+      #     git push --set-upstream origin ${{ steps.create_branch.outputs.branch_name }}
 
       # Create PR
       - name: Create Pull Request
@@ -143,8 +143,8 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ steps.create_branch.outputs.branch_name }}
-          title: "chore: Version Bump 🚀 ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+          commit-message: "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.bump_version.outputs.version }}"
+          title: "chore: Version Bump 🚀 ${{ steps.current_version.outputs.version }} → ${{ steps.bump_version.outputs.version }}"
           body: |
             ## 🎉 Version Bump 🎉
             
@@ -159,6 +159,11 @@ jobs:
             Ptolemy loves you! <3
             
             ![version bump](https://giphy.com/gifs/kiszkiloszki-3oEjI53nBYOOEQgDcY)
-          commit-message: "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
-          delete-branch: true
+          branch: version-bump-${{ github.run_id }}
           base: main
+          delete-branch: true
+          add-paths: |
+            pyproject.toml
+            Cargo.lock
+            **/pyproject.toml
+            **/Cargo.toml
