@@ -35,6 +35,11 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          
+      # Explicitly fetch all tags to ensure we have the complete history
+      - name: Fetch all tags
+        run: |
+          git fetch --tags --force
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -55,10 +60,20 @@ jobs:
       - name: Get latest version from git tags
         id: get_latest_tag
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          LATEST_VERSION=${LATEST_TAG#v}
+          # List all tags and sort them by version
+          ALL_TAGS=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | sort -V)
+          
+          if [ -z "$ALL_TAGS" ]; then
+            echo "No version tags found, using default 0.1.0"
+            LATEST_VERSION="0.1.0"
+          else
+            # Get the latest tag from the sorted list
+            LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+            LATEST_VERSION=${LATEST_TAG#v}
+            echo "Found latest version tag: $LATEST_TAG"
+          fi
+          
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "Found latest version from tags: $LATEST_VERSION"
 
       - name: Get current version from pyproject.toml
         id: current_version
