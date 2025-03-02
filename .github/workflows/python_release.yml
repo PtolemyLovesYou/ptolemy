@@ -49,8 +49,8 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
           before-script-linux: |
-            sudo apt-get update && \
-            sudo apt-get install -y --no-install-recommends \
+            apt-get update && \
+            apt-get install -y --no-install-recommends \
               libssl-dev \
               pkg-config \
               patchelf \
@@ -64,8 +64,8 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
           before-script-linux: |
-            sudo apt-get update && \
-            sudo apt-get install -y --no-install-recommends \
+            apt-get update && \
+            apt-get install -y --no-install-recommends \
               libssl-dev \
               pkg-config \
               patchelf \
@@ -103,8 +103,8 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
           before-script-linux: |
-            sudo apt-get update && \
-            sudo apt-get install -y --no-install-recommends \
+            apt-get update && \
+            apt-get install -y --no-install-recommends \
               libssl-dev \
               pkg-config \
               patchelf \
@@ -118,8 +118,8 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
           before-script-linux: |
-            sudo apt-get update && \
-            sudo apt-get install -y --no-install-recommends \
+            apt-get update && \
+            apt-get install -y --no-install-recommends \
               libssl-dev \
               pkg-config \
               patchelf \
@@ -212,8 +212,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Linux dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          apt-get update
+          apt-get install -y --no-install-recommends \
             protobuf-compiler \
             libssl-dev \
             pkg-config \
