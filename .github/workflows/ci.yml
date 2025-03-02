@@ -52,10 +52,20 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Get current version
+      - name: Get latest version from git tags
+        id: get_latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LATEST_VERSION=${LATEST_TAG#v}
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Found latest version from tags: $LATEST_VERSION"
+
+      - name: Get current version from pyproject.toml
         id: current_version
         run: |
-          echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version in pyproject.toml: $CURRENT_VERSION"
 
       # Handle automatic alpha bump on push to dev
       - name: Get git hash
@@ -76,7 +86,7 @@ jobs:
 
       - name: Bump alpha version (on push)
         if: github.event_name == 'push'
-        run: uv run bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
+        run: uv run bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }} --base-version ${{ steps.get_latest_tag.outputs.latest_version }}
 
       # Handle workflow dispatch for beta/rc/release
       - name: Bump version (beta/rc/release)
@@ -85,7 +95,7 @@ jobs:
           (github.event.inputs.version_type == 'beta' || 
            github.event.inputs.version_type == 'rc' || 
            github.event.inputs.version_type == 'release')
-        run: uv run bump_version.py ${{ github.event.inputs.version_type }}
+        run: uv run bump_version.py ${{ github.event.inputs.version_type }} --base-version ${{ steps.get_latest_tag.outputs.latest_version }}
 
       # Handle workflow dispatch for major/minor/patch
       - name: Bump version (major/minor/patch)
@@ -96,11 +106,11 @@ jobs:
            github.event.inputs.version_type == 'patch')
         run: |
           if [ "${{ github.event.inputs.version_type }}" = "major" ]; then
-            uv run bump_version.py mjr
+            uv run bump_version.py mjr --base-version ${{ steps.get_latest_tag.outputs.latest_version }}
           elif [ "${{ github.event.inputs.version_type }}" = "minor" ]; then
-            uv run bump_version.py mnr
+            uv run bump_version.py mnr --base-version ${{ steps.get_latest_tag.outputs.latest_version }}
           else
-            uv run bump_version.py patch
+            uv run bump_version.py patch --base-version ${{ steps.get_latest_tag.outputs.latest_version }}
           fi
 
       # Get new version after bump
@@ -115,7 +125,7 @@ jobs:
           git add pyproject.toml
           git add **/pyproject.toml || true
           git add **/Cargo.toml || true
-          git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+          git commit -m "chore: bump version ${{ steps.get_latest_tag.outputs.latest_version }} → ${{ steps.new_version.outputs.version }}"
           git push --set-upstream origin ${{ steps.create_branch.outputs.branch_name }}
 
   create-tag-or-release:
