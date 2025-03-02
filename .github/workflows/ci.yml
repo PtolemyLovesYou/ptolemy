@@ -167,3 +167,6 @@ jobs:
             Cargo.lock
             **/pyproject.toml
             **/Cargo.toml
+          labels: | 
+            auto-generated
+            version-bump
