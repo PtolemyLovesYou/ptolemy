@@ -114,17 +114,9 @@ class Version(BaseModel):
 
     def bump_dev(self, local: str) -> "Version":
         """Bump dev version."""
-        # Fix: Set pre first, then check if already an alpha version
-        if self.pre == Pre.ALPHA:
-            # If already alpha, increment n
-            self._bump_n()
-        else:
-            # If not alpha, set pre and initialize n
-            self.pre = Pre.ALPHA
-            self.n = 0
-        
-        # Update the local part (git hash)
         self.local = local
+        self._bump_n()
+        self.pre = Pre.ALPHA
         return self
 
     def bump_beta(self) -> "Version":
