@@ -5,7 +5,7 @@ import time
 from typing import Generator
 import requests
 import pytest
-from ptolemy import get_client, Ptolemy # pylint: disable=no-name-in-module
+from ptolemy_client import get_client, Ptolemy # pylint: disable=no-name-in-module
 
 SYSADMIN_USERNAME = os.getenv("SYSADMIN_USERNAME", "admin")
 SYSADMIN_PASSWORD = os.getenv("SYSADMIN_PASSWORD", "admin")

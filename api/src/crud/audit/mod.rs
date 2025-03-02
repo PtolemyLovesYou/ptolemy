@@ -1,8 +1,8 @@
 use crate::{
+    crud::prelude::Auditable,
     generated::audit_schema::{api_access_audit_logs, api_auth_audit_logs, iam_audit_logs},
     insert_obj_traits,
     models::{ApiAccessAuditLogCreate, AuthAuditLogCreate, IAMAuditLogCreate},
-    crud::prelude::Auditable,
 };
 use diesel_async::RunQueryDsl;
 

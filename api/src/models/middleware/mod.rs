@@ -8,22 +8,22 @@ pub struct AccessAuditId(pub Uuid);
 
 #[derive(Clone, Debug)]
 pub struct WorkspacePermission {
-    pub workspace: ptolemy::models::auth::Workspace,
-    pub permissions: Option<ptolemy::models::enums::ApiKeyPermission>,
-    pub role: Option<ptolemy::models::enums::WorkspaceRole>,
-    pub user: Option<ptolemy::models::auth::User>,
+    pub workspace: ptolemy::models::Workspace,
+    pub permissions: Option<ptolemy::models::ApiKeyPermission>,
+    pub role: Option<ptolemy::models::WorkspaceRole>,
+    pub user: Option<ptolemy::models::User>,
 }
 
 #[derive(Clone, Debug)]
 pub struct AuthContext {
     pub api_access_audit_log_id: Uuid,
     pub api_auth_audit_log_id: Uuid,
-    pub user: Option<ptolemy::models::auth::User>,
+    pub user: Option<ptolemy::models::User>,
     pub workspaces: Vec<WorkspacePermission>,
 }
 
 impl AuthContext {
-    pub fn user(&self) -> Result<&ptolemy::models::auth::User, ApiError> {
+    pub fn user(&self) -> Result<&ptolemy::models::User, ApiError> {
         match self.user.as_ref() {
             Some(u) => Ok(u),
             None => Err(ApiError::InternalError),
@@ -51,7 +51,7 @@ impl AuthContext {
     pub fn can_update_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin));
+                return matches!(workspace.role, Some(ptolemy::models::WorkspaceRole::Admin));
             }
         }
 
@@ -61,7 +61,7 @@ impl AuthContext {
     pub fn can_add_remove_update_user_to_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin));
+                return matches!(workspace.role, Some(ptolemy::models::WorkspaceRole::Admin));
             }
         }
 
@@ -71,7 +71,11 @@ impl AuthContext {
     pub fn can_create_delete_service_api_key(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.role, Some(ptolemy::models::enums::WorkspaceRole::Admin) | Some(ptolemy::models::enums::WorkspaceRole::Manager));
+                return matches!(
+                    workspace.role,
+                    Some(ptolemy::models::WorkspaceRole::Admin)
+                        | Some(ptolemy::models::WorkspaceRole::Manager)
+                );
             }
         }
 
@@ -89,7 +93,11 @@ impl AuthContext {
 
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.permissions, Some(ptolemy::models::enums::ApiKeyPermission::ReadOnly) | Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite));
+                return matches!(
+                    workspace.permissions,
+                    Some(ptolemy::models::ApiKeyPermission::ReadOnly)
+                        | Some(ptolemy::models::ApiKeyPermission::ReadWrite)
+                );
             }
         }
 
@@ -99,7 +107,11 @@ impl AuthContext {
     pub fn can_write_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {
-                return matches!(workspace.permissions, Some(ptolemy::models::enums::ApiKeyPermission::WriteOnly) | Some(ptolemy::models::enums::ApiKeyPermission::ReadWrite));
+                return matches!(
+                    workspace.permissions,
+                    Some(ptolemy::models::ApiKeyPermission::WriteOnly)
+                        | Some(ptolemy::models::ApiKeyPermission::ReadWrite)
+                );
             }
         }
 
@@ -202,7 +214,7 @@ impl ApiKey {
                 }
 
                 Err(ApiError::InternalError)
-            },
+            }
             _ => Err(ApiError::InternalError),
         }
     }

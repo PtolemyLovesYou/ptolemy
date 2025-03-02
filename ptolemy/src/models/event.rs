@@ -5,8 +5,8 @@ use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     Record, RuntimeRecord, Tier,
 };
-use crate::models::id::Id;
-use crate::models::json_serializable::{JsonSerializable, Parameters};
+use crate::models::json::JSON;
+use crate::models::Id;
 
 pub trait Proto: TryFrom<RecordData, Error = ParseError> {
     fn proto(&self) -> RecordData;
@@ -15,7 +15,7 @@ pub trait Proto: TryFrom<RecordData, Error = ParseError> {
 #[derive(Clone, Debug)]
 pub struct ProtoEvent {
     pub name: String,
-    pub parameters: Option<Parameters>,
+    pub parameters: Option<JSON>,
     pub version: Option<String>,
     pub environment: Option<String>,
 }
@@ -23,7 +23,7 @@ pub struct ProtoEvent {
 impl ProtoEvent {
     pub fn new(
         name: String,
-        parameters: Option<Parameters>,
+        parameters: Option<JSON>,
         version: Option<String>,
         environment: Option<String>,
     ) -> Self {
@@ -148,11 +148,11 @@ impl Proto for ProtoRuntime {
 #[derive(Clone, Debug)]
 pub struct ProtoInput {
     pub field_name: String,
-    pub field_value: JsonSerializable,
+    pub field_value: JSON,
 }
 
 impl ProtoInput {
-    pub fn new(field_name: String, field_value: JsonSerializable) -> Self {
+    pub fn new(field_name: String, field_value: JSON) -> Self {
         Self {
             field_name,
             field_value,
@@ -188,11 +188,11 @@ impl Proto for ProtoInput {
 #[derive(Clone, Debug)]
 pub struct ProtoOutput {
     pub field_name: String,
-    pub field_value: JsonSerializable,
+    pub field_value: JSON,
 }
 
 impl ProtoOutput {
-    pub fn new(field_name: String, field_value: JsonSerializable) -> Self {
+    pub fn new(field_name: String, field_value: JSON) -> Self {
         Self {
             field_name,
             field_value,
@@ -228,11 +228,11 @@ impl Proto for ProtoOutput {
 #[derive(Clone, Debug)]
 pub struct ProtoFeedback {
     pub field_name: String,
-    pub field_value: JsonSerializable,
+    pub field_value: JSON,
 }
 
 impl ProtoFeedback {
-    pub fn new(field_name: String, field_value: JsonSerializable) -> Self {
+    pub fn new(field_name: String, field_value: JSON) -> Self {
         Self {
             field_name,
             field_value,

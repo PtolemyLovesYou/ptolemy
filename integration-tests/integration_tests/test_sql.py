@@ -2,7 +2,7 @@
 
 import pytest
 import pandas as pd
-from ptolemy import Ptolemy # pylint: disable=no-name-in-module
+from ptolemy_client import Ptolemy # pylint: disable=no-name-in-module
 from .base import IntegrationTestBase
 
 class TestSql(IntegrationTestBase):

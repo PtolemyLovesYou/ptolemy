@@ -1,16 +1,10 @@
 [package]
 name = "ptolemy"
-version = "0.1.0-alpha.11+9d175ec"
+version = "0.1.0-beta.13"
 edition = "2021"
 
 [lib]
 name = "ptolemy"
-crate-type = [ "cdylib", "rlib",]
-
-[features]
-extension-module = [ "pyo3/extension-module", "pyo3-ffi/extension-module",]
-python = [ "pyo3", "pyo3-ffi",]
-client = [ "python", "extension-module",]
 
 [build-dependencies]
 tonic-build = "0.12.3"
@@ -18,15 +12,6 @@ apollo-compiler = "0.11.3"
 
 [build-dependencies.heck]
 workspace = true
-
-[dependencies.pyo3]
-version = "0.23.3"
-features = [ "chrono", "abi3-py311", "multiple-pymethods",]
-optional = true
-
-[dependencies.pyo3-ffi]
-version = "0.23.3"
-optional = true
 
 [dependencies.tonic]
 workspace = true

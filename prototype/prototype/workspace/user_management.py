@@ -1,7 +1,7 @@
 """Workspace user management."""
 
 import streamlit as st
-from ptolemy import WorkspaceRole, Workspace
+from ptolemy_client import WorkspaceRole, Workspace
 from ..client import get_client
 
 

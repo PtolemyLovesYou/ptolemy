@@ -8,5 +8,5 @@ Here's a simple example of Ptolemy in action!
 
 ## Client (Python)
 ```python3
---8<-- "../ptolemy/examples/getting_started_usage.py"
+--8<-- "../ptolemy-py/examples/getting_started_usage.py"
 ```

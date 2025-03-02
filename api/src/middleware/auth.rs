@@ -74,9 +74,9 @@ async fn validate_api_key_header(
     _req: &mut Request<axum::body::Body>,
     header: ApiKey,
 ) -> AuthResult<(
-    Option<ptolemy::models::auth::User>,
+    Option<ptolemy::models::User>,
     Vec<WorkspacePermission>,
-    Option<ptolemy::models::auth::ServiceApiKey>,
+    Option<ptolemy::models::ServiceApiKey>,
 )> {
     let api_key = match header {
         ApiKey::Undeclared | ApiKey::Err(_) => return Ok((None, Vec::new(), None)),
@@ -117,7 +117,7 @@ async fn validate_api_key_header(
                     .get_workspaces_with_roles(&mut state.get_conn().await.unwrap())
                     .await?;
 
-                let u_model: ptolemy::models::auth::User = u.into();
+                let u_model: ptolemy::models::User = u.into();
 
                 let workspaces_d = workspaces
                     .into_iter()
@@ -142,10 +142,7 @@ async fn validate_jwt_header(
     state: &ApiAppState,
     _req: &mut Request<axum::body::Body>,
     header: JWT,
-) -> AuthResult<(
-    Option<ptolemy::models::auth::User>,
-    Vec<WorkspacePermission>,
-)> {
+) -> AuthResult<(Option<ptolemy::models::User>, Vec<WorkspacePermission>)> {
     let mut conn = state.get_conn().await.unwrap();
 
     let claims = match header {
@@ -156,11 +153,9 @@ async fn validate_jwt_header(
     match claims.claim_type() {
         ClaimType::UserJWT => {
             let user = crate::models::User::get_by_id(&mut conn, claims.sub()).await?;
-            let workspaces = user
-                .get_workspaces_with_roles(&mut conn)
-                .await?;
+            let workspaces = user.get_workspaces_with_roles(&mut conn).await?;
 
-                let user_model: ptolemy::models::auth::User = user.into();
+            let user_model: ptolemy::models::User = user.into();
 
             let workspaces_d = workspaces
                 .into_iter()
@@ -208,7 +203,9 @@ pub async fn master_auth_middleware(
     if enable_auditing {
         let state_clone = state.clone();
 
-        state.queue(crate::crud::audit(state_clone, api_access_audit_log)).await;
+        state
+            .queue(crate::crud::audit(state_clone, api_access_audit_log))
+            .await;
     }
 
     let (jwt_header, api_key_header) = insert_headers(&mut req, &state);
@@ -236,9 +233,9 @@ pub async fn master_auth_middleware(
         let auth_payload_hash =
             get_header_raw(&req, HeaderName::from_str("Authorization").unwrap())
                 .map(|h| h.sha256());
-        
+
         let api_auth_audit_log_id = Uuid::new_v4();
-        
+
         if enable_auditing {
             let log = AuthAuditLogCreate {
                 id: api_auth_audit_log_id,
@@ -251,9 +248,9 @@ pub async fn master_auth_middleware(
                 success,
                 failure_details,
             };
-    
+
             let state_clone = state.clone();
-    
+
             state.queue(crate::crud::audit(state_clone, log)).await;
         }
 
@@ -295,9 +292,9 @@ pub async fn master_auth_middleware(
                 success,
                 failure_details,
             };
-    
+
             let state_clone = state.clone();
-    
+
             state.queue(crate::crud::audit(state_clone, log)).await;
         }
 

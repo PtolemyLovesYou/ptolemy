@@ -2,7 +2,9 @@ use crate::{
     crypto::{ClaimType, Claims, GenerateSha256},
     error::ApiError,
     models::{
-        audit::{AuthAuditLogCreate, AuthMethodEnum}, middleware::AccessAuditId, User
+        audit::{AuthAuditLogCreate, AuthMethodEnum},
+        middleware::AccessAuditId,
+        User,
     },
     state::ApiAppState,
 };
