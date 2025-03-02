@@ -1,6 +1,6 @@
 [package]
 name = "ptolemy-client"
-version = "0.1.0-beta.21"
+version = "0.1.0-alpha.22+80cc17b"
 edition = "2021"
 
 [lib]
