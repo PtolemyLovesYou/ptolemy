@@ -114,17 +114,9 @@ class Version(BaseModel):
 
     def bump_dev(self, local: str) -> "Version":
         """Bump dev version."""
-        # Fix: Set pre first, then check if already an alpha version
-        if self.pre == Pre.ALPHA:
-            # If already alpha, increment n
-            self._bump_n()
-        else:
-            # If not alpha, set pre and initialize n
-            self.pre = Pre.ALPHA
-            self.n = 0
-        
-        # Update the local part (git hash)
         self.local = local
+        self._bump_n()
+        self.pre = Pre.ALPHA
         return self
 
     def bump_beta(self) -> "Version":
@@ -271,27 +263,15 @@ def main():
         "--git-hash",
         help="Git hash to use for alpha versions",
     )
-    
-    parser.add_argument(
-        "--base-version",
-        help="Base version to use instead of reading from pyproject.toml",
-    )
 
     args = parser.parse_args()
     start_path = Path(args.start_path)
     root_pyproject = start_path / "pyproject.toml"
 
     try:
-        # Get version either from base-version arg or from pyproject.toml
-        if args.base_version:
-            version = Version.parse(args.base_version)
-            original_version = args.base_version  # Store for logging
-            print(f"Using provided base version: {original_version}")
-        else:
-            # Fallback to reading from pyproject.toml
-            version = get_root_version(root_pyproject)
-            original_version = str(version)  # Store for logging
-            print(f"Using version from pyproject.toml: {original_version}")
+        # First, get and bump the root version
+        version = get_root_version(root_pyproject)
+        original_version = str(version)  # Store for logging
 
         # Apply the requested version bump
         try:
