@@ -137,13 +137,38 @@ jobs:
       #     git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
       #     git push --set-upstream origin ${{ steps.create_branch.outputs.branch_name }}
 
+      # Generate appropriate labels based on release type
+      - name: Generate PR labels
+        id: generate_labels
+        run: |
+          # Start with the standard labels
+          LABELS="auto-generated\nversion-bump"
+          
+          # Add release type label
+          if [ "${{ github.event_name }}" = "push" ]; then
+            RELEASE_TYPE="alpha"
+          else
+            RELEASE_TYPE="${{ github.event.inputs.version_type }}"
+          fi
+          
+          LABELS="$LABELS\n$RELEASE_TYPE"
+          
+          # Add prerelease label for alpha/beta/rc
+          if [ "$RELEASE_TYPE" = "alpha" ] || [ "$RELEASE_TYPE" = "beta" ] || [ "$RELEASE_TYPE" = "rc" ]; then
+            LABELS="$LABELS\nprerelease"
+          fi
+          
+          echo "labels<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$LABELS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       # Create PR
       - name: Create Pull Request
         id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+          commit-message: "chore: bump version 🚀 ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
           title: "chore: Version Bump 🚀 ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
           body: |
             ## 🎉 Version Bump 🎉
@@ -167,6 +192,4 @@ jobs:
             Cargo.lock
             **/pyproject.toml
             **/Cargo.toml
-          labels: | 
-            auto-generated
-            version-bump
+          labels: ${{ steps.generate_labels.outputs.labels }}
