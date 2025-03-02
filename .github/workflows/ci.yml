@@ -92,6 +92,10 @@ jobs:
         id: new_version
         run: |
           echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+      
+      # Update Cargo.lock
+      - name: Update Cargo.lock
+        run: cargo update ptolemy --precise ${{ steps.new_version.outputs.version }}
 
       # Commit and push changes
       - name: Commit version bump
