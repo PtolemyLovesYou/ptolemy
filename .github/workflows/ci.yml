@@ -143,8 +143,8 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.bump_version.outputs.version }}"
-          title: "chore: Version Bump 🚀 ${{ steps.current_version.outputs.version }} → ${{ steps.bump_version.outputs.version }}"
+          commit-message: "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+          title: "chore: Version Bump 🚀 ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
           body: |
             ## 🎉 Version Bump 🎉
             
