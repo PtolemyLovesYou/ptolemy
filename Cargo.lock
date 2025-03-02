@@ -98,7 +98,7 @@ checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
 
 [[package]]
 name = "api"
-version = "0.1.0-alpha.12+2e4c291"
+version = "0.1.0-alpha.17+81ac5f5"
 dependencies = [
  "argon2",
  "axum",
@@ -130,8 +130,9 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "tonic-types",
+ "tonic-web",
  "tower 0.5.2",
- "tower-http",
+ "tower-http 0.6.2",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -2010,7 +2011,7 @@ dependencies = [
 
 [[package]]
 name = "ptolemy"
-version = "0.1.0-alpha.12+2e4c291"
+version = "0.1.0-alpha.17+81ac5f5"
 dependencies = [
  "apollo-compiler",
  "chrono",
@@ -2033,7 +2034,7 @@ dependencies = [
 
 [[package]]
 name = "ptolemy-client"
-version = "0.1.0"
+version = "0.1.0-alpha.17+81ac5f5"
 dependencies = [
  "chrono",
  "ptolemy",
@@ -3107,6 +3108,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "tonic-web"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5299dd20801ad736dccb4a5ea0da7376e59cd98f213bf1c3d478cf53f4834b58"
+dependencies = [
+ "base64 0.22.1",
+ "bytes",
+ "http",
+ "http-body",
+ "http-body-util",
+ "pin-project",
+ "tokio-stream",
+ "tonic",
+ "tower-http 0.5.2",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
 name = "tower"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3140,6 +3161,22 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "tower-http"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e9cd434a998747dd2c4276bc96ee2e0c7a2eadf3cae88e52be55a05fa9053f5"
+dependencies = [
+ "bitflags 2.6.0",
+ "bytes",
+ "http",
+ "http-body",
+ "http-body-util",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
 ]
 
 [[package]]
