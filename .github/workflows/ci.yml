@@ -58,18 +58,6 @@ jobs:
         id: git_hash
         run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      # Create versioning branch
-      - name: Create version branch
-        id: create_branch
-        run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            BRANCH_NAME="version/alpha-${{ steps.git_hash.outputs.hash }}"
-          else
-            BRANCH_NAME="version/${{ github.event.inputs.version_type }}-$(date +'%Y%m%d%H%M%S')"
-          fi
-          git checkout -b $BRANCH_NAME
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
       - name: Bump alpha version (on push)
         if: github.event_name == 'push'
         run: uv run bump_version.py alpha --git-hash ${{ steps.git_hash.outputs.hash }}
@@ -105,16 +93,16 @@ jobs:
         run: |
           echo "version=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)" >> $GITHUB_OUTPUT
 
-      # Commit and push changes to the version branch
+      # Commit and push changes
       - name: Commit version bump
         run: |
           git add pyproject.toml
           git add **/pyproject.toml || true
           git add **/Cargo.toml || true
           git commit -m "chore: bump version ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
-          git push --set-upstream origin ${{ steps.create_branch.outputs.branch_name }}
+          git push
 
-      # Create release for beta/rc/release on the version branch
+      # Create release for beta/rc/release
       - name: Create Release
         if: |
           github.event_name == 'workflow_dispatch' && 
@@ -128,6 +116,5 @@ jobs:
           draft: false
           prerelease: ${{ github.event.inputs.version_type != 'release' }}
           generate_release_notes: true
-          target_commitish: ${{ steps.create_branch.outputs.branch_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
