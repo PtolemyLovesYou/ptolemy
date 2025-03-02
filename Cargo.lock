@@ -98,7 +98,7 @@ checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
 
 [[package]]
 name = "api"
-version = "0.1.0-alpha.20+7967226"
+version = "0.1.0-alpha.21+2bebd57"
 dependencies = [
  "argon2",
  "axum",
@@ -2011,7 +2011,7 @@ dependencies = [
 
 [[package]]
 name = "ptolemy"
-version = "0.1.0-alpha.20+7967226"
+version = "0.1.0-alpha.21+2bebd57"
 dependencies = [
  "apollo-compiler",
  "chrono",
@@ -2034,7 +2034,7 @@ dependencies = [
 
 [[package]]
 name = "ptolemy-client"
-version = "0.1.0-alpha.20+7967226"
+version = "0.1.0-alpha.21+2bebd57"
 dependencies = [
  "chrono",
  "ptolemy",
