@@ -94,6 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if build_protobufs {
         tonic_build::configure()
+            .protoc_arg("--experimental_allow_proto3_optional")
             .build_server(true)
             .out_dir("src/generated")
             .compile_protos(
