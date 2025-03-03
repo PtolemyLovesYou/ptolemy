@@ -47,31 +47,21 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
+          manylinux: 2_28
           before-script-linux: |
-            PROTOC_VERSION=3.20.3
-            yum install -y openssl-devel
-            yum install -y curl make gcc-c++ unzip
-            echo "Installing protoc ${PROTOC_VERSION} from binary..."
-            curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
-            unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local
-            rm protoc-${PROTOC_VERSION}-linux-x86_64.zip
+            sudo apt-get update -y \
+              && sudo apt-get install -y libssl-dev pkg-config protobuf-compiler
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
+          manylinux: 2_28
           container: off
           before-script-linux: |
-            PROTOC_VERSION=3.20.3
-            yum install -y openssl-devel
-            yum install -y curl make gcc-c++ unzip
-            echo "Installing protoc ${PROTOC_VERSION} from binary..."
-            curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
-            unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local
-            rm protoc-${PROTOC_VERSION}-linux-x86_64.zip
+            sudo apt-get update -y \
+              && sudo apt-get install -y libssl-dev pkg-config protobuf-compiler
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
