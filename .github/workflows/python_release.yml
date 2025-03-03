@@ -45,24 +45,24 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml --uv
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           before-script-linux: |
             dnf update -y \
               && dnf install -y pkgconf perl-FindBin perl-IPC-Cmd openssl-devel python3-pip \
-              && python3 -m pip install -U pip
+              && python3 -m pip install -U pip uv
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t --uv
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           before-script-linux: |
             dnf update -y \
               && dnf install -y pkgconf perl-FindBin perl-IPC-Cmd openssl-devel python3-pip \
-              && python3 -m pip install -U pip
+              && python3 -m pip install -U pip uv
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
