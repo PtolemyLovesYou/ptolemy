@@ -1,6 +1,6 @@
 [package]
 name = "ptolemy"
-version = "0.1.0-beta.21"
+version = "0.1.0-alpha.22+54ef8bd"
 edition = "2021"
 
 [lib]
@@ -10,12 +10,21 @@ name = "ptolemy"
 tonic-build = "0.12.3"
 apollo-compiler = "0.11.3"
 
+[features]
+openssl = [ "dep:openssl",]
+vendored = [ "openssl",]
+
 [build-dependencies.heck]
 workspace = true
 
-[dependencies]
-openssl = { version = "0.10.71", features = ["vendored"], optional = true }
-protoc-bin-vendored = { version = "3.1.0", optional = true }
+[dependencies.openssl]
+version = "0.10.71"
+features = [ "vendored",]
+optional = true
+
+[dependencies.protoc-bin-vendored]
+version = "3.1.0"
+optional = true
 
 [dependencies.tonic]
 workspace = true
@@ -61,7 +70,3 @@ workspace = true
 
 [dependencies.tracing]
 workspace = true
-
-[features]
-openssl = ["dep:openssl"]
-vendored = ["openssl"]
