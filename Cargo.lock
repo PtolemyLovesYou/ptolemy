@@ -2028,7 +2028,6 @@ dependencies = [
  "env_logger",
  "heck 0.5.0",
  "log",
- "openssl",
  "prost",
  "prost-types",
  "reqwest",

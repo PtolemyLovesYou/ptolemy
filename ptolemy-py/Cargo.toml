@@ -41,4 +41,3 @@ workspace = true
 
 [dependencies.ptolemy]
 path = "../ptolemy"
-features = ["openssl"]
