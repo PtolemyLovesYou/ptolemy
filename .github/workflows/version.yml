@@ -191,7 +191,7 @@ jobs:
             Ptolemy loves you! <3
             
             ![version bump](https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjJmOXBxbGh2Z3BiYXM1NnJhMHdtbmNoaTFxN2xjOGZjZnd1ZGhuMiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjI53nBYOOEQgDcY/giphy.gif)
-          branch: version-bump-${{ github.run_id }}
+          branch: version/bump-${{ github.run_id }}
           base: main
           delete-branch: true
           add-paths: |
