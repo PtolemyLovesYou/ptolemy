@@ -9,10 +9,14 @@ name = "ptolemy"
 [build-dependencies]
 tonic-build = "0.12.3"
 apollo-compiler = "0.11.3"
-openssl = { version = "0.10.71", features = ["vendored"] }
 
 [build-dependencies.heck]
 workspace = true
+
+[dependencies.openssl]
+version = "0.10.71"
+features = ["vendored"]
+optional = true
 
 [dependencies.tonic]
 workspace = true
@@ -43,6 +47,9 @@ workspace = true
 
 [dependencies.uuid]
 workspace = true
+
+[features]
+openssl = ["dep:openssl"]
 
 [dependencies.serde_json]
 workspace = true
