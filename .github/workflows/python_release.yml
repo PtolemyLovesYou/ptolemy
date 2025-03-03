@@ -49,7 +49,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
-          before-script-linux: apt-get update && apt-get install -y protobuf-compiler
+          before-script-linux: apt-get update && apt-get install -y protobuf-compiler pkg-config libssl-dev
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -58,7 +58,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
-          before-script-linux: apt-get update && apt-get install -y protobuf-compiler
+          before-script-linux: apt-get update && apt-get install -y protobuf-compiler pkg-config libssl-dev
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
