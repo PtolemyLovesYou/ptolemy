@@ -51,8 +51,7 @@ jobs:
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
           before-script-linux: |
             apt-get update && 
-            apt-get install -y libssl-dev protobuf-compiler pkg-config &&
-            export OPENSSL_DIR=/usr/aarch64-unknown-linux-gnu
+            apt-get install -y protobuf-compiler
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -63,8 +62,7 @@ jobs:
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
           before-script-linux: |
             apt-get update && 
-            apt-get install -y libssl-dev protobuf-compiler pkg-config &&
-            export OPENSSL_DIR=/usr/aarch64-unknown-linux-gnu
+            apt-get install -y protobuf-compiler
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
