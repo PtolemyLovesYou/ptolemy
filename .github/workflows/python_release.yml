@@ -47,52 +47,18 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: 2014
-          before-script-linux: |
-            if command -v yum >/dev/null 2>&1; then
-              yum update -y && yum install -y openssl-devel curl unzip
-            elif command -v dnf >/dev/null 2>&1; then
-              dnf update -y && dnf install -y openssl-devel curl unzip
-            else
-              echo "Error: Neither yum nor dnf package managers found on this system."
-              exit 1
-            fi
-
-            PROTOC_VERSION="3.20.3"
-
-            # Download and install protoc
-            curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
-            unzip "protoc-${PROTOC_VERSION}-linux-${{ matrix.platform.target }}.zip" -d /usr/local
-            chmod +x /usr/local/bin/protoc
-
-            # Verify installation
-            protoc --version
+          manylinux: 2_28
+          container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
+          before-script-linux: apt-get update && apt-get install -y protobuf-compiler
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: 2014
-          before-script-linux: |
-            if command -v yum >/dev/null 2>&1; then
-              yum update -y && yum install -y openssl-devel curl unzip
-            elif command -v dnf >/dev/null 2>&1; then
-              dnf update -y && dnf install -y openssl-devel curl unzip
-            else
-              echo "Error: Neither yum nor dnf package managers found on this system."
-              exit 1
-            fi
-
-            PROTOC_VERSION="3.20.3"
-
-            # Download and install protoc
-            curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
-            unzip "protoc-${PROTOC_VERSION}-linux-${{ matrix.platform.target }}.zip" -d /usr/local
-            chmod +x /usr/local/bin/protoc
-
-            # Verify installation
-            protoc --version
+          manylinux: 2_28
+          container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
+          before-script-linux: apt-get update && apt-get install -y protobuf-compiler
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
