@@ -55,6 +55,7 @@ jobs:
             
             # Install appropriate packages based on architecture
             if [ "$TARGET_ARCH" = "aarch64" ]; then
+              dpkg --add-architecture arm64
               apt-get update
               apt-get install -y libssl-dev:arm64 protobuf-compiler:arm64 pkg-config:arm64
             elif [ "$TARGET_ARCH" = "x86_64" ]; then
@@ -79,6 +80,7 @@ jobs:
             
             # Install appropriate packages based on architecture
             if [ "$TARGET_ARCH" = "aarch64" ]; then
+              dpkg --add-architecture arm64
               apt-get update
               apt-get install -y libssl-dev:arm64 protobuf-compiler:arm64 pkg-config:arm64
             elif [ "$TARGET_ARCH" = "x86_64" ]; then
