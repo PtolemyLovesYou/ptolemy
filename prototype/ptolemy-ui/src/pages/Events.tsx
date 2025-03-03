@@ -1,6 +1,4 @@
 function Events() {
-    return (
-        <div>Event explorer goes here...</div>
-    )
+  return <div>Event explorer goes here...</div>;
 }
-export default Events
+export default Events;
