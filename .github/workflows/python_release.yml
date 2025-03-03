@@ -47,22 +47,16 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: 2_28
-          before-script-linux: |
-            dnf update -y \
-              && dnf install -y pkgconf openssl-devel python3-pip \
-              && pip install --upgrade pip
+          manylinux: 2014
+          before-script-linux: yum update -y && yum install -y pkgconf openssl-devel
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: 2_28
-          before-script-linux: |
-            dnf update -y \
-              && dnf install -y pkgconf openssl-devel python3-pip \
-              && pip install --upgrade pip
+          manylinux: 2014
+          before-script-linux: yum update -y && yum install -y pkgconf openssl-devel
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
