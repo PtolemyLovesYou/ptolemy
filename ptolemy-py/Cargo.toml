@@ -14,6 +14,10 @@ features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module"]
 [dependencies.pyo3-ffi]
 version = "0.23.3"
 
+[dependencies.openssl]
+version = "0.10.71"
+features = ["vendored"]
+
 [dependencies.uuid]
 workspace = true
 
@@ -37,3 +41,6 @@ workspace = true
 
 [dependencies.ptolemy]
 path = "../ptolemy"
+
+[features]
+vendored = ["ptolemy/vendored"]
