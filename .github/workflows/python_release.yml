@@ -48,7 +48,6 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
-          container: off
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -56,7 +55,6 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
-          container: off
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -88,20 +86,6 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
-          before-script-linux: |
-            apk update
-            apk add --no-cache openssl-dev
-            apk add --no-cache curl unzip
-            echo "Installing protoc ${PROTOC_VERSION} from binary..."
-
-            # Set the protoc version
-            PROTOC_VERSION=3.20.3
-
-            # Method 1: Install from binary (faster)
-            echo "Installing protoc ${PROTOC_VERSION} from binary..."
-            curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
-            unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local
-            rm protoc-${PROTOC_VERSION}-linux-x86_64.zip
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -109,20 +93,6 @@ jobs:
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: musllinux_1_2
-          before-script-linux: |
-            apk update
-            apk add --no-cache openssl-dev
-            apk add --no-cache curl unzip
-            echo "Installing protoc ${PROTOC_VERSION} from binary..."
-
-            # Set the protoc version
-            PROTOC_VERSION=3.20.3
-
-            # Method 1: Install from binary (faster)
-            echo "Installing protoc ${PROTOC_VERSION} from binary..."
-            curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
-            unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local
-            rm protoc-${PROTOC_VERSION}-linux-x86_64.zip
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
