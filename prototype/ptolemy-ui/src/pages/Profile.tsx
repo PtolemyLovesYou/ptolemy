@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
     const mapToInput = ([key, value]: [string, unknown]) => {
         if (key === '__typename') return null;
         return (
-            <div>
+            <div key={key} className="grid max-w-sm gap-1.5">
                 <Label htmlFor={key.toLowerCase()}>{key}</Label>
                 <Input type="text" id={key.toLowerCase()} placeholder="(empty)" value={String(value)} disabled />
             </div>

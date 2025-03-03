@@ -15,6 +15,7 @@ const httpLink = createHttpLink({ uri: `${import.meta.env.VITE_PTOLEMY_API}/grap
 
 const authLink = setContext((_, { headers }) => {
   const token = Cookies.get(AUTH_TOKEN_KEY);
+  console.log(token, "token")
   return {
     headers: {
       ...headers,

@@ -11,9 +11,14 @@ import {
     TableRow,
   } from "@/components/ui/table"
 import { runQueryAndGetData } from "@/grpc";
+import { Loader2 } from "lucide-react";
 
+interface DataProps {
+    query: string
+    setIsLoading: (isLoading: boolean) => void
+}
 
-function Data({ query }: { query: string }) {
+function Data({ query, setIsLoading }: DataProps) {
     const [schema, setSchema] = useState<string[]>([])
     const [data, setData] = useState<string[][]>([])
     useEffect(() => {
@@ -24,9 +29,10 @@ function Data({ query }: { query: string }) {
             const [schema, data] = await runQueryAndGetData(query)
             setSchema(schema)
             setData(data)
+            setIsLoading(false)
         }
         fetchData()
-    }, [query])
+    }, [query, setIsLoading])
 
     return (<Table>
     <TableHeader>
@@ -50,6 +56,7 @@ function Data({ query }: { query: string }) {
 function IDE() {
     const [query, setQuery] = useState("");
     const [input, setInput] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     return (
         <div>
@@ -60,8 +67,17 @@ function IDE() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your SQL query here."
             />
-            <Button onClick={() => setQuery(input)}>Run</Button>
-            {query ? <Data query={query} /> : null}
+
+            <Button onClick={() => {
+                setQuery(input)
+                if (input !== query)
+                    setIsLoading(true)
+            }} disabled={input === query || isLoading}>
+                {isLoading ? <><Loader2 className="animate-spin" /> Running...</> : 'Run'}
+            </Button>
+            {}
+            {/* TODO handle refetching data (right now, doesn't work so disabled. */}
+            {query ? <Data query={query} setIsLoading={setIsLoading} /> : null}
         </div>
     );
 }
