@@ -10,6 +10,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY ./api ./api
 COPY ./ptolemy ./ptolemy
+COPY ./ptolemy-py ./ptolemy-py
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
