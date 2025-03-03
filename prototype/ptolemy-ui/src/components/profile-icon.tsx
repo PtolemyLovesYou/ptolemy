@@ -52,11 +52,6 @@ function ProfileDropdown({ name, profilePictureUrl }: ProfileIconProps) {
             </NavLink>
           </DropdownMenuLabel>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <DropdownMenuLabel>
-            <Settings /> Settings
-          </DropdownMenuLabel>
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <DropdownMenuLabel onClick={logout}>
