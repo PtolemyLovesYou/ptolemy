@@ -47,7 +47,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
+          manylinux: 2_17
           before-script-linux: |
             yum install -y openssl-devel
       - name: Build free-threaded wheels
@@ -56,7 +56,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          manylinux: auto
+          manylinux: 2_17
           container: off
           before-script-linux: |
             yum install -y openssl-devel
