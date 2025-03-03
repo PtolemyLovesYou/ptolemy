@@ -46,7 +46,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
-          # sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
           before-script-linux: |
@@ -57,7 +57,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
-          # sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
           before-script-linux: |
