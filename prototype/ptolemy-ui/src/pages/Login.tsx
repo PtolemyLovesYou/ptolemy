@@ -1,12 +1,10 @@
-import { authenticate } from '../components/Auth'
-
-
 import { z } from "zod"
 import { useForm } from 'react-hook-form'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/auth/provider';
 
 const formSchema = z.object({
     username: z.string().min(5).max(256),
@@ -14,6 +12,7 @@ const formSchema = z.object({
 }).required()
 
 function Login() {
+    const { login } = useAuth()
 
     const loginForm = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -24,12 +23,13 @@ function Login() {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
             const { username, password } = values
-            await authenticate(username, password)
+            await login(username, password)
         }
 
     return (
-        <><h1>Login</h1>
-        <Form {...loginForm}>
+        <>
+            <h1>Login</h1>
+            <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
                 control={loginForm.control}
@@ -62,7 +62,8 @@ function Login() {
                 />
             <Button type="submit">Login</Button>
             </form>
-        </Form>        </>
+            </Form>
+        </>
     );
 }
 

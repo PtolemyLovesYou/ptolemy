@@ -9,8 +9,8 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Button } from "./ui/button"
 import { NavLink } from "react-router"
-import { logout } from "./Auth"
 import { User, LogOut, Settings } from "lucide-react"
+import { useAuth } from "@/auth/provider"
 
 const fallbackFromName = (name: string) => {
     return name.split(" ").map((word) => word[0].toUpperCase()).join("").slice(0, 2)
@@ -31,6 +31,7 @@ function ProfileIcon({ name, profilePictureUrl }: ProfileIconProps) {
 }
 
 function ProfileDropdown({ name, profilePictureUrl }: ProfileIconProps) {
+    const { logout } = useAuth()
     return (
         <DropdownMenu aria-label="Profile and Settings Dropdown">
             <DropdownMenuTrigger asChild>

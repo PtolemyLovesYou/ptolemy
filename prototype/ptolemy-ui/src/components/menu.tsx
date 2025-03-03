@@ -1,13 +1,8 @@
 import { NavLink } from 'react-router'
 import {
     NavigationMenu,
-    NavigationMenuContent,
-    NavigationMenuIndicator,
     NavigationMenuItem,
-    NavigationMenuLink,
     NavigationMenuList,
-    NavigationMenuTrigger,
-    NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"
 import ptolemyLogo from '/logomark_lime.svg'
 import { InternalLink, ExternalLink } from "./Link"
@@ -54,8 +49,8 @@ export const ExternalLinks: React.FC = () => {
     return (
 <NavigationMenu aria-label="External Links">
   <NavigationMenuList>
-                <MenuItem name="Feedback" href="mailto:raz@gmail.com" isExternal />
-                <MenuItem name="Docs" href={import.meta.env.VITE_PTOLEMY_DOCS} isExternal />
+            <MenuItem name="Feedback" href="mailto:raz@gmail.com" isExternal />
+            <MenuItem name="Docs" href={import.meta.env.VITE_PTOLEMY_DOCS} isExternal />
   </NavigationMenuList>
 </NavigationMenu>
     )

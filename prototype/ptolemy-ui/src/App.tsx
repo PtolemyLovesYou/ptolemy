@@ -5,23 +5,15 @@ import Home from './pages/Home'
 import IDE from './pages/Ide'
 import Login from './pages/Login'
 import ProfileDropdown from './components/profile-icon'
-import { useEffect, useState } from 'react'
-import { AUTH_TOKEN_KEY } from './constants'
 import Profile from './pages/Profile'
 import Events from './pages/Events'
+import { useAuth } from './auth/provider'
+import { ModeToggle } from './components/theme/toggle'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // TODO - do we need this state?
-  useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (token) {
-      // TODO - fetch user details from graphQL
-      setIsAuthenticated(true);
-    }
-  }, []);
+  const { token } = useAuth()
 
-  if (!isAuthenticated) {
+  if (!token) {
     return <Login />;
   }
 
@@ -32,6 +24,7 @@ function App() {
         <div className="flex justify-end gap-5">
           <ExternalLinks />
           <ProfileDropdown name="José" profilePictureUrl="https://github.com/shadcn.png/" />
+          <ModeToggle/>
           </div>
       </div>
       <main className="p-10">
