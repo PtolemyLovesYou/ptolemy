@@ -49,7 +49,15 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2014
           before-script-linux: |
-            yum update -y && yum install -y openssl-devel curl unzip
+            if command -v yum >/dev/null 2>&1; then
+              yum update -y && yum install -y openssl-devel curl unzip
+            elif command -v dnf >/dev/null 2>&1; then
+              dnf update -y && dnf install -y openssl-devel curl unzip
+            else
+              echo "Error: Neither yum nor dnf package managers found on this system."
+              exit 1
+            fi
+
             PROTOC_VERSION="3.20.3"
 
             # Download and install protoc
@@ -67,7 +75,15 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2014
           before-script-linux: |
-            yum update -y && yum install -y openssl-devel curl unzip
+            if command -v yum >/dev/null 2>&1; then
+              yum update -y && yum install -y openssl-devel curl unzip
+            elif command -v dnf >/dev/null 2>&1; then
+              dnf update -y && dnf install -y openssl-devel curl unzip
+            else
+              echo "Error: Neither yum nor dnf package managers found on this system."
+              exit 1
+            fi
+
             PROTOC_VERSION="3.20.3"
 
             # Download and install protoc
