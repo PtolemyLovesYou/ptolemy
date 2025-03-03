@@ -50,7 +50,7 @@ jobs:
           manylinux: 2_28
           before-script-linux: |
             dnf update -y \
-              && dnf install -y pkgconf perl-FindBin perl-IPC-Cmd openssl-devel python3-pip \
+              && dnf install -y pkgconf openssl-devel python3-pip \
               && python3 -m pip install -U pip install uv
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
@@ -61,7 +61,7 @@ jobs:
           manylinux: 2_28
           before-script-linux: |
             dnf update -y \
-              && dnf install -y pkgconf perl-FindBin perl-IPC-Cmd openssl-devel python3-pip \
+              && dnf install -y pkgconf openssl-devel python3-pip \
               && python3 -m pip install -U pip install uv
       - name: Upload wheels
         uses: actions/upload-artifact@v4
