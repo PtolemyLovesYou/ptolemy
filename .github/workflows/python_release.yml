@@ -49,7 +49,22 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
-          before-script-linux: apt-get update && apt-get install -y protobuf-compiler pkg-config libssl-dev
+          before-script-linux: |
+            # Extract the architecture from the target triple
+            TARGET_ARCH=$(echo ${{ matrix.platform.target }} | cut -d'-' -f1)
+            
+            # Install appropriate packages based on architecture
+            if [ "$TARGET_ARCH" = "aarch64" ]; then
+              apt-get update
+              apt-get install -y libssl-dev:arm64 protobuf-compiler:arm64 pkg-config:arm64
+            elif [ "$TARGET_ARCH" = "x86_64" ]; then
+              apt-get update
+              apt-get install -y libssl-dev protobuf-compiler pkg-config
+            # Add other architectures as needed
+            else
+              echo "Unsupported architecture: $TARGET_ARCH"
+              exit 1
+            fi
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -58,7 +73,22 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: 2_28
           container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
-          before-script-linux: apt-get update && apt-get install -y protobuf-compiler pkg-config libssl-dev
+          before-script-linux: |
+            # Extract the architecture from the target triple
+            TARGET_ARCH=$(echo ${{ matrix.platform.target }} | cut -d'-' -f1)
+            
+            # Install appropriate packages based on architecture
+            if [ "$TARGET_ARCH" = "aarch64" ]; then
+              apt-get update
+              apt-get install -y libssl-dev:arm64 protobuf-compiler:arm64 pkg-config:arm64
+            elif [ "$TARGET_ARCH" = "x86_64" ]; then
+              apt-get update
+              apt-get install -y libssl-dev protobuf-compiler pkg-config
+            # Add other architectures as needed
+            else
+              echo "Unsupported architecture: $TARGET_ARCH"
+              exit 1
+            fi
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
