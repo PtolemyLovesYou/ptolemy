@@ -64,5 +64,4 @@ workspace = true
 
 [features]
 openssl = ["dep:openssl"]
-protoc-bin-vendored = ["dep:protoc-bin-vendored"]
-vendored = ["openssl", "protoc-bin-vendored"]
+vendored = ["openssl"]
