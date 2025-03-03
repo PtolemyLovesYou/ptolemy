@@ -37,7 +37,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ptolemylovesyou/ptolemy:latest,ptolemylovesyou/ptolemy:${{ steps.get_version.outputs.version }}
+          tags: ghcr.io/ptolemylovesyou/ptolemy:latest,ghcr.io/ptolemylovesyou/ptolemy:${{ steps.get_version.outputs.version }}
           file: api/Dockerfile
   linux:
     runs-on: ${{ matrix.platform.runner }}
