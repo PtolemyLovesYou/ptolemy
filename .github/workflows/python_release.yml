@@ -52,9 +52,7 @@ jobs:
           before-script-linux: |
             apt-get update && 
             apt-get install -y libssl-dev protobuf-compiler pkg-config &&
-            export OPENSSL_DIR=/usr &&
-            export OPENSSL_LIB_DIR=/usr/aarch64-unknown-linux-gnu &&
-            export OPENSSL_INCLUDE_DIR=/usr/include
+            export OPENSSL_DIR=/usr/aarch64-unknown-linux-gnu
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -66,9 +64,7 @@ jobs:
           before-script-linux: |
             apt-get update && 
             apt-get install -y libssl-dev protobuf-compiler pkg-config &&
-            export OPENSSL_DIR=/usr &&
-            export OPENSSL_LIB_DIR=/usr/aarch64-unknown-linux-gnu &&
-            export OPENSSL_INCLUDE_DIR=/usr/include
+            export OPENSSL_DIR=/usr/aarch64-unknown-linux-gnu
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
