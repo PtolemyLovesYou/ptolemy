@@ -1,22 +1,25 @@
 [package]
 name = "ptolemy-client"
-version = "0.1.0-beta.21"
+version = "0.1.0-alpha.22+54ef8bd"
 edition = "2021"
 
 [lib]
 name = "ptolemy_client"
 crate-type = [ "cdylib",]
 
+[features]
+vendored = [ "ptolemy/vendored",]
+
 [dependencies.pyo3]
 version = "0.23.3"
-features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module"]
+features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module",]
 
 [dependencies.pyo3-ffi]
 version = "0.23.3"
 
 [dependencies.openssl]
 version = "0.10.71"
-features = ["vendored"]
+features = [ "vendored",]
 
 [dependencies.uuid]
 workspace = true
@@ -41,6 +44,3 @@ workspace = true
 
 [dependencies.ptolemy]
 path = "../ptolemy"
-
-[features]
-vendored = ["ptolemy/vendored"]
