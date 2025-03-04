@@ -82,7 +82,7 @@ interface CAPIKeyVarProps {
 }
 
 interface CreateAPIKeyFormProps {
-    createUserApiKey: ({ variables }: CAPIKeyVarProps) => void
+    createUserApiKey: ({ variables }: CAPIKeyVarProps) => void,
 }
 
 function CreateAPIKeyForm({ createUserApiKey }: CreateAPIKeyFormProps) {
@@ -91,79 +91,81 @@ function CreateAPIKeyForm({ createUserApiKey }: CreateAPIKeyFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-      const { name, durationDays } = values;
-      createUserApiKey({ variables: { name, durationDays } });
+    const { name, durationDays } = values;
+    createUserApiKey({ variables: { name, durationDays } });
   }
-    return (
+
+  return (
     <Form {...createKeyForm}>
-    <form onSubmit={createKeyForm.handleSubmit(onSubmit)} className='space-y-8'>
-      <FormField
-        control={createKeyForm.control}
-        name='name'
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Name</FormLabel>
-            <FormControl>
-              <Input
-                placeholder='name'
-                autoComplete='off'
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={createKeyForm.control}
-        name='durationDays'
-        render={({ field }) => (
-          <FormItem>
-                <FormLabel>Duration (Days)</FormLabel>
-                <FormControl>
-                <span className="flex gap-2"><Slider
-                    defaultValue={[30]}
-                    max={365}
-                    min={1}
-                    step={1}
-                    className={cn("w-[60%]")}
-                    name={field.name}
-                    onValueChange={(v) => field.onChange(v[0])}
-                    /> {field.value}</span>
-                </FormControl>
-            <FormDescription>
-              When should the API Key expire?
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
+      <form onSubmit={createKeyForm.handleSubmit(onSubmit)} className='space-y-8'>
+        <FormField
+          control={createKeyForm.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='name'
+                  autoComplete='off'
+                  {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={createKeyForm.control}
+          name='durationDays'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Duration (Days)</FormLabel>
+              <FormControl>
+                <span className="flex gap-2"><Slider
+                  defaultValue={[30]}
+                  max={365}
+                  min={1}
+                  step={1}
+                  className={cn("w-[60%]")}
+                  name={field.name}
+                  onValueChange={(v) => field.onChange(v[0])}
+                /> {field.value}</span>
+              </FormControl>
+              <FormDescription>
+                When should the API Key expire?
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
                 <DialogClose>
-                    <Button type='submit'>Create</Button>
+          <Button type='submit'>Create</Button>
                 </DialogClose>
-    </form>
-        </Form>
-    )
+      </form>
+    </Form>
+  )
 }
 
 const Profile: React.FC = () => {
-    const { loading, error, data } = useQuery(GET_USER_PROFILE);
-    const [createUserApiKey, { data: mutData }] = useMutation(CREATE_USER_API_KEY, {
-        refetchQueries: [
-            GET_USER_PROFILE, 'Me'
-    ]})
+  const { loading, error, data } = useQuery(GET_USER_PROFILE);
+  const [createUserApiKey, _data] = useMutation(CREATE_USER_API_KEY, {
+    refetchQueries: [
+      GET_USER_PROFILE, 'Me'
+    ],
+      onCompleted: (data) => {
+          const { user: { createUserApiKey: { apiKey } } } = data;
+          toast.success('API Key created!', { duration: 1000 * 60, description: <pre>{apiKey.apiKey}</pre> })
+      }
+  });
 
-    useEffect(() => {
-        if (mutData?.success) {
-            toast.success("API Key created!", { description: <pre>{mutData.apiKey.apiKey}</pre>})
-        }
-    }, [mutData])
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   const {
     me: { userApiKeys, __typename: _, ...profile },
   } = data;
+
   const mapToInput = ([key, value]: [string, unknown]) => {
     return (
       <div key={key} className='grid max-w-sm gap-1.5'>
@@ -178,6 +180,7 @@ const Profile: React.FC = () => {
       </div>
     );
   };
+
   return (
     <div className='grid gap-5'>
       <h1>Profile</h1>
@@ -188,7 +191,7 @@ const Profile: React.FC = () => {
         <APIKeys apiKeys={userApiKeys} />
       ) : (
         <p>No API Keys available</p>
-      )}
+          )}
       <div>
         <Dialog>
           <DialogTrigger asChild>
