@@ -1,5 +1,3 @@
-import { useQuery, gql } from '@apollo/client';
-import { format } from "date-fns"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -14,50 +12,25 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
-import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const GET_USER_PROFILE = gql`
-  query Me {
-    me {
-      id
-      username
-      displayName
-      isAdmin
-      workspaces {
-        id
-        name
-      }
-      userApiKeys {
-        id
-        name
-        keyPreview
-        expiresAt
-      }
-    }
-  }
-`;
-
-interface UserApiKey {
-  id: string;
-  name: string;
-  keyPreview: string;
-  expiresAt: Date;
-}
-
+import { UserApiKey } from '@/graphql/types';
+import { CREATE_USER_API_KEY, GET_USER_PROFILE } from "@/graphql/queries";
+import { useMutation, useQuery } from "@apollo/client";
+import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner"
+import { useEffect } from 'react';
 interface APIKeysProps {
   apiKeys: UserApiKey[];
 }
@@ -95,20 +68,31 @@ function APIKeys({ apiKeys }: APIKeysProps) {
 const formSchema = z
   .object({
     name: z.string().max(256),
-    expiresAt: z.date(), // TODO - logical date limits
+    durationDays: z.number().int().gte(1).lte(365).default(30),
   })
   .required();
 
 
-function CreateAPIKeyForm() {
+interface CAPIKeyVarProps {
+    variables: {
+        name: string,
+        durationDays: number
+    }
+
+}
+
+interface CreateAPIKeyFormProps {
+    createUserApiKey: ({ variables }: CAPIKeyVarProps) => void
+}
+
+function CreateAPIKeyForm({ createUserApiKey }: CreateAPIKeyFormProps) {
   const createKeyForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { name, expiresAt } = values;
-    alert(`Name: ${name}, Expires: ${expiresAt}`)
+      const { name, durationDays } = values;
+      createUserApiKey({ variables: { name, durationDays } });
   }
     return (
     <Form {...createKeyForm}>
@@ -132,57 +116,48 @@ function CreateAPIKeyForm() {
       />
       <FormField
         control={createKeyForm.control}
-        name='expiresAt'
+        name='durationDays'
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Expires</FormLabel>
-            <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-[240px] pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date()
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+                <FormLabel>Duration (Days)</FormLabel>
+                <FormControl>
+                <span className="flex gap-2"><Slider
+                    defaultValue={[30]}
+                    max={365}
+                    min={1}
+                    step={1}
+                    className={cn("w-[60%]")}
+                    name={field.name}
+                    onValueChange={(v) => field.onChange(v[0])}
+                    /> {field.value}</span>
+                </FormControl>
             <FormDescription>
               When should the API Key expire?
             </FormDescription>
             <FormMessage />
           </FormItem>
         )}
-      />
-      <Button type='submit'>Create</Button>
+                />
+                <DialogClose>
+                    <Button type='submit'>Create</Button>
+                </DialogClose>
     </form>
         </Form>
     )
 }
 
 const Profile: React.FC = () => {
-  const { loading, error, data } = useQuery(GET_USER_PROFILE);
+    const { loading, error, data } = useQuery(GET_USER_PROFILE);
+    const [createUserApiKey, { data: mutData }] = useMutation(CREATE_USER_API_KEY, {
+        refetchQueries: [
+            GET_USER_PROFILE, 'Me'
+    ]})
 
+    useEffect(() => {
+        if (mutData?.success) {
+            toast.success("API Key created!", { description: <pre>{mutData.apiKey.apiKey}</pre>})
+        }
+    }, [mutData])
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
@@ -222,8 +197,8 @@ const Profile: React.FC = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create User API Key</DialogTitle>
-              <DialogDescription>
-                <CreateAPIKeyForm/>
+              <DialogDescription asChild>
+                <CreateAPIKeyForm createUserApiKey={createUserApiKey}/>
               </DialogDescription>
             </DialogHeader>
           </DialogContent>

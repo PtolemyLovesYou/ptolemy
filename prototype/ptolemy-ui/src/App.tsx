@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Events from './pages/Events';
 import { useAuth } from './auth/provider';
 import { ModeToggle } from './components/theme/toggle';
+import { Toaster } from './components/ui/sonner';
 
 function App() {
   const { token } = useAuth();
@@ -39,6 +40,7 @@ function App() {
           <Route path='/profile' element={<Profile />} />
         </Routes>
       </main>
+      <Toaster />
     </>
   );
 }
