@@ -98,8 +98,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .build_server(true)
             .out_dir("src/generated")
             .compile_protos(
-                &["proto/observer.proto", "proto/query_engine.proto"],
-                &["proto/observer", "proto/query_engine"],
+                &["proto/observer.proto", "proto/query_engine.proto", "proto/graphql.proto"],
+                &["proto/observer", "proto/query_engine", "proto/graphql"],
             )?;
     }
 
