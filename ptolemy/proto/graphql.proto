@@ -13,7 +13,7 @@ service GraphQL {
 message GraphQLRequest {
     string query = 1;
     string operation_name = 2;
-    map<string, google.protobuf.Value> variables = 3;
+    optional google.protobuf.Value variables = 3;
 }
 
 message GraphQLResponse {

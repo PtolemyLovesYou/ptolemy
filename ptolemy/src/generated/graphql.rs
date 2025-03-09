@@ -5,11 +5,8 @@ pub struct GraphQlRequest {
     pub query: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub operation_name: ::prost::alloc::string::String,
-    #[prost(map = "string, message", tag = "3")]
-    pub variables: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        ::prost_types::Value,
-    >,
+    #[prost(message, optional, tag = "3")]
+    pub variables: ::core::option::Option<::prost_types::Value>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GraphQlResponse {
