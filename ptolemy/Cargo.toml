@@ -1,6 +1,6 @@
 [package]
 name = "ptolemy"
-version = "0.1.0-alpha.27+43049c1"
+version = "0.1.0-alpha.28+d5cf96e"
 edition = "2021"
 
 [lib]
