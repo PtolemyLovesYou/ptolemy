@@ -17,21 +17,37 @@ workspace ||--o{ user_query : allowed_workspace_ids
 system_event {
     id uuid PK
     workspace_id uuid FK
+    name varchar
+    parameters json
+    version varchar
+    environment varchar
 }
 
 subsystem_event {
     id uuid PK
     system_event_id uuid FK
+    name varchar
+    parameters json
+    version varchar
+    environment varchar
 }
 
 component_event {
     id uuid PK
     system_event_id uuid FK
+    name varchar
+    parameters json
+    version varchar
+    environment varchar
 }
 
 subcomponent_event {
     id uuid PK
     system_event_id uuid FK
+    name varchar
+    parameters json
+    version varchar
+    environment varchar
 }
 
 runtime {
@@ -52,6 +68,13 @@ io {
     subsystem_event_id uuid FK
     component_event_id uuid FK
     subcomponent_event_id uuid FK
+    field_name varchar
+    field_value_str varchar
+    field_value_int int8
+    field_value_float float8
+    field_value_bool bool
+    field_value_json json
+    field_value_type field_value_type
 }
 
 metadata {
