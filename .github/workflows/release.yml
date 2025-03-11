@@ -1,0 +1,101 @@
+name: Auto Tag and Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  create-tag-and-release:
+    # Only run this job if the PR was merged (not just closed) and has one of the specified labels
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.merged == true && 
+      (contains(github.event.pull_request.labels.*.name, 'beta') || 
+       contains(github.event.pull_request.labels.*.name, 'rc') || 
+       contains(github.event.pull_request.labels.*.name, 'patch') || 
+       contains(github.event.pull_request.labels.*.name, 'minor') || 
+       contains(github.event.pull_request.labels.*.name, 'major'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Set up Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get current version from pyproject.toml
+        id: get-version
+        run: |
+          # Extract version from pyproject.toml
+          VERSION=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Current version: ${VERSION}"
+      
+      - name: Determine release type
+        id: determine-release-type
+        run: |
+          # Determine release type based on PR labels
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'beta') }}" == "true" ]]; then
+            echo "RELEASE_TYPE=beta" >> $GITHUB_ENV
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'rc') }}" == "true" ]]; then
+            echo "RELEASE_TYPE=release candidate" >> $GITHUB_ENV
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+          fi
+          
+          # Determine version type based on PR labels
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'major') }}" == "true" ]]; then
+            echo "VERSION_TYPE=major" >> $GITHUB_ENV
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'minor') }}" == "true" ]]; then
+            echo "VERSION_TYPE=minor" >> $GITHUB_ENV
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'patch') }}" == "true" ]]; then
+            echo "VERSION_TYPE=patch" >> $GITHUB_ENV
+          else
+            echo "VERSION_TYPE=patch" >> $GITHUB_ENV
+          fi
+          
+      - name: Create tag
+        run: |
+          git tag -a "v${VERSION}" -m "Version ${VERSION}"
+          git push origin "v${VERSION}"
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Version ${{ env.VERSION }}
+          body: |
+            This is a ${{ env.RELEASE_TYPE }} ${{ env.VERSION_TYPE }} release.
+            
+            Changes included in this release:
+            ${{ github.event.pull_request.title }}
+            
+            ${{ github.event.pull_request.body }}
+
+            ✨ This release was automatically generated ✨
+
+            Ptolemy loves you! <3
+            
+            ![version bump](https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjJmOXBxbGh2Z3BiYXM1NnJhMHdtbmNoaTFxN2xjOGZjZnd1ZGhuMiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjI53nBYOOEQgDcY/giphy.gif)
+          prerelease: ${{ env.PRERELEASE }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
