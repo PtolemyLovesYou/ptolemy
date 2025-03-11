@@ -1,5 +1,5 @@
 use crate::{
-    graphql::{state::JuniperAppState, Mutation, Query},
+    graphql::{state::GraphQLAppState, Mutation, Query},
     models::middleware::AuthContext,
     state::ApiAppState,
 };
@@ -31,7 +31,7 @@ pub async fn graphql_handler(
         "operation_name": req.operation_name,
     }));
 
-    let state_clone = JuniperAppState {
+    let state_clone = GraphQLAppState {
         state: state.clone(),
         query_metadata,
         auth_context,

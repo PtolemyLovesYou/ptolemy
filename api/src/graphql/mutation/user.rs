@@ -3,9 +3,9 @@ use crate::{
     crud::prelude::*,
     crypto::generate_api_key,
     graphql::{
-        executor::JuniperExecutor,
+        executor::GraphQLExecutor,
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
-        state::JuniperAppState,
+        state::GraphQLAppState,
     },
     models::{prelude::HasId, User, UserApiKey, UserApiKeyCreate, UserCreate},
     unchecked_executor,
@@ -30,7 +30,7 @@ pub struct UserMutation;
 #[Object]
 impl UserMutation {
     async fn create<'ctx>(&self, ctx: &Context<'ctx>, user_data: UserInput) -> UserResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
 
         let user_create = UserCreate {
             username: user_data.username,
@@ -43,7 +43,7 @@ impl UserMutation {
             is_admin: user_data.is_admin,
         };
 
-        JuniperExecutor::from_juniper_app_state(state, "create", |ctx| async move {
+        GraphQLExecutor::from_graphql_app_state(state, "create", |ctx| async move {
             Ok(ctx
                 .auth_context
                 .can_create_delete_user(user_data.is_admin, user_data.is_sysadmin))
@@ -54,9 +54,9 @@ impl UserMutation {
     }
 
     async fn delete<'ctx>(&self, ctx: &Context<'ctx>, id: Uuid) -> DeletionResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
 
-        JuniperExecutor::from_juniper_app_state(state, "delete", |ctx| async move {
+        GraphQLExecutor::from_graphql_app_state(state, "delete", |ctx| async move {
             let mut conn = ctx.state.get_conn().await?;
             let user_to_delete = User::get_by_id(&mut conn, &id).await?;
             Ok(ctx
@@ -75,7 +75,7 @@ impl UserMutation {
         name: String,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
         let api_key = generate_api_key(USER_API_KEY_PREFIX).await;
         let key_preview = api_key.chars().take(12).collect();
         let key_hash = state.state.password_handler.hash_password(&api_key);
@@ -100,7 +100,7 @@ impl UserMutation {
     }
 
     async fn delete_user_api_key<'ctx>(&self, ctx: &Context<'ctx>, api_key_id: Uuid) -> DeletionResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
         unchecked_executor!(state, "delete_user_api_key")
             .delete::<UserApiKey>(&api_key_id)
             .await

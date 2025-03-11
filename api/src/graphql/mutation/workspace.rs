@@ -2,12 +2,12 @@ use crate::{
     consts::SERVICE_API_KEY_PREFIX,
     crypto::generate_api_key,
     graphql::{
-        executor::JuniperExecutor,
+        executor::GraphQLExecutor,
         mutation::result::{
             CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, WorkspaceResult,
             WorkspaceUserResult,
         },
-        state::JuniperAppState,
+        state::GraphQLAppState,
     },
     models::{
         prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace,
@@ -36,8 +36,8 @@ impl WorkspaceMutation {
         admin_user_id: Option<Uuid>,
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
-        let workspace = JuniperExecutor::from_juniper_app_state(state, "create", |ctx| async move {
+        let state = ctx.data::<GraphQLAppState>().unwrap();
+        let workspace = GraphQLExecutor::from_graphql_app_state(state, "create", |ctx| async move {
             Ok(ctx.auth_context.can_create_delete_workspace())
         })
         .create(&workspace_data)
@@ -63,8 +63,8 @@ impl WorkspaceMutation {
     }
 
     async fn delete<'ctx>(&self, ctx: &Context<'ctx>, workspace_id: Uuid) -> DeletionResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
-        JuniperExecutor::from_juniper_app_state(state, "delete", |ctx| async move {
+        let state = ctx.data::<GraphQLAppState>().unwrap();
+        GraphQLExecutor::from_graphql_app_state(state, "delete", |ctx| async move {
             Ok(ctx.auth_context.can_create_delete_workspace())
         })
         .delete::<Workspace>(&workspace_id)
@@ -78,10 +78,10 @@ impl WorkspaceMutation {
         ctx: &Context<'ctx>,
         workspace_user: WorkspaceUserCreateInput,
     ) -> WorkspaceUserResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
         let workspace_id = workspace_user.workspace_id;
 
-        JuniperExecutor::from_juniper_app_state(state, "add_user", |ctx| async move {
+        GraphQLExecutor::from_graphql_app_state(state, "add_user", |ctx| async move {
             Ok(ctx
                 .auth_context
                 .can_add_remove_update_user_to_workspace(workspace_id))
@@ -101,8 +101,8 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         user_id: Uuid,
     ) -> DeletionResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
-        JuniperExecutor::from_juniper_app_state(state, "remove_user", |ctx| async move {
+        let state = ctx.data::<GraphQLAppState>().unwrap();
+        GraphQLExecutor::from_graphql_app_state(state, "remove_user", |ctx| async move {
             Ok(ctx
                 .auth_context
                 .can_add_remove_update_user_to_workspace(workspace_id))
@@ -120,9 +120,9 @@ impl WorkspaceMutation {
         user_id: Uuid,
         new_role: WorkspaceRoleEnum,
     ) -> WorkspaceUserResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
 
-        JuniperExecutor::from_juniper_app_state(
+        GraphQLExecutor::from_graphql_app_state(
             state,
             "change_workspace_user_role",
             |ctx| async move {
@@ -149,7 +149,7 @@ impl WorkspaceMutation {
         permission: ApiKeyPermissionEnum,
         duration_days: Option<i32>,
     ) -> CreateApiKeyResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
 
         let api_key = generate_api_key(SERVICE_API_KEY_PREFIX).await;
 
@@ -164,7 +164,7 @@ impl WorkspaceMutation {
                 .map(|d| chrono::Utc::now() + chrono::Duration::days(d as i64)),
         };
 
-        JuniperExecutor::from_juniper_app_state(state, "create_service_api_key", |ctx| async move {
+        GraphQLExecutor::from_graphql_app_state(state, "create_service_api_key", |ctx| async move {
             Ok(ctx
                 .auth_context
                 .can_create_delete_service_api_key(workspace_id))
@@ -184,9 +184,9 @@ impl WorkspaceMutation {
         workspace_id: Uuid,
         api_key_id: Uuid,
     ) -> DeletionResult {
-        let state = ctx.data::<JuniperAppState>().unwrap();
+        let state = ctx.data::<GraphQLAppState>().unwrap();
 
-        JuniperExecutor::from_juniper_app_state(state, "delete_service_api_key", |ctx| async move {
+        GraphQLExecutor::from_graphql_app_state(state, "delete_service_api_key", |ctx| async move {
             Ok(ctx
                 .auth_context
                 .can_create_delete_service_api_key(workspace_id))

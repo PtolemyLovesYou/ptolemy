@@ -1,4 +1,4 @@
-use super::{executor::JuniperExecutor, state::JuniperAppState};
+use super::{executor::GraphQLExecutor, state::GraphQLAppState};
 use crate::{
     crud::prelude::GetObjById as _,
     models::{User, Workspace},
@@ -23,8 +23,8 @@ impl Query {
         id: Option<Uuid>,
         username: Option<String>,
     ) -> GraphQlResult<Vec<User>> {
-        let state = ctx.data::<JuniperAppState>()?;
-        JuniperExecutor::from_juniper_app_state(state, "user", |_| async move { Ok(true) })
+        let state = ctx.data::<GraphQLAppState>()?;
+        GraphQLExecutor::from_graphql_app_state(state, "user", |_| async move { Ok(true) })
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
                 User::search_users(&mut conn, id, username, None).await
@@ -40,8 +40,8 @@ impl Query {
         name: Option<String>,
         archived: Option<bool>,
     ) -> GraphQlResult<Vec<Workspace>> {
-        let state = ctx.data::<JuniperAppState>()?;
-        JuniperExecutor::from_juniper_app_state(state, "workspace", |_| async move { Ok(true) })
+        let state = ctx.data::<GraphQLAppState>()?;
+        GraphQLExecutor::from_graphql_app_state(state, "workspace", |_| async move { Ok(true) })
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
                 Workspace::search_workspaces(&mut conn, id, name, archived).await
@@ -51,8 +51,8 @@ impl Query {
     }
 
     async fn me<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<User> {
-        let state = ctx.data::<JuniperAppState>()?;
-        JuniperExecutor::from_juniper_app_state(state, "me", |_| async move { Ok(true) })
+        let state = ctx.data::<GraphQLAppState>()?;
+        GraphQLExecutor::from_graphql_app_state(state, "me", |_| async move { Ok(true) })
             .read(async move {
                 let mut conn = state.state.get_conn().await?;
                 User::get_by_id(&mut conn, &state.auth_context.user()?.id.into()).await

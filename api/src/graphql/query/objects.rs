@@ -1,6 +1,6 @@
 use crate::{
     crud::prelude::GetObjById as _,
-    graphql::{executor::JuniperExecutor, state::JuniperAppState},
+    graphql::{executor::GraphQLExecutor, state::GraphQLAppState},
     models::{
         ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum, Workspace,
         WorkspaceRoleEnum, WorkspaceUser,
@@ -43,7 +43,7 @@ impl Workspace {
         user_id: Option<Uuid>,
         username: Option<String>,
     ) -> GraphQlResult<Vec<WorkspaceUser>> {
-        let state = ctx.data::<JuniperAppState>()?;
+        let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "workspace_user")
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
@@ -57,7 +57,7 @@ impl Workspace {
         &self,
         ctx: &Context<'ctx>,
     ) -> GraphQlResult<Vec<ServiceApiKey>> {
-        let state = ctx.data::<JuniperAppState>()?;
+        let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "service_api_key")
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
@@ -100,7 +100,7 @@ impl User {
         workspace_id: Option<Uuid>,
         workspace_name: Option<String>,
     ) -> GraphQlResult<Vec<Workspace>> {
-        let state = ctx.data::<JuniperAppState>()?;
+        let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "workspace")
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
@@ -112,7 +112,7 @@ impl User {
     }
 
     async fn user_api_keys<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<Vec<UserApiKey>> {
-        let state = ctx.data::<JuniperAppState>()?;
+        let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "user_api_key")
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
@@ -180,7 +180,7 @@ impl WorkspaceUser {
     }
 
     async fn user<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<User> {
-        let state = ctx.data::<JuniperAppState>()?;
+        let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "user")
             .read(async move {
                 let mut conn = state.state.get_conn().await?;
@@ -191,7 +191,7 @@ impl WorkspaceUser {
     }
 
     async fn workspace<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<Workspace> {
-        let state = ctx.data::<JuniperAppState>()?;
+        let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "workspace")
             .read(async move {
                 let mut conn = state.state.get_conn().await?;
