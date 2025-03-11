@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   create-tag-and-release:
-    # Only run this job on merged PRs with specific labels or manual workflow dispatch
+    # Only run this job on merged PRs with specific labels
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true && 
@@ -61,8 +61,8 @@ jobs:
       
       - name: Determine release type
         id: determine-release-type
-        # Skip this step if we're triggered by a tag push
-        if: ${{ github.event_name != 'push' }}
+        # Only run this for PR merge events
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
           # Determine release type based on PR labels
           if [[ "${{ contains(github.event.pull_request.labels.*.name, 'beta') }}" == "true" ]]; then
@@ -88,14 +88,16 @@ jobs:
           fi
           
       - name: Create tag
-        # Only create tag if this is a PR close, not if we're already triggered by a tag
-        if: ${{ github.event_name != 'push' }}
+        # Only create tag if this is a PR close, not if we're already triggered by a tag or workflow_dispatch
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
-          git tag -a "v${VERSION}" -m "Version ${VERSION}"
-          git push origin "v${VERSION}"
-          
-      # Instead of creating an empty release, we'll just push the tag
-      # The actual release with assets will be created after the build is complete
+          # Check if tag already exists
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "Tag v${VERSION} already exists, skipping tag creation"
+          else
+            git tag -a "v${VERSION}" -m "Version ${VERSION}"
+            git push origin "v${VERSION}"
+          fi
 
   # The following jobs will run when a tag is pushed (either manually or from the above job)
   docker:
