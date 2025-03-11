@@ -6,7 +6,7 @@ use crate::{
 };
 use axum::{
     middleware::from_fn_with_state,
-    routing::{get, on, MethodFilter},
+    routing::{on, MethodFilter},
     Router,
 };
 use http::{
@@ -14,23 +14,18 @@ use http::{
     Method,
     HeaderName,
 };
-use juniper_axum::graphiql;
 use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth;
 pub mod graphql;
 
 macro_rules! graphql_router {
-    ($state:expr, $enable_graphiql:expr) => {
+    ($state:expr) => {
         async {
-            let mut router = Router::new().route(
+            let router = Router::new().route(
                 "/",
                 on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
             );
-
-            if $enable_graphiql {
-                router = router.route("/graphiql", get(graphiql("/graphql", None)))
-            }
 
             router.with_state($state.clone())
         }
@@ -41,7 +36,7 @@ pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
         .nest(
             "/graphql",
-            graphql_router!(state, state.enable_graphiql).await,
+            graphql_router!(state).await,
         )
         // .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
         .with_state(state.clone())
@@ -51,7 +46,7 @@ pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
         .nest(
             "/graphql",
-            graphql_router!(state, state.enable_graphiql).await,
+            graphql_router!(state).await,
         )
         .with_state(state.clone())
 }

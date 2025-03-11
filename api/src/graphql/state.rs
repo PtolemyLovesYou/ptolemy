@@ -11,8 +11,6 @@ pub struct GraphQLAppState {
     pub auth_context: AuthContext,
 }
 
-impl juniper::Context for GraphQLAppState {}
-
 impl State for GraphQLAppState {
     fn state(&self) -> ApiAppState {
         self.state.clone()
