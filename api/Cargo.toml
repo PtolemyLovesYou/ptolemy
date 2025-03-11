@@ -16,6 +16,7 @@ version = "0.1.0-beta.28"
 edition = "2021"
 
 [dependencies]
+async-graphql = { version = "7.0.15", features = ["uuid", "chrono"] }
 http = "1.2.0"
 r2d2 = "0.8.10"
 tokio-stream = "0.1.17"
@@ -37,12 +38,6 @@ workspace = true
 workspace = true
 
 [dependencies.hyper]
-workspace = true
-
-[dependencies.juniper]
-workspace = true
-
-[dependencies.juniper_axum]
 workspace = true
 
 [dependencies.serde]

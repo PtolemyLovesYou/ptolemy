@@ -14,7 +14,6 @@ pub fn get_env_var(name: &str) -> Result<String, ServerError> {
 pub struct ApiConfig {
     pub port: String,
     pub enable_prometheus: bool,
-    pub enable_graphql: bool,
     pub ptolemy_env: String,
     pub jwt_secret: String,
     pub postgres: PostgresConfig,
@@ -27,9 +26,6 @@ impl ApiConfig {
         Ok(ApiConfig {
             port: get_env_var("API_PORT")?,
             enable_prometheus: std::env::var("ENABLE_PROMETHEUS")
-                .map(|v| v.to_lowercase() == "true")
-                .unwrap_or(false),
-            enable_graphql: std::env::var("PTOLEMY_ENABLE_GRAPHQL")
                 .map(|v| v.to_lowercase() == "true")
                 .unwrap_or(false),
             ptolemy_env: get_env_var("PTOLEMY_ENV")?,

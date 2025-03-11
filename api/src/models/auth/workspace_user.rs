@@ -5,18 +5,29 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(
-    Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations, Identifiable,
+    Debug,
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Associations,
+    Identifiable,
+    async_graphql::SimpleObject,
 )]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::workspace_user)]
 #[diesel(primary_key(user_id, workspace_id))]
+#[graphql(complex)]
 pub struct WorkspaceUser {
     pub id: Uuid,
     pub user_id: Uuid,
     pub workspace_id: Uuid,
     pub role: WorkspaceRoleEnum,
+    #[graphql(skip)]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deletion_reason: Option<String>,
 }
 

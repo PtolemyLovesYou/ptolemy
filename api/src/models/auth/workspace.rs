@@ -1,12 +1,15 @@
+use async_graphql::{InputObject, SimpleObject};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
+#[derive(
+    Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq, SimpleObject,
+)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
+#[graphql(complex)]
 pub struct Workspace {
     pub id: Uuid,
     pub name: String,
@@ -14,7 +17,9 @@ pub struct Workspace {
     pub archived: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    #[graphql(skip)]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deletion_reason: Option<String>,
 }
 
@@ -33,7 +38,7 @@ impl From<Workspace> for ptolemy::models::Workspace {
     }
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
+#[derive(Debug, Insertable, Serialize, Deserialize, InputObject)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 pub struct WorkspaceCreate {
     name: String,

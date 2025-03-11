@@ -30,8 +30,6 @@ chrono = { version = "0.4.39", features=["serde"] }
 diesel = { version = "2.2.6", features = ["postgres", "chrono", "uuid", "serde_json", "ipnet-address"] }
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
 hyper = "1.5.1"
-juniper = { version = "0.16.1", features = ["chrono", "uuid", "schema-language"] }
-juniper_axum = "0.1.1"
 time = "0.3.37"
 tracing = "0.1.41"
 tracing-subscriber = {version = "0.3.19", features = ["fmt", "env-filter"] }

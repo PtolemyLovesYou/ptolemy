@@ -1,23 +1,15 @@
 pub use self::mutation::Mutation;
 pub use self::query::Query;
-use juniper::{EmptySubscription, RootNode};
 
 mod executor;
 pub mod mutation;
 pub mod query;
 pub mod state;
-mod prelude {
-    impl<S: juniper::ScalarValue> juniper::IntoFieldError<S> for crate::error::ApiError {
-        fn into_field_error(self) -> juniper::FieldError<S> {
-            juniper::FieldError::new(
-                format!("{:?}", &self),
-                juniper::graphql_value!({
-                    "code": self.category()
-                }),
-            )
-        }
-    }
-}
 
-pub type Schema =
-    RootNode<'static, Query, Mutation, EmptySubscription<self::state::JuniperAppState>>;
+pub type GraphQL = async_graphql::Schema<Query, Mutation, async_graphql::EmptySubscription>;
+
+pub fn get_graphql_schema() -> GraphQL {
+    async_graphql::Schema::build(Query, Mutation, async_graphql::EmptySubscription)
+        .register_output_type::<crate::graphql::mutation::result::GQLResultInterface>()
+        .finish()
+}

@@ -1,7 +1,7 @@
 use crate::models::{ApiKeyPermissionEnum, Workspace};
+use async_graphql::InputObject;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -15,6 +15,7 @@ use uuid::Uuid;
     Identifiable,
     PartialEq,
     Associations,
+    async_graphql::SimpleObject,
 )]
 #[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::service_api_key)]
@@ -23,11 +24,14 @@ pub struct ServiceApiKey {
     pub workspace_id: Uuid,
     pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
+    #[graphql(skip)]
     pub key_hash: String,
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deletion_reason: Option<String>,
 }
 
@@ -46,7 +50,7 @@ impl From<ServiceApiKey> for ptolemy::models::ServiceApiKey {
     }
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
+#[derive(Debug, Insertable, Serialize, Deserialize, InputObject)]
 #[diesel(table_name = crate::generated::auth_schema::service_api_key)]
 pub struct ServiceApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]

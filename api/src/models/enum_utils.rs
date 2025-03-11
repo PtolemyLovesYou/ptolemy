@@ -2,7 +2,7 @@
 macro_rules! define_enum {
     ($name:ident, $type:tt, [$($variant:ident),+]) => {
         #[derive(
-            Clone, Debug, PartialEq, diesel::FromSqlRow, diesel::AsExpression, Eq, juniper::GraphQLEnum,
+            Copy, Clone, Debug, PartialEq, diesel::FromSqlRow, diesel::AsExpression, Eq, async_graphql::Enum,
         )]
         #[diesel(sql_type = $type)]
         pub enum $name {

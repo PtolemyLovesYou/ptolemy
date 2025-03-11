@@ -2,6 +2,7 @@
 
 import os
 import time
+import logging
 from typing import Generator
 import requests
 import pytest
@@ -67,6 +68,8 @@ class IntegrationTestBase:
                 "Content-Type": "application/json",
             },
         )
+        
+        logging.error(resp.json())
 
         assert resp.status_code == 200, f"Error: {resp.text}"
 

@@ -1,4 +1,4 @@
-query UserApiKeys($userId: Uuid) {
+query UserApiKeys($userId: UUID) {
   user(id: $userId) {
     userApiKeys {
       expiresAt
@@ -10,7 +10,7 @@ query UserApiKeys($userId: Uuid) {
   }
 }
 
-query UserWorkspaces($userId: Uuid, $username: String) {
+query UserWorkspaces($userId: UUID, $username: String) {
   user(id: $userId, username: $username) {
     workspaces {
       ...ReturnsWorkspace
@@ -21,24 +21,24 @@ query UserWorkspaces($userId: Uuid, $username: String) {
   }
 }
 
-query SearchUsers($username: String, $userId: Uuid) {
+query SearchUsers($username: String, $userId: UUID) {
   user(username: $username, id: $userId) {
     ...ReturnsUser
   }
 }
 
-query WorkspaceUsers($workspaceId: Uuid, $workspaceName: String, $userId: Uuid, $username: String) {
+query WorkspaceUsers($workspaceId: UUID, $workspaceName: String, $userId: UUID, $username: String) {
   workspace(id: $workspaceId, name: $workspaceName) {
-    users {
+    users(id: $userId, username: $username) {
       role
-      user(id: $userId, username: $username) {
+      user {
         ...ReturnsUser
       }
     }
   }
 }
 
-query WorkspaceServiceApiKeys($workspaceId: Uuid) {
+query WorkspaceServiceApiKeys($workspaceId: UUID) {
   workspace(id: $workspaceId) {
     serviceApiKeys {
       id

@@ -6,53 +6,41 @@ use crate::{
 };
 use axum::{
     middleware::from_fn_with_state,
-    routing::{get, on, MethodFilter},
+    routing::{on, MethodFilter},
     Router,
+    Extension,
 };
 use http::{
     header::{AUTHORIZATION, CONTENT_TYPE},
-    Method,
-    HeaderName,
+    HeaderName, Method,
 };
-use juniper_axum::graphiql;
 use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth;
 pub mod graphql;
 
 macro_rules! graphql_router {
-    ($state:expr, $enable_graphiql:expr) => {
+    ($state:expr) => {
         async {
-            let mut router = Router::new().route(
+            let router = Router::new().route(
                 "/",
                 on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
             );
 
-            if $enable_graphiql {
-                router = router.route("/graphiql", get(graphiql("/graphql", None)))
-            }
-
-            router.with_state($state.clone())
+            router.layer(Extension(crate::graphql::get_graphql_schema())).with_state($state.clone())
         }
     };
 }
 
 pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
-        .nest(
-            "/graphql",
-            graphql_router!(state, state.enable_graphiql).await,
-        )
-        // .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
+        .nest("/graphql", graphql_router!(state).await)
         .with_state(state.clone())
 }
 
 pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
-        .nest(
-            "/graphql",
-            graphql_router!(state, state.enable_graphiql).await,
-        )
+        .nest("/graphql", graphql_router!(state).await)
         .with_state(state.clone())
 }
 
@@ -64,7 +52,14 @@ pub async fn get_router(state: &ApiAppState) -> Router {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_origin(Any)
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION, api_key, grpc_web, grpc_accept, grpc_encoding]);
+        .allow_headers([
+            CONTENT_TYPE,
+            AUTHORIZATION,
+            api_key,
+            grpc_web,
+            grpc_accept,
+            grpc_encoding,
+        ]);
 
     let http_router = Router::new()
         .route("/auth", axum::routing::post(self::auth::login))
