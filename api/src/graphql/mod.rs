@@ -11,5 +11,9 @@ macro_rules! graphql_schema {
     () => {
         async_graphql::Schema::build($crate::graphql::Query, $crate::graphql::Mutation, async_graphql::EmptySubscription)
             .register_output_type::<$crate::graphql::mutation::result::GQLResultInterface>()
+    };
+
+    ($data:ident) => {
+        $crate::graphql_schema!().data($data)
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    graphql::{state::GraphQLAppState, Mutation, Query},
+    graphql::state::GraphQLAppState,
     models::middleware::AuthContext,
     state::ApiAppState,
 };
@@ -43,8 +43,7 @@ pub async fn graphql_handler(
         auth_context,
     };
 
-    let schema = async_graphql::Schema::build(Query, Mutation, async_graphql::EmptySubscription)
-        .data(state_clone)
+    let schema = crate::graphql_schema!(state_clone)
         .finish();
 
     let mut gql_request = async_graphql::Request::new(req.query);
