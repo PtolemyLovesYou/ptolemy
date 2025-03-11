@@ -8,6 +8,7 @@ use axum::{
     middleware::from_fn_with_state,
     routing::{on, MethodFilter},
     Router,
+    Extension,
 };
 use http::{
     header::{AUTHORIZATION, CONTENT_TYPE},
@@ -19,28 +20,30 @@ pub mod auth;
 pub mod graphql;
 
 macro_rules! graphql_router {
-    ($state:expr) => {
+    ($state:expr, $schema:ident) => {
         async {
             let router = Router::new().route(
                 "/",
                 on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
             );
 
-            router.with_state($state.clone())
+            router.layer(Extension($schema)).with_state($state.clone())
         }
     };
 }
 
 pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
+    let schema = crate::graphql_schema!().finish();
     Router::new()
-        .nest("/graphql", graphql_router!(state).await)
+        .nest("/graphql", graphql_router!(state, schema).await)
         // .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
         .with_state(state.clone())
 }
 
 pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
+    let schema = crate::graphql_schema!().finish();
     Router::new()
-        .nest("/graphql", graphql_router!(state).await)
+        .nest("/graphql", graphql_router!(state, schema).await)
         .with_state(state.clone())
 }
 

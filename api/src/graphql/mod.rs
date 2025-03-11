@@ -17,3 +17,5 @@ macro_rules! graphql_schema {
         $crate::graphql_schema!().data($data)
     }
 }
+
+pub type GraphQL = async_graphql::Schema<Query, Mutation, async_graphql::EmptySubscription>;
