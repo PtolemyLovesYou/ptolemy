@@ -20,11 +20,14 @@ use uuid::Uuid;
 const BYTES_TO_DF_FN_STR: &'static CStr = c_str!(
     r###"
 import pandas as pd
+import pyarrow as pa
 from io import BytesIO
 
 def bytes_to_df(by: bytes):
     buf = BytesIO(by)
-    return pd.read_feather(buf)
+    reader = pa.ipc.open_stream(buf)
+    table = reader.read_all()
+    return table.to_pandas()
 "###
 );
 static BYTES_TO_DF_FN: GILOnceCell<PyObject> = GILOnceCell::new();
