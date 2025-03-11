@@ -26,7 +26,6 @@ pub struct ServiceApiKey {
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
     #[graphql(skip)]
     pub key_hash: String,
-    #[graphql(skip)]
     pub key_preview: String,
     pub permissions: ApiKeyPermissionEnum,
     pub expires_at: Option<DateTime<Utc>>,

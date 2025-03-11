@@ -19,6 +19,7 @@ use uuid::Uuid;
 #[diesel(belongs_to(Workspace))]
 #[diesel(table_name = crate::generated::auth_schema::workspace_user)]
 #[diesel(primary_key(user_id, workspace_id))]
+#[graphql(complex)]
 pub struct WorkspaceUser {
     pub id: Uuid,
     pub user_id: Uuid,

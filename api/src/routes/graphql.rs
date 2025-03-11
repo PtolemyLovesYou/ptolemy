@@ -10,12 +10,15 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GraphQLRequest {
     query: String,
     operation_name: Option<String>,
+    variables: Option<async_graphql::Variables>,
 }
 
 #[derive(Serialize)]
+#[serde(transparent)]
 pub struct GraphQLResponse(pub async_graphql::Response);
 
 impl axum::response::IntoResponse for GraphQLResponse {
@@ -48,6 +51,10 @@ pub async fn graphql_handler(
 
     if let Some(operation_name) = req.operation_name {
         gql_request = gql_request.operation_name(operation_name);
+    }
+
+    if let Some(variables) = req.variables {
+        gql_request = gql_request.variables(variables);
     }
 
     // gql_request = gql_request.data(state_clone);

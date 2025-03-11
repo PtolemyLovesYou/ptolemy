@@ -71,8 +71,8 @@ type User {
 	username: String!
 	displayName: String
 	status: UserStatusEnum!
-	isAdmin: Boolean!
 	isSysadmin: Boolean!
+	isAdmin: Boolean!
 	workspaces(workspaceId: UUID, workspaceName: String): [Workspace!]!
 	userApiKeys: [UserApiKey!]!
 }
@@ -123,7 +123,7 @@ type Workspace {
 	archived: Boolean!
 	createdAt: DateTime!
 	updatedAt: DateTime!
-	users(userId: UUID, username: String): [WorkspaceUser!]!
+	users(id: UUID, username: String): [WorkspaceUser!]!
 	serviceApiKeys: [ServiceApiKey!]!
 }
 
@@ -155,6 +155,9 @@ enum WorkspaceRoleEnum {
 }
 
 type WorkspaceUser {
+	id: UUID!
+	userId: UUID!
+	workspaceId: UUID!
 	role: WorkspaceRoleEnum!
 	user: User!
 	workspace: Workspace!

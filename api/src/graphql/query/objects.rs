@@ -12,14 +12,14 @@ impl Workspace {
     async fn users<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        user_id: Option<Uuid>,
+        id: Option<Uuid>,
         username: Option<String>,
     ) -> GraphQlResult<Vec<WorkspaceUser>> {
         let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "workspace_user")
             .read_many(async move {
                 let mut conn = state.state.get_conn().await?;
-                self.get_workspace_users(&mut conn, user_id, username).await
+                self.get_workspace_users(&mut conn, id, username).await
             })
             .await
             .map_err(|e| e.into())
