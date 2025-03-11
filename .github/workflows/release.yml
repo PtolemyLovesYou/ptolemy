@@ -280,7 +280,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: 'wheels-*/*'
+          subject-path: 'artifacts/wheels-*/*'
 
       # If this was triggered by a tag, upload artifacts to the GitHub release
       - name: Create GitHub Release with artifacts
@@ -307,4 +307,4 @@ jobs:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
-          args: --non-interactive --skip-existing wheels-*/*
+          args: --non-interactive --skip-existing artifacts/wheels-*/*
