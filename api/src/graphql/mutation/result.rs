@@ -2,8 +2,23 @@ use crate::{
     error::ApiError,
     models::{ServiceApiKey, User, Workspace, WorkspaceUser},
 };
-use async_graphql::{Object, SimpleObject};
+use async_graphql::{Object, SimpleObject, Interface};
 use uuid::Uuid;
+
+#[derive(Interface)]
+#[graphql(
+    name = "GQLResult",
+    field(name = "success", ty = "bool"),
+    field(name = "error", ty = "Option<&[ValidationError]>")
+)]
+pub enum GQLResultInterface {
+    DeletionResult(DeletionResult),
+    UserResult(UserResult),
+    WorkspaceResult(WorkspaceResult),
+    WorkspaceUserResult(WorkspaceUserResult),
+    CreateApiKeyResult(CreateApiKeyResult),
+    ServiceApiKeyResult(ServiceApiKeyResult),
+}
 
 pub trait GQLResult {
     fn success(&self) -> bool;

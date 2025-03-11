@@ -10,7 +10,7 @@ type CreateApiKeyResponse {
 	id: UUID!
 }
 
-type CreateApiKeyResult {
+type CreateApiKeyResult implements GQLResult {
 	success: Boolean!
 	apiKey: CreateApiKeyResponse
 	error: [ValidationError!]
@@ -23,12 +23,17 @@ The input/output is a string in RFC3339 format.
 """
 scalar DateTime
 
-type DeletionResult {
+type DeletionResult implements GQLResult {
 	success: Boolean!
 	deleted: Boolean
 	error: [ValidationError!]
 }
 
+
+interface GQLResult {
+	success: Boolean!
+	error: [ValidationError!]
+}
 
 
 
@@ -51,6 +56,12 @@ type ServiceApiKey {
 	keyPreview: String!
 	permissions: ApiKeyPermissionEnum!
 	expiresAt: DateTime
+}
+
+type ServiceApiKeyResult implements GQLResult {
+	success: Boolean!
+	serviceApiKey: ServiceApiKey
+	error: [ValidationError!]
 }
 
 
@@ -100,7 +111,7 @@ type UserMutation {
 	deleteUserApiKey(apiKeyId: UUID!): DeletionResult!
 }
 
-type UserResult {
+type UserResult implements GQLResult {
 	success: Boolean!
 	user: User
 	error: [ValidationError!]
@@ -142,7 +153,7 @@ type WorkspaceMutation {
 	deleteServiceApiKey(workspaceId: UUID!, apiKeyId: UUID!): DeletionResult!
 }
 
-type WorkspaceResult {
+type WorkspaceResult implements GQLResult {
 	success: Boolean!
 	workspace: Workspace
 	error: [ValidationError!]
@@ -169,7 +180,7 @@ input WorkspaceUserCreateInput {
 	role: WorkspaceRoleEnum!
 }
 
-type WorkspaceUserResult {
+type WorkspaceUserResult implements GQLResult {
 	success: Boolean!
 	workspaceUser: WorkspaceUser
 	error: [ValidationError!]

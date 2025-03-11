@@ -118,7 +118,11 @@ pub const MUTATION: &'static str = r###"mutation CreateUserApiKey($name: String!
       apiKey {
         apiKey
       }
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -128,7 +132,11 @@ mutation CreateUser($username: String!, $password: String!, $isAdmin: Boolean!, 
     create(
       userData: {username: $username, password: $password, isSysadmin: false, isAdmin: $isAdmin, displayName: $displayName}
     ) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
       user {
         ...ReturnsUser
       }
@@ -139,7 +147,11 @@ mutation CreateUser($username: String!, $password: String!, $isAdmin: Boolean!, 
 mutation DeleteUserApiKey($apiKeyId: UUID!) {
   user {
     deleteUserApiKey(apiKeyId: $apiKeyId) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -147,7 +159,11 @@ mutation DeleteUserApiKey($apiKeyId: UUID!) {
 mutation DeleteUser($userId: UUID!) {
   user {
     delete(id: $userId) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -157,7 +173,11 @@ mutation AddUserToWorkspace($userId: UUID!, $workspaceId: UUID!, $role: Workspac
     addUser(
       workspaceUser: {userId: $userId, workspaceId: $workspaceId, role: $role}
     ) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -169,7 +189,11 @@ mutation ChangeWorkspaceUserRole($role: WorkspaceRoleEnum!, $userId: UUID!, $wor
       userId: $userId
       workspaceId: $workspaceId
     ) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -182,7 +206,11 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
       workspaceId: $workspaceId
       durationDays: $durationDays
     ) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
       apiKey {
         apiKey
       }
@@ -193,7 +221,11 @@ mutation CreateServiceApiKey($name: String!, $permission: ApiKeyPermissionEnum!,
 mutation DeleteServiceApiKey($apiKeyId: UUID!, $workspaceId: UUID!) {
   workspace {
     deleteServiceApiKey(apiKeyId: $apiKeyId, workspaceId: $workspaceId) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -204,7 +236,11 @@ mutation CreateWorkspace($name: String!, $description: String, $adminUserId: UUI
       workspaceData: {name: $name, description: $description}
       adminUserId: $adminUserId
     ) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
       workspace {
         ...ReturnsWorkspace
       }
@@ -215,7 +251,11 @@ mutation CreateWorkspace($name: String!, $description: String, $adminUserId: UUI
 mutation RemoveUserFromWorkspace($userId: UUID!, $workspaceId: UUID!) {
   workspace {
     removeUser(userId: $userId, workspaceId: $workspaceId) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -223,7 +263,11 @@ mutation RemoveUserFromWorkspace($userId: UUID!, $workspaceId: UUID!) {
 mutation DeleteWorkspace($workspaceId: UUID!) {
   workspace {
     delete(workspaceId: $workspaceId) {
-      ...Result
+      error {
+        field
+        message
+      }
+      success
     }
   }
 }
@@ -235,14 +279,6 @@ fragment ReturnsUser on User {
   isSysadmin
   status
   username
-}
-
-fragment Result on GQLResult {
-  error {
-    field
-    message
-  }
-  success
 }
 
 fragment ReturnsWorkspace on Workspace {
