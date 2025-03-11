@@ -12,15 +12,18 @@ path = "src/bin/create_query_engine_role.rs"
 
 [package]
 name = "api"
-version = "0.1.0-beta.28"
+version = "0.1.0-alpha.29+408f7c3"
 edition = "2021"
 
 [dependencies]
-async-graphql = { version = "7.0.15", features = ["uuid", "chrono"] }
 http = "1.2.0"
 r2d2 = "0.8.10"
 tokio-stream = "0.1.17"
 tonic-web = "0.12.3"
+
+[dependencies.async-graphql]
+version = "7.0.15"
+features = [ "uuid", "chrono",]
 
 [dependencies.axum]
 workspace = true
