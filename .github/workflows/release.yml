@@ -1,26 +1,31 @@
-name: Auto Tag and Release
+name: Tag, Release, and Publish
 
 on:
   pull_request:
     types: [closed]
     branches:
       - main
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   create-tag-and-release:
-    # Only run this job if the PR was merged (not just closed) and has one of the specified labels
+    # Only run this job on merged PRs with specific labels or manual workflow dispatch
     if: >
       github.event_name == 'workflow_dispatch' ||
-      github.event.pull_request.merged == true && 
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && 
       (contains(github.event.pull_request.labels.*.name, 'beta') || 
        contains(github.event.pull_request.labels.*.name, 'rc') || 
        contains(github.event.pull_request.labels.*.name, 'patch') || 
        contains(github.event.pull_request.labels.*.name, 'minor') || 
-       contains(github.event.pull_request.labels.*.name, 'major'))
+       contains(github.event.pull_request.labels.*.name, 'major')))
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     
     steps:
       - name: Checkout code
@@ -38,16 +43,26 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-      - name: Get current version from pyproject.toml
+      - name: Get current version from pyproject.toml/Cargo.toml
         id: get-version
         run: |
-          # Extract version from pyproject.toml
-          VERSION=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)
+          # Try to find version in pyproject.toml first
+          if [ -f "pyproject.toml" ]; then
+            VERSION=$(cat pyproject.toml | grep '^version = ".*"' | cut -d'"' -f2)
+          # Then try Cargo.toml
+          elif [ -f "ptolemy-py/Cargo.toml" ]; then
+            VERSION=$(cat ptolemy-py/Cargo.toml | grep '^version = ".*"' | cut -d'"' -f2 | head -1 | sed 's/+.*//')
+          else
+            echo "Could not find version in pyproject.toml or Cargo.toml"
+            exit 1
+          fi
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "Current version: ${VERSION}"
       
       - name: Determine release type
         id: determine-release-type
+        # Skip this step if we're triggered by a tag push
+        if: ${{ github.event_name != 'push' }}
         run: |
           # Determine release type based on PR labels
           if [[ "${{ contains(github.event.pull_request.labels.*.name, 'beta') }}" == "true" ]]; then
@@ -73,22 +88,217 @@ jobs:
           fi
           
       - name: Create tag
+        # Only create tag if this is a PR close, not if we're already triggered by a tag
+        if: ${{ github.event_name != 'push' }}
         run: |
           git tag -a "v${VERSION}" -m "Version ${VERSION}"
           git push origin "v${VERSION}"
           
-      - name: Create GitHub Release
+      # Instead of creating an empty release, we'll just push the tag
+      # The actual release with assets will be created after the build is complete
+
+  # The following jobs will run when a tag is pushed (either manually or from the above job)
+  docker:
+    # Only run on tag push or manual workflow dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Get version from Cargo.toml
+        id: get_version
+        run: echo "version=$(cat ptolemy-py/Cargo.toml | grep '^version = ".*"' | cut -d'"' -f2 | head -1 | sed 's/+.*//')" >> $GITHUB_OUTPUT
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ghcr.io/ptolemylovesyou/ptolemy:latest,ghcr.io/ptolemylovesyou/ptolemy:${{ steps.get_version.outputs.version }}
+          file: api/Dockerfile
+
+  linux:
+    # Only run on tag push or manual workflow dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-22.04
+            target: x86_64
+          - runner: ubuntu-22.04
+            target: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml --features vendored
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: 2_28
+          container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
+          before-script-linux: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Build free-threaded wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t --features vendored
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: 2_28
+          container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
+          before-script-linux: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.platform.target }}
+          path: dist
+
+  musllinux:
+    # Only run on tag push or manual workflow dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-22.04
+            target: x86_64
+          - runner: ubuntu-22.04
+            target: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml --features vendored
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: musllinux_1_2
+          before-script-linux: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Build free-threaded wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t --features vendored
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: musllinux_1_2
+          before-script-linux: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-${{ matrix.platform.target }}
+          path: dist
+
+  macos:
+    # Only run on tag push or manual workflow dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: macos-13
+            target: x86_64
+          - runner: macos-14
+            target: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Install macOS dependencies
+        run: |
+          brew install openssl@3 protobuf pkg-config
+          echo "OPENSSL_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix openssl@3)/lib/pkgconfig" >> $GITHUB_ENV
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - name: Build free-threaded wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --manifest-path ptolemy-py/Cargo.toml -i python3.13t
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.platform.target }}
+          path: dist
+
+  sdist:
+    # Only run on tag push or manual workflow dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist --manifest-path ptolemy-py/Cargo.toml
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
+  release:
+    name: Publish to PyPI and GitHub Release
+    # Only run on tag push or manual workflow dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs: [linux, musllinux, macos, sdist]
+    permissions:
+      # Use to sign the release artifacts
+      id-token: write
+      # Used to upload release artifacts
+      contents: write
+      # Used to generate artifact attestation
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'wheels-*/*'
+
+      # If this was triggered by a tag, upload artifacts to the GitHub release
+      - name: Create GitHub Release with artifacts
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ env.VERSION }}
-          name: Version ${{ env.VERSION }}
+          files: wheels-*/*
+          tag_name: ${{ github.ref_name }}
+          name: Version ${{ github.ref_name }}
           body: |
             ✨ This release was automatically generated ✨
 
             Ptolemy loves you! <3
             
             ![version bump](https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjJmOXBxbGh2Z3BiYXM1NnJhMHdtbmNoaTFxN2xjOGZjZnd1ZGhuMiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjI53nBYOOEQgDcY/giphy.gif)
-          prerelease: ${{ env.PRERELEASE }}
           generate_release_notes: true
+          # Determine if this is a prerelease based on the tag name
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        with:
+          command: upload
+          args: --non-interactive --skip-existing wheels-*/*
