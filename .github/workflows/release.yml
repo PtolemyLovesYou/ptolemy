@@ -83,13 +83,6 @@ jobs:
           tag_name: v${{ env.VERSION }}
           name: Version ${{ env.VERSION }}
           body: |
-            This is a ${{ env.RELEASE_TYPE }} ${{ env.VERSION_TYPE }} release.
-            
-            Changes included in this release:
-            ${{ github.event.pull_request.title }}
-            
-            ${{ github.event.pull_request.body }}
-
             ✨ This release was automatically generated ✨
 
             Ptolemy loves you! <3
