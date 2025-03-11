@@ -2,8 +2,8 @@ use crate::{
     error::ApiError,
     models::{ServiceApiKey, User, Workspace, WorkspaceUser},
 };
-use uuid::Uuid;
 use async_graphql::{Object, SimpleObject};
+use uuid::Uuid;
 
 pub trait GQLResult {
     fn success(&self) -> bool;

@@ -11,8 +11,7 @@ use axum::{
 };
 use http::{
     header::{AUTHORIZATION, CONTENT_TYPE},
-    Method,
-    HeaderName,
+    HeaderName, Method,
 };
 use tower_http::cors::{Any, CorsLayer};
 
@@ -34,20 +33,14 @@ macro_rules! graphql_router {
 
 pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
-        .nest(
-            "/graphql",
-            graphql_router!(state).await,
-        )
+        .nest("/graphql", graphql_router!(state).await)
         // .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
         .with_state(state.clone())
 }
 
 pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
     Router::new()
-        .nest(
-            "/graphql",
-            graphql_router!(state).await,
-        )
+        .nest("/graphql", graphql_router!(state).await)
         .with_state(state.clone())
 }
 
@@ -59,7 +52,14 @@ pub async fn get_router(state: &ApiAppState) -> Router {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_origin(Any)
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION, api_key, grpc_web, grpc_accept, grpc_encoding]);
+        .allow_headers([
+            CONTENT_TYPE,
+            AUTHORIZATION,
+            api_key,
+            grpc_web,
+            grpc_accept,
+            grpc_encoding,
+        ]);
 
     let http_router = Router::new()
         .route("/auth", axum::routing::post(self::auth::login))

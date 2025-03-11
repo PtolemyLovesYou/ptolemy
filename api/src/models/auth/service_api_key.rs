@@ -1,7 +1,7 @@
 use crate::models::{ApiKeyPermissionEnum, Workspace};
+use async_graphql::InputObject;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use async_graphql::InputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

@@ -1,13 +1,11 @@
 use crate::{
     crud::prelude::GetObjById as _,
     graphql::{executor::GraphQLExecutor, state::GraphQLAppState},
-    models::{
-        ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser,
-    },
+    models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser},
     unchecked_executor,
 };
+use async_graphql::{ComplexObject, Context, Result as GraphQlResult};
 use uuid::Uuid;
-use async_graphql::{Result as GraphQlResult, Context, ComplexObject};
 
 #[ComplexObject]
 impl Workspace {

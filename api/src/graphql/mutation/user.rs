@@ -10,10 +10,10 @@ use crate::{
     models::{User, UserApiKey, UserApiKeyCreate, UserCreate},
     unchecked_executor,
 };
+use async_graphql::{Context, InputObject, Object};
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use async_graphql::{Object, Context, InputObject};
 
 #[derive(Debug, Serialize, Deserialize, InputObject)]
 pub struct UserInput {
@@ -99,7 +99,11 @@ impl UserMutation {
             .into()
     }
 
-    async fn delete_user_api_key<'ctx>(&self, ctx: &Context<'ctx>, api_key_id: Uuid) -> DeletionResult {
+    async fn delete_user_api_key<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        api_key_id: Uuid,
+    ) -> DeletionResult {
         let state = ctx.data::<GraphQLAppState>().unwrap();
         unchecked_executor!(state, "delete_user_api_key")
             .delete::<UserApiKey>(&api_key_id)

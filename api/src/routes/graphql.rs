@@ -3,7 +3,10 @@ use crate::{
     models::middleware::AuthContext,
     state::ApiAppState,
 };
-use axum::{extract::{State, Json}, Extension};
+use axum::{
+    extract::{Json, State},
+    Extension,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -37,7 +40,9 @@ pub async fn graphql_handler(
         auth_context,
     };
 
-    let schema = async_graphql::Schema::build(Query, Mutation, async_graphql::EmptySubscription).data(state_clone).finish();
+    let schema = async_graphql::Schema::build(Query, Mutation, async_graphql::EmptySubscription)
+        .data(state_clone)
+        .finish();
 
     let mut gql_request = async_graphql::Request::new(req.query);
 
@@ -47,11 +52,7 @@ pub async fn graphql_handler(
 
     // gql_request = gql_request.data(state_clone);
 
-    let resp = schema
-        .execute(gql_request)
-        .await;
-
-
+    let resp = schema.execute(gql_request).await;
 
     GraphQLResponse(resp)
 }

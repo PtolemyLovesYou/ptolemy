@@ -10,13 +10,13 @@ use crate::{
         state::GraphQLAppState,
     },
     models::{
-        ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace,
-        WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate,
+        ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace, WorkspaceCreate,
+        WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate,
     },
 };
+use async_graphql::{Context, InputObject, Object};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use async_graphql::{Object, Context, InputObject};
 
 #[derive(Debug, Serialize, Deserialize, InputObject)]
 pub struct WorkspaceUserCreateInput {
@@ -37,11 +37,12 @@ impl WorkspaceMutation {
         workspace_data: WorkspaceCreate,
     ) -> WorkspaceResult {
         let state = ctx.data::<GraphQLAppState>().unwrap();
-        let workspace = GraphQLExecutor::from_graphql_app_state(state, "create", |ctx| async move {
-            Ok(ctx.auth_context.can_create_delete_workspace())
-        })
-        .create(&workspace_data)
-        .await;
+        let workspace =
+            GraphQLExecutor::from_graphql_app_state(state, "create", |ctx| async move {
+                Ok(ctx.auth_context.can_create_delete_workspace())
+            })
+            .create(&workspace_data)
+            .await;
 
         if workspace.is_err() {
             return workspace.into();

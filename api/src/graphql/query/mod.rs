@@ -3,8 +3,8 @@ use crate::{
     crud::prelude::GetObjById as _,
     models::{User, Workspace},
 };
+use async_graphql::{Context, Object, Result as GraphQlResult};
 use uuid::Uuid;
-use async_graphql::{Object, Context, Result as GraphQlResult};
 
 pub mod objects;
 

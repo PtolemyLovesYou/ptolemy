@@ -1,10 +1,12 @@
+use async_graphql::{InputObject, SimpleObject};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use async_graphql::{InputObject, SimpleObject};
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq, SimpleObject)]
+#[derive(
+    Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq, SimpleObject,
+)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[graphql(complex)]

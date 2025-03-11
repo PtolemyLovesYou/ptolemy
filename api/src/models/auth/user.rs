@@ -4,7 +4,16 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq, async_graphql::SimpleObject)]
+#[derive(
+    Debug,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    PartialEq,
+    async_graphql::SimpleObject,
+)]
 #[diesel(table_name = crate::generated::auth_schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[graphql(complex)]

@@ -5,7 +5,15 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(
-    Debug, Queryable, Selectable, Insertable, Serialize, Deserialize, Associations, Identifiable, async_graphql::SimpleObject
+    Debug,
+    Queryable,
+    Selectable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Associations,
+    Identifiable,
+    async_graphql::SimpleObject,
 )]
 #[diesel(belongs_to(User))]
 #[diesel(belongs_to(Workspace))]
