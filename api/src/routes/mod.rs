@@ -20,30 +20,27 @@ pub mod auth;
 pub mod graphql;
 
 macro_rules! graphql_router {
-    ($state:expr, $schema:ident) => {
+    ($state:expr) => {
         async {
             let router = Router::new().route(
                 "/",
                 on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
             );
 
-            router.layer(Extension($schema)).with_state($state.clone())
+            router.layer(Extension(crate::graphql::get_graphql_schema())).with_state($state.clone())
         }
     };
 }
 
 pub async fn get_external_router(state: &ApiAppState) -> Router<ApiAppState> {
-    let schema = crate::graphql_schema!().finish();
     Router::new()
-        .nest("/graphql", graphql_router!(state, schema).await)
-        // .layer(from_fn_with_state(state.clone(), api_key_auth_middleware))
+        .nest("/graphql", graphql_router!(state).await)
         .with_state(state.clone())
 }
 
 pub async fn get_base_router(state: &ApiAppState) -> Router<ApiAppState> {
-    let schema = crate::graphql_schema!().finish();
     Router::new()
-        .nest("/graphql", graphql_router!(state, schema).await)
+        .nest("/graphql", graphql_router!(state).await)
         .with_state(state.clone())
 }
 

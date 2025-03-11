@@ -6,16 +6,10 @@ pub mod mutation;
 pub mod query;
 pub mod state;
 
-#[macro_export]
-macro_rules! graphql_schema {
-    () => {
-        async_graphql::Schema::build($crate::graphql::Query, $crate::graphql::Mutation, async_graphql::EmptySubscription)
-            .register_output_type::<$crate::graphql::mutation::result::GQLResultInterface>()
-    };
-
-    ($data:ident) => {
-        $crate::graphql_schema!().data($data)
-    }
-}
-
 pub type GraphQL = async_graphql::Schema<Query, Mutation, async_graphql::EmptySubscription>;
+
+pub fn get_graphql_schema() -> GraphQL {
+    async_graphql::Schema::build(Query, Mutation, async_graphql::EmptySubscription)
+        .register_output_type::<crate::graphql::mutation::result::GQLResultInterface>()
+        .finish()
+}
