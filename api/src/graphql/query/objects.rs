@@ -2,41 +2,15 @@ use crate::{
     crud::prelude::GetObjById as _,
     graphql::{executor::GraphQLExecutor, state::GraphQLAppState},
     models::{
-        ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum, Workspace,
-        WorkspaceRoleEnum, WorkspaceUser,
+        ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser,
     },
     unchecked_executor,
 };
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use async_graphql::{Object, Result as GraphQlResult, Context};
+use async_graphql::{Result as GraphQlResult, Context, ComplexObject};
 
-#[Object]
+#[ComplexObject]
 impl Workspace {
-    async fn id(&self) -> Uuid {
-        self.id
-    }
-
-    async fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    async fn description(&self) -> Option<String> {
-        self.description.clone()
-    }
-
-    async fn archived(&self) -> bool {
-        self.archived
-    }
-
-    async fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-
-    async fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
-
     async fn users<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -68,32 +42,8 @@ impl Workspace {
     }
 }
 
-#[Object]
+#[ComplexObject]
 impl User {
-    async fn id(&self) -> Uuid {
-        self.id
-    }
-
-    async fn username(&self) -> String {
-        self.username.clone()
-    }
-
-    async fn display_name(&self) -> Option<String> {
-        self.display_name.clone()
-    }
-
-    async fn status(&self) -> UserStatusEnum {
-        self.status.clone()
-    }
-
-    async fn is_admin(&self) -> bool {
-        self.is_admin
-    }
-
-    async fn is_sysadmin(&self) -> bool {
-        self.is_sysadmin
-    }
-
     async fn workspaces<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -123,62 +73,8 @@ impl User {
     }
 }
 
-#[Object]
-impl ServiceApiKey {
-    async fn id(&self) -> Uuid {
-        self.id
-    }
-
-    async fn workspace_id(&self) -> Uuid {
-        self.workspace_id
-    }
-
-    async fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    async fn key_preview(&self) -> String {
-        self.key_preview.clone()
-    }
-
-    async fn permissions(&self) -> ApiKeyPermissionEnum {
-        self.permissions.clone()
-    }
-
-    async fn expires_at(&self) -> Option<DateTime<Utc>> {
-        self.expires_at
-    }
-}
-
-#[Object]
-impl UserApiKey {
-    async fn id(&self) -> Uuid {
-        self.id
-    }
-
-    async fn user_id(&self) -> Uuid {
-        self.user_id
-    }
-
-    async fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    async fn key_preview(&self) -> String {
-        self.key_preview.clone()
-    }
-
-    async fn expires_at(&self) -> Option<DateTime<Utc>> {
-        self.expires_at
-    }
-}
-
-#[Object]
+#[ComplexObject]
 impl WorkspaceUser {
-    async fn role(&self) -> WorkspaceRoleEnum {
-        self.role.clone()
-    }
-
     async fn user<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<User> {
         let state = ctx.data::<GraphQLAppState>()?;
         unchecked_executor!(state, "user")

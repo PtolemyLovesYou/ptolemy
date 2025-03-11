@@ -2,11 +2,12 @@ use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use async_graphql::InputObject;
+use async_graphql::{InputObject, SimpleObject};
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
+#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq, SimpleObject)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
+#[graphql(complex)]
 pub struct Workspace {
     pub id: Uuid,
     pub name: String,
@@ -14,7 +15,9 @@ pub struct Workspace {
     pub archived: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    #[graphql(skip)]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deletion_reason: Option<String>,
 }
 

@@ -10,7 +10,7 @@ use crate::{
         state::GraphQLAppState,
     },
     models::{
-        prelude::HasId, ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace,
+        ApiKeyPermissionEnum, ServiceApiKey, ServiceApiKeyCreate, Workspace,
         WorkspaceCreate, WorkspaceRoleEnum, WorkspaceUser, WorkspaceUserUpdate,
     },
 };
@@ -172,7 +172,7 @@ impl WorkspaceMutation {
         .create(&create_model)
         .await
         .map(|ak| CreateApiKeyResponse {
-            id: ak.id(),
+            id: ak.id.clone(),
             api_key,
         })
         .into()

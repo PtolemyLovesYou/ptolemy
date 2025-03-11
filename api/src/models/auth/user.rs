@@ -4,19 +4,23 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
+#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq, async_graphql::SimpleObject)]
 #[diesel(table_name = crate::generated::auth_schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
+#[graphql(complex)]
 pub struct User {
     pub id: Uuid,
     pub username: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
+    #[graphql(skip)]
     pub password_hash: String,
     pub display_name: Option<String>,
     pub status: UserStatusEnum,
     pub is_sysadmin: bool,
     pub is_admin: bool,
+    #[graphql(skip)]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deletion_reason: Option<String>,
 }
 

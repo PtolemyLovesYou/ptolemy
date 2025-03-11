@@ -15,6 +15,7 @@ use uuid::Uuid;
     Identifiable,
     PartialEq,
     Associations,
+    async_graphql::SimpleObject,
 )]
 #[diesel(belongs_to(User))]
 #[diesel(table_name = crate::generated::auth_schema::user_api_key)]
@@ -23,10 +24,14 @@ pub struct UserApiKey {
     pub user_id: Uuid,
     pub name: String,
     #[serde(skip)] // password hash should NOT be serialized under any circumstances
+    #[graphql(skip)]
     pub key_hash: String,
+    #[graphql(skip)]
     pub key_preview: String,
     pub expires_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deleted_at: Option<DateTime<Utc>>,
+    #[graphql(skip)]
     pub deletion_reason: Option<String>,
 }
 

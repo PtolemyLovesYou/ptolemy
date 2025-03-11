@@ -7,7 +7,7 @@ use crate::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::GraphQLAppState,
     },
-    models::{prelude::HasId, User, UserApiKey, UserApiKeyCreate, UserCreate},
+    models::{User, UserApiKey, UserApiKeyCreate, UserCreate},
     unchecked_executor,
 };
 use chrono::{Duration, Utc};
@@ -93,7 +93,7 @@ impl UserMutation {
             .create(&user_api_key_create)
             .await
             .map(|ak| CreateApiKeyResponse {
-                id: ak.id(),
+                id: ak.id.clone(),
                 api_key,
             })
             .into()
