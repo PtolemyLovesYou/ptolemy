@@ -1,6 +1,5 @@
 use crate::{
     crud::prelude::GetObjById as _,
-    error::ApiError,
     graphql::{executor::JuniperExecutor, state::JuniperAppState},
     models::{
         ApiKeyPermissionEnum, ServiceApiKey, User, UserApiKey, UserStatusEnum, Workspace,
@@ -9,10 +8,10 @@ use crate::{
     unchecked_executor,
 };
 use chrono::{DateTime, Utc};
-use juniper::graphql_object;
 use uuid::Uuid;
+use async_graphql::{Object, Result as GraphQlResult, Context};
 
-#[graphql_object]
+#[Object]
 impl Workspace {
     async fn id(&self) -> Uuid {
         self.id
@@ -38,34 +37,38 @@ impl Workspace {
         self.updated_at
     }
 
-    async fn users(
+    async fn users<'ctx>(
         &self,
-        ctx: &JuniperAppState,
+        ctx: &Context<'ctx>,
         user_id: Option<Uuid>,
         username: Option<String>,
-    ) -> Result<Vec<WorkspaceUser>, ApiError> {
-        unchecked_executor!(ctx, "workspace_user")
+    ) -> GraphQlResult<Vec<WorkspaceUser>> {
+        let state = ctx.data::<JuniperAppState>()?;
+        unchecked_executor!(state, "workspace_user")
             .read_many(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 self.get_workspace_users(&mut conn, user_id, username).await
             })
             .await
+            .map_err(|e| e.into())
     }
 
-    async fn service_api_keys(
+    async fn service_api_keys<'ctx>(
         &self,
-        ctx: &JuniperAppState,
-    ) -> Result<Vec<ServiceApiKey>, ApiError> {
-        unchecked_executor!(ctx, "service_api_key")
+        ctx: &Context<'ctx>,
+    ) -> GraphQlResult<Vec<ServiceApiKey>> {
+        let state = ctx.data::<JuniperAppState>()?;
+        unchecked_executor!(state, "service_api_key")
             .read_many(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 self.get_service_api_keys(&mut conn).await
             })
             .await
+            .map_err(|e| e.into())
     }
 }
 
-#[graphql_object]
+#[Object]
 impl User {
     async fn id(&self) -> Uuid {
         self.id
@@ -91,32 +94,36 @@ impl User {
         self.is_sysadmin
     }
 
-    async fn workspaces(
+    async fn workspaces<'ctx>(
         &self,
-        ctx: &JuniperAppState,
+        ctx: &Context<'ctx>,
         workspace_id: Option<Uuid>,
         workspace_name: Option<String>,
-    ) -> Result<Vec<Workspace>, ApiError> {
-        unchecked_executor!(ctx, "workspace")
+    ) -> GraphQlResult<Vec<Workspace>> {
+        let state = ctx.data::<JuniperAppState>()?;
+        unchecked_executor!(state, "workspace")
             .read_many(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 self.get_workspaces(&mut conn, workspace_id, workspace_name)
                     .await
             })
             .await
+            .map_err(|e| e.into())
     }
 
-    async fn user_api_keys(&self, ctx: &JuniperAppState) -> Result<Vec<UserApiKey>, ApiError> {
-        unchecked_executor!(ctx, "user_api_key")
+    async fn user_api_keys<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<Vec<UserApiKey>> {
+        let state = ctx.data::<JuniperAppState>()?;
+        unchecked_executor!(state, "user_api_key")
             .read_many(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 self.get_user_api_keys(&mut conn).await
             })
             .await
+            .map_err(|e| e.into())
     }
 }
 
-#[graphql_object]
+#[Object]
 impl ServiceApiKey {
     async fn id(&self) -> Uuid {
         self.id
@@ -143,7 +150,7 @@ impl ServiceApiKey {
     }
 }
 
-#[graphql_object]
+#[Object]
 impl UserApiKey {
     async fn id(&self) -> Uuid {
         self.id
@@ -166,27 +173,31 @@ impl UserApiKey {
     }
 }
 
-#[graphql_object]
+#[Object]
 impl WorkspaceUser {
     async fn role(&self) -> WorkspaceRoleEnum {
         self.role.clone()
     }
 
-    async fn user(&self, ctx: &JuniperAppState) -> Result<User, ApiError> {
-        unchecked_executor!(ctx, "user")
+    async fn user<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<User> {
+        let state = ctx.data::<JuniperAppState>()?;
+        unchecked_executor!(state, "user")
             .read(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 User::get_by_id(&mut conn, &self.user_id).await
             })
             .await
+            .map_err(|e| e.into())
     }
 
-    async fn workspace(&self, ctx: &JuniperAppState) -> Result<Workspace, ApiError> {
-        unchecked_executor!(ctx, "workspace")
+    async fn workspace<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<Workspace> {
+        let state = ctx.data::<JuniperAppState>()?;
+        unchecked_executor!(state, "workspace")
             .read(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 Workspace::get_by_id(&mut conn, &self.workspace_id).await
             })
             .await
+            .map_err(|e| e.into())
     }
 }

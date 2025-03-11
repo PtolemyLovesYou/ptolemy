@@ -1,24 +1,9 @@
 use crate::{
     error::ApiError,
-    graphql::state::JuniperAppState,
     models::{ServiceApiKey, User, Workspace, WorkspaceUser},
 };
-use juniper::{graphql_interface, graphql_object, GraphQLObject};
 use uuid::Uuid;
-
-#[graphql_interface]
-#[graphql(
-    context = JuniperAppState,
-    for = [
-        DeletionResult,
-        UserResult,
-        WorkspaceResult,
-        WorkspaceUserResult,
-        ServiceApiKeyResult,
-        CreateApiKeyResult
-        ]
-    )
-    ]
+use async_graphql::{Object, SimpleObject};
 
 pub trait GQLResult {
     fn success(&self) -> bool;
@@ -29,18 +14,17 @@ macro_rules! result_model {
     ($name:ident, $result_type:ty, $field_name:ident) => {
         pub struct $name(pub Result<$result_type, Vec<ValidationError>>);
 
-        #[graphql_object]
-        #[graphql(context = JuniperAppState, impl = GQLResultValue)]
+        #[Object]
         impl $name {
-            fn success(&self) -> bool {
+            async fn success(&self) -> bool {
                 self.0.as_ref().is_ok()
             }
 
-            fn $field_name(&self) -> Option<&$result_type> {
+            async fn $field_name(&self) -> Option<&$result_type> {
                 self.0.as_ref().ok()
             }
 
-            fn error(&self) -> Option<&[ValidationError]> {
+            async fn error(&self) -> Option<&[ValidationError]> {
                 self.0.as_ref().err().map(Vec::as_slice)
             }
         }
@@ -69,13 +53,13 @@ macro_rules! result_model {
     };
 }
 
-#[derive(Debug, GraphQLObject)]
+#[derive(Debug, SimpleObject)]
 pub struct CreateApiKeyResponse {
     pub api_key: String,
     pub id: Uuid,
 }
 
-#[derive(Debug, GraphQLObject)]
+#[derive(Debug, SimpleObject)]
 pub struct ValidationError {
     pub field: String,
     pub message: String,

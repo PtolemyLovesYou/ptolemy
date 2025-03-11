@@ -1,7 +1,7 @@
 use crate::models::{ApiKeyPermissionEnum, Workspace};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
+use async_graphql::InputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -46,7 +46,7 @@ impl From<ServiceApiKey> for ptolemy::models::ServiceApiKey {
     }
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
+#[derive(Debug, Insertable, Serialize, Deserialize, InputObject)]
 #[diesel(table_name = crate::generated::auth_schema::service_api_key)]
 pub struct ServiceApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]

@@ -1,5 +1,4 @@
-use crate::graphql::state::JuniperAppState;
-use juniper::graphql_object;
+use async_graphql::Object;
 
 pub mod result;
 pub mod user;
@@ -11,14 +10,13 @@ use self::workspace::WorkspaceMutation;
 #[derive(Clone, Copy, Debug)]
 pub struct Mutation;
 
-#[graphql_object]
-#[graphql(context = JuniperAppState)]
+#[Object]
 impl Mutation {
-    async fn user(&self, _ctx: &JuniperAppState) -> UserMutation {
+    async fn user(&self) -> UserMutation {
         UserMutation {}
     }
 
-    async fn workspace(&self, _ctx: &JuniperAppState) -> WorkspaceMutation {
+    async fn workspace(&self) -> WorkspaceMutation {
         WorkspaceMutation {}
     }
 }

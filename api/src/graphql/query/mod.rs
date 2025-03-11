@@ -1,57 +1,63 @@
 use super::{executor::JuniperExecutor, state::JuniperAppState};
 use crate::{
     crud::prelude::GetObjById as _,
-    error::ApiError,
     models::{User, Workspace},
 };
-use juniper::graphql_object;
 use uuid::Uuid;
+use async_graphql::{Object, Context, Result as GraphQlResult};
 
 pub mod objects;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Query;
 
-#[graphql_object]
-#[graphql(context = JuniperAppState)]
+#[Object]
 impl Query {
-    async fn ping(_ctx: &JuniperAppState) -> String {
+    async fn ping<'ctx>(&self, _ctx: &Context<'ctx>) -> String {
         "Pong!".to_string()
     }
 
-    async fn user(
-        ctx: &JuniperAppState,
+    async fn user<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
         id: Option<Uuid>,
         username: Option<String>,
-    ) -> Result<Vec<User>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "user", |_| async move { Ok(true) })
+    ) -> GraphQlResult<Vec<User>> {
+        let state = ctx.data::<JuniperAppState>()?;
+        JuniperExecutor::from_juniper_app_state(state, "user", |_| async move { Ok(true) })
             .read_many(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 User::search_users(&mut conn, id, username, None).await
             })
             .await
+            .map_err(|e| e.into())
     }
 
-    async fn workspace(
-        ctx: &JuniperAppState,
+    async fn workspace<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
         id: Option<Uuid>,
         name: Option<String>,
         archived: Option<bool>,
-    ) -> Result<Vec<Workspace>, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "workspace", |_| async move { Ok(true) })
+    ) -> GraphQlResult<Vec<Workspace>> {
+        let state = ctx.data::<JuniperAppState>()?;
+        JuniperExecutor::from_juniper_app_state(state, "workspace", |_| async move { Ok(true) })
             .read_many(async move {
-                let mut conn = ctx.state.get_conn().await?;
+                let mut conn = state.state.get_conn().await?;
                 Workspace::search_workspaces(&mut conn, id, name, archived).await
             })
             .await
+            .map_err(|e| e.into())
     }
 
-    async fn me(ctx: &JuniperAppState) -> Result<User, ApiError> {
-        JuniperExecutor::from_juniper_app_state(ctx, "me", |_| async move { Ok(true) })
+    async fn me<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<User> {
+        let state = ctx.data::<JuniperAppState>()?;
+        JuniperExecutor::from_juniper_app_state(state, "me", |_| async move { Ok(true) })
             .read(async move {
-                let mut conn = ctx.state.get_conn().await?;
-                User::get_by_id(&mut conn, &ctx.auth_context.user()?.id.into()).await
+                let mut conn = state.state.get_conn().await?;
+                User::get_by_id(&mut conn, &state.auth_context.user()?.id.into()).await
             })
             .await
+            .map_err(|e| e.into())
     }
 }

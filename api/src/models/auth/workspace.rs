@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use async_graphql::InputObject;
 
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Identifiable, PartialEq)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
@@ -33,7 +33,7 @@ impl From<Workspace> for ptolemy::models::Workspace {
     }
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
+#[derive(Debug, Insertable, Serialize, Deserialize, InputObject)]
 #[diesel(table_name = crate::generated::auth_schema::workspace)]
 pub struct WorkspaceCreate {
     name: String,

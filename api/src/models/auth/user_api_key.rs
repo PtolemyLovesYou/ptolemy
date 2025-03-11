@@ -1,7 +1,7 @@
 use crate::models::auth::user::User;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use juniper::GraphQLInputObject;
+use async_graphql::InputObject;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -44,7 +44,7 @@ impl From<UserApiKey> for ptolemy::models::UserApiKey {
     }
 }
 
-#[derive(Debug, Insertable, Serialize, Deserialize, GraphQLInputObject)]
+#[derive(Debug, Insertable, Serialize, Deserialize, InputObject)]
 #[diesel(table_name = crate::generated::auth_schema::user_api_key)]
 pub struct UserApiKeyCreate {
     #[diesel(treat_none_as_default_value = true)]
