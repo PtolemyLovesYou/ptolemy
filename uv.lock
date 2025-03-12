@@ -513,7 +513,7 @@ wheels = [
 
 [[package]]
 name = "docs"
-version = "0.1.0b28"
+version = "0.1.0b31"
 source = { virtual = "docs" }
 dependencies = [
     { name = "mkdocs" },
@@ -810,7 +810,7 @@ wheels = [
 
 [[package]]
 name = "integration-tests"
-version = "0.1.0b28"
+version = "0.1.0b31"
 source = { virtual = "integration-tests" }
 dependencies = [
     { name = "ptolemy-client" },
@@ -1865,7 +1865,7 @@ wheels = [
 
 [[package]]
 name = "prototype"
-version = "0.1.0b28"
+version = "0.1.0b31"
 source = { virtual = "prototype" }
 dependencies = [
     { name = "ptolemy-client" },
@@ -1899,7 +1899,7 @@ wheels = [
 
 [[package]]
 name = "ptolemy-client"
-version = "0.1.0b28"
+version = "0.1.0b31"
 source = { directory = "ptolemy-py" }
 dependencies = [
     { name = "aiohttp" },
@@ -1932,7 +1932,7 @@ dev = [
 
 [[package]]
 name = "ptolemy-workspace"
-version = "0.1.0b28"
+version = "0.1.0b31"
 source = { virtual = "." }
 dependencies = [
     { name = "pydantic" },
@@ -2371,7 +2371,7 @@ wheels = [
 
 [[package]]
 name = "query-engine"
-version = "0.1.0b28"
+version = "0.1.0b31"
 source = { virtual = "query-engine" }
 dependencies = [
     { name = "duckdb" },
