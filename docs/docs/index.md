@@ -7,6 +7,9 @@ Ptolemy is an open-source ML monitoring platform that provides comprehensive obs
 
 :rocket: Try out Ptolemy now using our [Getting Started](getting_started/installation_docker_compose.md) guide!
 
+!!! warning "Alpha"
+    Ptolemy is still in alpha and we would love your help making it better! See our guide on [Contribution](contributing/index.md) to learn more about submitting feedback and contributing.
+
 ## Why Ptolemy?
 
 ### Systems-First Design
