@@ -25,7 +25,7 @@ We don't want to replace your existing monitoring tools — they're great at wha
 While we're building toward full compliance certifications, Ptolemy already includes comprehensive auditing capabilities, fine-grained access controls, and customizable permission schemes. Your sensitive ML data deserves nothing less.
 
 ### Deploy Without Drama
-We've built Ptolemy on battle-tested technolgoies you likely already have deployed. No exotic dependencies, no complex infra prerequisites – just standard components that your ops team already knows how to maintain. Deploy in minutes, not months, without fighting the endless approval battles plaguing ML tooling adoption. Because great observability shouldn't require a six-month procurement cycle.
+We've built Ptolemy on battle-tested technologies you likely already have deployed. No exotic dependencies, no complex infra prerequisites – just standard components that your ops team already knows how to maintain. Deploy in minutes, not months, without fighting the endless approval battles plaguing ML tooling adoption. Because great observability shouldn't require a six-month procurement cycle.
 
 ### Built for Extensibility
 We understand that ML engineers are (rightfully) opinionated about their observability needs. Every ML system is unique, which is why Ptolemy prioritizes extensibility at our cour. Our plugin architecture lets you integrate with your existing pipelines and tools without forcing you to adopt our opinionis. Whether you're using custom metrics, proprietary data formats, or specialize visualition tools, Ptolemy's flexible APIs and connector framework adapt tio your workflow – not the other way around.
