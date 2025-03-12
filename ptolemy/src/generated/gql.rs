@@ -16,6 +16,8 @@ pub const CREATE_USER_API_KEY_MUTATION: &'static str = r###"CreateUserApiKey"###
 
 pub const UPDATE_USER_MUTATION: &'static str = r###"UpdateUser"###;
 
+pub const CHANGE_USER_PASSWORD_MUTATION: &'static str = r###"ChangeUserPassword"###;
+
 pub const CREATE_USER_MUTATION: &'static str = r###"CreateUser"###;
 
 pub const DELETE_USER_API_KEY_MUTATION: &'static str = r###"DeleteUserApiKey"###;
@@ -135,6 +137,24 @@ mutation UpdateUser($userId: UUID!, $displayName: String, $status: UserStatusEnu
       displayName: $displayName,
       status: $status,
       isAdmin: $isAdmin
+    }) {
+      error {
+        field
+        message
+      }
+      success
+      user {
+        ...ReturnsUser
+      }
+    }
+  }
+}
+
+mutation ChangeUserPassword($userId: UUID!, $currentPassword: String!, $newPassword: String!) {
+  user {
+    changePassword(userId: $userId, data: {
+      currentPassword: $currentPassword,
+      newPassword: $newPassword
     }) {
       error {
         field

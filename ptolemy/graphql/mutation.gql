@@ -37,15 +37,15 @@ mutation ChangeUserPassword($userId: UUID!, $currentPassword: String!, $newPassw
     changePassword(userId: $userId, data: {
       currentPassword: $currentPassword,
       newPassword: $newPassword
-    })
-  } {
-    error {
-      field
-      message
-    }
-    success
-    user {
-      ...ReturnsUser
+    }) {
+      error {
+        field
+        message
+      }
+      success
+      user {
+        ...ReturnsUser
+      }
     }
   }
 }
