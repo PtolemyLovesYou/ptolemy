@@ -7,8 +7,7 @@ use crate::{
 use axum::{
     middleware::from_fn_with_state,
     routing::{on, MethodFilter},
-    Router,
-    Extension,
+    Extension, Router,
 };
 use http::{
     header::{AUTHORIZATION, CONTENT_TYPE},
@@ -27,7 +26,9 @@ macro_rules! graphql_router {
                 on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
             );
 
-            router.layer(Extension(crate::graphql::get_graphql_schema())).with_state($state.clone())
+            router
+                .layer(Extension(crate::graphql::get_graphql_schema()))
+                .with_state($state.clone())
         }
     };
 }

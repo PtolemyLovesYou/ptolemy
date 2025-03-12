@@ -2,7 +2,7 @@ use crate::{
     error::ApiError,
     models::{ServiceApiKey, User, Workspace, WorkspaceUser},
 };
-use async_graphql::{Object, SimpleObject, Interface};
+use async_graphql::{Interface, Object, SimpleObject};
 use uuid::Uuid;
 
 #[derive(Interface)]
