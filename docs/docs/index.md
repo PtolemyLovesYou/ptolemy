@@ -15,7 +15,7 @@ Ptolemy is an open-source ML monitoring platform that provides comprehensive obs
 We enforce clean architectural patterns, inspired by traditional systems engineering methodologies, that break down your ML systems into logical components. Every system, subsystem, component, and subcomponent has well-defined inputs, outputs, feedback loops, and metadata—making troubleshooting and optimization intuitive.
 
 ### :woman_scientist: Direct SQL Access
-Query your data directly with SQL—no black boxes, no limitations. While other platforms lock you into rigid semantic layers, Ptolemy lets you run the complex analyses you actually need, using a language you already know.
+Query your data directly with SQL — no black boxes, no limitations. While other platforms lock you into rigid semantic layers, Ptolemy lets you run the complex analyses you actually need, using a language you already know. Learn more about Ptolemy's SQL capabilities in our guide on Ptolemy's [Query Engine](concepts/query_engine.md).
 
 ### :zap: Lightning-Fast Performance
 Built with Rust and gRPC for speed-critical components, Ptolemy ingests and processes your data with minimal overhead. We've optimized every part of the stack because milliseconds matter when you're debugging production.
