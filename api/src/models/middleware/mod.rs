@@ -48,6 +48,46 @@ impl AuthContext {
         }
     }
 
+    pub fn can_update_user(
+        &self,
+        user_id: uuid::Uuid,
+        data: &crate::models::auth::UserUpdate,
+    ) -> bool {
+        match &self.user {
+            Some(u) => {
+                // password change cannot be done as part of user update. must use separate password change route
+                if data.password_hash.is_some() {
+                    return false
+                }
+
+                // if user is sysadmin, can update any user
+                // idea here is that sysadmins have exclusive control of system user status or role.
+                if data.status.is_some() || data.is_admin.is_some() {
+                    return u.is_sysadmin
+                }
+
+                if data.display_name.is_some() {
+                    return u.id.as_uuid() == user_id
+                }
+
+                false
+            },
+            None => false,
+        }
+    }
+
+    pub fn can_change_user_password(
+        &self,
+        user_id: uuid::Uuid,
+    ) -> bool {
+        match &self.user {
+            Some(u) => {
+                u.is_sysadmin || u.id.as_uuid() == user_id
+            },
+            None => false
+        }
+    }
+
     pub fn can_update_workspace(&self, workspace_id: uuid::Uuid) -> bool {
         for workspace in &self.workspaces {
             if workspace.workspace.id.as_uuid() == workspace_id {

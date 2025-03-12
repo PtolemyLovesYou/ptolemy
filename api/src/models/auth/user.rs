@@ -58,11 +58,12 @@ pub struct UserCreate {
     pub is_admin: bool,
 }
 
-#[derive(Debug, AsChangeset)]
+#[derive(Debug, Clone, AsChangeset, async_graphql::InputObject)]
 #[diesel(table_name = crate::generated::auth_schema::users)]
 pub struct UserUpdate {
     pub display_name: Option<String>,
     pub status: Option<UserStatusEnum>,
     pub is_admin: Option<bool>,
-    pub password_hash: Option<String>,
+    #[graphql(skip)]
+    pub password_hash: Option<String>
 }
