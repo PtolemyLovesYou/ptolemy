@@ -13,6 +13,43 @@ mutation CreateUserApiKey($name: String!, $durationDays: Int) {
   }
 }
 
+mutation UpdateUser($userId: UUID!, $displayName: String, $status: UserStatusEnum, $isAdmin: Boolean) {
+  user {
+    update(userId: $userId, data: {
+      displayName: $displayName,
+      status: $status,
+      isAdmin: $isAdmin
+    }) {
+      error {
+        field
+        message
+      }
+      success
+      user {
+        ...ReturnsUser
+      }
+    }
+  }
+}
+
+mutation ChangeUserPassword($userId: UUID!, $currentPassword: String!, $newPassword: String!) {
+  user {
+    changePassword(userId: $userId, data: {
+      currentPassword: $currentPassword,
+      newPassword: $newPassword
+    })
+  } {
+    error {
+      field
+      message
+    }
+    success
+    user {
+      ...ReturnsUser
+    }
+  }
+}
+
 mutation CreateUser($username: String!, $password: String!, $isAdmin: Boolean!, $displayName: String) {
   user {
     create(
