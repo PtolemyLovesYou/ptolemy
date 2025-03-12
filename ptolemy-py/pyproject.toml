@@ -1,6 +1,6 @@
 [project]
 name = "ptolemy-client"
-version = "0.1.0-beta.30"
+version = "0.1.0-alpha.31+af543dc"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
