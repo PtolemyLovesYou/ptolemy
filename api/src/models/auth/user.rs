@@ -65,5 +65,5 @@ pub struct UserUpdate {
     pub status: Option<UserStatusEnum>,
     pub is_admin: Option<bool>,
     #[graphql(skip)]
-    pub password_hash: Option<String>
+    pub password_hash: Option<String>,
 }

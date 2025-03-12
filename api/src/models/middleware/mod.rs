@@ -57,34 +57,34 @@ impl AuthContext {
             Some(u) => {
                 // password change cannot be done as part of user update. must use separate password change route
                 if data.password_hash.is_some() {
-                    return false
+                    return false;
                 }
 
                 // if user is sysadmin, can update any user
                 // idea here is that sysadmins have exclusive control of system user status or role.
                 if data.status.is_some() || data.is_admin.is_some() {
-                    return u.is_sysadmin
+                    return u.is_sysadmin;
                 }
 
                 if data.display_name.is_some() {
-                    return u.id.as_uuid() == user_id
+                    return u.id.as_uuid() == user_id;
                 }
 
                 false
-            },
+            }
             None => false,
         }
     }
 
     pub fn can_change_user_password(
         &self,
-        user_id: uuid::Uuid,
+        current_password: &str,
+        password_hash: &str,
+        handler: &crate::crypto::PasswordHandler,
     ) -> bool {
         match &self.user {
-            Some(u) => {
-                u.is_sysadmin || u.id.as_uuid() == user_id
-            },
-            None => false
+            Some(_u) => handler.verify_password(current_password, password_hash),
+            None => false,
         }
     }
 

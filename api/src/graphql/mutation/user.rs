@@ -7,7 +7,7 @@ use crate::{
         mutation::result::{CreateApiKeyResponse, CreateApiKeyResult, DeletionResult, UserResult},
         state::GraphQLAppState,
     },
-    models::{User, UserApiKey, UserApiKeyCreate, UserCreate},
+    models::{User, UserApiKey, UserApiKeyCreate, UserCreate, UserUpdate},
     unchecked_executor,
 };
 use async_graphql::{Context, InputObject, Object};
@@ -22,6 +22,12 @@ pub struct UserInput {
     pub display_name: Option<String>,
     pub is_sysadmin: bool,
     pub is_admin: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, InputObject)]
+pub struct UserChangePasswordInput {
+    pub current_password: String,
+    pub new_password: String,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -49,6 +55,70 @@ impl UserMutation {
                 .can_create_delete_user(user_data.is_admin, user_data.is_sysadmin))
         })
         .create(&user_create)
+        .await
+        .into()
+    }
+
+    async fn update<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        user_id: Uuid,
+        data: UserUpdate,
+    ) -> UserResult {
+        let state = ctx.data::<GraphQLAppState>().unwrap();
+        let data_clone = data.clone(); // TODO: would like to avoid cloning here
+
+        GraphQLExecutor::from_graphql_app_state(state, "update", |ctx| async move {
+            Ok(ctx.auth_context.can_update_user(user_id, &data_clone))
+        })
+        .update(&user_id, &data)
+        .await
+        .into()
+    }
+
+    async fn change_password<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        user_id: Uuid,
+        data: UserChangePasswordInput,
+    ) -> UserResult {
+        let state = ctx.data::<GraphQLAppState>().unwrap();
+
+        let new_hashed_password = state
+            .state
+            .password_handler
+            .hash_password(&data.new_password);
+
+        let changeset = UserUpdate {
+            display_name: None,
+            status: None,
+            is_admin: None,
+            password_hash: Some(new_hashed_password),
+        };
+
+        let current_password = data.current_password.clone();
+
+        GraphQLExecutor::from_graphql_app_state(state, "change_password", |ctx| async move {
+            let mut conn = ctx.state.get_conn().await?;
+
+            match &ctx.auth_context.user {
+                None => Ok(false),
+                Some(u) => {
+                    let u_id = u.id.as_uuid();
+
+                    if u_id != user_id {
+                        return Ok(false);
+                    }
+                    let user_model = User::get_by_id(&mut conn, u_id.as_ref()).await?;
+                    Ok(ctx.auth_context.can_change_user_password(
+                        current_password.as_ref(),
+                        user_model.password_hash.as_ref(),
+                        &ctx.state.password_handler,
+                    ))
+                }
+            }
+        })
+        .update(&user_id, &changeset)
         .await
         .into()
     }
