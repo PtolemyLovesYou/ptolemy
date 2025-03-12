@@ -2,7 +2,7 @@ use crate::{
     error::GraphQLError,
     generated::gql::*,
     graphql::response::{GQLResponse, GraphQLResult, MutationResponse, QueryResponse},
-    models::{ApiKeyPermission, Id, ServiceApiKey, User, UserApiKey, Workspace, WorkspaceRole},
+    models::{ApiKeyPermission, Id, ServiceApiKey, User, UserApiKey, UserStatus, Workspace, WorkspaceRole},
     prelude::graphql::IntoModel,
 };
 use std::sync::Arc;
@@ -470,6 +470,35 @@ impl GraphQLClient {
         }
 
         Ok(user_api_keys)
+    }
+
+    pub fn update_user(&self, user_id: Id, display_name: Option<String>, status: Option<UserStatus>, is_admin: Option<bool>) -> Result<User, GraphQLError> {
+        let data = json!({
+            "userId": user_id,
+            "status": status,
+            "displayName": display_name,
+            "isAdmin": is_admin
+        });
+
+        self.mutation(UPDATE_USER_MUTATION, data)?
+            .user()?
+            .update()?
+            .user()?
+            .to_model()
+    }
+
+    pub fn change_user_password(&self, user_id: Id, current_password: String, new_password: String) -> Result<User, GraphQLError> {
+        let data = json!({
+            "userId": user_id,
+            "currentPassword": current_password,
+            "newPassword": new_password
+        });
+
+        self.mutation(CHANGE_USER_PASSWORD_MUTATION, data)?
+            .user()?
+            .change_password()?
+            .user()?
+            .to_model()
     }
 }
 

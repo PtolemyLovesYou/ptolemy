@@ -342,6 +342,8 @@ pub type GQLUserApiKeys = GQLModelVec<GQLUserApiKey>;
 pub struct GQLUserMutation {
     pub create: Option<GQLUserResult>,
     pub delete: Option<GQLDeletionResult>,
+    pub update: Option<GQLUserResult>,
+    pub change_password: Option<GQLUserResult>,
     pub create_user_api_key: Option<GQLCreateApiKeyResult>,
     pub delete_user_api_key: Option<GQLDeletionResult>,
 }
@@ -351,6 +353,8 @@ graphql_response!(
     [
         (create, GQLUserResult),
         (delete, GQLDeletionResult),
+        (update, GQLUserResult),
+        (change_password, GQLUserResult),
         (create_user_api_key, GQLCreateApiKeyResult),
         (delete_user_api_key, GQLDeletionResult)
     ]
