@@ -1,16 +1,15 @@
 # Ptolemy
 
 ## Open Source Universal ML Observability
-Ptolemy is an open-source ML monitoring platform that provides comprehensive observability without requiring you to reinvent the wheel for each new methodology. Built with love by engineers who value systems design, performance, and flexibility.
 
-<br>
+Ptolemy is an open-source ML monitoring platform that provides comprehensive observability without requiring you to reinvent the wheel for each new methodology. Built with love by engineers who value systems design, performance, and flexibility.
 
 :rocket: Try out Ptolemy now using our [Getting Started](getting_started/installation_docker_compose.md) guide!
 
-!!! warning "Alpha"
-    Ptolemy is still in alpha and we would love your help making it better! See our guide on [Contribution](contributing/index.md) to learn more about submitting feedback and contributing.
-
 ## Why Ptolemy?
+
+!!! danger inline end "Ptolemy is in Alpha!"
+    Ptolemy is still in alpha and we would love your help making it better! See our guide on [Contribution](contributing/index.md) to learn more about submitting feedback and contributing.
 
 ### Systems-First Design
 We enforce clean architectural patterns, inspired by traditional systems engineering methodologies, that break down your ML systems into logical components. Every system, subsystem, component, and subcomponent has well-defined inputs, outputs, feedback loops, and metadata—making troubleshooting and optimization intuitive.

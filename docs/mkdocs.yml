@@ -1,5 +1,5 @@
 site_name: "Ptolemy"
-site_url: http://docs.ptolemy.dev
+site_url: https://ptolemy.dev
 
 theme:
   name: material
