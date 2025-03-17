@@ -2,7 +2,7 @@
 
 ## Open Source Universal ML Observability
 
-Ptolemy is an open-source ML monitoring platform that provides comprehensive observability without requiring you to reinvent the wheel for each new methodology. Built with love by engineers who value systems design, performance, and flexibility.
+Ptolemy is an open-source ML monitoring platform built on systems engineering principles that brings clarity to complex ML deployments. Created by engineers who value architectural rigor, performance, and flexibility, Ptolemy delivers comprehensive observability without requiring you to reinvent the wheel for each new methodology.
 
 :rocket: Try out Ptolemy now using our [Getting Started](getting_started/installation_docker_compose.md) guide!
 
@@ -12,7 +12,7 @@ Ptolemy is an open-source ML monitoring platform that provides comprehensive obs
     Ptolemy is still in alpha and we would love your help making it better! See our guide on [Contribution](contributing/index.md) to learn more about submitting feedback and contributing.
 
 ### :building_construction: Systems-First Design
-We enforce clean architectural patterns, inspired by traditional systems engineering methodologies, that break down your ML systems into logical components. Every system, subsystem, component, and subcomponent has well-defined inputs, outputs, feedback loops, and metadata—making troubleshooting and optimization intuitive.
+Ptolemy organizes your ML monitoring across four logical levels (system, subsystem, component, subcomponent) and four data types (input, output, feedback, metadata). This structured yet flexible framework makes troubleshooting and optimization intuitive, even for complex ML deployments. [Learn more about our data model here](concepts/data_model.md).
 
 ### :woman_scientist: Direct SQL Access
 Query your data directly with SQL — no black boxes, no limitations. While other platforms lock you into rigid semantic layers, Ptolemy lets you run the complex analyses you actually need, using a language you already know. Learn more about Ptolemy's SQL capabilities in our guide on Ptolemy's [Query Engine](concepts/query_engine.md).
@@ -30,4 +30,4 @@ While we're building toward full compliance certifications, Ptolemy already incl
 We've built Ptolemy on battle-tested technologies you likely already have deployed. No exotic dependencies, no complex infra prerequisites – just standard components that your ops team already knows how to maintain. Deploy in minutes, not months, without fighting the endless approval battles plaguing ML tooling adoption. Because great observability shouldn't require a six-month procurement cycle.
 
 ### :jigsaw: Built for Extensibility
-We understand that ML engineers are (rightfully) opinionated about their observability needs. Every ML system is unique, which is why Ptolemy prioritizes extensibility at our cour. Our plugin architecture lets you integrate with your existing pipelines and tools without forcing you to adopt our opinionis. Whether you're using custom metrics, proprietary data formats, or specialize visualition tools, Ptolemy's flexible APIs and connector framework adapt tio your workflow – not the other way around.
+We understand that ML engineers are (rightfully) opinionated about their observability needs. Every ML system is unique, which is why Ptolemy prioritizes extensibility at our core. Our plugin architecture lets you integrate with your existing pipelines and tools without forcing you to adopt our opinions. Whether you're using custom metrics, proprietary data formats, or specialized visualization tools, Ptolemy's flexible APIs and connector framework adapt to your workflow – not the other way around.
