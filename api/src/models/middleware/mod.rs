@@ -66,8 +66,8 @@ impl AuthContext {
                     return u.is_sysadmin;
                 }
 
-                if u.id.as_uuid() == user_id || u.is_sysadmin {
-                    return true;
+                if data.display_name.is_some() {
+                    return u.id.as_uuid() == user_id;
                 }
 
                 false
