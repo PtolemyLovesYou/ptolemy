@@ -20,6 +20,7 @@ theme:
     - navigation.tabs
     # - navigation.tabs.sticky
     - content.code.copy
+    - toc.integrate
 
 repo_name: PtolemyLovesYou/ptolemy
 repo_url: https://github.com/PtolemyLovesYou/ptolemy
@@ -27,40 +28,40 @@ edit_uri: edit/main/docs/
 
 nav:
   - Home:
-    - index.md
+      - index.md
   - Getting Started:
-    - Overview: getting_started/index.md
-    - Install with Docker Compose: getting_started/installation_docker_compose.md
-    - Building Documentation: getting_started/building_documentation.md
-    - Usage: getting_started/usage.md
+      - Overview: getting_started/index.md
+      - Install with Docker Compose: getting_started/installation_docker_compose.md
+      - Building Documentation: getting_started/building_documentation.md
+      - Usage: getting_started/usage.md
   - Concepts:
-    - Data Model: concepts/data_model.md
-    - Identity & Access Management: concepts/iam.md
-    - Query Engine: concepts/query_engine.md
+      - Data Model: concepts/data_model.md
+      - Identity & Access Management: concepts/iam.md
+      - Query Engine: concepts/query_engine.md
   - Guides:
-    - Introduction: guides/index.md
+      - Introduction: guides/index.md
   - API Reference:
-    - Configuration: api_reference/configuration.md
-    - GraphQL Schema: api_reference/gql_schema.md
-    - System Diagrams:
-      - Database Schema: api_reference/system_diagrams/database_schema.md
-      - Query Engine Service Architecture: api_reference/system_diagrams/query_engine.md
+      - Configuration: api_reference/configuration.md
+      - GraphQL Schema: api_reference/gql_schema.md
+      - System Diagrams:
+          - Database Schema: api_reference/system_diagrams/database_schema.md
+          - Query Engine Service Architecture: api_reference/system_diagrams/query_engine.md
   - Integrations:
-    - integrations.md
+      - integrations.md
   - Contributing:
-    - Introduction: contributing/index.md
-    - Code of Conduct: contributing/code_of_conduct.md
-    - Development Process: contributing/development_process.md
-    - Issue, Pull Request, & Commit Guidelines: contributing/issues_commits_prs.md
+      - Introduction: contributing/index.md
+      - Code of Conduct: contributing/code_of_conduct.md
+      - Development Process: contributing/development_process.md
+      - Issue, Pull Request, & Commit Guidelines: contributing/issues_commits_prs.md
 
 plugins:
   - table-reader
   - search
   - plantuml:
-        puml_url: https://www.plantuml.com/plantuml/
-        verbose: true
-        theme:
-          dark: material/light-green-dark
+      puml_url: https://www.plantuml.com/plantuml/
+      verbose: true
+      theme:
+        dark: material/light-green-dark
 
 markdown_extensions:
   - attr_list
@@ -84,12 +85,12 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.snippets:
-      base_path: ['.', '../api', '../ptolemy']
+      base_path: [".", "../api", "../ptolemy"]
 
 extra:
   consent:
     title: Cookie consent
-    description: >- 
+    description: >-
       We use cookies to recognize your repeated visits and preferences, as well
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
