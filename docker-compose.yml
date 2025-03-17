@@ -67,18 +67,6 @@ services:
       - ptolemy
     depends_on:
       - redis
-  app:
-    container_name: app
-    build:
-      dockerfile: prototype/Dockerfile
-    environment:
-      REDIS_HOST: redis
-    ports:
-      - "8501:8501"
-    volumes:
-      - ./prototype:/app/prototype
-    networks:
-      - ptolemy
 
 volumes:
   postgres:

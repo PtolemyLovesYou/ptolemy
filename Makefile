@@ -1,6 +1,6 @@
 .PHONY: format
 format:
-	&& black ptolemy-py/python prototype \
+	&& black ptolemy-py/python \
 	&& cargo fmt
 
 .PHONY: diesel
@@ -43,9 +43,9 @@ docs:
 run-api:
 	cargo run -p api --bin api
 
-.PHONY: run-prototype-app
-run-prototype-app:
-	API_URL=http://localhost:8000 uv run --directory prototype -m streamlit run app.py
+.PHONY: run-ui
+run-ui:
+	VITE_PTOLEMY_API=http://localhost:8000 VITE_PTOLEMY_DOCS=http://localhost:8080 cd ptolemy-ui && npm install --force && npm run dev
 
 .PHONY: run-query-engine
 run-query-engine:
