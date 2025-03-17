@@ -34,6 +34,7 @@ nav:
     - Building Documentation: getting_started/building_documentation.md
     - Usage: getting_started/usage.md
   - Concepts:
+    - Data Model: concepts/data_model.md
     - Identity & Access Management: concepts/iam.md
     - Query Engine: concepts/query_engine.md
   - Guides:
