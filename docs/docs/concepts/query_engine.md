@@ -1,4 +1,4 @@
-# Overview
+# Query Engine
 Modern observability data often requires complex analysis that goes beyond simple search filters. Ptolemy addresses this need by providing a SQL interface for direct querying - leveraging a language most engineers already know and trust.
 
 The query engine is powered by [DuckDB](https://duckdb.org), an in-process OLAP database chosen for its exceptional performance, extensibility, and ease of use. Running in dedicated containers, it supports optional query logging and data access auditing.
