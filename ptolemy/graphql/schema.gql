@@ -96,6 +96,11 @@ type UserApiKey {
 	expiresAt: DateTime
 }
 
+input UserChangePasswordInput {
+	currentPassword: String!
+	newPassword: String!
+}
+
 input UserInput {
 	username: String!
 	password: String!
@@ -106,6 +111,8 @@ input UserInput {
 
 type UserMutation {
 	create(userData: UserInput!): UserResult!
+	update(userId: UUID!, data: UserUpdate!): UserResult!
+	changePassword(userId: UUID!, data: UserChangePasswordInput!): UserResult!
 	delete(id: UUID!): DeletionResult!
 	createUserApiKey(name: String!, durationDays: Int): CreateApiKeyResult!
 	deleteUserApiKey(apiKeyId: UUID!): DeletionResult!
@@ -120,6 +127,12 @@ type UserResult implements GQLResult {
 enum UserStatusEnum {
 	ACTIVE
 	SUSPENDED
+}
+
+input UserUpdate {
+	displayName: String
+	status: UserStatusEnum
+	isAdmin: Boolean
 }
 
 type ValidationError {

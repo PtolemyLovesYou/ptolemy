@@ -12,7 +12,7 @@ macro_rules! search_db_obj {
                 conn: &mut $crate::db::DbConnection<'_>,
                 $($req_field: Option<$req_type>),+
             ) -> Result<Vec<$ty>, $crate::error::ApiError> {
-                let mut query = $table::table.into_boxed();
+                let mut query = $table::table.filter($table::deleted_at.is_null()).into_boxed();
                 $(
                     if let Some($req_field) = $req_field {
                         query = query.filter($table::$req_field.eq($req_field));

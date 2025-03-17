@@ -2,6 +2,7 @@
 
 import os
 import time
+from typing import Optional
 import logging
 from typing import Generator
 import requests
@@ -25,6 +26,24 @@ BASE_URL = "http://localhost:8000/"
 
 class IntegrationTestBase:
     """Base Integration Test."""
+    def graphql(self, jwt: str, query: str, operation_name: Optional[str] = None, variables: Optional[dict] = None) -> dict:
+        headers = {"Authorization": f"Bearer {jwt}"}
+        data = {
+            "query": query,
+            "operationName": operation_name,
+            "variables": variables,
+        }
+
+        resp = requests.post(
+            os.path.join(BASE_URL, "graphql"),
+            json={i: j for i, j in data.items() if j is not None},
+            headers=headers,
+            timeout=10,
+        )
+
+        assert resp.status_code == 200, f"Error: {resp.text}"
+
+        return resp.json()
 
     @pytest.fixture(scope="class")
     def sysadmin_jwt(self) -> Generator[str, None, None]:
@@ -50,64 +69,30 @@ class IntegrationTestBase:
     @pytest.fixture(scope="class")
     def admin_user_id(self, sysadmin_jwt: str, admin_username: str) -> Generator[str, None, None]:
         """Create admin user."""
-        resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "CreateUser",
-                "variables": {
-                    "username": admin_username,
-                    "password": admin_username,
-                    "displayName": "Test User (integration tests)",
-                    "isAdmin": True,
-                },
-            },
-            timeout=30,
-            headers={
-                "Authorization": f"Bearer {sysadmin_jwt}",
-                "Content-Type": "application/json",
+        resp = self.graphql(
+            sysadmin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="CreateUser",
+            variables={
+                "username": admin_username,
+                "password": admin_username,
+                "displayName": "Test User (integration tests)",
+                "isAdmin": True,
             },
         )
-        
-        logging.error(resp.json())
 
-        assert resp.status_code == 200, f"Error: {resp.text}"
+        logging.error(resp)
 
-        user_id = resp.json()["data"]["user"]["create"]["user"]["id"]
+        user_id = resp["data"]["user"]["create"]["user"]["id"]
 
         yield user_id
 
-        resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "DeleteUser",
-                "variables": {"userId": user_id},
-            },
-            timeout=30,
-            headers={
-                "Authorization": f"Bearer {sysadmin_jwt}",
-                "Content-Type": "application/json",
-            },
+        self.graphql(
+            sysadmin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="DeleteUser",
+            variables={"userId": user_id},
         )
-
-        assert resp.status_code == 200, f"Error: {resp.text}"
-
-        delete_resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "DeleteUser",
-                "variables": {"userId": user_id},
-            },
-            timeout=30,
-            headers={
-                "Authorization": f"Bearer {sysadmin_jwt}",
-                "Content-Type": "application/json",
-            },
-        )
-
-        assert delete_resp.status_code == 200, f"Error: {delete_resp.text}"
 
     @pytest.fixture(scope="class")
     def admin_jwt(self, admin_user_id: str, admin_username: str) -> Generator[str, None, None]:
@@ -133,118 +118,95 @@ class IntegrationTestBase:
     @pytest.fixture(scope="class")
     def admin_api_key(self, admin_jwt: str) -> Generator[str, None, None]:
         """Admin API Key."""
-        resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "CreateUserApiKey",
-                "variables": {
-                    "name": f"test_{int(time.time())}",
-                    "durationDays": 1,
-                },
-            },
-            timeout=10,
-            headers={
-                "Authorization": f"Bearer {admin_jwt}",
-                "Content-Type": "application/json",
+        resp = self.graphql(
+            admin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="CreateUserApiKey",
+            variables={
+                "name": f"test_{int(time.time())}",
+                "durationDays": 1,
             },
         )
 
-        assert resp.status_code == 200, f"Error: {resp.text}"
-
-        api_key = resp.json()["data"]["user"]["createUserApiKey"]["apiKey"]["apiKey"]
+        api_key = resp["data"]["user"]["createUserApiKey"]["apiKey"]["apiKey"]
         yield api_key
 
     @pytest.fixture(scope="class")
     def workspace_id(
-        self, admin_api_key: str, admin_user_id: str, workspace_name: str
+        self,
+        admin_user_id: str,
+        workspace_name: str,
+        admin_jwt: str
     ) -> Generator[str, None, None]:
         """Workspace Name."""
-        resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "CreateWorkspace",
-                "variables": {
-                    "name": workspace_name,
-                    "description": "Test Workspace (integration tests)",
-                    "adminUserId": admin_user_id,
-                },
+        resp = self.graphql(
+            admin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="CreateWorkspace",
+            variables={
+                "name": workspace_name,
+                "description": "Test Workspace (integration tests)",
+                "adminUserId": admin_user_id,
             },
-            timeout=10,
-            headers={"X-Api-Key": admin_api_key, "Content-Type": "application/json"},
         )
 
-        assert resp.status_code == 200, f"Error: {resp.text}"
         try:
-            workspace_id = resp.json()["data"]["workspace"]["create"]["workspace"]["id"]
+            workspace_id = resp["data"]["workspace"]["create"]["workspace"]["id"]
         except TypeError as exc:
             raise TypeError(
-                f"Failed to get workspace id from response: {resp.json()}"
+                f"Failed to get workspace id from response: {resp}"
             ) from exc
 
         yield workspace_id
 
-        resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "DeleteWorkspace",
-                "variables": {"workspaceId": workspace_id},
-            },
-            timeout=10,
-            headers={"X-Api-Key": admin_api_key, "Content-Type": "application/json"},
+        resp = self.graphql(
+            admin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="DeleteWorkspace",
+            variables={"workspaceId": workspace_id},
         )
-
-        assert resp.status_code == 200, f"Error: {resp.text}"
 
     def _service_api_key(
-        self, admin_api_key: str, workspace_id: str, permission: str
+        self, workspace_id: str, permission: str, admin_jwt: str
     ) -> Generator[str, None, None]:
         """Service API Key."""
-        resp = requests.post(
-            os.path.join(BASE_URL, "graphql"),
-            json={
-                "query": GRAPHQL_MUTATION,
-                "operationName": "CreateServiceApiKey",
-                "variables": {
-                    "name": f"test_{int(time.time())}",
-                    "durationDays": 1,
-                    "permission": permission,
-                    "workspaceId": workspace_id,
-                },
+        resp = self.graphql(
+            admin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="CreateServiceApiKey",
+            variables={
+                "name": f"test_{int(time.time())}",
+                "durationDays": 1,
+                "permission": permission,
+                "workspaceId": workspace_id,
             },
-            timeout=10,
-            headers={"X-Api-Key": admin_api_key, "Content-Type": "application/json"},
         )
 
-        assert resp.status_code == 200, f"Error: {resp.text}"
-
-        service_api_key = resp.json()["data"]["workspace"]["createServiceApiKey"][
+        service_api_key = resp["data"]["workspace"]["createServiceApiKey"][
             "apiKey"
         ]["apiKey"]
         yield service_api_key
 
     @pytest.fixture
     def ro_service_api_key(
-        self, admin_api_key: str, workspace_id: str
+        self, workspace_id: str, admin_jwt: str
     ) -> Generator[str, None, None]:
         """Read Only Service API Key."""
-        yield from self._service_api_key(admin_api_key, workspace_id, "READ_ONLY")
+        yield from self._service_api_key(workspace_id, "READ_ONLY", admin_jwt)
 
     @pytest.fixture
     def rw_service_api_key(
-        self, admin_api_key: str, workspace_id: str
+        self, workspace_id: str, admin_jwt: str,
     ) -> Generator[str, None, None]:
         """Read Write Service API Key."""
-        yield from self._service_api_key(admin_api_key, workspace_id, "READ_WRITE")
+        yield from self._service_api_key(workspace_id, "READ_WRITE", admin_jwt)
 
     @pytest.fixture
     def wo_service_api_key(
-        self, admin_api_key: str, workspace_id: str
+        self, workspace_id: str, admin_jwt: str
     ) -> Generator[str, None, None]:
         """Write Only Service API Key."""
-        yield from self._service_api_key(admin_api_key, workspace_id, "WRITE_ONLY")
+        yield from self._service_api_key(workspace_id, "WRITE_ONLY", admin_jwt)
 
     @pytest.fixture
     def client(self, rw_service_api_key: str, workspace_name: str) -> Ptolemy:

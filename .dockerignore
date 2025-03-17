@@ -4,6 +4,5 @@ target/
 docs/
 assets/
 
-prototype/.venv/
 ptolemy/.venv/
 ptolemy/target/

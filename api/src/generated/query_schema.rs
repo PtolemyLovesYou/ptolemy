@@ -51,4 +51,7 @@ diesel::table! {
 
 diesel::joinable!(user_query_results -> user_query (user_query_id));
 
-diesel::allow_tables_to_appear_in_same_query!(user_query, user_query_results,);
+diesel::allow_tables_to_appear_in_same_query!(
+    user_query,
+    user_query_results,
+);

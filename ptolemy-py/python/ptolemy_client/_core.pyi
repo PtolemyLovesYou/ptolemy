@@ -208,3 +208,16 @@ class GraphQLClient:
         self, username: str
     ) -> List[tuple[WorkspaceRole, Workspace]]: ...
     def get_user_api_keys(self, user_id: UUID) -> List[UserApiKey]: ...
+    def update_user(
+        self,
+        user_id: UUID,
+        display_name: Optional[str] = None,
+        status: Optional[UserStatus] = None,
+        is_admin: Optional[bool] = None
+        ) -> User: ...
+    def change_password(
+        self,
+        user_id: UUID,
+        current_password: str,
+        new_password: str
+    ): ...
