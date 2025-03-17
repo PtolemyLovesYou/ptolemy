@@ -47,7 +47,7 @@ diesel::table! {
         subsystem_event_id -> Nullable<Uuid>,
         component_event_id -> Nullable<Uuid>,
         subcomponent_event_id -> Nullable<Uuid>,
-        field_name -> Nullable<Varchar>,
+        field_name -> Varchar,
         field_value_str -> Nullable<Varchar>,
         field_value_int -> Nullable<Int8>,
         field_value_float -> Nullable<Float8>,
