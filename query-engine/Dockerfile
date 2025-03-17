@@ -4,7 +4,6 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 COPY ./query-engine ./query-engine
-RUN uv init prototype
 RUN uv init ptolemy-py
 
 RUN uv sync --frozen --directory query-engine --inexact
