@@ -10,7 +10,7 @@ diesel:
 
 .PHONY: cli
 cli:
-	uv run -m ptolemy
+	uv run -m ptolemy_client
 
 .PHONY: generate-gql-schema
 generate-gql-schema:
