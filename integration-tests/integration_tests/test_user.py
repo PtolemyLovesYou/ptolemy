@@ -1,6 +1,5 @@
 """Test user model."""
 
-import logging
 from .base import GRAPHQL_MUTATION, IntegrationTestBase
 
 class TestUser(IntegrationTestBase):
