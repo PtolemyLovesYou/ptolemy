@@ -50,3 +50,14 @@ class TestUser(IntegrationTestBase):
 
         assert usr['data']['user']['update']['user']['status'] == "ACTIVE"
         assert usr['data']['user']['update']['success']
+
+    def test_admin_change_own_status(self, admin_user_id: str, admin_jwt: str):
+        """Test updating own status as admin."""
+        usr = self.graphql(
+            admin_jwt,
+            GRAPHQL_MUTATION,
+            operation_name="UpdateUser",
+            variables={"userId": admin_user_id, "status": "SUSPENDED", "displayName": "This should not happen"},
+        )
+
+        assert not usr['data']['user']['update']['success']
