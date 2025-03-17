@@ -80,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Only happens if env var COMPILE_GQL is set to 1
     let compile_gql = std::env::var("COMPILE_GQL")
         .map(|s| s == "1")
-        .unwrap_or(false);
+        .unwrap_or(true);
 
     if compile_gql {
         gql_compiler()?;

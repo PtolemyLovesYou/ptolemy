@@ -1,4 +1,4 @@
-use crate::enums::{api_key_permission::ApiKeyPermission, workspace_role::WorkspaceRole};
+use crate::enums::{api_key_permission::ApiKeyPermission, workspace_role::WorkspaceRole, user_status::UserStatus};
 use crate::models::{PyServiceApiKey, PyUser, PyUserApiKey, PyWorkspace};
 use crate::types::PyId;
 use ptolemy::graphql::client::GraphQLClient;
@@ -157,6 +157,21 @@ impl PyGraphQLClient {
         self.0
             .delete_user(user_id.into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    #[pyo3(signature = (user_id, display_name=None, status=None, is_admin=None))]
+    pub fn update_user(&self, user_id: PyId, display_name: Option<String>, status: Option<UserStatus>, is_admin: Option<bool>) -> PyResult<PyUser> {
+        self.0
+            .update_user(user_id.into(), display_name, status.map(|x| x.into()), is_admin)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(|u| u.into())
+    }
+
+    pub fn change_password(&self, user_id: PyId, current_password: String, new_password: String) -> PyResult<()> {
+        self.0
+            .change_user_password(user_id.into(), current_password, new_password)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(|_u| ())
     }
 
     #[pyo3(signature = (name, duration_days=None))]
