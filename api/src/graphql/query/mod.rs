@@ -1,7 +1,7 @@
 use async_graphql::{Context, MergedObject, Object};
 
+pub mod auth;
 pub mod filter;
-pub mod objects;
 pub mod records;
 
 #[derive(Debug, Default)]
@@ -15,4 +15,4 @@ impl BaseQuery {
 }
 
 #[derive(Debug, Default, MergedObject)]
-pub struct Query(pub BaseQuery, pub objects::IamQuery, pub records::Event);
+pub struct Query(pub BaseQuery, pub auth::IamQuery, pub records::Event);
