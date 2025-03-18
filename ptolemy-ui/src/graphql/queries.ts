@@ -7,6 +7,8 @@ export const GET_USER_PROFILE = gql`
       username
       displayName
       isAdmin
+      isSysadmin
+      status
       workspaces {
         id
         name
@@ -19,6 +21,35 @@ export const GET_USER_PROFILE = gql`
       }
     }
   }
+`;
+
+export const UPDATE_USER = gql`
+fragment ReturnsUser on User {
+  displayName
+  id
+  isAdmin
+  isSysadmin
+  status
+  username
+}
+mutation UpdateUser($userId: UUID!, $displayName: String, $status: UserStatusEnum, $isAdmin: Boolean) {
+  user {
+    update(userId: $userId, data: {
+      displayName: $displayName,
+      status: $status,
+      isAdmin: $isAdmin
+    }) {
+      error {
+        field
+        message
+      }
+      success
+      user {
+        ...ReturnsUser
+      }
+    }
+  }
+}
 `;
 
 export const CREATE_USER_API_KEY = gql`
@@ -37,3 +68,5 @@ export const CREATE_USER_API_KEY = gql`
     }
   }
 `;
+
+

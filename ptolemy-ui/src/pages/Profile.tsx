@@ -34,7 +34,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
 import { UserApiKey } from '@/graphql/types';
-import { CREATE_USER_API_KEY, GET_USER_PROFILE } from '@/graphql/queries';
+import { CREATE_USER_API_KEY, GET_USER_PROFILE, UPDATE_USER } from '@/graphql/queries';
 import { useMutation, useQuery } from '@apollo/client';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
@@ -73,7 +73,7 @@ function APIKeys({ apiKeys }: APIKeysProps) {
   );
 }
 
-const formSchema = z
+const apiKeyFormSchema = z
   .object({
     name: z.string().max(256),
     durationDays: z.number().int().gte(1).lte(365).default(30),
@@ -92,11 +92,11 @@ interface CreateAPIKeyFormProps {
 }
 
 function CreateAPIKeyForm({ createUserApiKey }: CreateAPIKeyFormProps) {
-  const createKeyForm = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const createKeyForm = useForm<z.infer<typeof apiKeyFormSchema>>({
+    resolver: zodResolver(apiKeyFormSchema),
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof apiKeyFormSchema>) {
     const { name, durationDays } = values;
     createUserApiKey({ variables: { name, durationDays } });
   }
@@ -153,6 +153,131 @@ function CreateAPIKeyForm({ createUserApiKey }: CreateAPIKeyFormProps) {
   );
 }
 
+
+const UserStatus = ['ACTIVE', 'SUSPENDED'] as const;
+
+// For now, can only edit username
+const profileFormSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  status: z.enum(UserStatus),
+  displayName: z.string(),
+  isAdmin: z.boolean(),
+  isSysadmin: z.boolean(),
+}).partial();
+
+type Workspace = {
+  id: string;
+  name: string;
+}
+
+interface ProfileFormProps {
+  profile: {
+    id: string;
+    username: string;
+    status: typeof UserStatus[number];
+    displayName: string;
+    isAdmin: boolean;
+    isSysadmin: boolean;
+    workspaces: Workspace[];
+  }
+}
+
+const ProfileForm = ({ profile }: ProfileFormProps) => {
+  const [updateUser, _userData] = useMutation(UPDATE_USER, {
+    refetchQueries: [
+      GET_USER_PROFILE,
+      'Me',
+    ]
+  });
+  const form = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      ...profile,
+    }
+  });
+
+  async function onSubmit(data: z.infer<typeof profileFormSchema>) {
+    const { displayName } = data;
+    updateUser({ variables: { userId: profile.id, displayName } });
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="id">ID</FormLabel>
+              <FormControl>
+                <Input placeholder="(empty)" {...field} disabled />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="username">Username</FormLabel>
+              <FormControl>
+                <Input placeholder="(empty)" {...field} disabled />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+                <FormField
+          control={form.control}
+          name="displayName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="displayName">Display Name</FormLabel>
+              <FormControl>
+                <Input placeholder="(empty)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        <FormField
+          control={form.control}
+          name="isSysadmin"
+          render={({ field }) => (
+            <FormItem className="flex flex-row">
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled />
+              </FormControl>
+              <FormLabel htmlFor="isSysadmin">Is System Admin?</FormLabel>
+
+              <FormMessage />
+            </FormItem>
+          )} />
+        <FormField
+          control={form.control}
+          name="isAdmin"
+          render={({ field }) => (
+            <FormItem className="flex flex-row">
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled />
+              </FormControl>
+              <FormLabel htmlFor="isAdmin">Is Admin?</FormLabel>
+
+              <FormMessage />
+            </FormItem>
+          )} />
+        <div className='grid max-w-sm gap-1.5'>
+        <Label htmlFor="workspaces">Workspaces</Label>
+        <Input id="workspaces" value={String(profile.workspaces)} placeholder="(empty)" />
+        </div>
+        <Button type="submit">Save</Button>
+      </form>
+    </Form>
+  )
+}
+
+
 const Profile: React.FC = () => {
   const { loading, error, data } = useQuery(GET_USER_PROFILE);
   const [createUserApiKey, _data] = useMutation(CREATE_USER_API_KEY, {
@@ -177,25 +302,10 @@ const Profile: React.FC = () => {
     me: { userApiKeys, __typename: _, ...profile },
   } = data;
 
-  const mapToInput = ([key, value]: [string, unknown]) => {
-    return (
-      <div key={key} className='grid max-w-sm gap-1.5'>
-        <Label htmlFor={key.toLowerCase()}>{key}</Label>
-        <Input
-          type='text'
-          id={key.toLowerCase()}
-          placeholder='(empty)'
-          value={String(value)}
-          disabled
-        />
-      </div>
-    );
-  };
-
   return (
     <div className='grid gap-5'>
       <h1>Profile</h1>
-      {Object.entries(profile).map(mapToInput)}
+      <ProfileForm profile={profile} />
 
       <h2>API Keys</h2>
       {userApiKeys.length ? (
