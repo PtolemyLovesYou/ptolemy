@@ -12,6 +12,42 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 
 macro_rules! records {
+    ($obj:ident, $ctx:ident, Runtime) => {{
+        let state = $ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        records!($obj, state, conn, Runtime)
+    }};
+    ($obj:ident, $ctx:ident, Input) => {{
+        let state = $ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        records!($obj, state, conn, Input, Io)
+    }};
+    ($obj:ident, $ctx:ident, Output) => {{
+        let state = $ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        records!($obj, state, conn, Output, Io)
+    }};
+    ($obj:ident, $ctx:ident, Feedback) => {{
+        let state = $ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        records!($obj, state, conn, Feedback, Io)
+    }};
+    ($obj:ident, $ctx:ident, Metadata) => {{
+        let state = $ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        records!($obj, state, conn, Metadata)
+    }};
+    ($obj:ident, $ctx:ident, $event_type:ident, $name:literal) => {{
+        let state = $ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        records!($obj, state, conn, $event_type, $name)
+    }};
     ($obj:ident, $state:ident, $conn:ident, Runtime) => {
         $crate::unchecked_executor!($state, "runtime")
             .read(async move {
@@ -24,15 +60,6 @@ macro_rules! records {
             })
             .await
             .map_err(|e| e.into())
-    };
-    ($obj:ident, $state:ident, $conn:ident, Input) => {
-        records!($obj, $state, $conn, Input, Io)
-    };
-    ($obj:ident, $state:ident, $conn:ident, Output) => {
-        records!($obj, $state, $conn, Output, Io)
-    };
-    ($obj:ident, $state:ident, $conn:ident, Feedback) => {
-        records!($obj, $state, $conn, Feedback, Io)
     };
     ($obj:ident, $state:ident, $conn:ident, $io_type:ident, Io) => {
         $crate::unchecked_executor!($state, "io")
@@ -84,51 +111,27 @@ impl SystemEventRecord {
         &self,
         ctx: &Context<'_>,
     ) -> GraphQLResult<Vec<SubsystemEventRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, SubsystemEventRecord, "subsystem_event")
+        records!(self, ctx, SubsystemEventRecord, "subsystem_event")
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Runtime)
+        records!(self, ctx, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Input)
+        records!(self, ctx, Input)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Output)
+        records!(self, ctx, Output)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Feedback)
+        records!(self, ctx, Feedback)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Metadata)
+        records!(self, ctx, Metadata)
     }
 }
 
@@ -138,51 +141,27 @@ impl SubsystemEventRecord {
         &self,
         ctx: &Context<'_>,
     ) -> GraphQLResult<Vec<ComponentEventRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, ComponentEventRecord, "component_event")
+        records!(self, ctx, ComponentEventRecord, "component_event")
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Runtime)
+        records!(self, ctx, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Input)
+        records!(self, ctx, Input)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Output)
+        records!(self, ctx, Output)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Feedback)
+        records!(self, ctx, Feedback)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Metadata)
+        records!(self, ctx, Metadata)
     }
 }
 
@@ -192,99 +171,49 @@ impl ComponentEventRecord {
         &self,
         ctx: &Context<'_>,
     ) -> GraphQLResult<Vec<SubcomponentEventRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(
-            self,
-            state,
-            conn,
-            SubcomponentEventRecord,
-            "subcomponent_event"
-        )
+        records!(self, ctx, SubcomponentEventRecord, "subcomponent_event")
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Runtime)
+        records!(self, ctx, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Input)
+        records!(self, ctx, Input)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Output)
+        records!(self, ctx, Output)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Feedback)
+        records!(self, ctx, Feedback)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Metadata)
+        records!(self, ctx, Metadata)
     }
 }
 
 #[ComplexObject]
 impl SubcomponentEventRecord {
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Runtime)
+        records!(self, ctx, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Input)
+        records!(self, ctx, Input)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Output)
+        records!(self, ctx, Output)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Feedback)
+        records!(self, ctx, Feedback)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
-        let state = ctx.data::<GraphQLAppState>()?;
-
-        let mut conn = state.state.get_conn().await?;
-
-        records!(self, state, conn, Metadata)
+        records!(self, ctx, Metadata)
     }
 }
