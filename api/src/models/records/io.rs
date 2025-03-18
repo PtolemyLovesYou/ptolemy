@@ -30,6 +30,7 @@ use uuid::Uuid;
 #[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
 #[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
 #[diesel(table_name = crate::generated::records_schema::io)]
+#[graphql(complex, name = "IORecord")]
 pub struct IORecord {
     pub id: Uuid,
     #[graphql(skip)]
@@ -45,11 +46,17 @@ pub struct IORecord {
     #[graphql(skip)]
     pub subcomponent_event_id: Option<Uuid>,
     pub field_name: String,
+    #[graphql(skip)]
     pub field_value_str: Option<String>,
+    #[graphql(skip)]
     pub field_value_int: Option<i64>,
+    #[graphql(skip)]
     pub field_value_float: Option<f64>,
+    #[graphql(skip)]
     pub field_value_bool: Option<bool>,
+    #[graphql(skip)]
     pub field_value_json: Option<serde_json::Value>,
+    #[graphql(skip)]
     pub field_value_type: FieldValueTypeEnum,
 }
 

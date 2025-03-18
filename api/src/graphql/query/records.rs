@@ -135,6 +135,25 @@ impl Event {
 }
 
 #[ComplexObject]
+impl IORecord {
+    async fn field_value(&self) -> GraphQLResult<serde_json::Value> {
+        if let Some(field_value_str) = &self.field_value_str {
+            Ok(serde_json::json!(field_value_str))
+        } else if let Some(field_value_int) = &self.field_value_int {
+            Ok(serde_json::json!(field_value_int))
+        } else if let Some(field_value_float) = &self.field_value_float {
+            Ok(serde_json::json!(field_value_float))
+        } else if let Some(field_value_bool) = &self.field_value_bool {
+            Ok(serde_json::json!(field_value_bool))
+        } else if let Some(field_value_json) = &self.field_value_json {
+            Ok(serde_json::json!(field_value_json))
+        } else {
+            Err(ApiError::InternalError.into())
+        }
+    }
+}
+
+#[ComplexObject]
 impl SystemEventRecord {
     async fn subsystem_events(
         &self,

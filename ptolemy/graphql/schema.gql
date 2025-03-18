@@ -13,9 +13,9 @@ type ComponentEventRecord {
 	environment: String
 	subcomponentEvents: [SubcomponentEventRecord!]!
 	runtime: RuntimeRecord!
-	inputs: [Iorecord!]!
-	outputs: [Iorecord!]!
-	feedback: [Iorecord!]!
+	inputs: [IORecord!]!
+	outputs: [IORecord!]!
+	feedback: [IORecord!]!
 	metadata: [MetadataRecord!]!
 }
 
@@ -47,14 +47,6 @@ type Event {
 	systemEvents: [SystemEventRecord!]!
 }
 
-enum FieldValueTypeEnum {
-	STRING
-	INT
-	FLOAT
-	BOOL
-	JSON
-}
-
 
 interface GQLResult {
 	success: Boolean!
@@ -62,17 +54,12 @@ interface GQLResult {
 }
 
 
-
-type Iorecord {
+type IORecord {
 	id: UUID!
 	fieldName: String!
-	fieldValueStr: String
-	fieldValueInt: Int
-	fieldValueFloat: Float
-	fieldValueBool: Boolean
-	fieldValueJson: JSON
-	fieldValueType: FieldValueTypeEnum!
+	fieldValue: JSON!
 }
+
 
 """
 A scalar that can represent any JSON value.
@@ -138,9 +125,9 @@ type SubcomponentEventRecord {
 	version: String
 	environment: String
 	runtime: RuntimeRecord!
-	inputs: [Iorecord!]!
-	outputs: [Iorecord!]!
-	feedback: [Iorecord!]!
+	inputs: [IORecord!]!
+	outputs: [IORecord!]!
+	feedback: [IORecord!]!
 	metadata: [MetadataRecord!]!
 }
 
@@ -152,9 +139,9 @@ type SubsystemEventRecord {
 	environment: String
 	componentEvents: [ComponentEventRecord!]!
 	runtime: RuntimeRecord!
-	inputs: [Iorecord!]!
-	outputs: [Iorecord!]!
-	feedback: [Iorecord!]!
+	inputs: [IORecord!]!
+	outputs: [IORecord!]!
+	feedback: [IORecord!]!
 	metadata: [MetadataRecord!]!
 }
 
@@ -166,9 +153,9 @@ type SystemEventRecord {
 	environment: String
 	subsystemEvents: [SubsystemEventRecord!]!
 	runtime: RuntimeRecord!
-	inputs: [Iorecord!]!
-	outputs: [Iorecord!]!
-	feedback: [Iorecord!]!
+	inputs: [IORecord!]!
+	outputs: [IORecord!]!
+	feedback: [IORecord!]!
 	metadata: [MetadataRecord!]!
 }
 
