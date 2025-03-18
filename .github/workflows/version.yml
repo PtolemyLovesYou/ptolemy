@@ -4,12 +4,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "api/**"
-      - "ptolemy/**"
-      - "ptolemy-py/**"
-      - "ptolemy-ui/**"
-      - "query-engine/**"
+    paths-ignore:
+      - ".github/**"
+      - "docs/**"
+      - ".gitattributes"
+      - "**/README.md"
+      - "README.md"
+      - ".gitignore"
 
   workflow_dispatch:
     inputs:
