@@ -139,11 +139,7 @@ impl Event {
                             .eq_any(&workspace_ids)
                             .and(records_schema::system_event::deleted_at.is_null()),
                     )
-                    .inner_join(
-                        records_schema::runtime::table.on(records_schema::system_event::id
-                            .nullable()
-                            .eq(records_schema::runtime::system_event_id)),
-                    )
+                    .inner_join(records_schema::runtime::table)
                     .select(SystemEventRecord::as_select())
                     .order_by(records_schema::runtime::start_time.desc())
                     .limit(limit)
