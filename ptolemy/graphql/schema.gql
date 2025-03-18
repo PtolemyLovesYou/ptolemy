@@ -49,10 +49,6 @@ type DeletionResult implements GQLResult {
 	error: [ValidationError!]
 }
 
-type Event {
-	systemEvents(event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SystemEventRecord!]!
-}
-
 input EventFilter {
 	id: UuidFilter
 	name: StringFilter
@@ -101,10 +97,10 @@ scalar NaiveDateTime
 
 type Query {
 	ping: String!
-	event(workspaceId: UUID!): Event!
 	user(id: UUID, username: String): [User!]!
 	workspace(id: UUID, name: String, archived: Boolean): [Workspace!]!
 	me: User!
+	systemEvents(workspaceId: UUID!, event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SystemEventRecord!]!
 }
 
 input RuntimeFilter {

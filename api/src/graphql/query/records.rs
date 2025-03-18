@@ -109,16 +109,15 @@ macro_rules! records {
     };
 }
 
-#[derive(Debug)]
-pub struct Event {
-    pub workspace_id: uuid::Uuid,
-}
+#[derive(Debug, Default)]
+pub struct Event;
 
 #[Object]
 impl Event {
     async fn system_events(
         &self,
         ctx: &Context<'_>,
+        workspace_id: uuid::Uuid,
         event: Option<EventFilter>,
         runtime: Option<RuntimeFilter>,
         #[graphql(default = 20)] limit: i64,
@@ -132,7 +131,7 @@ impl Event {
                 let mut query = records_schema::system_event::table
                     .filter(
                         records_schema::system_event::workspace_id
-                            .eq(&self.workspace_id)
+                            .eq(&workspace_id)
                             .and(records_schema::system_event::deleted_at.is_null()),
                     )
                     .inner_join(
