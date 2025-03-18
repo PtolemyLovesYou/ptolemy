@@ -7,6 +7,7 @@ use async_graphql::{Context, Object, Result as GraphQlResult};
 use uuid::Uuid;
 
 pub mod objects;
+pub mod records;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Query;

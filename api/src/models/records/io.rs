@@ -15,7 +15,15 @@ use tracing::error;
 use uuid::Uuid;
 
 #[derive(
-    Debug, Queryable, Insertable, Serialize, Deserialize, Associations, Selectable, Identifiable,
+    Debug,
+    Queryable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Associations,
+    Selectable,
+    Identifiable,
+    async_graphql::SimpleObject,
 )]
 #[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
 #[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]

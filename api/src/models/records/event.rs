@@ -17,9 +17,11 @@ macro_rules! event_table {
             Associations,
             Selectable,
             Identifiable,
+            async_graphql::SimpleObject,
         )]
         #[diesel(belongs_to($parent_table, foreign_key = $parent_fk))]
         #[diesel(table_name = crate::generated::records_schema::$table_name)]
+        #[graphql(complex)]
         pub struct $name {
             pub id: Uuid,
             pub $parent_fk: Uuid,
