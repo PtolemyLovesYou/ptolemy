@@ -45,6 +45,25 @@ class IntegrationTestBase:
 
         return resp.json()
 
+    def graphql_api_key(self, api_key: str, query: str, operation_name: Optional[str] = None, variables: Optional[dict] = None) -> dict:
+        headers = {"X-Api-Key": api_key}
+        data = {
+            "query": query,
+            "operationName": operation_name,
+            "variables": variables,
+        }
+
+        resp = requests.post(
+            os.path.join(BASE_URL, "graphql"),
+            json={i: j for i, j in data.items() if j is not None},
+            headers=headers,
+            timeout=10,
+        )
+
+        assert resp.status_code == 200, f"Error: {resp.text}"
+
+        return resp.json()
+
     @pytest.fixture(scope="class")
     def sysadmin_jwt(self) -> Generator[str, None, None]:
         """Superadmin JWT."""

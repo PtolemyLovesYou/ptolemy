@@ -52,3 +52,27 @@ class TestSql(IntegrationTestBase):
             assert len(result) > 0
         except ValueError as exc:
             raise ValueError("No system events returned") from exc
+
+    def test_get_events(self, client: Ptolemy, rw_service_api_key: str, workspace_id: str):
+        """Test workspaces"""
+
+        query = """
+        query TestBasicSystemEvents {
+          systemEvents {
+            id
+            name
+            version
+            environment
+            runtime {
+              startTime
+              endTime
+              errorType
+              errorContent
+            }
+          }
+        }
+        """
+
+        result = self.graphql_api_key(rw_service_api_key, query, operation_name="TestBasicSystemEvents")
+
+        assert result['data']['systemEvents'] is not None
