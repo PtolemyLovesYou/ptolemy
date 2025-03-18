@@ -1,7 +1,11 @@
 use crate::{
     error::ApiError,
     generated::records_schema,
-    graphql::{executor::GraphQLExecutor, state::GraphQLAppState},
+    graphql::{
+        executor::GraphQLExecutor,
+        query::filter::{EventFilter, RuntimeFilter},
+        state::GraphQLAppState,
+    },
     models::records::{
         ComponentEventRecord, IORecord, IoTypeEnum, MetadataRecord, RuntimeRecord,
         SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
@@ -115,6 +119,8 @@ impl Event {
     async fn system_events(
         &self,
         ctx: &Context<'_>,
+        event: Option<EventFilter>,
+        runtime: Option<RuntimeFilter>,
         #[graphql(default = 20)] limit: i64,
         #[graphql(default = 0)] offset: i64,
     ) -> GraphQLResult<Vec<SystemEventRecord>> {
@@ -123,15 +129,31 @@ impl Event {
 
         crate::unchecked_executor!(state, "system_event")
             .read_many(async move {
-                records_schema::system_event::table
+                let mut query = records_schema::system_event::table
                     .filter(
                         records_schema::system_event::workspace_id
                             .eq(&self.workspace_id)
                             .and(records_schema::system_event::deleted_at.is_null()),
                     )
+                    .inner_join(
+                        records_schema::runtime::table.on(records_schema::system_event::id
+                            .nullable()
+                            .eq(records_schema::runtime::system_event_id)),
+                    )
                     .select(SystemEventRecord::as_select())
                     .limit(limit)
                     .offset(offset)
+                    .into_boxed();
+
+                if let Some(f) = &event {
+                    query = crate::search_filter!(query, f, system_event, Event);
+                }
+
+                if let Some(f) = &runtime {
+                    query = crate::search_filter!(query, f, Runtime);
+                }
+
+                query
                     .get_results(&mut conn)
                     .await
                     .map_err(|_| ApiError::GetError)

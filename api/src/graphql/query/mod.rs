@@ -6,6 +6,7 @@ use crate::{
 use async_graphql::{Context, Object, Result as GraphQlResult};
 use uuid::Uuid;
 
+pub mod filter;
 pub mod objects;
 pub mod records;
 

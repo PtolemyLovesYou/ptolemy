@@ -37,6 +37,12 @@ The input/output is a string in RFC3339 format.
 """
 scalar DateTime
 
+input DateTimeFilter {
+	lt: DateTime
+	gt: DateTime
+	isNull: Boolean
+}
+
 type DeletionResult implements GQLResult {
 	success: Boolean!
 	deleted: Boolean
@@ -44,7 +50,14 @@ type DeletionResult implements GQLResult {
 }
 
 type Event {
-	systemEvents(limit: Int! = 20, offset: Int! = 0): [SystemEventRecord!]!
+	systemEvents(event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SystemEventRecord!]!
+}
+
+input EventFilter {
+	id: UuidFilter
+	name: StringFilter
+	version: StringFilter
+	environment: StringFilter
 }
 
 
@@ -94,6 +107,13 @@ type Query {
 	me: User!
 }
 
+input RuntimeFilter {
+	startTime: DateTimeFilter
+	endTime: DateTimeFilter
+	errorType: StringFilter
+	errorContent: StringFilter
+}
+
 type RuntimeRecord {
 	id: UUID!
 	startTime: NaiveDateTime!
@@ -117,6 +137,16 @@ type ServiceApiKeyResult implements GQLResult {
 	error: [ValidationError!]
 }
 
+
+input StringFilter {
+	eq: String
+	ne: String
+	in: [String!]
+	nin: [String!]
+	like: String
+	ilike: String
+	isNull: Boolean
+}
 
 type SubcomponentEventRecord {
 	id: UUID!
@@ -227,6 +257,14 @@ input UserUpdate {
 	displayName: String
 	status: UserStatusEnum
 	isAdmin: Boolean
+}
+
+input UuidFilter {
+	eq: UUID
+	ne: UUID
+	in: [UUID!]
+	nin: [UUID!]
+	isNull: Boolean
 }
 
 type ValidationError {
