@@ -107,7 +107,7 @@ macro_rules! records {
 
 #[derive(Debug)]
 pub struct Event {
-    workspace_id: uuid::Uuid,
+    pub workspace_id: uuid::Uuid,
 }
 
 #[Object]

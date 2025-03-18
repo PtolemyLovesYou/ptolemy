@@ -18,6 +18,10 @@ impl Query {
         "Pong!".to_string()
     }
 
+    async fn event<'ctx>(&self, workspace_id: Uuid) -> records::Event {
+        records::Event { workspace_id }
+    }
+
     async fn user<'ctx>(
         &self,
         ctx: &Context<'ctx>,

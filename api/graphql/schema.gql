@@ -5,6 +5,21 @@ enum ApiKeyPermissionEnum {
 }
 
 
+type ComponentEventRecord {
+	id: UUID!
+	subsystemEventId: UUID!
+	name: String!
+	parameters: JSON
+	version: String
+	environment: String
+	subcomponentEvents: [SubcomponentEventRecord!]!
+	runtime: RuntimeRecord!
+	inputs: [Iorecord!]!
+	outputs: [Iorecord!]!
+	feedback: [Iorecord!]!
+	metadata: [MetadataRecord!]!
+}
+
 type CreateApiKeyResponse {
 	apiKey: String!
 	id: UUID!
@@ -29,6 +44,18 @@ type DeletionResult implements GQLResult {
 	error: [ValidationError!]
 }
 
+type Event {
+	systemEvents: [SystemEventRecord!]!
+}
+
+enum FieldValueTypeEnum {
+	STRING
+	INT
+	FLOAT
+	BOOL
+	JSON
+}
+
 
 interface GQLResult {
 	success: Boolean!
@@ -37,16 +64,77 @@ interface GQLResult {
 
 
 
+enum IoTypeEnum {
+	INPUT
+	OUTPUT
+	FEEDBACK
+}
+
+type Iorecord {
+	id: UUID!
+	tier: TierEnum!
+	ioType: IoTypeEnum!
+	systemEventId: UUID
+	subsystemEventId: UUID
+	componentEventId: UUID
+	subcomponentEventId: UUID
+	fieldName: String!
+	fieldValueStr: String
+	fieldValueInt: Int
+	fieldValueFloat: Float
+	fieldValueBool: Boolean
+	fieldValueJson: JSON
+	fieldValueType: FieldValueTypeEnum!
+}
+
+"""
+A scalar that can represent any JSON value.
+"""
+scalar JSON
+
+type MetadataRecord {
+	id: UUID!
+	systemEventId: UUID
+	subsystemEventId: UUID
+	componentEventId: UUID
+	subcomponentEventId: UUID
+	fieldName: String!
+	fieldValue: String!
+}
+
 type Mutation {
 	user: UserMutation!
 	workspace: WorkspaceMutation!
 }
 
+"""
+ISO 8601 combined date and time without timezone.
+
+# Examples
+
+* `2015-07-01T08:59:60.123`,
+"""
+scalar NaiveDateTime
+
 type Query {
 	ping: String!
+	event(workspaceId: UUID!): Event!
 	user(id: UUID, username: String): [User!]!
 	workspace(id: UUID, name: String, archived: Boolean): [Workspace!]!
 	me: User!
+}
+
+type RuntimeRecord {
+	id: UUID!
+	tier: TierEnum!
+	systemEventId: UUID
+	subsystemEventId: UUID
+	componentEventId: UUID
+	subcomponentEventId: UUID
+	startTime: NaiveDateTime!
+	endTime: NaiveDateTime!
+	errorType: String
+	errorContent: String
 }
 
 type ServiceApiKey {
@@ -64,6 +152,57 @@ type ServiceApiKeyResult implements GQLResult {
 	error: [ValidationError!]
 }
 
+
+type SubcomponentEventRecord {
+	id: UUID!
+	componentEventId: UUID!
+	name: String!
+	parameters: JSON
+	version: String
+	environment: String
+	runtime: RuntimeRecord!
+	inputs: [Iorecord!]!
+	outputs: [Iorecord!]!
+	feedback: [Iorecord!]!
+	metadata: [MetadataRecord!]!
+}
+
+type SubsystemEventRecord {
+	id: UUID!
+	systemEventId: UUID!
+	name: String!
+	parameters: JSON
+	version: String
+	environment: String
+	componentEvents: [ComponentEventRecord!]!
+	runtime: RuntimeRecord!
+	inputs: [Iorecord!]!
+	outputs: [Iorecord!]!
+	feedback: [Iorecord!]!
+	metadata: [MetadataRecord!]!
+}
+
+type SystemEventRecord {
+	id: UUID!
+	workspaceId: UUID!
+	name: String!
+	parameters: JSON
+	version: String
+	environment: String
+	subsystemEvents: [SubsystemEventRecord!]!
+	runtime: RuntimeRecord!
+	inputs: [Iorecord!]!
+	outputs: [Iorecord!]!
+	feedback: [Iorecord!]!
+	metadata: [MetadataRecord!]!
+}
+
+enum TierEnum {
+	SYSTEM
+	SUBSYSTEM
+	COMPONENT
+	SUBCOMPONENT
+}
 
 """
 A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
