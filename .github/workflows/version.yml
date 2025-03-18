@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - "api"
-      - "ptolemy"
-      - "ptolemy-py"
-      - "ptolemy-ui"
-      - "query-engine"
+      - "api/**"
+      - "ptolemy/**"
+      - "ptolemy-py/**"
+      - "ptolemy-ui/**"
+      - "query-engine/**"
 
   workflow_dispatch:
     inputs:
