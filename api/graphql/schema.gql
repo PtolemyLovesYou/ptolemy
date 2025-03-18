@@ -11,7 +11,7 @@ type ComponentEventRecord {
 	parameters: JSON
 	version: String
 	environment: String
-	subcomponentEvents: [SubcomponentEventRecord!]!
+	subcomponentEvents(event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SubcomponentEventRecord!]!
 	runtime: RuntimeRecord!
 	inputs: [IORecord!]!
 	outputs: [IORecord!]!
@@ -163,7 +163,7 @@ type SubsystemEventRecord {
 	parameters: JSON
 	version: String
 	environment: String
-	componentEvents: [ComponentEventRecord!]!
+	componentEvents(event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [ComponentEventRecord!]!
 	runtime: RuntimeRecord!
 	inputs: [IORecord!]!
 	outputs: [IORecord!]!
@@ -177,7 +177,7 @@ type SystemEventRecord {
 	parameters: JSON
 	version: String
 	environment: String
-	subsystemEvents: [SubsystemEventRecord!]!
+	subsystemEvents(event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SubsystemEventRecord!]!
 	runtime: RuntimeRecord!
 	inputs: [IORecord!]!
 	outputs: [IORecord!]!

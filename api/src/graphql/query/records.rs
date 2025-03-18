@@ -95,20 +95,6 @@ macro_rules! records {
             .await
             .map_err(|e| e.into())
     };
-    ($obj:ident, $state:ident, $conn:ident, $event_type:ident, $name:literal) => {
-        $crate::unchecked_executor!($state, $name)
-            .read_many(async move {
-                $event_type::belonging_to($obj)
-                    .inner_join(records_schema::runtime::table)
-                    .select($event_type::as_select())
-                    .order_by(records_schema::runtime::start_time.asc())
-                    .get_results(&mut $conn)
-                    .await
-                    .map_err(|_| ApiError::GetError)
-            })
-            .await
-            .map_err(|e| e.into())
-    };
 }
 
 #[derive(Debug, Default)]
@@ -190,8 +176,44 @@ impl SystemEventRecord {
     async fn subsystem_events(
         &self,
         ctx: &Context<'_>,
+        event: Option<EventFilter>,
+        runtime: Option<RuntimeFilter>,
+        #[graphql(default = 20)] limit: i64,
+        #[graphql(default = 0)] offset: i64,
     ) -> GraphQLResult<Vec<SubsystemEventRecord>> {
-        records!(self, ctx, SubsystemEventRecord, "subsystem_event")
+        let state = ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        crate::unchecked_executor!(state, "subsystem_event")
+            .read_many(async move {
+                let mut query = records_schema::subsystem_event::table
+                    .filter(
+                        records_schema::subsystem_event::system_event_id
+                            .eq(&self.id)
+                            .and(records_schema::subsystem_event::deleted_at.is_null()),
+                    )
+                    .inner_join(records_schema::runtime::table)
+                    .select(SubsystemEventRecord::as_select())
+                    .order_by(records_schema::runtime::start_time.desc())
+                    .limit(limit)
+                    .offset(offset)
+                    .into_boxed();
+
+                if let Some(f) = &event {
+                    query = crate::search_filter!(query, f, subsystem_event, Event);
+                }
+
+                if let Some(f) = &runtime {
+                    query = crate::search_filter!(query, f, Runtime);
+                }
+
+                query
+                    .get_results(&mut conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
+            .await
+            .map_err(|e| e.into())
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -220,8 +242,44 @@ impl SubsystemEventRecord {
     async fn component_events(
         &self,
         ctx: &Context<'_>,
+        event: Option<EventFilter>,
+        runtime: Option<RuntimeFilter>,
+        #[graphql(default = 20)] limit: i64,
+        #[graphql(default = 0)] offset: i64,
     ) -> GraphQLResult<Vec<ComponentEventRecord>> {
-        records!(self, ctx, ComponentEventRecord, "component_event")
+        let state = ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        crate::unchecked_executor!(state, "component_event")
+            .read_many(async move {
+                let mut query = records_schema::component_event::table
+                    .filter(
+                        records_schema::component_event::subsystem_event_id
+                            .eq(&self.id)
+                            .and(records_schema::component_event::deleted_at.is_null()),
+                    )
+                    .inner_join(records_schema::runtime::table)
+                    .select(ComponentEventRecord::as_select())
+                    .order_by(records_schema::runtime::start_time.desc())
+                    .limit(limit)
+                    .offset(offset)
+                    .into_boxed();
+
+                if let Some(f) = &event {
+                    query = crate::search_filter!(query, f, component_event, Event);
+                }
+
+                if let Some(f) = &runtime {
+                    query = crate::search_filter!(query, f, Runtime);
+                }
+
+                query
+                    .get_results(&mut conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
+            .await
+            .map_err(|e| e.into())
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -250,8 +308,44 @@ impl ComponentEventRecord {
     async fn subcomponent_events(
         &self,
         ctx: &Context<'_>,
+        event: Option<EventFilter>,
+        runtime: Option<RuntimeFilter>,
+        #[graphql(default = 20)] limit: i64,
+        #[graphql(default = 0)] offset: i64,
     ) -> GraphQLResult<Vec<SubcomponentEventRecord>> {
-        records!(self, ctx, SubcomponentEventRecord, "subcomponent_event")
+        let state = ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        crate::unchecked_executor!(state, "subcomponent_event")
+            .read_many(async move {
+                let mut query = records_schema::subcomponent_event::table
+                    .filter(
+                        records_schema::subcomponent_event::component_event_id
+                            .eq(&self.id)
+                            .and(records_schema::subcomponent_event::deleted_at.is_null()),
+                    )
+                    .inner_join(records_schema::runtime::table)
+                    .select(SubcomponentEventRecord::as_select())
+                    .order_by(records_schema::runtime::start_time.desc())
+                    .limit(limit)
+                    .offset(offset)
+                    .into_boxed();
+
+                if let Some(f) = &event {
+                    query = crate::search_filter!(query, f, subcomponent_event, Event);
+                }
+
+                if let Some(f) = &runtime {
+                    query = crate::search_filter!(query, f, Runtime);
+                }
+
+                query
+                    .get_results(&mut conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
+            .await
+            .map_err(|e| e.into())
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
