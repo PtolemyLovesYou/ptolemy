@@ -20,7 +20,7 @@ theme:
     - navigation.tabs
     # - navigation.tabs.sticky
     - content.code.copy
-    - toc.integrate
+    - toc #.integrate
 
 repo_name: PtolemyLovesYou/ptolemy
 repo_url: https://github.com/PtolemyLovesYou/ptolemy
