@@ -12,37 +12,57 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 
 macro_rules! records {
-    ($obj:ident, $conn:ident, Runtime) => {
-        RuntimeRecord::belonging_to($obj)
-            .select(RuntimeRecord::as_select())
-            .filter(records_schema::runtime::deleted_at.is_null())
-            .get_result(&mut $conn)
+    ($state:ident, $obj:ident, $conn:ident, Runtime) => {
+        $crate::unchecked_executor!($state, "runtime")
+            .read(async move {
+                RuntimeRecord::belonging_to($obj)
+                    .select(RuntimeRecord::as_select())
+                    .filter(records_schema::runtime::deleted_at.is_null())
+                    .get_result(&mut $conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
             .await
-            .map_err(|_| ApiError::GetError.into())
+            .map_err(|e| e.into())
     };
-    ($obj:ident, $conn:ident, $io_type:ident, Io) => {
-        IORecord::belonging_to($obj)
-            .select(IORecord::as_select())
-            .filter(records_schema::io::deleted_at.is_null())
-            .filter(records_schema::io::io_type.eq(IoTypeEnum::$io_type))
-            .get_results(&mut $conn)
+    ($state:ident, $obj:ident, $conn:ident, $io_type:ident, Io) => {
+        $crate::unchecked_executor!($state, "io")
+            .read_many(async move {
+                IORecord::belonging_to($obj)
+                    .select(IORecord::as_select())
+                    .filter(records_schema::io::deleted_at.is_null())
+                    .filter(records_schema::io::io_type.eq(IoTypeEnum::$io_type))
+                    .get_results(&mut $conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
             .await
-            .map_err(|_| ApiError::GetError.into())
+            .map_err(|e| e.into())
     };
-    ($obj:ident, $conn:ident, Metadata) => {
-        MetadataRecord::belonging_to($obj)
-            .select(MetadataRecord::as_select())
-            .filter(records_schema::metadata::deleted_at.is_null())
-            .get_results(&mut $conn)
+    ($state:ident, $obj:ident, $conn:ident, Metadata) => {
+        $crate::unchecked_executor!($state, "metadata")
+            .read_many(async move {
+                MetadataRecord::belonging_to($obj)
+                    .select(MetadataRecord::as_select())
+                    .filter(records_schema::metadata::deleted_at.is_null())
+                    .get_results(&mut $conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
             .await
-            .map_err(|_| ApiError::GetError.into())
+            .map_err(|e| e.into())
     };
-    ($obj:ident, $conn:ident, $event_type:ident, Event) => {
-        $event_type::belonging_to($obj)
-            .select($event_type::as_select())
-            .get_results(&mut $conn)
+    ($state:ident, $obj:ident, $conn:ident, $event_type:ident, $name:literal, Event) => {
+        $crate::unchecked_executor!($state, $name)
+            .read_many(async move {
+                $event_type::belonging_to($obj)
+                    .select($event_type::as_select())
+                    .get_results(&mut $conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
             .await
-            .map_err(|_| ApiError::GetError.into())
+            .map_err(|e| e.into())
     };
 }
 
@@ -56,10 +76,14 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "subsystem_event")
-            .read_many(async move { records!(self, conn, SubsystemEventRecord, Event) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(
+            state,
+            self,
+            conn,
+            SubsystemEventRecord,
+            "subsystem_event",
+            Event
+        )
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -67,10 +91,7 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "runtime")
-            .read(async move { records!(self, conn, Runtime) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -78,10 +99,7 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Input, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Input, Io)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -89,10 +107,7 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Output, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Output, Io)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -100,10 +115,7 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Feedback, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Feedback, Io)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
@@ -111,10 +123,7 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "metadata")
-            .read_many(async move { records!(self, conn, Metadata) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Metadata)
     }
 }
 
@@ -128,10 +137,14 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "component_event")
-            .read_many(async move { records!(self, conn, ComponentEventRecord, Event) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(
+            state,
+            self,
+            conn,
+            ComponentEventRecord,
+            "component_event",
+            Event
+        )
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -139,10 +152,7 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "runtime")
-            .read(async move { records!(self, conn, Runtime) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -150,10 +160,7 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Input, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Input, Io)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -161,10 +168,7 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Output, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Output, Io)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -172,10 +176,7 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Feedback, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Feedback, Io)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
@@ -183,10 +184,7 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "metadata")
-            .read_many(async move { records!(self, conn, Metadata) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Metadata)
     }
 }
 
@@ -200,10 +198,14 @@ impl ComponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "subcomponent_event")
-            .read_many(async move { records!(self, conn, SubcomponentEventRecord, Event) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(
+            state,
+            self,
+            conn,
+            SubcomponentEventRecord,
+            "subcomponent_event",
+            Event
+        )
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -211,10 +213,7 @@ impl ComponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "runtime")
-            .read(async move { records!(self, conn, Runtime) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -222,10 +221,7 @@ impl ComponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Input, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Input, Io)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -233,10 +229,7 @@ impl ComponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Output, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Output, Io)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -244,10 +237,7 @@ impl ComponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Feedback, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Feedback, Io)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
@@ -255,10 +245,7 @@ impl ComponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "metadata")
-            .read_many(async move { records!(self, conn, Metadata) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Metadata)
     }
 }
 
@@ -269,10 +256,7 @@ impl SubcomponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "runtime")
-            .read(async move { records!(self, conn, Runtime) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Runtime)
     }
 
     async fn inputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -280,10 +264,7 @@ impl SubcomponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Input, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Input, Io)
     }
 
     async fn outputs(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -291,10 +272,7 @@ impl SubcomponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Output, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Output, Io)
     }
 
     async fn feedback(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<IORecord>> {
@@ -302,10 +280,7 @@ impl SubcomponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "io")
-            .read_many(async move { records!(self, conn, Feedback, Io) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Feedback, Io)
     }
 
     async fn metadata(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<MetadataRecord>> {
@@ -313,9 +288,6 @@ impl SubcomponentEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "metadata")
-            .read_many(async move { records!(self, conn, Metadata) })
-            .await
-            .map_err(|_| ApiError::GetError.into())
+        records!(state, self, conn, Metadata)
     }
 }
