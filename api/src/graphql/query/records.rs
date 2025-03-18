@@ -64,7 +64,7 @@ macro_rules! records {
             .await
             .map_err(|e| e.into())
     };
-    ($obj:ident, $state:ident, $conn:ident, $event_type:ident, $name:literal, Event) => {
+    ($obj:ident, $state:ident, $conn:ident, $event_type:ident, $name:literal) => {
         $crate::unchecked_executor!($state, $name)
             .read_many(async move {
                 $event_type::belonging_to($obj)
@@ -88,14 +88,7 @@ impl SystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        records!(
-            self,
-            state,
-            conn,
-            SubsystemEventRecord,
-            "subsystem_event",
-            Event
-        )
+        records!(self, state, conn, SubsystemEventRecord, "subsystem_event")
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -149,14 +142,7 @@ impl SubsystemEventRecord {
 
         let mut conn = state.state.get_conn().await?;
 
-        records!(
-            self,
-            state,
-            conn,
-            ComponentEventRecord,
-            "component_event",
-            Event
-        )
+        records!(self, state, conn, ComponentEventRecord, "component_event")
     }
 
     async fn runtime(&self, ctx: &Context<'_>) -> GraphQLResult<RuntimeRecord> {
@@ -215,8 +201,7 @@ impl ComponentEventRecord {
             state,
             conn,
             SubcomponentEventRecord,
-            "subcomponent_event",
-            Event
+            "subcomponent_event"
         )
     }
 
