@@ -1,4 +1,4 @@
-import { NavLink, Link as ExtLink } from 'react-router';
+import { NavLink } from 'react-router';
 import { ExternalLinkIcon } from 'lucide-react';
 import {
   NavigationMenuLink,

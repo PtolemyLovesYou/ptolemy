@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from './ui/button';
 import { NavLink } from 'react-router';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { useAuth } from '@/auth/provider';
 
 const fallbackFromName = (name: string) => {

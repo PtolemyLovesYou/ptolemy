@@ -227,14 +227,10 @@ export const processData = (data: Uint8Array[]): [string[], string[][]] => {
             try {
               return tableFromIPC(curr);
             } catch (e) {
-              console.warn(`Error with default tableFromIPC: ${e.message}`);
-              if (
-                e.message &&
-                e.message.includes('compression not implemented')
-              ) {
-                console.warn('Trying with decompress:false option');
-                return tableFromIPC(curr, { decompress: false });
-              }
+              let message;
+              if (e instanceof Error) message = e.message
+              else message = String(e);
+              console.warn(`Error with default tableFromIPC: ${message}`);
               throw e;
             }
           } else {
@@ -242,14 +238,10 @@ export const processData = (data: Uint8Array[]): [string[], string[][]] => {
             try {
               return prev.concat(tableFromIPC(curr));
             } catch (e) {
-              console.warn(`Error concatenating batch ${index}: ${e.message}`);
-              if (
-                e.message &&
-                e.message.includes('compression not implemented')
-              ) {
-                console.warn('Trying with decompress:false option');
-                return prev.concat(tableFromIPC(curr, { decompress: false }));
-              }
+              let message;
+              if (e instanceof Error) message = e.message
+              else message = String(e);
+              console.warn(`Error concatenating batch ${index}: ${message}`);
               throw e;
             }
           }
@@ -332,7 +324,7 @@ export async function runQueryAndGetData(
     console.log('Query metadata:', queryStatus);
 
     switch (queryStatus.status) {
-      case QueryStatus.COMPLETED:
+      case QueryStatus.COMPLETED: {
         // Check if there are any rows in the result based on metadata
         // Get metadata without using find (since metadata might not be an array)
         let totalRows = 0;
@@ -349,7 +341,7 @@ export async function runQueryAndGetData(
             // Try accessing using dot notation first
             if ('metadata:total_rows' in queryStatus.metadata) {
               totalRows =
-                parseInt(queryStatus.metadata['metadata:total_rows'], 10) || 0;
+                parseInt(queryStatus.metadata['metadata:total_rows'] as string, 10) || 0;
             }
 
             // Try accessing column names
@@ -390,7 +382,10 @@ export async function runQueryAndGetData(
           );
           return [columns, data];
         } catch (fetchError) {
-          console.error(`Error fetching data: ${fetchError.message}`);
+          let message;
+          if (fetchError instanceof Error) message = fetchError.message;
+          else message = String(fetchError);
+          console.error(`Error fetching data: ${message}`);
 
           // If we failed to fetch data but have column names, return empty CSV
           if (columnNames.length > 0) {
@@ -399,7 +394,7 @@ export async function runQueryAndGetData(
 
           throw fetchError;
         }
-
+      }
       case QueryStatus.CANCELLED:
         throw new Error('Query was canceled');
 
@@ -414,5 +409,3 @@ export async function runQueryAndGetData(
     throw error;
   }
 }
-
-// query -> queryId ; waitForQuery(queryId) -> QueryStatus.COMPLETE; getQuery({ queryId }) -> Data or Error
