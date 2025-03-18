@@ -7,7 +7,7 @@ use crate::{
         SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
     },
 };
-use async_graphql::{ComplexObject, Context, Result as GraphQLResult};
+use async_graphql::{ComplexObject, Context, Object, Result as GraphQLResult};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 
@@ -103,6 +103,35 @@ macro_rules! records {
             .await
             .map_err(|e| e.into())
     };
+}
+
+#[derive(Debug)]
+pub struct Event {
+    workspace_id: uuid::Uuid,
+}
+
+#[Object]
+impl Event {
+    async fn system_events(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<SystemEventRecord>> {
+        let state = ctx.data::<GraphQLAppState>()?;
+        let mut conn = state.state.get_conn().await?;
+
+        crate::unchecked_executor!(state, "system_event")
+            .read_many(async move {
+                records_schema::system_event::table
+                    .filter(
+                        records_schema::system_event::workspace_id
+                            .eq(&self.workspace_id)
+                            .and(records_schema::system_event::deleted_at.is_null()),
+                    )
+                    .select(SystemEventRecord::as_select())
+                    .get_results(&mut conn)
+                    .await
+                    .map_err(|_| ApiError::GetError)
+            })
+            .await
+            .map_err(|e| e.into())
+    }
 }
 
 #[ComplexObject]
