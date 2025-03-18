@@ -75,4 +75,4 @@ class TestSql(IntegrationTestBase):
 
         result = self.graphql_api_key(rw_service_api_key, query, operation_name="TestBasicSystemEvents")
 
-        assert result['data']['systemEvents'] is not None
+        assert result['data']['systemEvents']
