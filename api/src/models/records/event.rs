@@ -8,7 +8,16 @@ use uuid::Uuid;
 
 macro_rules! event_table {
     ($name:ident, $table_name:ident, $parent_table:ident, $parent_fk:ident) => {
-        #[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+        #[derive(
+            Debug,
+            Queryable,
+            Insertable,
+            Serialize,
+            Deserialize,
+            Associations,
+            Selectable,
+            Identifiable,
+        )]
         #[diesel(belongs_to($parent_table, foreign_key = $parent_fk))]
         #[diesel(table_name = crate::generated::records_schema::$table_name)]
         pub struct $name {

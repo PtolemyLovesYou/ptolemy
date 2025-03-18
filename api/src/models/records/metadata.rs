@@ -11,7 +11,9 @@ use ptolemy::models::{ProtoMetadata, ProtoRecord};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+#[derive(
+    Debug, Queryable, Insertable, Serialize, Deserialize, Associations, Selectable, Identifiable,
+)]
 #[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
 #[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
 #[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
