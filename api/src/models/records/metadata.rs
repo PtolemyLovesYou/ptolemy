@@ -11,7 +11,17 @@ use ptolemy::models::{ProtoMetadata, ProtoRecord};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+#[derive(
+    Debug,
+    Queryable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Associations,
+    Selectable,
+    Identifiable,
+    async_graphql::SimpleObject,
+)]
 #[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
 #[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
 #[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
@@ -19,9 +29,13 @@ use uuid::Uuid;
 #[diesel(table_name = crate::generated::records_schema::metadata)]
 pub struct MetadataRecord {
     pub id: Uuid,
+    #[graphql(skip)]
     pub system_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subsystem_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub component_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subcomponent_event_id: Option<Uuid>,
     pub field_name: String,
     pub field_value: String,

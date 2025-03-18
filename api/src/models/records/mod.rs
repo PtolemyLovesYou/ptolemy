@@ -5,6 +5,7 @@ mod metadata;
 mod runtime;
 pub mod utils;
 
+pub use enums::{FieldValueTypeEnum, IoTypeEnum, TierEnum};
 pub use event::{
     ComponentEventRecord, SubcomponentEventRecord, SubsystemEventRecord, SystemEventRecord,
 };

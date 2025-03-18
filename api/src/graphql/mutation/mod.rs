@@ -7,7 +7,7 @@ pub mod workspace;
 use self::user::UserMutation;
 use self::workspace::WorkspaceMutation;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Mutation;
 
 #[Object]

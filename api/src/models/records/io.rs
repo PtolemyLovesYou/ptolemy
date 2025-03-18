@@ -14,26 +14,49 @@ use serde_json::{json, Value};
 use tracing::error;
 use uuid::Uuid;
 
-#[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+#[derive(
+    Debug,
+    Queryable,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Associations,
+    Selectable,
+    Identifiable,
+    async_graphql::SimpleObject,
+)]
 #[diesel(belongs_to(SystemEventRecord, foreign_key = system_event_id))]
 #[diesel(belongs_to(SubsystemEventRecord, foreign_key = subsystem_event_id))]
 #[diesel(belongs_to(ComponentEventRecord, foreign_key = component_event_id))]
 #[diesel(belongs_to(SubcomponentEventRecord, foreign_key = subcomponent_event_id))]
 #[diesel(table_name = crate::generated::records_schema::io)]
+#[graphql(complex, name = "IORecord")]
 pub struct IORecord {
     pub id: Uuid,
+    #[graphql(skip)]
     pub tier: TierEnum,
+    #[graphql(skip)]
     pub io_type: IoTypeEnum,
+    #[graphql(skip)]
     pub system_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subsystem_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub component_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subcomponent_event_id: Option<Uuid>,
     pub field_name: String,
+    #[graphql(skip)]
     pub field_value_str: Option<String>,
+    #[graphql(skip)]
     pub field_value_int: Option<i64>,
+    #[graphql(skip)]
     pub field_value_float: Option<f64>,
+    #[graphql(skip)]
     pub field_value_bool: Option<bool>,
+    #[graphql(skip)]
     pub field_value_json: Option<serde_json::Value>,
+    #[graphql(skip)]
     pub field_value_type: FieldValueTypeEnum,
 }
 

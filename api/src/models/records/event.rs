@@ -8,11 +8,23 @@ use uuid::Uuid;
 
 macro_rules! event_table {
     ($name:ident, $table_name:ident, $parent_table:ident, $parent_fk:ident) => {
-        #[derive(Debug, Queryable, Insertable, Serialize, Deserialize, Associations)]
+        #[derive(
+            Debug,
+            Queryable,
+            Insertable,
+            Serialize,
+            Deserialize,
+            Associations,
+            Selectable,
+            Identifiable,
+            async_graphql::SimpleObject,
+        )]
         #[diesel(belongs_to($parent_table, foreign_key = $parent_fk))]
         #[diesel(table_name = crate::generated::records_schema::$table_name)]
+        #[graphql(complex)]
         pub struct $name {
             pub id: Uuid,
+            #[graphql(skip)]
             pub $parent_fk: Uuid,
             pub name: String,
             pub parameters: Option<serde_json::Value>,

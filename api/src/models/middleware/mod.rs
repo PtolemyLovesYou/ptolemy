@@ -23,6 +23,13 @@ pub struct AuthContext {
 }
 
 impl AuthContext {
+    pub fn workspace_ids(&self) -> Vec<Uuid> {
+        self.workspaces
+            .iter()
+            .map(|w| w.workspace.id.clone().into())
+            .collect()
+    }
+
     pub fn user(&self) -> Result<&ptolemy::models::User, ApiError> {
         match self.user.as_ref() {
             Some(u) => Ok(u),

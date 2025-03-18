@@ -4,8 +4,58 @@ use crate::{
     models::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser},
     unchecked_executor,
 };
-use async_graphql::{ComplexObject, Context, Result as GraphQlResult};
+use async_graphql::{ComplexObject, Context, Object, Result as GraphQlResult};
 use uuid::Uuid;
+
+#[derive(Debug, Default)]
+pub struct IamQuery;
+
+#[Object]
+impl IamQuery {
+    async fn user<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        id: Option<Uuid>,
+        username: Option<String>,
+    ) -> GraphQlResult<Vec<User>> {
+        let state = ctx.data::<GraphQLAppState>()?;
+        GraphQLExecutor::from_graphql_app_state(state, "user", |_| async move { Ok(true) })
+            .read_many(async move {
+                let mut conn = state.state.get_conn().await?;
+                User::search_users(&mut conn, id, username, None).await
+            })
+            .await
+            .map_err(|e| e.into())
+    }
+
+    async fn workspace<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        id: Option<Uuid>,
+        name: Option<String>,
+        archived: Option<bool>,
+    ) -> GraphQlResult<Vec<Workspace>> {
+        let state = ctx.data::<GraphQLAppState>()?;
+        GraphQLExecutor::from_graphql_app_state(state, "workspace", |_| async move { Ok(true) })
+            .read_many(async move {
+                let mut conn = state.state.get_conn().await?;
+                Workspace::search_workspaces(&mut conn, id, name, archived).await
+            })
+            .await
+            .map_err(|e| e.into())
+    }
+
+    async fn me<'ctx>(&self, ctx: &Context<'ctx>) -> GraphQlResult<User> {
+        let state = ctx.data::<GraphQLAppState>()?;
+        GraphQLExecutor::from_graphql_app_state(state, "me", |_| async move { Ok(true) })
+            .read(async move {
+                let mut conn = state.state.get_conn().await?;
+                User::get_by_id(&mut conn, &state.auth_context.user()?.id.into()).await
+            })
+            .await
+            .map_err(|e| e.into())
+    }
+}
 
 #[ComplexObject]
 impl Workspace {
