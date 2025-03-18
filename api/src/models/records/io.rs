@@ -32,11 +32,17 @@ use uuid::Uuid;
 #[diesel(table_name = crate::generated::records_schema::io)]
 pub struct IORecord {
     pub id: Uuid,
+    #[graphql(skip)]
     pub tier: TierEnum,
+    #[graphql(skip)]
     pub io_type: IoTypeEnum,
+    #[graphql(skip)]
     pub system_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subsystem_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub component_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subcomponent_event_id: Option<Uuid>,
     pub field_name: String,
     pub field_value_str: Option<String>,

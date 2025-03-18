@@ -7,7 +7,6 @@ enum ApiKeyPermissionEnum {
 
 type ComponentEventRecord {
 	id: UUID!
-	subsystemEventId: UUID!
 	name: String!
 	parameters: JSON
 	version: String
@@ -64,20 +63,8 @@ interface GQLResult {
 
 
 
-enum IoTypeEnum {
-	INPUT
-	OUTPUT
-	FEEDBACK
-}
-
 type Iorecord {
 	id: UUID!
-	tier: TierEnum!
-	ioType: IoTypeEnum!
-	systemEventId: UUID
-	subsystemEventId: UUID
-	componentEventId: UUID
-	subcomponentEventId: UUID
 	fieldName: String!
 	fieldValueStr: String
 	fieldValueInt: Int
@@ -94,10 +81,6 @@ scalar JSON
 
 type MetadataRecord {
 	id: UUID!
-	systemEventId: UUID
-	subsystemEventId: UUID
-	componentEventId: UUID
-	subcomponentEventId: UUID
 	fieldName: String!
 	fieldValue: String!
 }
@@ -126,11 +109,6 @@ type Query {
 
 type RuntimeRecord {
 	id: UUID!
-	tier: TierEnum!
-	systemEventId: UUID
-	subsystemEventId: UUID
-	componentEventId: UUID
-	subcomponentEventId: UUID
 	startTime: NaiveDateTime!
 	endTime: NaiveDateTime!
 	errorType: String
@@ -155,7 +133,6 @@ type ServiceApiKeyResult implements GQLResult {
 
 type SubcomponentEventRecord {
 	id: UUID!
-	componentEventId: UUID!
 	name: String!
 	parameters: JSON
 	version: String
@@ -169,7 +146,6 @@ type SubcomponentEventRecord {
 
 type SubsystemEventRecord {
 	id: UUID!
-	systemEventId: UUID!
 	name: String!
 	parameters: JSON
 	version: String
@@ -184,7 +160,6 @@ type SubsystemEventRecord {
 
 type SystemEventRecord {
 	id: UUID!
-	workspaceId: UUID!
 	name: String!
 	parameters: JSON
 	version: String
@@ -195,13 +170,6 @@ type SystemEventRecord {
 	outputs: [Iorecord!]!
 	feedback: [Iorecord!]!
 	metadata: [MetadataRecord!]!
-}
-
-enum TierEnum {
-	SYSTEM
-	SUBSYSTEM
-	COMPONENT
-	SUBCOMPONENT
 }
 
 """

@@ -24,6 +24,7 @@ macro_rules! event_table {
         #[graphql(complex)]
         pub struct $name {
             pub id: Uuid,
+            #[graphql(skip)]
             pub $parent_fk: Uuid,
             pub name: String,
             pub parameters: Option<serde_json::Value>,

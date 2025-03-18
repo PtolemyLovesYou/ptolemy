@@ -31,10 +31,15 @@ use uuid::Uuid;
 #[diesel(table_name = crate::generated::records_schema::runtime)]
 pub struct RuntimeRecord {
     pub id: Uuid,
+    #[graphql(skip)]
     pub tier: TierEnum,
+    #[graphql(skip)]
     pub system_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subsystem_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub component_event_id: Option<Uuid>,
+    #[graphql(skip)]
     pub subcomponent_event_id: Option<Uuid>,
     #[serde(with = "ts_microseconds")]
     pub start_time: NaiveDateTime,
