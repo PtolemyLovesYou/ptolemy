@@ -117,7 +117,7 @@ impl Event {
     async fn system_events(
         &self,
         ctx: &Context<'_>,
-        workspace_id: uuid::Uuid,
+        workspace_id: Option<uuid::Uuid>,
         event: Option<EventFilter>,
         runtime: Option<RuntimeFilter>,
         #[graphql(default = 20)] limit: i64,
@@ -126,12 +126,17 @@ impl Event {
         let state = ctx.data::<GraphQLAppState>()?;
         let mut conn = state.state.get_conn().await?;
 
+        let workspace_ids = match workspace_id {
+            Some(w) => vec![w],
+            None => state.auth_context.workspace_ids(),
+        };
+
         crate::unchecked_executor!(state, "system_event")
             .read_many(async move {
                 let mut query = records_schema::system_event::table
                     .filter(
                         records_schema::system_event::workspace_id
-                            .eq(&workspace_id)
+                            .eq_any(&workspace_ids)
                             .and(records_schema::system_event::deleted_at.is_null()),
                     )
                     .inner_join(
@@ -140,6 +145,7 @@ impl Event {
                             .eq(records_schema::runtime::system_event_id)),
                     )
                     .select(SystemEventRecord::as_select())
+                    .order_by(records_schema::runtime::start_time.desc())
                     .limit(limit)
                     .offset(offset)
                     .into_boxed();

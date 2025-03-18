@@ -100,7 +100,7 @@ type Query {
 	user(id: UUID, username: String): [User!]!
 	workspace(id: UUID, name: String, archived: Boolean): [Workspace!]!
 	me: User!
-	systemEvents(workspaceId: UUID!, event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SystemEventRecord!]!
+	systemEvents(workspaceId: UUID, event: EventFilter, runtime: RuntimeFilter, limit: Int! = 20, offset: Int! = 0): [SystemEventRecord!]!
 }
 
 input RuntimeFilter {
