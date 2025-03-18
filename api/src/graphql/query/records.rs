@@ -99,7 +99,9 @@ macro_rules! records {
         $crate::unchecked_executor!($state, $name)
             .read_many(async move {
                 $event_type::belonging_to($obj)
+                    .inner_join(records_schema::runtime::table)
                     .select($event_type::as_select())
+                    .order_by(records_schema::runtime::start_time.asc())
                     .get_results(&mut $conn)
                     .await
                     .map_err(|_| ApiError::GetError)
