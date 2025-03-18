@@ -112,7 +112,12 @@ pub struct Event {
 
 #[Object]
 impl Event {
-    async fn system_events(&self, ctx: &Context<'_>) -> GraphQLResult<Vec<SystemEventRecord>> {
+    async fn system_events(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(default = 20)] limit: i64,
+        #[graphql(default = 0)] offset: i64,
+    ) -> GraphQLResult<Vec<SystemEventRecord>> {
         let state = ctx.data::<GraphQLAppState>()?;
         let mut conn = state.state.get_conn().await?;
 
@@ -125,6 +130,8 @@ impl Event {
                             .and(records_schema::system_event::deleted_at.is_null()),
                     )
                     .select(SystemEventRecord::as_select())
+                    .limit(limit)
+                    .offset(offset)
                     .get_results(&mut conn)
                     .await
                     .map_err(|_| ApiError::GetError)
