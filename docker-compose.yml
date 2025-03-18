@@ -32,7 +32,8 @@ services:
   ui:
     container_name: ui
     build:
-      dockerfile: ptolemy-ui/Dockerfile
+      context: ptolemy-ui/
+      dockerfile: Dockerfile
     ports:
       - "3000:80"
     networks:

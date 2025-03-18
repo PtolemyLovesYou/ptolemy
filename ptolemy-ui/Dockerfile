@@ -1,12 +1,12 @@
-FROM node:18-slim AS build
+FROM node:23-slim AS build
 
 WORKDIR /app
 
-COPY ptolemy-ui/package*.json ./
+COPY package*.json ./
 
 RUN npm ci
 
-COPY ptolemy-ui/ .
+COPY . .
 
 RUN npm run build
 
