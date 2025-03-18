@@ -40,6 +40,7 @@ services:
       - ptolemy
     environment:
       VITE_PTOLEMY_API: http://api:8000
+      VITE_PTOLEMY_DOCS: http://host.docker.internal:8080
     depends_on:
       - api
   postgres:
