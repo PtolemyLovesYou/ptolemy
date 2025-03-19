@@ -1,18 +1,8 @@
 # Description
 <!-- What does this PR do? -->
 
-# Related Issue
-<!-- Link to the issue this PR addresses -->
-Closes #[issue-number]
-
-# Type of Change
-<!-- delete options that are not relevant -->
-- 🚀 New feature
-- 🔧 Bug fix
-- 📚 Documentation
-- 🔨 Breaking change
-- ⚡️ Performance improvement
-- 🧪 Test updates
+**Linked Issue:** #[issue-number]
+**Type of Change:** [✨ feat | 🐛 fix | 📚 docs | ⚡️ perf | 🧪 test | ⚙️ ci/cd | 📦 refactor | 🚧 build | 💎 style ]
 
 # Testing
 <!-- How were these changes tested? -->
