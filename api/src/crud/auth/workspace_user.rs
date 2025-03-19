@@ -43,7 +43,7 @@ impl InsertObjReturningId for WorkspaceUser {
             .on_conflict(workspace_user::id)
             .do_update()
             .set((
-                workspace_user::role.eq(record.role.clone()),
+                workspace_user::role.eq(record.role),
                 workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
                 workspace_user::deletion_reason.eq(None::<String>),
             ))
@@ -64,7 +64,7 @@ impl InsertObjReturningId for WorkspaceUser {
                 .on_conflict(workspace_user::id)
                 .do_update()
                 .set((
-                    workspace_user::role.eq(record.role.clone()),
+                    workspace_user::role.eq(record.role),
                     workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
                     workspace_user::deletion_reason.eq(None::<String>),
                 ))
@@ -90,7 +90,7 @@ impl InsertObjReturningObj for WorkspaceUser {
             .on_conflict(workspace_user::id)
             .do_update()
             .set((
-                workspace_user::role.eq(record.role.clone()),
+                workspace_user::role.eq(record.role),
                 workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
                 workspace_user::deletion_reason.eq(None::<String>),
             ))
@@ -111,7 +111,7 @@ impl InsertObjReturningObj for WorkspaceUser {
                 .on_conflict(workspace_user::id)
                 .do_update()
                 .set((
-                    workspace_user::role.eq(record.role.clone()),
+                    workspace_user::role.eq(record.role),
                     workspace_user::deleted_at.eq(None::<chrono::DateTime<chrono::Utc>>),
                     workspace_user::deletion_reason.eq(None::<String>),
                 ))

@@ -162,10 +162,7 @@ impl UserMutation {
         unchecked_executor!(state, "create_user_api_key")
             .create(&user_api_key_create)
             .await
-            .map(|ak| CreateApiKeyResponse {
-                id: ak.id.clone(),
-                api_key,
-            })
+            .map(|ak| CreateApiKeyResponse { id: ak.id, api_key })
             .into()
     }
 

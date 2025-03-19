@@ -172,10 +172,7 @@ impl WorkspaceMutation {
         })
         .create(&create_model)
         .await
-        .map(|ak| CreateApiKeyResponse {
-            id: ak.id.clone(),
-            api_key,
-        })
+        .map(|ak| CreateApiKeyResponse { id: ak.id, api_key })
         .into()
     }
 
