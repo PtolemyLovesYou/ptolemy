@@ -51,7 +51,7 @@ export const ExternalLinks: React.FC = () => {
   return (
     <NavigationMenu aria-label='External Links'>
       <NavigationMenuList>
-        <MenuItem name='Feedback' href='mailto:raz@gmail.com' isExternal />
+        <MenuItem name='Feedback' href='https://github.com/PtolemyLovesYou/ptolemy/discussions' isExternal />
         <MenuItem
           name='Docs'
           href={import.meta.env.VITE_PTOLEMY_DOCS}
