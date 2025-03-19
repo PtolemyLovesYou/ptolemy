@@ -185,10 +185,10 @@ interface ProfileFormProps {
 
 const ProfileForm = ({ profile }: ProfileFormProps) => {
   const [updateUser, _userData] = useMutation(UPDATE_USER, {
-    refetchQueries: [
-      GET_USER_PROFILE,
-      'Me',
-    ]
+    refetchQueries: [GET_USER_PROFILE, 'Me'],
+    onCompleted: () => {
+      toast.success('Profile updated!');
+    },
   });
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -269,7 +269,7 @@ const ProfileForm = ({ profile }: ProfileFormProps) => {
           )} />
         <div className='grid max-w-sm gap-1.5'>
         <Label htmlFor="workspaces">Workspaces</Label>
-        <Input id="workspaces" value={String(profile.workspaces)} placeholder="(empty)" />
+        <Input id="workspaces" value={String(profile.workspaces)} placeholder="(empty)" disabled />
         </div>
         <Button type="submit">Save</Button>
       </form>
