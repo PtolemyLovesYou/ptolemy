@@ -2,11 +2,13 @@
 
 import pytest
 import pandas as pd
-from ptolemy_client import Ptolemy # pylint: disable=no-name-in-module
+from ptolemy_client import Ptolemy  # pylint: disable=no-name-in-module
 from .base import IntegrationTestBase
+
 
 class TestSql(IntegrationTestBase):
     """Test sql functionality."""
+
     def test_naive_select(self, client: Ptolemy):
         """Test select"""
         result = pd.concat(client.sql("SELECT 1;"))

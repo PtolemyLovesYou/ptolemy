@@ -19,6 +19,7 @@ from ._core import (
 # Used by python-semantic-release
 __version__ = "0.0.0-test.4+7da95d5"
 
+
 def get_client(
     base_url: str = "http://localhost:8000",
     api_key: str = None,
@@ -54,10 +55,4 @@ def get_client(
     if api_key.startswith("pt-sk") and workspace_name is None:
         raise ValueError("workspace_name must be provided when using a service API key")
 
-    return Ptolemy(
-        base_url,
-        api_key,
-        workspace_name,
-        autoflush,
-        batch_size
-        )
+    return Ptolemy(base_url, api_key, workspace_name, autoflush, batch_size)

@@ -95,9 +95,12 @@ class QueryExecutor(BaseModel):
         try:
             self.setup_conn()
         except Exception as e:  # pylint: disable=broad-except
-            self.logger.info("Error setting up connection for query %s", self.query_id, exc_info=e)
+            self.logger.info(
+                "Error setting up connection for query %s", self.query_id, exc_info=e
+            )
             self.redis_conn.hset(
-                self.keyspace, mapping={"status": QueryStatus.FAILED, "error": "Internal Error"}
+                self.keyspace,
+                mapping={"status": QueryStatus.FAILED, "error": "Internal Error"},
             )
             return 1
 
@@ -105,7 +108,7 @@ class QueryExecutor(BaseModel):
             self.logger.debug("Executing query %s", self.query_id)
             # Get results directly as Arrow table
             arrow_table = self.conn.sql(self.query).arrow()
-            
+
         except Exception as e:  # pylint: disable=broad-except
             self.logger.info("Error executing query %s", self.query_id, exc_info=e)
             self.redis_conn.hset(
@@ -120,11 +123,11 @@ class QueryExecutor(BaseModel):
         total_rows = arrow_table.num_rows
         # Estimate memory usage - this is approximate
         est_size = sum(arrow_table.nbytes for batch in arrow_table.to_batches())
-        
+
         # Extract column information
         column_names = arrow_table.column_names
         column_types = [str(field.type) for field in arrow_table.schema]
-        
+
         self.logger.info(f"Query result: {total_rows} rows")
         total_batches = 0
         batches = {}
@@ -136,7 +139,7 @@ class QueryExecutor(BaseModel):
             if batch_size > 0:
                 dff = arrow_table.slice(i, batch_size)
                 total_batches += 1
-                
+
                 # Serialize directly to Arrow IPC format
                 buf = BytesIO()
                 with pa.ipc.new_stream(buf, dff.schema) as writer:

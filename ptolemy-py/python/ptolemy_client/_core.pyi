@@ -76,7 +76,6 @@ class Ptolemy:
     def push_event(self) -> bool: ...
     def push_io(self) -> bool: ...
     def flush(self) -> bool: ...
-
     def sql(self, query: str) -> Iterable[pd.DataFrame]: ...
 
 class Workspace:
@@ -139,11 +138,8 @@ class GraphQLClient:
     """GraphQL client."""
 
     def __init__(
-        self,
-        url:str ,
-        api_key: str,
-        auth_method: Literal['api_key', 'jwt'] = 'api_key'
-        ): ...
+        self, url: str, api_key: str, auth_method: Literal["api_key", "jwt"] = "api_key"
+    ): ...
     def me(self) -> User: ...
     def create_workspace(
         self,
@@ -213,11 +209,8 @@ class GraphQLClient:
         user_id: UUID,
         display_name: Optional[str] = None,
         status: Optional[UserStatus] = None,
-        is_admin: Optional[bool] = None
-        ) -> User: ...
+        is_admin: Optional[bool] = None,
+    ) -> User: ...
     def change_password(
-        self,
-        user_id: UUID,
-        current_password: str,
-        new_password: str
+        self, user_id: UUID, current_password: str, new_password: str
     ): ...

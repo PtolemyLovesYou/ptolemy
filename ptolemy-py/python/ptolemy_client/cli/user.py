@@ -66,20 +66,30 @@ def create_user(
     except ValueError as e:
         click.echo(f"Failed to create user: {e}")
 
+
 @user.command(name="update")
 @click.argument("user_id")
 @click.option("--display_name", required=False, type=str)
 @click.option("--is_admin", required=False, type=bool)
 @click.option("--status", required=False, type=UserStatus)
 @click.pass_context
-def update_user(ctx, user_id: str, display_name: Optional[str] = None, is_admin: bool = False, status: Optional[UserStatus] = None):
+def update_user(
+    ctx,
+    user_id: str,
+    display_name: Optional[str] = None,
+    is_admin: bool = False,
+    status: Optional[UserStatus] = None,
+):
     """Update user."""
     cli_state: CLIState = ctx.obj["state"]
     try:
-        cli_state.client.update_user(user_id, display_name=display_name, is_admin=is_admin, status=status)
+        cli_state.client.update_user(
+            user_id, display_name=display_name, is_admin=is_admin, status=status
+        )
         click.echo(f"Successfully updated user {user_id}")
     except ValueError as e:
         click.echo(f"Failed to update user: {e}")
+
 
 @user.command(name="delete")
 @click.argument("user_id")

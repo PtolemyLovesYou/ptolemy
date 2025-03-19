@@ -3,11 +3,13 @@
 import time
 import pandas as pd
 import pytest
-from ptolemy_client import Ptolemy, get_client # pylint: disable=no-name-in-module
+from ptolemy_client import Ptolemy, get_client  # pylint: disable=no-name-in-module
 from .base import IntegrationTestBase, BASE_URL
+
 
 class TestSql(IntegrationTestBase):
     """Test sql functionality."""
+
     def test_user_client(self, admin_api_key: str):
         """Test user client."""
         client = get_client(
@@ -32,15 +34,15 @@ class TestSql(IntegrationTestBase):
         """Test workspaces"""
 
         for _ in range(10):
-            sys = client.trace("test_trace", version='1.2.3', environment='dev')
+            sys = client.trace("test_trace", version="1.2.3", environment="dev")
             with sys:
                 sys.inputs(
                     foo={"bar": "baz"},
                     baz=1,
                     qux=True,
                     test_str="this is a string",
-                    test_float=0.93
-                    )
+                    test_float=0.93,
+                )
 
         client.flush()
 
@@ -53,7 +55,9 @@ class TestSql(IntegrationTestBase):
         except ValueError as exc:
             raise ValueError("No system events returned") from exc
 
-    def test_get_events(self, client: Ptolemy, rw_service_api_key: str, workspace_id: str):
+    def test_get_events(
+        self, client: Ptolemy, rw_service_api_key: str, workspace_id: str
+    ):
         """Test workspaces"""
 
         query = """
@@ -73,6 +77,8 @@ class TestSql(IntegrationTestBase):
         }
         """
 
-        result = self.graphql_api_key(rw_service_api_key, query, operation_name="TestBasicSystemEvents")
+        result = self.graphql_api_key(
+            rw_service_api_key, query, operation_name="TestBasicSystemEvents"
+        )
 
-        assert result['data']['systemEvents']
+        assert result["data"]["systemEvents"]

@@ -7,7 +7,7 @@ import logging
 from typing import Generator
 import requests
 import pytest
-from ptolemy_client import get_client, Ptolemy # pylint: disable=no-name-in-module
+from ptolemy_client import get_client, Ptolemy  # pylint: disable=no-name-in-module
 
 SYSADMIN_USERNAME = os.getenv("SYSADMIN_USERNAME", "admin")
 SYSADMIN_PASSWORD = os.getenv("SYSADMIN_PASSWORD", "admin")
@@ -24,9 +24,17 @@ with open(os.path.join(GRAPHQL_PATH, "mutation.gql"), encoding="utf-8") as f:
 
 BASE_URL = "http://localhost:8000/"
 
+
 class IntegrationTestBase:
     """Base Integration Test."""
-    def graphql(self, jwt: str, query: str, operation_name: Optional[str] = None, variables: Optional[dict] = None) -> dict:
+
+    def graphql(
+        self,
+        jwt: str,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict] = None,
+    ) -> dict:
         headers = {"Authorization": f"Bearer {jwt}"}
         data = {
             "query": query,
@@ -45,7 +53,13 @@ class IntegrationTestBase:
 
         return resp.json()
 
-    def graphql_api_key(self, api_key: str, query: str, operation_name: Optional[str] = None, variables: Optional[dict] = None) -> dict:
+    def graphql_api_key(
+        self,
+        api_key: str,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict] = None,
+    ) -> dict:
         headers = {"X-Api-Key": api_key}
         data = {
             "query": query,
@@ -86,7 +100,9 @@ class IntegrationTestBase:
         yield f"test_workspace_{int(time.time())}"
 
     @pytest.fixture(scope="class")
-    def admin_user_id(self, sysadmin_jwt: str, admin_username: str) -> Generator[str, None, None]:
+    def admin_user_id(
+        self, sysadmin_jwt: str, admin_username: str
+    ) -> Generator[str, None, None]:
         """Create admin user."""
         resp = self.graphql(
             sysadmin_jwt,
@@ -114,7 +130,9 @@ class IntegrationTestBase:
         )
 
     @pytest.fixture(scope="class")
-    def admin_jwt(self, admin_user_id: str, admin_username: str) -> Generator[str, None, None]:
+    def admin_jwt(
+        self, admin_user_id: str, admin_username: str
+    ) -> Generator[str, None, None]:
         """Admin JWT."""
         resp = requests.post(
             os.path.join(BASE_URL, "auth"),
@@ -152,10 +170,7 @@ class IntegrationTestBase:
 
     @pytest.fixture(scope="class")
     def workspace_id(
-        self,
-        admin_user_id: str,
-        workspace_name: str,
-        admin_jwt: str
+        self, admin_user_id: str, workspace_name: str, admin_jwt: str
     ) -> Generator[str, None, None]:
         """Workspace Name."""
         resp = self.graphql(
@@ -201,9 +216,9 @@ class IntegrationTestBase:
             },
         )
 
-        service_api_key = resp["data"]["workspace"]["createServiceApiKey"][
+        service_api_key = resp["data"]["workspace"]["createServiceApiKey"]["apiKey"][
             "apiKey"
-        ]["apiKey"]
+        ]
         yield service_api_key
 
     @pytest.fixture
@@ -215,7 +230,9 @@ class IntegrationTestBase:
 
     @pytest.fixture
     def rw_service_api_key(
-        self, workspace_id: str, admin_jwt: str,
+        self,
+        workspace_id: str,
+        admin_jwt: str,
     ) -> Generator[str, None, None]:
         """Read Write Service API Key."""
         yield from self._service_api_key(workspace_id, "READ_WRITE", admin_jwt)
