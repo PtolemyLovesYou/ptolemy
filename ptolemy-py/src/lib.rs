@@ -1,4 +1,4 @@
-use client::client::bytes_to_df;
+use client::core::bytes_to_df;
 use pyo3::{exceptions::PyValueError, prelude::*};
 
 pub mod client;
@@ -8,7 +8,7 @@ pub mod models;
 pub mod types;
 
 use crate::{
-    client::{client::PtolemyClient, server_handler::QueryEngine},
+    client::{core::PtolemyClient, server_handler::QueryEngine},
     enums::{api_key_permission, user_status, workspace_role},
     graphql::PyGraphQLClient,
     models::add_models_to_module,

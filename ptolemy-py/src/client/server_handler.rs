@@ -31,10 +31,7 @@ impl QueryEngine {
             timeout_seconds,
         });
 
-        let token = self
-            .token
-            .clone()
-            .ok_or_else(|| "Not authenticated: no token")?;
+        let token = self.token.clone().ok_or("Not authenticated: no token")?;
 
         query_request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("Authorization")?,
@@ -167,7 +164,7 @@ impl ServerHandler {
 impl ServerHandler {
     pub fn workspace_id(&self) -> Result<Id, Box<dyn std::error::Error>> {
         match &self.workspace_id {
-            Some(id) => Ok(id.clone()),
+            Some(id) => Ok(*id),
             None => Err("Not authenticated".into()),
         }
     }
@@ -220,7 +217,7 @@ impl ServerHandler {
 
         let mut publish_request = tonic::Request::new(PublishRequest { records });
 
-        let token = self.token.clone().ok_or_else(|| "Not authenticated")?;
+        let token = self.token.clone().ok_or("Not authenticated")?;
 
         publish_request.metadata_mut().insert(
             tonic::metadata::MetadataKey::from_str("Authorization")?,
@@ -255,10 +252,9 @@ impl ServerHandler {
     }
 
     pub fn queue_records(&mut self, records: Vec<Record>) {
-        let should_send_batch: bool;
+        let should_send_batch = self.queue.len() >= self.batch_size;
 
         self.queue.extend(records);
-        should_send_batch = self.queue.len() >= self.batch_size;
 
         if should_send_batch {
             self.send_batch();
@@ -266,10 +262,9 @@ impl ServerHandler {
     }
 
     pub fn push_record_front(&mut self, record: Record) {
-        let should_send_batch: bool;
+        let should_send_batch = self.queue.len() >= self.batch_size;
 
         self.queue.push_front(record);
-        should_send_batch = self.queue.len() >= self.batch_size;
 
         if should_send_batch {
             self.send_batch();

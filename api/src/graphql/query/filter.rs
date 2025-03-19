@@ -62,7 +62,7 @@ macro_rules! search_filter {
         let query = if let Some(id) = &$filter.id {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::$event_tier::id,
+                $crate::generated::records_schema::$event_tier::id,
                 id,
                 Uuid
             )
@@ -73,7 +73,7 @@ macro_rules! search_filter {
         let query = if let Some(name) = &$filter.name {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::$event_tier::name,
+                $crate::generated::records_schema::$event_tier::name,
                 name,
                 String
             )
@@ -84,7 +84,7 @@ macro_rules! search_filter {
         let query = if let Some(version) = &$filter.version {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::$event_tier::version,
+                $crate::generated::records_schema::$event_tier::version,
                 version,
                 String
             )
@@ -95,7 +95,7 @@ macro_rules! search_filter {
         let query = if let Some(environment) = &$filter.environment {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::$event_tier::environment,
+                $crate::generated::records_schema::$event_tier::environment,
                 environment,
                 String
             )
@@ -111,7 +111,7 @@ macro_rules! search_filter {
         let query = if let Some(start_time) = &$filter.start_time {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::runtime::start_time,
+                $crate::generated::records_schema::runtime::start_time,
                 start_time,
                 DateTime
             )
@@ -122,7 +122,7 @@ macro_rules! search_filter {
         let query = if let Some(end_time) = &$filter.end_time {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::runtime::end_time,
+                $crate::generated::records_schema::runtime::end_time,
                 end_time,
                 DateTime
             )
@@ -133,7 +133,7 @@ macro_rules! search_filter {
         let query = if let Some(error_type) = &$filter.error_type {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::runtime::error_type,
+                $crate::generated::records_schema::runtime::error_type,
                 error_type,
                 String
             )
@@ -144,7 +144,7 @@ macro_rules! search_filter {
         let query = if let Some(error_content) = &$filter.error_content {
             $crate::search_filter!(
                 query,
-                crate::generated::records_schema::runtime::error_content,
+                $crate::generated::records_schema::runtime::error_content,
                 error_content,
                 String
             )

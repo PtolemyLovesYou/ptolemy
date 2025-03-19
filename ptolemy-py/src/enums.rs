@@ -63,15 +63,15 @@ macro_rules! pywrap_enum {
             pub struct $enum_name(pub ptolemy::models::$enum_name);
             }
 
-        impl Into<$mod_name::$enum_name> for ptolemy::models::$enum_name {
-            fn into(self) -> $mod_name::$enum_name {
-                $mod_name::$enum_name(self)
+        impl From<ptolemy::models::$enum_name> for $mod_name::$enum_name {
+            fn from(value: ptolemy::models::$enum_name) -> Self {
+                $mod_name::$enum_name(value)
             }
         }
 
-        impl Into<ptolemy::models::$enum_name> for $mod_name::$enum_name {
-            fn into(self) -> ptolemy::models::$enum_name {
-                self.0
+        impl From<$mod_name::$enum_name> for ptolemy::models::$enum_name {
+            fn from(value: $mod_name::$enum_name) -> Self {
+                value.0
             }
         }
 
