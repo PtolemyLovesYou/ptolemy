@@ -26,7 +26,7 @@ impl AuthContext {
     pub fn workspace_ids(&self) -> Vec<Uuid> {
         self.workspaces
             .iter()
-            .map(|w| w.workspace.id.clone().into())
+            .map(|w| w.workspace.id.into())
             .collect()
     }
 

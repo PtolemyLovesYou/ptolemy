@@ -91,7 +91,7 @@ mod json {
                 Some(JsonValue::Number(serde_json::Number::from_f64(*v)?))
             }
             Some(Kind::StringValue(v)) => Some(JsonValue::String(v.clone())),
-            Some(Kind::BoolValue(v)) => Some(JsonValue::Bool(v.clone())),
+            Some(Kind::BoolValue(v)) => Some(JsonValue::Bool(*v)),
             Some(Kind::StructValue(v)) => {
                 let mut map = serde_json::Map::new();
                 for (field, value) in &v.fields {

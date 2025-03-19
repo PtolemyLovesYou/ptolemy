@@ -9,11 +9,7 @@ pub mod state;
 pub type GraphQL = async_graphql::Schema<Query, Mutation, async_graphql::EmptySubscription>;
 
 pub fn get_graphql_schema() -> GraphQL {
-    async_graphql::Schema::build(
-        Query::default(),
-        Mutation::default(),
-        async_graphql::EmptySubscription,
-    )
-    .register_output_type::<crate::graphql::mutation::result::GQLResultInterface>()
-    .finish()
+    async_graphql::Schema::build(Query::default(), Mutation, async_graphql::EmptySubscription)
+        .register_output_type::<crate::graphql::mutation::result::GQLResultInterface>()
+        .finish()
 }

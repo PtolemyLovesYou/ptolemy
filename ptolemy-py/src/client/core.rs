@@ -17,7 +17,7 @@ use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-const BYTES_TO_DF_FN_STR: &'static CStr = c_str!(
+const BYTES_TO_DF_FN_STR: &CStr = c_str!(
     r###"
 import pandas as pd
 import pyarrow as pa
@@ -124,7 +124,7 @@ impl PtolemyClient {
             parent_id: None,
             tier: None,
             autoflush,
-            state: PtolemyClientState::new(),
+            state: PtolemyClientState::default(),
             grpc_client,
         })
     }
@@ -161,7 +161,7 @@ impl PtolemyClient {
 
         self.state.set_runtime(ProtoRecord::new(
             self.tier.unwrap(),
-            self.state.event_id()?.into(),
+            self.state.event_id()?,
             Uuid::new_v4().into(),
             ProtoRuntime::new(
                 self.state.start_time.unwrap(),
@@ -235,7 +235,7 @@ impl PtolemyClient {
             parent_id: None,
             tier: Some(Tier::System),
             autoflush: self.autoflush,
-            state: PtolemyClientState::new(), // This creates fresh state
+            state: PtolemyClientState::default(), // This creates fresh state
             grpc_client: self.grpc_client.clone(),
         };
 
@@ -290,7 +290,7 @@ impl PtolemyClient {
             parent_id: Some(self.state.event_id()?),
             tier: Some(child_tier),
             autoflush: self.autoflush,
-            state: PtolemyClientState::new(),
+            state: PtolemyClientState::default(),
             grpc_client: self.grpc_client.clone(),
         };
 
@@ -339,8 +339,8 @@ impl PtolemyClient {
         };
 
         let event = ProtoRecord::new(
-            tier.into(),
-            parent_id.into(),
+            tier,
+            parent_id,
             Uuid::new_v4().into(),
             ProtoEvent::new(name, parameters.map(|p| p.0), version, environment),
         );
@@ -366,7 +366,7 @@ impl PtolemyClient {
 
         let runtime = ProtoRecord::new(
             tier,
-            self.state.event_id()?.into(),
+            self.state.event_id()?,
             Uuid::new_v4().into(),
             ProtoRuntime::new(start_time, end_time, error_type, error_content),
         );

@@ -14,9 +14,9 @@ pub struct PyUUIDWrapper {
     hex: String,
 }
 
-impl Into<Uuid> for PyUUIDWrapper {
-    fn into(self) -> Uuid {
-        Uuid::from_str(&self.hex).unwrap()
+impl From<PyUUIDWrapper> for Uuid {
+    fn from(val: PyUUIDWrapper) -> Self {
+        Uuid::from_str(&val.hex).unwrap()
     }
 }
 
@@ -26,10 +26,10 @@ pub enum PyId {
     String(String),
 }
 
-impl Into<PyId> for Id {
-    fn into(self) -> PyId {
+impl From<Id> for PyId {
+    fn from(val: Id) -> Self {
         PyId::UUID(PyUUIDWrapper {
-            hex: self.to_string(),
+            hex: val.to_string(),
         })
     }
 }
@@ -51,9 +51,9 @@ impl<'py> IntoPyObject<'py> for PyId {
     }
 }
 
-impl Into<Id> for PyId {
-    fn into(self) -> Id {
-        match self {
+impl From<PyId> for Id {
+    fn from(pyid: PyId) -> Self {
+        match pyid {
             PyId::UUID(u) => Id::from(Uuid::from_str(&u.hex).unwrap()),
             PyId::String(s) => Id::from(Uuid::from_str(&s).unwrap()),
         }

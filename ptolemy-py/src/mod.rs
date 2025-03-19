@@ -1,4 +1,4 @@
-use client::client::bytes_to_df;
+use client::core::bytes_to_df;
 use pyo3::{exceptions::PyValueError, prelude::*};
 
 pub mod client;
@@ -7,40 +7,48 @@ pub mod graphql;
 pub mod models;
 pub mod types;
 
-use ptolemy::generated::query_engine::query_engine_client::QueryEngineClient;
 use crate::{
     client::{client::PtolemyClient, server_handler::QueryEngine},
+    enums::{api_key_permission, user_status, workspace_role},
     graphql::PyGraphQLClient,
     models::add_models_to_module,
-    enums::{api_key_permission, user_status, workspace_role}
 };
+use ptolemy::generated::query_engine::query_engine_client::QueryEngineClient;
 
 #[pyfunction(signature=(base_url, token, query, batch_size=None, timeout_seconds=None))]
-pub fn query(py: Python<'_>, base_url: String, token: String, query: String, batch_size: Option<u32>, timeout_seconds: Option<u32>) -> PyResult<Vec<Py<PyAny>>> {
+pub fn query(
+    py: Python<'_>,
+    base_url: String,
+    token: String,
+    query: String,
+    batch_size: Option<u32>,
+    timeout_seconds: Option<u32>,
+) -> PyResult<Vec<Py<PyAny>>> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
 
-        let client = rt
-            .block_on(QueryEngineClient::connect(base_url.clone()))
-            .unwrap();
+    let client = rt
+        .block_on(QueryEngineClient::connect(base_url.clone()))
+        .unwrap();
 
-        let mut query_engine_client = QueryEngine {
-            client,
-            token: Some(token)
-        };
+    let mut query_engine_client = QueryEngine {
+        client,
+        token: Some(token),
+    };
 
-        let result = rt.block_on(query_engine_client.query(query, batch_size, timeout_seconds))
-            .map_err(|e| PyValueError::new_err(e.to_string()))?
-            .into_iter();
-        
-        let mut data = Vec::new();
+    let result = rt
+        .block_on(query_engine_client.query(query, batch_size, timeout_seconds))
+        .map_err(|e| PyValueError::new_err(e.to_string()))?
+        .into_iter();
 
-        for r in result {
-            data.push(bytes_to_df(py, r)?);
-        }
-        Ok(data)
+    let mut data = Vec::new();
+
+    for r in result {
+        data.push(bytes_to_df(py, r)?);
+    }
+    Ok(data)
 }
 
 /// A Python module implemented in Rust. The name of this function must match

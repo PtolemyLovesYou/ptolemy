@@ -96,7 +96,7 @@ async fn validate_api_key_header(
             None,
             vec![WorkspacePermission {
                 workspace: workspace.into(),
-                permissions: Some(sak.permissions.clone().into()),
+                permissions: Some(sak.permissions.into()),
                 role: None,
                 user: None,
             }],
@@ -179,7 +179,7 @@ async fn validate_jwt_header(
                         None,
                         vec![WorkspacePermission {
                             workspace: workspace.into(),
-                            permissions: Some(sak.permissions.clone().into()),
+                            permissions: Some(sak.permissions.into()),
                             role: None,
                             user: None,
                         }],

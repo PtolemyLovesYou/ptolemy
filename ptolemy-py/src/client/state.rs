@@ -7,7 +7,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct PtolemyClientState {
     pub event: Option<ProtoRecord<ProtoEvent>>,
     pub runtime: Option<ProtoRecord<ProtoRuntime>>,
@@ -21,16 +21,7 @@ pub struct PtolemyClientState {
 
 impl PtolemyClientState {
     pub fn new() -> Self {
-        Self {
-            event: None,
-            runtime: None,
-            input: None,
-            output: None,
-            feedback: None,
-            metadata: None,
-            start_time: None,
-            end_time: None,
-        }
+        Self::default()
     }
 
     pub fn start(&mut self) {
@@ -95,7 +86,7 @@ impl PtolemyClientState {
 
     pub fn event_id(&self) -> PyResult<Id> {
         match &self.event {
-            Some(event) => Ok(event.id.into()),
+            Some(event) => Ok(event.id),
             None => Err(PyValueError::new_err("No event set!")),
         }
     }
@@ -110,22 +101,22 @@ impl PtolemyClientState {
         };
 
         let inputs = match &self.input {
-            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            Some(r) => r.iter().map(|r| r.proto()).collect(),
             None => vec![],
         };
 
         let outputs = match &self.output {
-            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            Some(r) => r.iter().map(|r| r.proto()).collect(),
             None => vec![],
         };
 
         let feedback = match &self.feedback {
-            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            Some(r) => r.iter().map(|r| r.proto()).collect(),
             None => vec![],
         };
 
         let metadata = match &self.metadata {
-            Some(r) => r.into_iter().map(|r| r.proto()).collect(),
+            Some(r) => r.iter().map(|r| r.proto()).collect(),
             None => vec![],
         };
 
