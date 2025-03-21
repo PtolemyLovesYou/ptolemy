@@ -1,7 +1,7 @@
 # Description
 <!-- What does this PR do? -->
 
-**Linked Issue:** #[issue-number]
+**Linked Issue:** Closes #[issue-number]
 **Type of Change:** [✨ feat | 🐛 fix | 📚 docs | ⚡️ perf | 🧪 test | ⚙️ ci/cd | 📦 refactor | 🚧 build | 💎 style ]
 
 # Testing
