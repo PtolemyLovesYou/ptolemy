@@ -43,7 +43,7 @@ services:
     networks:
       - ptolemy
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: /usr/bin/pg_isready
       interval: 5s
       timeout: 5s
       retries: 5
@@ -61,11 +61,13 @@ services:
       dockerfile: query-engine/Dockerfile
     environment:
       REDIS_HOST: redis
+      POSTGRES_HOST: postgres
     volumes:
       - ./query-engine:/app/query-engine
     networks:
       - ptolemy
     depends_on:
+      - postgres
       - redis
 
 volumes:
