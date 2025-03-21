@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - docs/**
+      - .github/workflows/deploy_docs.yml
+      - CNAME
 permissions:
   contents: write
 jobs:
