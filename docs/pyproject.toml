@@ -1,6 +1,6 @@
 [project]
 name = "docs"
-version = "0.1.0-alpha.38+06b42ec"
+version = "0.1.0-alpha.39+30065ba"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
