@@ -29,6 +29,20 @@ services:
       - ptolemy
     depends_on:
       - postgres
+  ui:
+    container_name: ui
+    build:
+      context: ptolemy-ui/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - ptolemy
+    environment:
+      VITE_PTOLEMY_API: http://api:8000
+      VITE_PTOLEMY_DOCS: http://host.docker.internal:8080
+    depends_on:
+      - api
   postgres:
     container_name: postgres
     image: postgres:17-alpine
