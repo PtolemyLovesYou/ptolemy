@@ -144,7 +144,7 @@ jobs:
 
       # Update uv.lock
       - name: Update uv.lock
-        run: uv lock --offline
+        run: uv lock
 
       # Commit changes to the branch
       # - name: Commit version bump
