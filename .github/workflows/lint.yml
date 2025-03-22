@@ -47,7 +47,7 @@ jobs:
           uv sync --locked --all-packages --dev
       - name: Run black
         run: |
-          black --pyi --check ptolemy-py/python query-engine integration-tests
+          uv run -m black --pyi --check ptolemy-py/python query-engine integration-tests
 
   check_rust:
     name: Check Rust
