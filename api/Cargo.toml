@@ -12,7 +12,7 @@ path = "src/bin/create_query_engine_role.rs"
 
 [package]
 name = "api"
-version = "0.1.0-alpha.39+d027706"
+version = "0.1.0-alpha.40+e5ee779"
 edition = "2021"
 
 [dependencies]

@@ -1,6 +1,6 @@
 [project]
 name = "query-engine"
-version = "0.1.0-alpha.39+d027706"
+version = "0.1.0-alpha.40+e5ee779"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
