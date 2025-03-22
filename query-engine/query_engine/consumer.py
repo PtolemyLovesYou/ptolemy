@@ -8,10 +8,8 @@ from pydantic import BaseModel, ConfigDict, model_validator, field_validator
 import redis
 from .query_executor import QueryExecutor
 
-
 # Configure logging
 logger = logging.getLogger(__name__)
-
 
 class Message(BaseModel):
     """Message."""
@@ -68,7 +66,6 @@ class Message(BaseModel):
             extra={"action": self.action, "query_id": self.query_id},
         )
         return self
-
 
 class Consumer(BaseModel):
     """Event consumer."""
@@ -241,7 +238,6 @@ class Consumer(BaseModel):
                 extra={"action": msg.action, "query_id": msg.query_id},
             )
             return f"Processed message {msg.query_id}"
-
         return self.executor.submit(_dummy_process, message)
 
     def stop(self) -> None:

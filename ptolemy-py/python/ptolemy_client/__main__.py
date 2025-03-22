@@ -10,7 +10,6 @@ from .cli import get_cli
 from .cli.cli import CLIState, Commands
 from . import GraphQLClient
 
-
 def run_cli():
     """Run Ptolemy CLI."""
     session = PromptSession()
@@ -56,7 +55,6 @@ def run_cli():
             if command := cli.get_command(None, command_name):
                 ctx = click.Context(command)
                 click.echo(command.get_help(ctx))
-
 
 if __name__ == "__main__":
     run_cli()

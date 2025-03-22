@@ -30,7 +30,6 @@ SET_ROLE = """
 call postgres_execute('ptolemy', 'set role = ptolemy_query_engine');
 """
 
-
 class QueryExecutor(BaseModel):
     """Query Executor."""
 

@@ -19,7 +19,6 @@ from ._core import (
 # Used by python-semantic-release
 __version__ = "0.0.0-test.4+7da95d5"
 
-
 def get_client(
     base_url: str = "http://localhost:8000",
     api_key: str = None,

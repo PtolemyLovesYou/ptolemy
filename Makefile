@@ -1,6 +1,6 @@
 .PHONY: format
 format:
-	black ptolemy-py/python query-engine integration-tests \
+	black --pyi ptolemy-py/python query-engine integration-tests \
 	&& cargo fmt
 
 .PHONY: diesel

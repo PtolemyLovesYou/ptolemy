@@ -6,11 +6,9 @@ from tabulate import tabulate
 from .cli import CLIState
 from .._core import ApiKeyPermission  # pylint: disable=no-name-in-module
 
-
 @click.group()
 def workspace():
     """Workspace commands."""
-
 
 @workspace.command(name="list")
 @click.pass_context
@@ -26,11 +24,9 @@ def list_workspaces(ctx):
     else:
         click.echo("No workspaces found.")
 
-
 @workspace.group(name="users")
 def workspace_users():
     """Workspace users group."""
-
 
 @workspace_users.command(name="list", help="List users in a workspace.")
 @click.option("--name", required=False, type=str)
@@ -48,11 +44,9 @@ def list_workspace_users(ctx, name: Optional[str] = None):
     except ValueError:
         click.echo(f"Unable to find workspace {wk_name}")
 
-
 @workspace.group(name="api-keys")
 def service_api_keys():
     """Service API keys group."""
-
 
 @service_api_keys.command(name="list")
 @click.pass_context
@@ -65,7 +59,6 @@ def list_api_keys(ctx):
         click.echo("No API keys found.")
     else:
         click.echo(tabulate((i.to_dict() for i in api_keys), headers="keys"))
-
 
 @service_api_keys.command(name="create")
 @click.option("--name", required=True, type=str)
@@ -85,7 +78,6 @@ def create_api_key(
         click.echo(f"Successfully created API key {api_key}")
     except ValueError as e:
         click.echo(f"Failed to create API key: {e}")
-
 
 @service_api_keys.command(name="delete")
 @click.argument("api_key_id")

@@ -2,7 +2,6 @@
 
 from .base import IntegrationTestBase, GRAPHQL_QUERY
 
-
 class TestSysadminPermissions(IntegrationTestBase):
     """Test sysadmin permissions."""
 

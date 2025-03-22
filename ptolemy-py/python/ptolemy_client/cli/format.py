@@ -3,7 +3,6 @@
 import click
 from .._core import User  # pylint: disable=no-name-in-module
 
-
 def format_user_info(user: User):
     """Format user info."""
     return (

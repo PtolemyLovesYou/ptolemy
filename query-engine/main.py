@@ -14,7 +14,6 @@ from query_engine.env_settings import (
 
 logger = logging.getLogger(__name__)
 
-
 def configure_logger():
     """Configure logger."""
     logging.basicConfig(
@@ -22,7 +21,6 @@ def configure_logger():
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
 
 def main():
     """Main function."""
@@ -35,7 +33,6 @@ def main():
     )
 
     consumer.run()
-
 
 if __name__ == "__main__":
     configure_logger()

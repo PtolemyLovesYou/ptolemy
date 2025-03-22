@@ -2,7 +2,6 @@
 
 from enum import StrEnum
 
-
 class QueryStatus(StrEnum):
     """Query Status."""
 

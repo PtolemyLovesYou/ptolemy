@@ -6,7 +6,6 @@ import pytest
 from ptolemy_client import Ptolemy, get_client  # pylint: disable=no-name-in-module
 from .base import IntegrationTestBase, BASE_URL
 
-
 class TestSql(IntegrationTestBase):
     """Test sql functionality."""
 

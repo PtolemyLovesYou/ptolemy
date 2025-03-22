@@ -5,7 +5,6 @@ from .._core import User  # pylint: disable=no-name-in-module
 from .workspace import workspace
 from .user import user
 
-
 def get_cli(usr: User):
     """Get CLI function."""
 
@@ -15,7 +14,6 @@ def get_cli(usr: User):
         """CLI root command group."""
         # Ensure ctx.obj exists
         ctx.ensure_object(dict)
-
     if not usr.is_sysadmin:
         cli.add_command(workspace, name="workspace")
 

@@ -7,11 +7,9 @@ from .cli import CLIState
 from .format import format_user_info
 from .._core import UserStatus
 
-
 @click.group()
 def user():
     """User group."""
-
 
 @user.command()
 @click.option("--username", required=False, type=str)
@@ -28,7 +26,6 @@ def info(ctx: click.Context, username: Optional[str] = None):
         except ValueError:
             click.echo(f"Unable to find user: {username}")
 
-
 @user.command(name="list")
 @click.pass_context
 def list_users(ctx):
@@ -37,7 +34,6 @@ def list_users(ctx):
     users = cli_state.client.all_users()
 
     click.echo(tabulate(map(lambda u: u.to_dict(), users), headers="keys"))
-
 
 @user.command(name="create")
 @click.option("--username", type=str, required=True)
@@ -66,7 +62,6 @@ def create_user(
     except ValueError as e:
         click.echo(f"Failed to create user: {e}")
 
-
 @user.command(name="update")
 @click.argument("user_id")
 @click.option("--display_name", required=False, type=str)
@@ -90,7 +85,6 @@ def update_user(
     except ValueError as e:
         click.echo(f"Failed to update user: {e}")
 
-
 @user.command(name="delete")
 @click.argument("user_id")
 @click.pass_context
@@ -104,11 +98,9 @@ def delete_user(ctx, user_id: str):
     except ValueError as e:
         click.echo(f"Failed to delete user: {e}")
 
-
 @user.group(name="workspaces")
 def user_workspaces():
     """User workspaces."""
-
 
 @user_workspaces.command(name="list")
 @click.option("--username", required=False, type=str)
@@ -128,11 +120,9 @@ def list_workspaces_of_user(ctx, username: Optional[str] = None):
 
     click.echo(tabulate(wks, headers="keys"))
 
-
 @user.group(name="api-keys")
 def user_api_keys():
     """User API keys."""
-
 
 @user_api_keys.command(name="list")
 @click.pass_context
@@ -146,7 +136,6 @@ def list_api_keys(ctx):
     else:
         click.echo(tabulate((i.to_dict() for i in api_keys), headers="keys"))
 
-
 @user_api_keys.command(name="delete")
 @click.argument("api_key_id")
 @click.pass_context
@@ -159,7 +148,6 @@ def delete_api_key(ctx, api_key_id: str):
         click.echo(f"Successfully deleted API key {api_key_id}")
     except ValueError as e:
         click.echo(f"Failed to delete API key: {e}")
-
 
 @user_api_keys.command(name="create")
 @click.option("--name", required=True, type=str)

@@ -5,7 +5,6 @@ import pandas as pd
 from ptolemy_client import Ptolemy  # pylint: disable=no-name-in-module
 from .base import IntegrationTestBase
 
-
 class TestSql(IntegrationTestBase):
     """Test sql functionality."""
 

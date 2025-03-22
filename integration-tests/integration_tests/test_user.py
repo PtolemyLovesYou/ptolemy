@@ -2,7 +2,6 @@
 
 from .base import GRAPHQL_MUTATION, IntegrationTestBase
 
-
 class TestUser(IntegrationTestBase):
     """Test user model."""
 

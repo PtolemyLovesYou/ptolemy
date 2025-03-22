@@ -1,4 +1,4 @@
-name: Rust CI Check
+name: Lint Check
 on:
   push:
     branches: [main]
@@ -6,19 +6,51 @@ on:
       - "**/*.rs"
       - "**/Cargo.toml"
       - "**/Cargo.lock"
+      - "**/pyproject.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "**/*.py"
+      - "**/*.pyi"
   pull_request:
     branches: [main]
     paths:
       - "**/*.rs"
       - "**/Cargo.toml"
       - "**/Cargo.lock"
+      - "**/pyproject.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "**/*.py"
+      - "**/*.pyi"
 env:
   CARGO_TERM_COLOR: always
 permissions:
   contents: read
 jobs:
-  check:
-    name: Cargo Check
+  check_python:
+    name: Check Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          pip install uv
+      - name: Sync
+        run: |
+          uv sync --locked --all-packages --dev
+      - name: Run black
+        run: |
+          black --pyi --check ptolemy-py/python query-engine integration-tests
+
+  check_rust:
+    name: Check Rust
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

@@ -24,7 +24,6 @@ with open(os.path.join(GRAPHQL_PATH, "mutation.gql"), encoding="utf-8") as f:
 
 BASE_URL = "http://localhost:8000/"
 
-
 class IntegrationTestBase:
     """Base Integration Test."""
 
