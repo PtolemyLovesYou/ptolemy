@@ -38,8 +38,8 @@ nav:
       - Data Model: concepts/data_model.md
       - Identity & Access Management: concepts/iam.md
       - Query Engine: concepts/query_engine.md
-  - Guides:
-      - Introduction: guides/index.md
+  # - Guides:
+  #     - Introduction: guides/index.md
   - API Reference:
       - Configuration: api_reference/configuration.md
       - GraphQL Schema: api_reference/gql_schema.md
