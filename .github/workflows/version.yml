@@ -142,6 +142,10 @@ jobs:
       - name: Update Cargo.lock
         run: cargo update ptolemy --precise ${{ steps.new_version.outputs.version }}
 
+      # Update uv.lock
+      - name: Update uv.lock
+        run: uv lock --offline
+
       # Commit changes to the branch
       # - name: Commit version bump
       #   run: |
@@ -205,6 +209,7 @@ jobs:
           add-paths: |
             pyproject.toml
             Cargo.lock
+            uv.lock
             **/pyproject.toml
             **/Cargo.toml
           labels: ${{ steps.generate_labels.outputs.labels }}
