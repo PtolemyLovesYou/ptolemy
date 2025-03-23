@@ -5,6 +5,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
+use tracing::error;
 
 type JobsFuture = Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
 
@@ -17,7 +18,7 @@ pub enum JobMessage {
 struct JobsRuntime {
     jobs: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
     tx: mpsc::Sender<JobMessage>,
-    // consumer_handle: Arc<tokio::task::JoinHandle<()>>,
+    consumer_handle: Arc<tokio::task::JoinHandle<()>>,
 }
 
 impl Default for JobsRuntime {
@@ -26,7 +27,7 @@ impl Default for JobsRuntime {
 
         let jobs = Arc::new(Default::default());
 
-        let _consumer_handle = Arc::new(tokio::spawn(async move {
+        let consumer_handle = Arc::new(tokio::spawn(async move {
             while let Some(fut) = rx.recv().await {
                 match fut {
                     JobMessage::Queue(f) => f.await,
@@ -37,7 +38,11 @@ impl Default for JobsRuntime {
             }
         }));
 
-        Self { jobs, tx }
+        Self {
+            jobs,
+            tx,
+            consumer_handle,
+        }
     }
 }
 
@@ -49,6 +54,42 @@ impl JobsRuntime {
 
     async fn queue(&self, fut: JobsFuture) {
         let _ = self.tx.send(JobMessage::Queue(fut)).await;
+    }
+
+    async fn shutdown(&self, timeout: std::time::Duration) -> Result<(), ServerError> {
+        // Send shutdown message to stop the consumer task
+        if let Err(e) = self.tx.send(JobMessage::Shutdown).await {
+            error!("Failed to send shutdown message: {}", e);
+        }
+
+        // Wait for the consumer task to complete
+        if let Ok(handle) = Arc::try_unwrap(self.consumer_handle.clone()) {
+            if let Err(e) = tokio::time::timeout(timeout.clone(), handle).await {
+                error!("Consumer task didn't complete within timeout: {}", e);
+            }
+        }
+
+        // Get all spawned jobs
+        let jobs_to_wait = {
+            let mut jobs = self.jobs.write().unwrap();
+            std::mem::take(&mut *jobs) // Take ownership of the jobs vec, releasing the lock
+        };
+
+        // Wait for all jobs with timeout
+        for handle in jobs_to_wait {
+            match tokio::time::timeout(timeout.clone(), handle).await {
+                Ok(result) => {
+                    if let Err(e) = result {
+                        error!("Error joining job task: {}", e);
+                    }
+                }
+                Err(_) => {
+                    error!("Job task timed out and was aborted");
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -99,7 +140,10 @@ impl AppState {
     }
 
     pub async fn shutdown(&self) -> Result<(), ServerError> {
-        // self.jobs_rt.shutdown().await;
+        self.jobs_rt
+            .shutdown(std::time::Duration::from_secs(5))
+            .await?;
+
         Ok(())
     }
 
