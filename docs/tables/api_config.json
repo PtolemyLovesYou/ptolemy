@@ -1,26 +1,32 @@
 [
-    {
-        "Name": "`PTOLEMY_USER`",
-        "Description": "Sysadmin username",
-        "Default Value": "",
-        "Required": true
-    },
-    {
-        "Name": "`PTOLEMY_PASS`",
-        "Description": "Sysadmin password",
-        "Default Value": "",
-        "Required": true
-    },
-    {
-        "Name": "`JWT_SECRET`",
-        "Description": "Secret to generate JWTs. Must be base64 encoded.",
-        "Default Value": "",
-        "Required": true
-    },
-    {
-        "Name": "`ENABLE_AUDITING`",
-        "Description": "Enable auditing",
-        "Default Value": "`false`",
-        "Required": false
-    }
+  {
+    "Name": "`PTOLEMY_USER`",
+    "Description": "Sysadmin username",
+    "Default Value": "",
+    "Required": true
+  },
+  {
+    "Name": "`PTOLEMY_PASS`",
+    "Description": "Sysadmin password",
+    "Default Value": "",
+    "Required": true
+  },
+  {
+    "Name": "`JWT_SECRET`",
+    "Description": "Secret to generate JWTs. Must be base64 encoded.",
+    "Default Value": "",
+    "Required": true
+  },
+  {
+    "Name": "`ENABLE_AUDITING`",
+    "Description": "Enable auditing",
+    "Default Value": "`false`",
+    "Required": false
+  },
+  {
+    "Name": "`SHUTDOWN_TIMEOUT`",
+    "Description": "Timeout for graceful shutdown (seconds)",
+    "Default Value": "`10`",
+    "Required": false
+  }
 ]
