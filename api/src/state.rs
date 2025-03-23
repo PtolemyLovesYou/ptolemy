@@ -64,7 +64,7 @@ impl JobsRuntime {
 
         // Wait for the consumer task to complete
         if let Ok(handle) = Arc::try_unwrap(self.consumer_handle.clone()) {
-            if let Err(e) = tokio::time::timeout(timeout.clone(), handle).await {
+            if let Err(e) = tokio::time::timeout(timeout, handle).await {
                 error!("Consumer task didn't complete within timeout: {}", e);
             }
         }
@@ -79,7 +79,7 @@ impl JobsRuntime {
 
         // Wait for all jobs with timeout
         for handle in jobs_to_wait {
-            match tokio::time::timeout(timeout.clone(), handle).await {
+            match tokio::time::timeout(timeout, handle).await {
                 Ok(result) => {
                     if let Err(e) = result {
                         error!("Error joining job task: {}", e);
