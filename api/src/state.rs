@@ -75,6 +75,8 @@ impl JobsRuntime {
             std::mem::take(&mut *jobs) // Take ownership of the jobs vec, releasing the lock
         };
 
+        tracing::debug!("Jobs to flush: {:?}", jobs_to_wait.len());
+
         // Wait for all jobs with timeout
         for handle in jobs_to_wait {
             match tokio::time::timeout(timeout.clone(), handle).await {
@@ -140,9 +142,12 @@ impl AppState {
     }
 
     pub async fn shutdown(&self) -> Result<(), ServerError> {
+        tracing::info!("Shutting down jobs runtime");
         self.jobs_rt
             .shutdown(std::time::Duration::from_secs(5))
             .await?;
+
+        tracing::debug!("State shut down successfully");
 
         Ok(())
     }
