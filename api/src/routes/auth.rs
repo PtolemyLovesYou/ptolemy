@@ -39,7 +39,7 @@ async fn auth_login(
     ))?;
 
     let token = Claims::new(user.id, ClaimType::UserJWT, 3600)
-        .generate_auth_token(state.jwt_secret.as_bytes())?;
+        .generate_auth_token(state.config.jwt_secret.as_bytes())?;
 
     Ok((user, AuthResponse { token }))
 }

@@ -56,7 +56,7 @@ fn insert_headers(req: &mut Request<axum::body::Body>, state: &ApiAppState) -> (
         HeaderName::from_str("Authorization").unwrap(),
         Some("Bearer "),
     )
-    .and_then(|header| UuidClaims::from_token(header, state.jwt_secret.as_bytes()))
+    .and_then(|header| UuidClaims::from_token(header, state.config.jwt_secret.as_bytes()))
     .into();
 
     req.extensions_mut().insert(jwt_header.clone());
@@ -196,7 +196,7 @@ pub async fn master_auth_middleware(
     mut req: Request<axum::body::Body>,
     next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let enable_auditing = state.enable_auditing;
+    let enable_auditing = state.config.enable_auditing;
     let api_access_audit_log = ApiAccessAuditLogCreate::from_axum_request(&req, None);
     let api_access_audit_log_id = api_access_audit_log.id;
 

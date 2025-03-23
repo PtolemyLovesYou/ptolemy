@@ -87,7 +87,7 @@ where
 
         let state = self.ctx.state();
 
-        if state.enable_auditing {
+        if state.config.enable_auditing {
             let state_clone = state.clone();
             state.queue(crate::crud::audit(state_clone, logs)).await;
         }
@@ -143,7 +143,7 @@ where
 
         let state = self.ctx.state();
 
-        if state.enable_auditing {
+        if state.config.enable_auditing {
             let state_clone = state.clone();
             state.queue(crate::crud::audit(state_clone, log)).await;
         }
@@ -192,7 +192,7 @@ where
             ),
         };
 
-        if self.ctx.state().enable_auditing {
+        if self.ctx.state().config.enable_auditing {
             let state_clone = self.ctx.state().clone();
             self.ctx
                 .state()
@@ -246,7 +246,7 @@ where
             ),
         };
 
-        if self.ctx.state().enable_auditing {
+        if self.ctx.state().config.enable_auditing {
             let state_clone = self.ctx.state().clone();
             self.ctx
                 .state()

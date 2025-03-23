@@ -1,44 +1,11 @@
-use crate::{
-    crypto::PasswordHandler,
-    db::DbConnection,
-    env_settings::ApiConfig,
-    error::{ApiError, ServerError},
-};
-use diesel::{pg::PgConnection, prelude::*};
-use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection, RunQueryDsl};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use crate::{crypto::PasswordHandler, env_settings::ApiConfig, error::ServerError};
+use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
 use redis::aio::MultiplexedConnection;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
 use tracing::error;
-
-const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
-
-pub fn run_migrations() -> Result<(), ServerError> {
-    let pg_url = ApiConfig::from_env()?.postgres.url();
-
-    let mut conn = PgConnection::establish(&pg_url).map_err(|e| {
-        error!("Failed to connect to Postgres for migrations: {}", e);
-        ServerError::ConfigError
-    })?;
-
-    let ran_migrations = conn.run_pending_migrations(MIGRATIONS).map_err(|e| {
-        error!("Failed to run migrations: {}", e);
-        ServerError::ConfigError
-    })?;
-
-    if ran_migrations.is_empty() {
-        tracing::debug!("No migrations run.");
-    }
-
-    for m in ran_migrations.iter() {
-        tracing::debug!("Ran migration: {:?}", m);
-    }
-
-    Ok(())
-}
 
 type JobsFuture = Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
 
@@ -51,7 +18,7 @@ pub enum JobMessage {
 struct JobsRuntime {
     jobs: Arc<RwLock<Vec<tokio::task::JoinHandle<()>>>>,
     tx: mpsc::Sender<JobMessage>,
-    // consumer_handle: Arc<tokio::task::JoinHandle<()>>,
+    consumer_handle: Arc<tokio::task::JoinHandle<()>>,
 }
 
 impl Default for JobsRuntime {
@@ -60,7 +27,7 @@ impl Default for JobsRuntime {
 
         let jobs = Arc::new(Default::default());
 
-        let _consumer_handle = Arc::new(tokio::spawn(async move {
+        let consumer_handle = Arc::new(tokio::spawn(async move {
             while let Some(fut) = rx.recv().await {
                 match fut {
                     JobMessage::Queue(f) => f.await,
@@ -71,7 +38,11 @@ impl Default for JobsRuntime {
             }
         }));
 
-        Self { jobs, tx }
+        Self {
+            jobs,
+            tx,
+            consumer_handle,
+        }
     }
 }
 
@@ -84,19 +55,53 @@ impl JobsRuntime {
     async fn queue(&self, fut: JobsFuture) {
         let _ = self.tx.send(JobMessage::Queue(fut)).await;
     }
+
+    async fn shutdown(&self, timeout: std::time::Duration) -> Result<(), ServerError> {
+        // Send shutdown message to stop the consumer task
+        if let Err(e) = self.tx.send(JobMessage::Shutdown).await {
+            error!("Failed to send shutdown message: {}", e);
+        }
+
+        // Wait for the consumer task to complete
+        if let Ok(handle) = Arc::try_unwrap(self.consumer_handle.clone()) {
+            if let Err(e) = tokio::time::timeout(timeout, handle).await {
+                error!("Consumer task didn't complete within timeout: {}", e);
+            }
+        }
+
+        // Get all spawned jobs
+        let jobs_to_wait = {
+            let mut jobs = self.jobs.write().unwrap();
+            std::mem::take(&mut *jobs) // Take ownership of the jobs vec, releasing the lock
+        };
+
+        tracing::debug!("Jobs to flush: {:?}", jobs_to_wait.len());
+
+        // Wait for all jobs with timeout
+        for handle in jobs_to_wait {
+            match tokio::time::timeout(timeout, handle).await {
+                Ok(result) => {
+                    if let Err(e) = result {
+                        error!("Error joining job task: {}", e);
+                    }
+                }
+                Err(_) => {
+                    error!("Job task timed out and was aborted");
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 pub type ApiAppState = Arc<AppState>;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub port: String,
-    pub enable_auditing: bool,
+    pub config: ApiConfig,
     pub pg_pool: Pool<AsyncPgConnection>,
     pub password_handler: PasswordHandler,
-    pub enable_prometheus: bool,
-    pub ptolemy_env: String,
-    pub jwt_secret: String,
     pub redis_conn: MultiplexedConnection,
     jobs_rt: JobsRuntime,
 }
@@ -114,13 +119,9 @@ impl AppState {
         let redis_conn = config.redis.get_connection().await?;
 
         let state = Self {
-            port: config.port,
+            config,
             pg_pool,
-            enable_auditing: config.enable_auditing,
-            enable_prometheus: config.enable_prometheus,
             password_handler,
-            ptolemy_env: config.ptolemy_env,
-            jwt_secret: config.jwt_secret,
             redis_conn,
             jobs_rt,
         };
@@ -133,7 +134,13 @@ impl AppState {
     }
 
     pub async fn shutdown(&self) -> Result<(), ServerError> {
-        // self.jobs_rt.shutdown().await;
+        tracing::info!("Shutting down jobs runtime");
+        self.jobs_rt
+            .shutdown(std::time::Duration::from_secs(self.config.shutdown_timeout))
+            .await?;
+
+        tracing::debug!("State shut down successfully");
+
         Ok(())
     }
 
@@ -143,53 +150,6 @@ impl AppState {
 
     pub async fn queue<O: std::future::Future<Output = ()> + Send + 'static>(&self, fut: O) {
         self.jobs_rt.queue(Box::pin(fut)).await;
-    }
-
-    pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
-        match self.pg_pool.get().await {
-            Ok(c) => Ok(c),
-            Err(e) => {
-                error!("Failed to get connection: {}", e);
-                Err(ApiError::ConnectionError)
-            }
-        }
-    }
-
-    pub async fn get_conn_with_vars(
-        &self,
-        api_access_audit_log_id: &uuid::Uuid,
-        user_query_id: Option<&uuid::Uuid>,
-    ) -> Result<DbConnection<'_>, ApiError> {
-        let mut conn = self.get_conn().await?;
-        diesel::sql_query(format!(
-            "SET app.current_api_access_audit_log_id = '{}'",
-            api_access_audit_log_id
-        ))
-        .execute(&mut conn)
-        .await
-        .map_err(|e| {
-            error!("Failed to set current_api_access_audit_log_id: {}", e);
-            ApiError::ConnectionError
-        })?;
-
-        if let Some(user_query_id) = user_query_id {
-            diesel::sql_query(format!(
-                "SET app.current_user_query_id = '{}'",
-                user_query_id
-            ))
-            .execute(&mut conn)
-            .await
-            .map_err(|e| {
-                error!("Failed to set current_user_query_id: {}", e);
-                ApiError::ConnectionError
-            })?;
-        }
-
-        Ok(conn)
-    }
-
-    pub async fn get_redis_conn(&self) -> Result<MultiplexedConnection, ApiError> {
-        Ok(self.redis_conn.clone())
     }
 }
 

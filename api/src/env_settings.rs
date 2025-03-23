@@ -10,7 +10,7 @@ pub fn get_env_var(name: &str) -> Result<String, ServerError> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ApiConfig {
     pub port: String,
     pub enable_prometheus: bool,
@@ -19,6 +19,7 @@ pub struct ApiConfig {
     pub postgres: PostgresConfig,
     pub redis: RedisConfig,
     pub enable_auditing: bool,
+    pub shutdown_timeout: u64,
 }
 
 impl ApiConfig {
@@ -35,11 +36,14 @@ impl ApiConfig {
             enable_auditing: std::env::var("ENABLE_AUDITING")
                 .map(|v| v.to_lowercase() == "true")
                 .unwrap_or(false),
+            shutdown_timeout: std::env::var("SHUTDOWN_TIMEOUT")
+                .map(|v| v.parse().unwrap_or(10))
+                .unwrap_or(10),
         })
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PostgresConfig {
     pub user: String,
     pub password: String,
@@ -60,7 +64,7 @@ impl PostgresConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RedisConfig {
     pub host: String,
     pub port: String,
