@@ -136,7 +136,7 @@ impl AppState {
     pub async fn shutdown(&self) -> Result<(), ServerError> {
         tracing::info!("Shutting down jobs runtime");
         self.jobs_rt
-            .shutdown(std::time::Duration::from_secs(5))
+            .shutdown(std::time::Duration::from_secs(self.config.shutdown_timeout))
             .await?;
 
         tracing::debug!("State shut down successfully");
