@@ -26,7 +26,7 @@ async fn main() -> Result<(), ServerError> {
         .await
         .into_make_service_with_connect_info::<std::net::SocketAddr>();
 
-    let server_url = format!("[::]:{}", shared_state.port);
+    let server_url = format!("[::]:{}", shared_state.config.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 
     tracing::info!("Ptolemy running on {} <3", server_url);

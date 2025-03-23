@@ -25,7 +25,7 @@ pub async fn audit<L: self::prelude::Auditable>(
     const MAX_RETRIES: u32 = 3;
     const BASE_DELAY_MS: u64 = 100;
 
-    if !state.enable_auditing {
+    if !state.config.enable_auditing {
         return;
     }
 

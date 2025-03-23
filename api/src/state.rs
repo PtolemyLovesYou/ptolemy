@@ -99,13 +99,9 @@ pub type ApiAppState = Arc<AppState>;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub port: String,
-    pub enable_auditing: bool,
+    pub config: ApiConfig,
     pub pg_pool: Pool<AsyncPgConnection>,
     pub password_handler: PasswordHandler,
-    pub enable_prometheus: bool,
-    pub ptolemy_env: String,
-    pub jwt_secret: String,
     pub redis_conn: MultiplexedConnection,
     jobs_rt: JobsRuntime,
 }
@@ -123,13 +119,9 @@ impl AppState {
         let redis_conn = config.redis.get_connection().await?;
 
         let state = Self {
-            port: config.port,
+            config,
             pg_pool,
-            enable_auditing: config.enable_auditing,
-            enable_prometheus: config.enable_prometheus,
             password_handler,
-            ptolemy_env: config.ptolemy_env,
-            jwt_secret: config.jwt_secret,
             redis_conn,
             jobs_rt,
         };
