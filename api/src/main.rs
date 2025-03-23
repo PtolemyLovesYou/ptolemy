@@ -1,9 +1,6 @@
 use api::{
-    crud::auth::admin::ensure_sysadmin,
-    error::ServerError,
-    middleware::shutdown_signal,
-    routes::get_router,
-    state::{run_migrations, AppState},
+    crud::auth::admin::ensure_sysadmin, db::run_migrations, error::ServerError,
+    middleware::shutdown_signal, routes::get_router, state::AppState,
 };
 use tracing::error;
 
