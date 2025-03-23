@@ -14,13 +14,10 @@ use tracing::error;
 
 impl crate::state::AppState {
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
-        match self.pg_pool.get().await {
-            Ok(c) => Ok(c),
-            Err(e) => {
-                error!("Failed to get connection: {}", e);
-                Err(ApiError::ConnectionError)
-            }
-        }
+        self.pg_pool.get().await.map_err(|e| {
+            error!("Failed to get connection: {}", e);
+            ApiError::ConnectionError
+        })
     }
 
     pub async fn get_conn_with_vars(
