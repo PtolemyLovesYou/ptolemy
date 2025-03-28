@@ -1,6 +1,7 @@
 """User functions."""
 
 from typing import Optional
+from uuid import UUID
 import click
 from tabulate import tabulate
 from .cli import CLIState
@@ -79,7 +80,7 @@ def update_user(
     cli_state: CLIState = ctx.obj["state"]
     try:
         cli_state.client.update_user(
-            user_id, display_name=display_name, is_admin=is_admin, status=status
+            UUID(user_id), display_name=display_name, is_admin=is_admin, status=status
         )
         click.echo(f"Successfully updated user {user_id}")
     except ValueError as e:
@@ -93,7 +94,7 @@ def delete_user(ctx, user_id: str):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        cli_state.client.delete_user(user_id)
+        cli_state.client.delete_user(UUID(user_id))
         click.echo(f"Successfully deleted user {user_id}")
     except ValueError as e:
         click.echo(f"Failed to delete user: {e}")
@@ -144,7 +145,7 @@ def delete_api_key(ctx, api_key_id: str):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        cli_state.client.delete_user_api_key(api_key_id)
+        cli_state.client.delete_user_api_key(UUID(api_key_id))
         click.echo(f"Successfully deleted API key {api_key_id}")
     except ValueError as e:
         click.echo(f"Failed to delete API key: {e}")
