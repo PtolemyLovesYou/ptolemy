@@ -1,6 +1,7 @@
 """CLI."""
 
 from typing import Optional
+from uuid import UUID
 import click
 from tabulate import tabulate
 from .cli import CLIState
@@ -62,7 +63,7 @@ def list_api_keys(ctx):
 
 @service_api_keys.command(name="create")
 @click.option("--name", required=True, type=str)
-@click.option("--permission", required=True, type=click.Choice(ApiKeyPermission))
+@click.option("--permission", required=True, type=click.Choice([str(i) for i in ApiKeyPermission]))
 @click.option("--duration", required=False, type=int)
 @click.pass_context
 def create_api_key(
@@ -73,7 +74,7 @@ def create_api_key(
 
     try:
         api_key = cli_state.client.create_service_api_key(
-            cli_state.workspace.id, name, permission, valid_for=duration
+            cli_state.workspace.id, ApiKeyPermission(name), permission, valid_for=duration
         )
         click.echo(f"Successfully created API key {api_key}")
     except ValueError as e:
@@ -87,7 +88,7 @@ def delete_api_key(ctx, api_key_id: str):
     cli_state: CLIState = ctx.obj["state"]
 
     try:
-        cli_state.client.delete_service_api_key(cli_state.workspace.id, api_key_id)
+        cli_state.client.delete_service_api_key(cli_state.workspace.id, UUID(api_key_id))
         click.echo(f"Successfully deleted API key {api_key_id}")
     except ValueError as e:
         click.echo(f"Failed to delete API key: {e}")
