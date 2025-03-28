@@ -2,33 +2,31 @@
 
 # pylint: disable=unused-argument,missing-function-docstring,too-few-public-methods
 from __future__ import annotations
-from typing import Optional, Any, Dict, TypeVar, List, Literal, Iterable
+from typing import Optional, Any, Dict, List, Literal, Iterable
 from uuid import UUID
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 import pandas as pd
 
-T = TypeVar("T", bound=Enum)
-
-class ApiKeyPermission(Enum):
+class ApiKeyPermission(StrEnum):
     """API Key Permissions Enum."""
 
-    READ_ONLY: str = "READ_ONLY"
-    WRITE_ONLY: str = "WRITE_ONLY"
-    READ_WRITE: str = "READ_WRITE"
+    READ_ONLY = "READ_ONLY"
+    WRITE_ONLY = "WRITE_ONLY"
+    READ_WRITE = "READ_WRITE"
 
-class UserStatus(Enum):
+class UserStatus(StrEnum):
     """User Status Enum."""
 
-    ACTIVE: str = "ACTIVE"
-    SUSPENDED: str = "SUSPENDED"
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
 
-class WorkspaceRole(Enum):
+class WorkspaceRole(StrEnum):
     """Workspace Role Enum."""
 
-    USER: str = "USER"
-    MANAGER: str = "MANAGER"
-    ADMIN: str = "ADMIN"
+    USER = "USER"
+    MANAGER = "MANAGER"
+    ADMIN = "ADMIN"
 
 class Ptolemy:
     """Ptolemy Client."""
@@ -40,7 +38,7 @@ class Ptolemy:
         workspace_name: str,
         autoflush: bool,
         batch_size: int,
-    ) -> "Ptolemy": ...
+    ) -> None: ...
     def trace(
         self,
         name: str,
