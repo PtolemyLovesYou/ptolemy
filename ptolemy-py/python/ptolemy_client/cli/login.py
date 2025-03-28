@@ -11,7 +11,7 @@ def select_workspace(usr: User, client: GraphQLClient) -> Optional[Workspace]:
     if workspaces:
         wk = questionary.select(
             "Select a workspace:",
-            choices=workspaces,
+            choices=list(workspaces.keys()),
             use_shortcuts=True,
         ).ask()
 
