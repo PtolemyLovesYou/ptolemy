@@ -18,7 +18,7 @@ features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module",]
 version = "0.23.3"
 
 [dependencies.openssl]
-version = "0.10.71"
+version = "0.10.72"
 features = [ "vendored",]
 
 [dependencies.uuid]
