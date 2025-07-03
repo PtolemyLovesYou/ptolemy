@@ -8,7 +8,7 @@ use crate::{
         state::GraphQLAppState,
     },
     models::{User, UserApiKey, UserApiKeyCreate, UserCreate, UserUpdate},
-    unchecked_executor,
+    unchecked_graphql_executor,
 };
 use async_graphql::{Context, InputObject, Object};
 use chrono::{Duration, Utc};
@@ -159,7 +159,7 @@ impl UserMutation {
             expires_at: duration_days.map(|d| Utc::now() + Duration::days(d as i64)),
         };
 
-        unchecked_executor!(state, "create_user_api_key")
+        unchecked_graphql_executor!(state, "create_user_api_key")
             .create(&user_api_key_create)
             .await
             .map(|ak| CreateApiKeyResponse { id: ak.id, api_key })
@@ -172,7 +172,7 @@ impl UserMutation {
         api_key_id: Uuid,
     ) -> DeletionResult {
         let state = ctx.data::<GraphQLAppState>().unwrap();
-        unchecked_executor!(state, "delete_user_api_key")
+        unchecked_graphql_executor!(state, "delete_user_api_key")
             .delete::<UserApiKey>(&api_key_id)
             .await
             .map(|_| true)

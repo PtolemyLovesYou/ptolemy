@@ -56,7 +56,7 @@ impl WorkspaceMutation {
             WorkspaceRoleEnum::Admin,
         );
 
-        crate::unchecked_executor!(state, "create")
+        crate::unchecked_graphql_executor!(state, "create")
             .create(&workspace_user)
             .await
             .map(|_| workspace)
