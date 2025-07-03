@@ -53,7 +53,7 @@ macro_rules! records {
         records!($obj, state, conn, $event_type, $name)
     }};
     ($obj:ident, $state:ident, $conn:ident, Runtime) => {
-        $crate::unchecked_executor!($state, "runtime")
+        $crate::unchecked_graphql_executor!($state, "runtime")
             .read(async move {
                 RuntimeRecord::belonging_to($obj)
                     .select(RuntimeRecord::as_select())
@@ -66,7 +66,7 @@ macro_rules! records {
             .map_err(|e| e.into())
     };
     ($obj:ident, $state:ident, $conn:ident, $io_type:ident, Io) => {
-        $crate::unchecked_executor!($state, "io")
+        $crate::unchecked_graphql_executor!($state, "io")
             .read_many(async move {
                 IORecord::belonging_to($obj)
                     .select(IORecord::as_select())
@@ -83,7 +83,7 @@ macro_rules! records {
             .map_err(|e| e.into())
     };
     ($obj:ident, $state:ident, $conn:ident, Metadata) => {
-        $crate::unchecked_executor!($state, "metadata")
+        $crate::unchecked_graphql_executor!($state, "metadata")
             .read_many(async move {
                 MetadataRecord::belonging_to($obj)
                     .select(MetadataRecord::as_select())
@@ -119,7 +119,7 @@ impl Event {
             None => state.auth_context.workspace_ids(),
         };
 
-        crate::unchecked_executor!(state, "system_event")
+        crate::unchecked_graphql_executor!(state, "system_event")
             .read_many(async move {
                 let mut query = records_schema::system_event::table
                     .filter(
@@ -184,7 +184,7 @@ impl SystemEventRecord {
         let state = ctx.data::<GraphQLAppState>()?;
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "subsystem_event")
+        crate::unchecked_graphql_executor!(state, "subsystem_event")
             .read_many(async move {
                 let mut query = records_schema::subsystem_event::table
                     .filter(
@@ -250,7 +250,7 @@ impl SubsystemEventRecord {
         let state = ctx.data::<GraphQLAppState>()?;
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "component_event")
+        crate::unchecked_graphql_executor!(state, "component_event")
             .read_many(async move {
                 let mut query = records_schema::component_event::table
                     .filter(
@@ -316,7 +316,7 @@ impl ComponentEventRecord {
         let state = ctx.data::<GraphQLAppState>()?;
         let mut conn = state.state.get_conn().await?;
 
-        crate::unchecked_executor!(state, "subcomponent_event")
+        crate::unchecked_graphql_executor!(state, "subcomponent_event")
             .read_many(async move {
                 let mut query = records_schema::subcomponent_event::table
                     .filter(
