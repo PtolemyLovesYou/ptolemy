@@ -5,19 +5,19 @@ use uuid::Uuid;
 pub type DieselResult<T> = Result<T, diesel::result::Error>;
 
 /// Generates an async search function for a Diesel model with optional filters.
-/// 
+///
 /// Requirements:
 /// - The Diesel model must have a `deleted_at` field for soft deletion.
-/// 
-/// The generated function performs an exact-match filter on the specified fields, 
+///
+/// The generated function performs an exact-match filter on the specified fields,
 /// and only returns rows where `deleted_at IS NULL`.
-/// 
+///
 /// ### Parameters:
 /// - `fn_name`: The name of the function to generate (used as `Model::fn_name(...)`)
 /// - `ty`: The Diesel model struct
 /// - `table`: The Diesel table module
 /// - A list of tuples `(field_name, field_type)` that can be filtered on
-/// 
+///
 /// ### Example:
 /// ```rust,ignore
 /// search_db_obj!(
@@ -59,7 +59,7 @@ macro_rules! search_db_obj {
 }
 
 /// Maps Diesel errors into a consistent `ApiError`, with structured logging.
-/// 
+///
 /// This macro expands to a closure that:
 /// - Logs the error using `tracing::error!` with the provided action and entity name
 /// - Maps common Diesel error variants to specific `ApiError` variants:
@@ -102,15 +102,15 @@ pub trait Auditable: serde::Serialize + InsertObjReturningId {
 }
 
 /// Trait for inserting Diesel models and returning their generated UUIDs.
-/// 
+///
 /// Implement this for models that:
 /// - Have a UUID primary key
 /// - Need to return the inserted ID(s) after `INSERT`
-/// 
+///
 /// ### Methods:
 /// - `insert_one_returning_id`: Inserts a single record and returns its UUID
 /// - `insert_many_returning_id`: Inserts multiple records and returns their UUIDs
-/// 
+///
 /// Both methods are:
 /// - Async (returning `impl Future`)
 /// - Expected to handle DB errors via `ApiError`
