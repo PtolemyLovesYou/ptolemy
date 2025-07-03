@@ -108,7 +108,7 @@ checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
 
 [[package]]
 name = "api"
-version = "0.1.0-alpha.43+ca86d6f"
+version = "0.1.0-alpha.44+f50881c"
 dependencies = [
  "argon2",
  "async-graphql",
@@ -2143,7 +2143,7 @@ checksum = "7dc55d7dec32ecaf61e0bd90b3d2392d721a28b95cfd23c3e176eccefbeab2f2"
 
 [[package]]
 name = "ptolemy"
-version = "0.1.0-alpha.43+ca86d6f"
+version = "0.1.0-alpha.44+f50881c"
 dependencies = [
  "apollo-compiler",
  "chrono",
@@ -2168,7 +2168,7 @@ dependencies = [
 
 [[package]]
 name = "ptolemy-client"
-version = "0.1.0-alpha.43+ca86d6f"
+version = "0.1.0-alpha.44+f50881c"
 dependencies = [
  "chrono",
  "openssl",
