@@ -107,9 +107,5 @@ workspace = true
 version = "2.2.0"
 features = [ "postgres",]
 
-[dependencies.redis]
-version = "0.28.2"
-features = [ "aio", "r2d2", "tokio-comp",]
-
 [dependencies.ptolemy]
 path = "../ptolemy"

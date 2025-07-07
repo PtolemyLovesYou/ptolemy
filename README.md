@@ -18,7 +18,6 @@ You should be able to access the experimental Streamlit app at `http://localhost
 To run outside of docker, you must have:
 - `uv` and `cargo` installed
 - a postgres instance running available at `http://localhost:5432`. If the user credentials for the Postgres instance are different than those in `.cargo/config.toml`, you can override them by exporting them as environment variables.
-- a redis instance running available at `redis://localhost:6379/0`. If the credentials for the redis instance are different than those in `.cargo/config.toml`, you can override them by exporting them as environment variables.
 
 ```sh
 # Start API
@@ -27,8 +26,8 @@ To run outside of docker, you must have:
 # Build Python client (necessary for running the prototype frontend)
 > make build-client
 
-# If you want to run postgres and redis in docker:
-> docker compose up -d postgres redis # add redis_insight if you want a redis GUI
+# If you want to run postgres in docker:
+> docker compose up -d postgres
 
 # In a separate terminal, start experimental frontend
 > make run-ui
@@ -45,11 +44,6 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_DB=ptolemy
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-
-# Redis settings
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_DB=0
 
 # Sysadmin Credentials
 PTOLEMY_USER=admin
