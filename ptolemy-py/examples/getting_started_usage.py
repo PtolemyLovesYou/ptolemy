@@ -98,7 +98,3 @@ except Exception as e:
 finally:
     # Ensure we flush any remaining events even if there's an error
     client.flush()
-
-# Example of using the SQL interface
-df = pd.concat(client.sql("SELECT * from ptolemy.system_event WHERE name = 'chat-completion'"))
-print(df.head())

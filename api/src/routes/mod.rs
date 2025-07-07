@@ -1,8 +1,7 @@
 use self::graphql::graphql_handler;
 use crate::{
     middleware::master_auth_middleware, services::auth::authentication_service,
-    services::observer::observer_service, services::query_engine::query_engine_service,
-    state::ApiAppState,
+    services::observer::observer_service, state::ApiAppState,
 };
 use axum::{
     middleware::from_fn_with_state,
@@ -72,7 +71,6 @@ pub async fn get_router(state: &ApiAppState) -> Router {
         .routes()
         .add_service(authentication_service(state.clone()).await)
         .add_service(observer_service(state.clone()).await)
-        .add_service(tonic_web::enable(query_engine_service(state.clone()).await))
         .into_axum_router();
 
     Router::new()
