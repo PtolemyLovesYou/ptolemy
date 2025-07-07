@@ -1,16 +1,5 @@
 name: Lint Check
 on:
-  push:
-    branches: [main]
-    paths:
-      - "**/*.rs"
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
-      - "**/pyproject.toml"
-      - "pyproject.toml"
-      - "uv.lock"
-      - "**/*.py"
-      - "**/*.pyi"
   pull_request:
     branches: [main]
     paths:
