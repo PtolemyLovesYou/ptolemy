@@ -37,7 +37,6 @@ nav:
   - Concepts:
       - Data Model: concepts/data_model.md
       - Identity & Access Management: concepts/iam.md
-      - Query Engine: concepts/query_engine.md
   # - Guides:
   #     - Introduction: guides/index.md
   - API Reference:
@@ -45,7 +44,6 @@ nav:
       - GraphQL Schema: api_reference/gql_schema.md
       - System Diagrams:
           - Database Schema: api_reference/system_diagrams/database_schema.md
-          - Query Engine Service Architecture: api_reference/system_diagrams/query_engine.md
   - Integrations:
       - integrations.md
   - Contributing:
