@@ -69,20 +69,6 @@ services:
       - "6379:6379"
     networks:
       - ptolemy
-  query_engine:
-    container_name: query_engine
-    build:
-      dockerfile: query-engine/Dockerfile
-    environment:
-      REDIS_HOST: redis
-      POSTGRES_HOST: postgres
-    volumes:
-      - ./query-engine:/app/query-engine
-    networks:
-      - ptolemy
-    depends_on:
-      - postgres
-      - redis
 
 volumes:
   postgres:
