@@ -4,13 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - ".github/**"
-      - "docs/**"
-      - ".gitattributes"
-      - "**/README.md"
-      - "README.md"
-      - ".gitignore"
 
   workflow_dispatch:
     inputs:
@@ -43,19 +36,27 @@ jobs:
       - name: Check trigger event or commit message
         id: check
         run: |
-          # Always run if triggered by workflow_dispatch
+          echo "Event: ${{ github.event_name }}"
+          
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "Running because this is a manual workflow dispatch"
+            echo "Manual trigger — always run."
             echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          COMMIT_MSG=$(git log -1 --pretty=%B | tr -d '\n')
+          echo "Commit message: '$COMMIT_MSG'"
+
+          # Skip version bump if commit is a known non-code change
+          if echo "$COMMIT_MSG" | grep -Eq '^(chore|docs|style|test|ci)(\([^)]+\))?:'; then
+            echo "Skipping: commit is non-code change."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          elif echo "$COMMIT_MSG" | grep -iq 'bump version'; then
+            echo "Skipping: self-referential version bump."
+            echo "should_run=false" >> $GITHUB_OUTPUT
           else
-            # Check commit message only if triggered by push
-            COMMIT_MSG=$(git log -1 --pretty=%B)
-            if echo "$COMMIT_MSG" | grep -i "bump version" > /dev/null; then
-              echo "Skipping workflow as commit message contains 'bump version'"
-              echo "should_run=false" >> $GITHUB_OUTPUT
-            else
-              echo "should_run=true" >> $GITHUB_OUTPUT
-            fi
+            echo "Commit is code-related — triggering version bump."
+            echo "should_run=true" >> $GITHUB_OUTPUT
           fi
 
   bump-version:
