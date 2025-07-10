@@ -97,10 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .protoc_arg("--experimental_allow_proto3_optional")
             .build_server(true)
             .out_dir("src/generated")
-            .compile_protos(
-                &["proto/observer.proto", "proto/query_engine.proto"],
-                &["proto/observer", "proto/query_engine"],
-            )?;
+            .compile_protos(&["proto/observer.proto"], &["proto/observer"])?;
     }
 
     Ok(())

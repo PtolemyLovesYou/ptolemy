@@ -1,6 +1,6 @@
 .PHONY: format
 format:
-	black --pyi ptolemy-py/python query-engine integration-tests \
+	black --pyi ptolemy-py/python integration-tests \
 	&& cargo fmt
 
 .PHONY: diesel
@@ -16,10 +16,6 @@ cli:
 generate-gql-schema:
 	OUTPUT_DIR=$(PWD)/api/graphql/schema.gql cargo run -p api --bin generate-gql-schema \
 	&& OUTPUT_DIR=$(PWD)/ptolemy/graphql/schema.gql cargo run -p api --bin generate-gql-schema
-
-.PHONY: create-query-engine-role
-create-query-engine-role:
-	cargo run -p api --bin create-query-engine-role
 
 .PHONY: test-client
 test-client:
@@ -46,10 +42,6 @@ run-api:
 .PHONY: run-ui
 run-ui:
 	VITE_PTOLEMY_API=http://localhost:8000 VITE_PTOLEMY_DOCS=http://localhost:8080 cd ptolemy-ui && npm install --force && npm run dev
-
-.PHONY: run-query-engine
-run-query-engine:
-	uv run --directory query-engine main.py
 
 .PHONY: run-integration_tests
 run-integration-tests:

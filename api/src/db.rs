@@ -1,5 +1,5 @@
 use crate::{
-    env_settings::{ApiConfig, PostgresConfig, RedisConfig},
+    env_settings::{ApiConfig, PostgresConfig},
     error::{ApiError, ServerError},
 };
 use bb8::PooledConnection;
@@ -9,7 +9,6 @@ use diesel_async::{
     AsyncPgConnection, RunQueryDsl,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use redis::aio::MultiplexedConnection;
 use tracing::error;
 
 impl crate::state::AppState {
@@ -52,10 +51,6 @@ impl crate::state::AppState {
 
         Ok(conn)
     }
-
-    pub async fn get_redis_conn(&self) -> Result<MultiplexedConnection, ApiError> {
-        Ok(self.redis_conn.clone())
-    }
 }
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./diesel");
@@ -85,27 +80,6 @@ pub fn run_migrations() -> Result<(), ServerError> {
 }
 
 pub type DbConnection<'a> = PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>;
-
-impl RedisConfig {
-    pub fn url(&self) -> String {
-        format!("redis://{}:{}/{}", self.host, self.port, self.db)
-    }
-
-    pub async fn get_connection(&self) -> Result<MultiplexedConnection, ServerError> {
-        let client = redis::Client::open(self.url()).map_err(|e| {
-            error!("Failed to connect to Redis: {}", e);
-            ServerError::ConfigError
-        })?;
-
-        client
-            .get_multiplexed_async_connection()
-            .await
-            .map_err(|e| {
-                error!("Failed to get Redis connection: {}", e);
-                ServerError::ConfigError
-            })
-    }
-}
 
 impl PostgresConfig {
     pub fn url(&self) -> String {

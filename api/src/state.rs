@@ -1,6 +1,5 @@
 use crate::{crypto::PasswordHandler, env_settings::ApiConfig, error::ServerError};
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
-use redis::aio::MultiplexedConnection;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, RwLock};
@@ -102,7 +101,6 @@ pub struct AppState {
     pub config: ApiConfig,
     pub pg_pool: Pool<AsyncPgConnection>,
     pub password_handler: PasswordHandler,
-    pub redis_conn: MultiplexedConnection,
     jobs_rt: JobsRuntime,
 }
 
@@ -116,13 +114,10 @@ impl AppState {
 
         let jobs_rt = JobsRuntime::default();
 
-        let redis_conn = config.redis.get_connection().await?;
-
         let state = Self {
             config,
             pg_pool,
             password_handler,
-            redis_conn,
             jobs_rt,
         };
 
