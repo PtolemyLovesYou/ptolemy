@@ -34,10 +34,9 @@ impl TryFrom<observer::Record> for Record {
                 parent_id,
                 id,
                 name: e.name,
-                parameters: match e.parameters {
-                    None => None,
-                    Some(p) => Some(p.try_into().map_err(|_| PtolemyError::InvalidJson)?),
-                },
+                parameters: e.parameters
+                    .map(|p| p.try_into().map_err(|_| PtolemyError::InvalidJson))
+                    .transpose()?,
                 version: e.version,
                 environment: e.environment,
             }),
