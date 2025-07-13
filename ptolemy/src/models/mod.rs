@@ -10,8 +10,33 @@ mod json {
     type ProtoValue = prost_types::Value;
     type JsonValue = serde_json::Value;
 
+    #[derive(Debug, Clone)]
+    pub enum FieldValueType {
+        String,
+        Int,
+        Float,
+        Bool,
+        JSON,
+        Null,
+    }
+
     #[derive(Clone, Debug)]
     pub struct JSON(pub JsonValue);
+
+    impl JSON {
+        pub fn field_value_type(&self) -> FieldValueType {
+            match &self.0 {
+                JsonValue::Array(_) | JsonValue::Object(_) => FieldValueType::JSON,
+                JsonValue::Bool(_) => FieldValueType::Bool,
+                JsonValue::Number(i) => match i.as_i64() {
+                    Some(_) => FieldValueType::Int,
+                    None => FieldValueType::Float,
+                },
+                JsonValue::String(_) => FieldValueType::String,
+                JsonValue::Null => FieldValueType::Null,
+            }
+        }
+    }
 
     impl serde::Serialize for JSON {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -119,4 +144,4 @@ pub use event::{
     ProtoRuntime,
 };
 pub use id::Id;
-pub use json::JSON;
+pub use json::{JSON, FieldValueType};
