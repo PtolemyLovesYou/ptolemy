@@ -2,10 +2,9 @@ use crate::client::server_handler::ServerHandler;
 use crate::client::state::PtolemyClientState;
 use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::types::PyJSON;
-use ptolemy::generated::observer::Tier;
 use ptolemy::models::{
     Id, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
-    ProtoRuntime,
+    ProtoRuntime, Tier
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -16,7 +15,7 @@ use uuid::Uuid;
 
 macro_rules! set_io {
     ($self:ident, $kwds:ident, $field_val_type:ident, $proto_struct:ident, $set_fn:ident) => {{
-        let tier = match $self.tier {
+        let tier = match &$self.tier {
             Some(t) => t,
             None => {
                 return Err(PyValueError::new_err("No tier set!"));
@@ -130,7 +129,7 @@ impl PtolemyClient {
             };
 
         self.state.set_runtime(ProtoRecord::new(
-            self.tier.unwrap(),
+            self.tier.clone().unwrap(),
             self.state.event_id()?,
             Uuid::new_v4().into(),
             ProtoRuntime::new(
@@ -205,7 +204,7 @@ impl PtolemyClient {
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<Self> {
-        let tier = match self.tier {
+        let tier = match &self.tier {
             Some(t) => t,
             None => {
                 return Err(PyValueError::new_err("No tier set!"));
@@ -219,11 +218,6 @@ impl PtolemyClient {
             Tier::Subcomponent => {
                 return Err(PyValueError::new_err(
                     "Cannot create a child of a subcomponent!",
-                ))
-            }
-            Tier::UndeclaredTier => {
-                return Err(PyValueError::new_err(
-                    "Undeclared tier. This shouldn't happen. Contact the maintainers.",
                 ))
             }
         };
@@ -252,7 +246,7 @@ impl PtolemyClient {
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<()> {
-        let tier = match self.tier {
+        let tier = match &self.tier {
             Some(t) => t,
             None => {
                 return Err(PyValueError::new_err("No tier set!"));
@@ -275,16 +269,11 @@ impl PtolemyClient {
                 None => {
                     return Err(PyValueError::new_err("No parent set!"));
                 }
-            },
-            Tier::UndeclaredTier => {
-                return Err(PyValueError::new_err(
-                    "Undeclared tier. This shouldn't happen. Contact the maintainers.",
-                ))
             }
         };
 
         let event = ProtoRecord::new(
-            tier,
+            tier.clone(),
             parent_id,
             Uuid::new_v4().into(),
             ProtoEvent::new(name, parameters.map(|p| p.0), version, environment),
@@ -302,7 +291,7 @@ impl PtolemyClient {
         error_type: Option<String>,
         error_content: Option<String>,
     ) -> PyResult<()> {
-        let tier = match self.tier {
+        let tier = match &self.tier {
             Some(t) => t,
             None => {
                 return Err(PyValueError::new_err("No tier set!"));
@@ -310,7 +299,7 @@ impl PtolemyClient {
         };
 
         let runtime = ProtoRecord::new(
-            tier,
+            tier.clone(),
             self.state.event_id()?,
             Uuid::new_v4().into(),
             ProtoRuntime::new(start_time, end_time, error_type, error_content),
