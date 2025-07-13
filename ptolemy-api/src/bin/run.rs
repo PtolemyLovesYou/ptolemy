@@ -2,13 +2,15 @@ use ptolemy_api::{
     error::PtolemyError,
     routes::get_router,
     shutdown::shutdown_signal,
+    sink::Sink,
     state::{AppState, PtolemyConfig},
 };
 
 #[tokio::main]
 async fn main() -> Result<(), PtolemyError> {
     let config = PtolemyConfig::default();
-    let state = std::sync::Arc::new(AppState::from_config(config).await);
+    let sink = Sink::from_config(&config).await?;
+    let state = std::sync::Arc::new(AppState::new(config, sink.sender()).await);
 
     let service = get_router(state.clone())
         .await
@@ -20,7 +22,7 @@ async fn main() -> Result<(), PtolemyError> {
     tracing::info!("Ptolemy running on {} <3", server_url);
 
     match axum::serve(listener, service)
-        .with_graceful_shutdown(shutdown_signal(state))
+        .with_graceful_shutdown(shutdown_signal(state, sink))
         .await
     {
         Ok(_) => Ok(()),
