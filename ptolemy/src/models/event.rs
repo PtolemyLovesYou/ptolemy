@@ -3,7 +3,7 @@ use chrono::{DateTime, NaiveDateTime};
 use crate::error::ParseError;
 use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
-    Record, RuntimeRecord, Tier,
+    Record, RuntimeRecord
 };
 use crate::models::json::JSON;
 use crate::models::Id;
@@ -326,11 +326,8 @@ impl<T: Proto> ProtoRecord<T> {
     }
 
     pub fn proto(&self) -> Record {
-        // TODO: Less clone-y
-        let tier: Tier = self.tier.clone().into();
-
         Record {
-            tier: tier.into(),
+            tier: self.tier.proto().into(),
             parent_id: self.parent_id.to_string(),
             id: self.id.to_string(),
             record_data: Some(self.record_data.proto()),

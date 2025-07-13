@@ -15,12 +15,7 @@ use uuid::Uuid;
 
 macro_rules! set_io {
     ($self:ident, $kwds:ident, $field_val_type:ident, $proto_struct:ident, $set_fn:ident) => {{
-        let tier = match &$self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
+        let tier = $self.tier()?;
 
         let io_vec = match $kwds {
             Some(k) => k.extract::<HashMap<String, $field_val_type>>()?,
@@ -56,6 +51,12 @@ pub struct PtolemyClient {
     autoflush: bool,
     state: PtolemyClientState,
     grpc_client: Arc<Mutex<ServerHandler>>,
+}
+
+impl PtolemyClient {
+    fn tier(&self) -> PyResult<Tier> {
+        self.tier.clone().ok_or(PyValueError::new_err("No tier set!"))
+    }
 }
 
 #[pymethods]
@@ -127,18 +128,8 @@ impl PtolemyClient {
                 }
                 _ => (None, None),
             };
-
-        self.state.set_runtime(ProtoRecord::new(
-            self.tier.clone().unwrap(),
-            self.state.event_id()?,
-            Uuid::new_v4().into(),
-            ProtoRuntime::new(
-                self.state.start_time.unwrap(),
-                self.state.end_time.unwrap(),
-                error_type,
-                error_content,
-            ),
-        ));
+        
+        self.runtime(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content)?;
 
         // push io
         Python::with_gil(|py| self.push_io(py).unwrap());
@@ -163,14 +154,9 @@ impl PtolemyClient {
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<Self> {
-        let workspace_id = match self.workspace_id {
-            Some(w) => w,
-            None => {
-                return Err(PyValueError::new_err(
-                    "You need to authenticate with a service API key to create a trace.",
-                ));
-            }
-        };
+        let workspace_id = self.workspace_id.ok_or(PyValueError::new_err(
+            "You need to authenticate with a service API key to create a trace.",
+            ))?;
 
         let mut client = Self {
             base_url: self.base_url.clone(),
@@ -204,12 +190,7 @@ impl PtolemyClient {
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<Self> {
-        let tier = match &self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
+        let tier = self.tier()?;
 
         let child_tier = match tier {
             Tier::System => Tier::Subsystem,
@@ -246,34 +227,19 @@ impl PtolemyClient {
         version: Option<String>,
         environment: Option<String>,
     ) -> PyResult<()> {
-        let tier = match &self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
+        let tier = self.tier()?;
 
-        let workspace_id = match self.workspace_id {
-            Some(w) => w,
-            None => {
-                return Err(PyValueError::new_err(
-                    "You need to authenticate with a service API key to create an event.",
-                ));
-            }
-        };
+        let workspace_id = self.workspace_id.ok_or(PyValueError::new_err(
+            "You need to authenticate with a service API key to create an event.",
+            ))?;
 
-        let parent_id = match tier {
+        let parent_id = match &tier {
             Tier::System => workspace_id,
-            Tier::Subsystem | Tier::Component | Tier::Subcomponent => match self.parent_id {
-                Some(id) => id,
-                None => {
-                    return Err(PyValueError::new_err("No parent set!"));
-                }
-            }
+            Tier::Subsystem | Tier::Component | Tier::Subcomponent => self.parent_id.ok_or(PyValueError::new_err("No parent set!"))?
         };
 
         let event = ProtoRecord::new(
-            tier.clone(),
+            tier,
             parent_id,
             Uuid::new_v4().into(),
             ProtoEvent::new(name, parameters.map(|p| p.0), version, environment),
@@ -291,15 +257,10 @@ impl PtolemyClient {
         error_type: Option<String>,
         error_content: Option<String>,
     ) -> PyResult<()> {
-        let tier = match &self.tier {
-            Some(t) => t,
-            None => {
-                return Err(PyValueError::new_err("No tier set!"));
-            }
-        };
+        let tier = self.tier()?;
 
         let runtime = ProtoRecord::new(
-            tier.clone(),
+            tier,
             self.state.event_id()?,
             Uuid::new_v4().into(),
             ProtoRuntime::new(start_time, end_time, error_type, error_content),

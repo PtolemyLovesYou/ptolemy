@@ -63,6 +63,17 @@ impl TryFrom<observer::Tier> for Tier {
     }
 }
 
+impl Tier {
+    pub fn proto(&self) -> observer::Tier {
+        match self {
+            Tier::System => observer::Tier::System,
+            Tier::Subsystem => observer::Tier::Subsystem,
+            Tier::Component => observer::Tier::Component,
+            Tier::Subcomponent => observer::Tier::Subcomponent,
+        }
+    }
+}
+
 impl From<Tier> for observer::Tier {
     fn from(value: Tier) -> observer::Tier {
         match value {
