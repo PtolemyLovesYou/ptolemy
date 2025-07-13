@@ -1,6 +1,4 @@
-use super::state::{
-    PtolemyState
-};
+use super::state::PtolemyState;
 use tokio::signal;
 
 pub async fn shutdown_signal(_state: PtolemyState) {

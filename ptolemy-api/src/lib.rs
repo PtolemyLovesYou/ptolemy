@@ -1,5 +1,5 @@
-pub mod routes;
 pub mod error;
-pub mod state;
-pub mod shutdown;
 pub mod middleware;
+pub mod routes;
+pub mod shutdown;
+pub mod state;

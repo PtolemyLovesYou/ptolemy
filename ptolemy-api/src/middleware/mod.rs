@@ -1,6 +1,6 @@
 use http::{
-    header::{AUTHORIZATION, CONTENT_TYPE},
     HeaderName, Method,
+    header::{AUTHORIZATION, CONTENT_TYPE},
 };
 use tower_http::cors::{Any, CorsLayer};
 

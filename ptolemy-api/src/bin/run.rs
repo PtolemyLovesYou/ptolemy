@@ -1,8 +1,8 @@
 use ptolemy_api::{
     error::PtolemyError,
     routes::get_router,
-    state::{AppState, PtolemyConfig},
     shutdown::shutdown_signal,
+    state::{AppState, PtolemyConfig},
 };
 
 #[tokio::main]
