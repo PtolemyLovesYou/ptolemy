@@ -4,7 +4,7 @@ use crate::client::utils::{format_traceback, ExcType, ExcValue, Traceback};
 use crate::types::PyJSON;
 use ptolemy::models::{
     Id, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
-    ProtoRuntime, Tier
+    ProtoRuntime, Tier,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -55,7 +55,9 @@ pub struct PtolemyClient {
 
 impl PtolemyClient {
     fn tier(&self) -> PyResult<Tier> {
-        self.tier.clone().ok_or(PyValueError::new_err("No tier set!"))
+        self.tier
+            .clone()
+            .ok_or(PyValueError::new_err("No tier set!"))
     }
 }
 
@@ -128,8 +130,13 @@ impl PtolemyClient {
                 }
                 _ => (None, None),
             };
-        
-        self.runtime(self.state.start_time.unwrap(), self.state.end_time.unwrap(), error_type, error_content)?;
+
+        self.runtime(
+            self.state.start_time.unwrap(),
+            self.state.end_time.unwrap(),
+            error_type,
+            error_content,
+        )?;
 
         // push io
         Python::with_gil(|py| self.push_io(py).unwrap());
@@ -156,7 +163,7 @@ impl PtolemyClient {
     ) -> PyResult<Self> {
         let workspace_id = self.workspace_id.ok_or(PyValueError::new_err(
             "You need to authenticate with a service API key to create a trace.",
-            ))?;
+        ))?;
 
         let mut client = Self {
             base_url: self.base_url.clone(),
@@ -231,11 +238,13 @@ impl PtolemyClient {
 
         let workspace_id = self.workspace_id.ok_or(PyValueError::new_err(
             "You need to authenticate with a service API key to create an event.",
-            ))?;
+        ))?;
 
         let parent_id = match &tier {
             Tier::System => workspace_id,
-            Tier::Subsystem | Tier::Component | Tier::Subcomponent => self.parent_id.ok_or(PyValueError::new_err("No parent set!"))?
+            Tier::Subsystem | Tier::Component | Tier::Subcomponent => self
+                .parent_id
+                .ok_or(PyValueError::new_err("No parent set!"))?,
         };
 
         let event = ProtoRecord::new(

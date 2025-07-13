@@ -1,13 +1,13 @@
 use chrono::{DateTime, NaiveDateTime};
 
+use super::enums;
 use crate::error::ParseError;
 use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
-    Record, RuntimeRecord
+    Record, RuntimeRecord,
 };
 use crate::models::json::JSON;
 use crate::models::Id;
-use super::enums;
 
 pub trait Proto: TryFrom<RecordData, Error = ParseError> {
     fn proto(&self) -> RecordData;

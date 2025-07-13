@@ -1,7 +1,7 @@
+use crate::error::ParseError;
+use crate::generated::observer;
 use crate::prelude::enum_utils::*;
 use crate::serialize_enum;
-use crate::generated::observer;
-use crate::error::ParseError;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ApiKeyPermission {
@@ -56,7 +56,7 @@ impl TryFrom<observer::Tier> for Tier {
             observer::Tier::Subsystem => Tier::Subsystem,
             observer::Tier::Component => Tier::Component,
             observer::Tier::Subcomponent => Tier::Subcomponent,
-            observer::Tier::UndeclaredTier => { return Err(ParseError::UndefinedTier) }
+            observer::Tier::UndeclaredTier => return Err(ParseError::UndefinedTier),
         };
 
         Ok(tier)
