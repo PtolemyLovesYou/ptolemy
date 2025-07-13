@@ -3,7 +3,7 @@ members = [
     "ptolemy",
     "api",
     "ptolemy-py"
-    ]
+    , "ptolemy-api"]
 
 default-members = [
     "api",
