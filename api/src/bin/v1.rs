@@ -8,6 +8,10 @@ use api::v1::{
 
 #[tokio::main]
 async fn main() -> Result<(), PtolemyError> {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     let config = PtolemyConfig::default();
     let sink = Sink::from_config(&config).await?;
     let state = std::sync::Arc::new(AppState::new(config, sink.sender()).await);
