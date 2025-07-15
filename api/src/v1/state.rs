@@ -36,7 +36,7 @@ impl Default for PtolemyConfig {
         Self {
             port: 3000,
             buffer_size: 1024,
-            sink_timeout_secs: 30
+            sink_timeout_secs: 30,
         }
     }
 }
