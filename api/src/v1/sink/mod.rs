@@ -4,6 +4,18 @@ use tokio::{sync::mpsc, task::JoinHandle};
 use super::{error::PtolemyError, models, state::PtolemyConfig};
 
 #[derive(Debug)]
+pub enum SinkMessage {
+    Record(Record),
+    Shutdown,
+}
+
+impl From<Record> for SinkMessage {
+    fn from(value: Record) -> SinkMessage {
+        SinkMessage::Record(value)
+    }
+}
+
+#[derive(Debug)]
 pub struct StdoutSink;
 
 impl StdoutSink {
@@ -43,33 +55,31 @@ impl StdoutSink {
             }
 
             if !rx.is_empty() {
-                if !rx.is_empty() {
-                    tracing::debug!("Flushing remaining {} messages...", rx.len());
+                tracing::debug!("Flushing remaining {} messages...", rx.len());
 
-                    // Drain any remaining messages in the channel
-                    while let Ok(msg) = rx.try_recv() {
-                        match msg {
-                            Some(record) => {
-                                let record_id = record.id.clone();
-                                let rec = match models::Record::try_from(record) {
-                                    Ok(r) => r,
-                                    Err(e) => {
-                                        tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
-                                        continue;
-                                    }
-                                };
+                // Drain any remaining messages in the channel
+                while let Ok(msg) = rx.try_recv() {
+                    match msg {
+                        Some(record) => {
+                            let record_id = record.id.clone();
+                            let rec = match models::Record::try_from(record) {
+                                Ok(r) => r,
+                                Err(e) => {
+                                    tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
+                                    continue;
+                                }
+                            };
 
-                                match serde_json::to_string(&rec) {
-                                    Ok(json_str) => tracing::info!("{}", &json_str),
-                                    Err(e) => {
-                                        tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e);
-                                    }
+                            match serde_json::to_string(&rec) {
+                                Ok(json_str) => tracing::info!("{}", &json_str),
+                                Err(e) => {
+                                    tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e);
                                 }
                             }
-                            None => {
-                                tracing::info!("🛑 Sink received explicit shutdown during flush.");
-                                break;
-                            }
+                        }
+                        None => {
+                            tracing::info!("🛑 Sink received explicit shutdown during flush.");
+                            break;
                         }
                     }
                 }
