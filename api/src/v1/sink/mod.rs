@@ -1,70 +1,88 @@
 use ptolemy::generated::observer::Record;
-use tokio::sync::mpsc;
+use tokio::{sync::mpsc, task::JoinHandle};
 
 use super::{error::PtolemyError, models, state::PtolemyConfig};
 
 #[derive(Debug)]
-pub struct Sink {
-    sender: mpsc::Sender<Record>,
-}
+pub struct StdoutSink;
 
-impl Sink {
-    pub async fn from_config(config: &PtolemyConfig) -> Result<Self, PtolemyError> {
-        let (tx, rx) = mpsc::channel(config.buffer_size);
-
-        let sink = Sink { sender: tx };
-
-        let writer = LogWriter::new().await?;
-
-        tokio::spawn(start_writer(rx, writer));
-
-        Ok(sink)
+impl StdoutSink {
+    pub async fn from_config(_config: &PtolemyConfig) -> Result<Self, PtolemyError> {
+        Ok(Self)
     }
 
-    pub fn sender(&self) -> mpsc::Sender<Record> {
-        self.sender.clone()
-    }
-}
+    pub async fn start(&self) -> Result<(mpsc::Sender<Option<Record>>, JoinHandle<()>), PtolemyError> {
+        let (tx, mut rx) = mpsc::channel::<Option<Record>>(1024);
+        let writer_loop = async move {
+            while let Some(msg) = rx.recv().await {
+                match msg {
+                    Some(record) => {
+                        let record_id = record.id.clone();
+                        let rec = match models::Record::try_from(record) {
+                            Ok(r) => r,
+                            Err(e) => {
+                                tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
+                                continue;
+                            }
+                        };
 
-async fn start_writer(
-    mut rx: mpsc::Receiver<Record>,
-    writer: impl SinkWriter,
-) -> Result<(), PtolemyError> {
-    while let Some(record) = rx.recv().await {
-        let record_id = record.id.clone();
-        if let Err(e) = writer.write(record).await {
-            tracing::error!("Error writing record {}: {:?}", record_id, e)
-        }
-    }
+                        match serde_json::to_string(&rec) {
+                            Ok(json_str) => {
+                                tracing::info!("{}", &json_str);
+                            },
+                            Err(e) => {
+                                tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e)
+                            }
+                        };
+                    },
+                    None => {
+                        tracing::info!("🛑 Sink received shutdown signal.");
+                        break;
+                    }
+                }
+            }
 
-    writer.flush().await?;
+            if !rx.is_empty() {
+                if !rx.is_empty() {
+                    tracing::debug!("Flushing remaining {} messages...", rx.len());
 
-    Ok(())
-}
+                    // Drain any remaining messages in the channel
+                    while let Ok(msg) = rx.try_recv() {
+                        match msg {
+                            Some(record) => {
+                                let record_id = record.id.clone();
+                                let rec = match models::Record::try_from(record) {
+                                    Ok(r) => r,
+                                    Err(e) => {
+                                        tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
+                                        continue;
+                                    }
+                                };
 
-pub trait SinkWriter {
-    fn write(&self, record: Record) -> impl std::future::Future<Output = Result<(), PtolemyError>>;
-    fn flush(&self) -> impl std::future::Future<Output = Result<(), PtolemyError>>;
-}
+                                match serde_json::to_string(&rec) {
+                                    Ok(json_str) => tracing::info!("{}", &json_str),
+                                    Err(e) => {
+                                        tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e);
+                                    }
+                                }
+                            }
+                            None => {
+                                tracing::info!("🛑 Sink received explicit shutdown during flush.");
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
-#[derive(Debug)]
-pub struct LogWriter;
+            rx.close();
 
-impl LogWriter {
-    pub async fn new() -> Result<Self, PtolemyError> {
-        Ok(Self {})
-    }
-}
+            tracing::debug!("✅ Sink receiver successfully closed.");
+        };
 
-impl SinkWriter for LogWriter {
-    async fn write(&self, record: Record) -> Result<(), PtolemyError> {
-        let rec = models::Record::try_from(record)?;
-        let json_str = serde_json::to_string(&rec).map_err(|_| PtolemyError::InvalidJson)?;
-        tracing::info!("{}", &json_str);
-        Ok(())
-    }
+        // spawn task
+        let handle = tokio::spawn(writer_loop);
 
-    async fn flush(&self) -> Result<(), PtolemyError> {
-        Ok(())
+        Ok((tx, handle))
     }
 }

@@ -3,13 +3,13 @@ pub type PtolemyState = std::sync::Arc<AppState>;
 #[derive(Debug)]
 pub struct AppState {
     pub config: PtolemyConfig,
-    pub event_sender: tokio::sync::mpsc::Sender<ptolemy::generated::observer::Record>,
+    event_sender: tokio::sync::mpsc::Sender<Option<ptolemy::generated::observer::Record>>,
 }
 
 impl AppState {
     pub async fn new(
         config: PtolemyConfig,
-        event_sender: tokio::sync::mpsc::Sender<ptolemy::generated::observer::Record>,
+        event_sender: tokio::sync::mpsc::Sender<Option<ptolemy::generated::observer::Record>>,
     ) -> Self {
         Self {
             config,
@@ -17,7 +17,7 @@ impl AppState {
         }
     }
 
-    pub fn sender(&self) -> tokio::sync::mpsc::Sender<ptolemy::generated::observer::Record> {
+    pub fn sender(&self) -> tokio::sync::mpsc::Sender<Option<ptolemy::generated::observer::Record>> {
         self.event_sender.clone()
     }
 }

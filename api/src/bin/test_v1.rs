@@ -25,7 +25,7 @@ async fn main() {
     };
 
     let publish_request = PublishRequest {
-        records: vec![record; 100],
+        records: vec![record; 15],
     };
 
     let resp = client.publish(publish_request).await;
