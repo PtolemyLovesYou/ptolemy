@@ -28,6 +28,10 @@ service Observer {
     rpc Publish(PublishRequest) returns (PublishResponse);
 }
 
+service RecordPublisher {
+    rpc Publish(PublishRequest) returns (PublishResponse);
+}
+
 message PublishRequest {
     repeated Record records = 1;
 }

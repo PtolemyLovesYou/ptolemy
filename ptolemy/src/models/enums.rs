@@ -3,6 +3,22 @@ use crate::generated::observer;
 use crate::prelude::enum_utils::*;
 use crate::serialize_enum;
 
+#[derive(Debug, Clone)]
+pub enum FieldValueType {
+    String,
+    Int,
+    Float,
+    Bool,
+    JSON,
+    Null,
+}
+
+serialize_enum!(
+    FieldValueType,
+    ShoutySnakeCase,
+    [String, Int, Float, Bool, JSON, Null]
+);
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ApiKeyPermission {
     ReadOnly,

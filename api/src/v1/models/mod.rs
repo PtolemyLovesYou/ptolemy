@@ -1,9 +1,10 @@
 use super::error::PtolemyError;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, naive::serde::ts_microseconds};
 use ptolemy::{
     generated::observer::{self, record::RecordData},
     models::{FieldValueType, Id, JSON, Tier},
 };
+use serde::Serialize;
 
 #[derive(Debug, Clone)]
 pub enum Record {
@@ -71,7 +72,7 @@ impl TryFrom<observer::Record> for Record {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Event {
     pub tier: Tier,
     pub parent_id: Id,
@@ -82,18 +83,20 @@ pub struct Event {
     pub environment: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Runtime {
     pub tier: Tier,
     pub event_id: Id,
     pub id: Id,
-    pub start_time: DateTime<Utc>,
-    pub end_time: DateTime<Utc>,
+    #[serde(with = "ts_microseconds")]
+    pub start_time: NaiveDateTime,
+    #[serde(with = "ts_microseconds")]
+    pub end_time: NaiveDateTime,
     pub error_type: Option<String>,
     pub error_content: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct IOF {
     pub tier: Tier,
     pub event_id: Id,
@@ -170,7 +173,7 @@ impl IOF {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Metadata {
     pub tier: Tier,
     pub event_id: Id,
@@ -179,9 +182,9 @@ pub struct Metadata {
     pub field_value: String,
 }
 
-fn datetime_from_unix_timestamp(ts: f32) -> Result<DateTime<Utc>, PtolemyError> {
+fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, PtolemyError> {
     match DateTime::from_timestamp(ts.trunc() as i64, (ts.fract() * 1e9) as u32) {
-        Some(t) => Ok(t),
+        Some(t) => Ok(t.naive_utc()),
         None => {
             tracing::error!("Invalid timestamp: {}", ts);
             Err(PtolemyError::InvalidTimestamp)

@@ -4,21 +4,12 @@ mod event;
 mod id;
 
 mod json {
+    use super::enums::FieldValueType;
     use crate::error::ParseError;
     use prost_types::{value::Kind, ListValue, Struct};
 
     type ProtoValue = prost_types::Value;
     type JsonValue = serde_json::Value;
-
-    #[derive(Debug, Clone)]
-    pub enum FieldValueType {
-        String,
-        Int,
-        Float,
-        Bool,
-        JSON,
-        Null,
-    }
 
     #[derive(Clone, Debug)]
     pub struct JSON(pub JsonValue);
@@ -138,10 +129,10 @@ mod json {
 }
 
 pub use auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
-pub use enums::{ApiKeyPermission, Tier, UserStatus, WorkspaceRole};
+pub use enums::{ApiKeyPermission, Tier, UserStatus, WorkspaceRole, FieldValueType};
 pub use event::{
     Proto, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
     ProtoRuntime,
 };
 pub use id::Id;
-pub use json::{JSON, FieldValueType};
+pub use json::JSON;
