@@ -23,12 +23,12 @@ impl StdoutSink {
         Ok(Self)
     }
 
-    pub async fn start(&self) -> Result<(mpsc::Sender<Option<Record>>, JoinHandle<()>), PtolemyError> {
-        let (tx, mut rx) = mpsc::channel::<Option<Record>>(1024);
+    pub async fn start(&self) -> Result<(mpsc::Sender<SinkMessage>, JoinHandle<()>), PtolemyError> {
+        let (tx, mut rx) = mpsc::channel::<SinkMessage>(1024);
         let writer_loop = async move {
             while let Some(msg) = rx.recv().await {
                 match msg {
-                    Some(record) => {
+                    SinkMessage::Record(record) => {
                         let record_id = record.id.clone();
                         let rec = match models::Record::try_from(record) {
                             Ok(r) => r,
@@ -47,7 +47,7 @@ impl StdoutSink {
                             }
                         };
                     },
-                    None => {
+                    SinkMessage::Shutdown => {
                         tracing::info!("🛑 Sink received shutdown signal.");
                         break;
                     }
@@ -60,7 +60,7 @@ impl StdoutSink {
                 // Drain any remaining messages in the channel
                 while let Ok(msg) = rx.try_recv() {
                     match msg {
-                        Some(record) => {
+                        SinkMessage::Record(record) => {
                             let record_id = record.id.clone();
                             let rec = match models::Record::try_from(record) {
                                 Ok(r) => r,
@@ -77,7 +77,7 @@ impl StdoutSink {
                                 }
                             }
                         }
-                        None => {
+                        SinkMessage::Shutdown => {
                             tracing::info!("🛑 Sink received explicit shutdown during flush.");
                             break;
                         }

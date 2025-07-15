@@ -1,4 +1,4 @@
-use super::state::PtolemyState;
+use super::{state::PtolemyState, sink::SinkMessage};
 use tokio::{signal, time::{timeout, Duration}, task::JoinHandle};
 
 pub async fn shutdown_signal(state: PtolemyState, sink_join_handle: JoinHandle<()>) {
@@ -30,7 +30,7 @@ pub async fn shutdown_signal(state: PtolemyState, sink_join_handle: JoinHandle<(
 
     // Send shutdown signal to sink
     let tx = state.sender();
-    if let Err(e) = tx.send(None).await {
+    if let Err(e) = tx.send(SinkMessage::Shutdown).await {
         tracing::error!("Error shutting down sink consumer: {}", e);
     };
 

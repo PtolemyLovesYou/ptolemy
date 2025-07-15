@@ -1,4 +1,4 @@
-use super::state::PtolemyState;
+use super::{state::PtolemyState, sink::SinkMessage};
 use ptolemy::generated::observer;
 use tonic::{Request, Response, Status};
 
@@ -28,7 +28,7 @@ impl observer::record_publisher_server::RecordPublisher for RecordPublisherServi
         let publish_job = async move {
             for record in records {
                 let record_id = record.id.clone();
-                if let Err(e) = sender.send(Some(record)).await {
+                if let Err(e) = sender.send(SinkMessage::Record(record)).await {
                     tracing::error!("Failed to submit record {}: {:?}", record_id, e)
                 };
             }

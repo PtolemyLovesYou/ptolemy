@@ -1,15 +1,17 @@
+use super::sink::SinkMessage;
+
 pub type PtolemyState = std::sync::Arc<AppState>;
 
 #[derive(Debug)]
 pub struct AppState {
     pub config: PtolemyConfig,
-    event_sender: tokio::sync::mpsc::Sender<Option<ptolemy::generated::observer::Record>>,
+    event_sender: tokio::sync::mpsc::Sender<SinkMessage>,
 }
 
 impl AppState {
     pub async fn new(
         config: PtolemyConfig,
-        event_sender: tokio::sync::mpsc::Sender<Option<ptolemy::generated::observer::Record>>,
+        event_sender: tokio::sync::mpsc::Sender<SinkMessage>,
     ) -> Self {
         Self {
             config,
@@ -17,7 +19,7 @@ impl AppState {
         }
     }
 
-    pub fn sender(&self) -> tokio::sync::mpsc::Sender<Option<ptolemy::generated::observer::Record>> {
+    pub fn sender(&self) -> tokio::sync::mpsc::Sender<SinkMessage> {
         self.event_sender.clone()
     }
 }
