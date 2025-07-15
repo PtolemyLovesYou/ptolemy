@@ -38,10 +38,10 @@ pub async fn shutdown_signal(state: PtolemyState, sink_join_handle: JoinHandle<(
         tracing::error!("Error shutting down sink consumer: {}", e);
     };
 
-    drop(tx);
+    let timeout_secs = Duration::from_secs(state.config.sink_timeout_secs as u64);
 
     // Trigger sink shutdown by dropping the sender
-    match timeout(Duration::from_secs(30), sink_join_handle).await {
+    match timeout(timeout_secs, sink_join_handle).await {
         Ok(join_result) => match join_result {
             Ok(_) => tracing::debug!("Successfully wrote all messages."),
             Err(e) => tracing::error!("Sink cancelled or panicked: {}", e),
