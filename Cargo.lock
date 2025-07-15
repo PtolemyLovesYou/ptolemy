@@ -2146,45 +2146,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ptolemy-api"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "axum",
- "base64 0.22.1",
- "bb8",
- "chrono",
- "diesel",
- "diesel-async",
- "diesel_migrations",
- "heck 0.5.0",
- "http",
- "hyper",
- "ipnet",
- "jsonwebtoken",
- "pin-project-lite",
- "prost",
- "prost-types",
- "ptolemy",
- "r2d2",
- "ring",
- "serde",
- "serde_json",
- "serde_repr",
- "time",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-types",
- "tonic-web",
- "tower 0.5.2",
- "tower-http 0.6.2",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "ptolemy-client"
 version = "0.1.0-beta.45"
 dependencies = [

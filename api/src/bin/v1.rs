@@ -1,4 +1,4 @@
-use ptolemy_api::{
+use api::v1::{
     error::PtolemyError,
     routes::get_router,
     shutdown::shutdown_signal,

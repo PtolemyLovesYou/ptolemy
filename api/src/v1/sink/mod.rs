@@ -1,7 +1,7 @@
 use ptolemy::generated::observer::Record;
 use tokio::sync::mpsc;
 
-use crate::{error::PtolemyError, state::PtolemyConfig};
+use super::{error::PtolemyError, state::PtolemyConfig};
 
 #[derive(Debug)]
 pub struct Sink {
