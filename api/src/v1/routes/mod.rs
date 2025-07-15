@@ -1,7 +1,4 @@
-use super::{
-    state::PtolemyState,
-    super::middleware::get_cors_layer
-};
+use super::{super::middleware::get_cors_layer, state::PtolemyState};
 use axum::Router;
 
 pub async fn get_router(state: PtolemyState) -> Router {

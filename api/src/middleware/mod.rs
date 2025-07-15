@@ -6,8 +6,8 @@ pub use self::auth::master_auth_middleware;
 pub use shutdown::shutdown_signal;
 
 use http::{
-    HeaderName, Method,
     header::{AUTHORIZATION, CONTENT_TYPE},
+    HeaderName, Method,
 };
 use tower_http::cors::{Any, CorsLayer};
 

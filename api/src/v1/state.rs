@@ -16,6 +16,10 @@ impl AppState {
             event_sender,
         }
     }
+
+    pub fn sender(&self) -> tokio::sync::mpsc::Sender<ptolemy::generated::observer::Record> {
+        self.event_sender.clone()
+    }
 }
 
 #[derive(Debug)]

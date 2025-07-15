@@ -1,8 +1,8 @@
 use super::error::PtolemyError;
-use chrono::{DateTime, NaiveDateTime, naive::serde::ts_microseconds};
+use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use ptolemy::{
     generated::observer::{self, record::RecordData},
-    models::{FieldValueType, Id, JSON, Tier},
+    models::{FieldValueType, Id, Tier, JSON},
 };
 use serde::Serialize;
 
@@ -14,6 +14,19 @@ pub enum Record {
     Output(IOF),
     Feedback(IOF),
     Metadata(Metadata),
+}
+
+impl Serialize for Record {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Record::Event(inner) => inner.serialize(serializer),
+            Record::Runtime(inner) => inner.serialize(serializer),
+            Record::Input(inner) => inner.serialize(serializer),
+            Record::Output(inner) => inner.serialize(serializer),
+            Record::Feedback(inner) => inner.serialize(serializer),
+            Record::Metadata(inner) => inner.serialize(serializer),
+        }
+    }
 }
 
 impl TryFrom<observer::Record> for Record {
@@ -35,7 +48,8 @@ impl TryFrom<observer::Record> for Record {
                 parent_id,
                 id,
                 name: e.name,
-                parameters: e.parameters
+                parameters: e
+                    .parameters
                     .map(|p| p.try_into().map_err(|_| PtolemyError::InvalidJson))
                     .transpose()?,
                 version: e.version,
