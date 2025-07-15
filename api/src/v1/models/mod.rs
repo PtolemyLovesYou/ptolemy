@@ -1,6 +1,6 @@
 pub mod record;
 
-pub use record::{Event, IOF, Metadata, Runtime, Record};
+pub use record::{Event, Metadata, Record, Runtime, IOF};
 
 use ptolemy::generated::observer;
 
@@ -25,21 +25,29 @@ impl RecordBatch {
         }
     }
 
-    pub fn append_record(&mut self, record: observer::Record) -> Result<(), super::error::PtolemyError> {
+    pub fn append_record(
+        &mut self,
+        record: observer::Record,
+    ) -> Result<(), super::error::PtolemyError> {
         match Record::try_from(record)? {
             Record::Event(e) => self.event.push(e),
             Record::Runtime(r) => self.runtime.push(r),
             Record::Input(i) => self.input.push(i),
             Record::Output(o) => self.output.push(o),
             Record::Feedback(f) => self.feedback.push(f),
-            Record::Metadata(m) => self.metadata.push(m)
+            Record::Metadata(m) => self.metadata.push(m),
         }
 
         Ok(())
     }
 
     pub fn is_empty(&self) -> bool {
-        self.event.is_empty() & self.runtime.is_empty() & self.input.is_empty() & self.output.is_empty() & self.feedback.is_empty() & self.metadata.is_empty()
+        self.event.is_empty()
+            & self.runtime.is_empty()
+            & self.input.is_empty()
+            & self.output.is_empty()
+            & self.feedback.is_empty()
+            & self.metadata.is_empty()
     }
 
     pub fn event(&mut self) -> Vec<Event> {

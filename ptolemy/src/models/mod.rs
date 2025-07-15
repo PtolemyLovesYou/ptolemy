@@ -129,7 +129,7 @@ mod json {
 }
 
 pub use auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
-pub use enums::{ApiKeyPermission, Tier, UserStatus, WorkspaceRole, FieldValueType};
+pub use enums::{ApiKeyPermission, FieldValueType, Tier, UserStatus, WorkspaceRole};
 pub use event::{
     Proto, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
     ProtoRuntime,
