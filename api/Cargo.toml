@@ -3,6 +3,10 @@ name = "api"
 path = "src/main.rs"
 
 [[bin]]
+name = "v1"
+path = "src/bin/v1.rs"
+
+[[bin]]
 name = "generate-gql-schema"
 path = "src/bin/generate_gql_schema.rs"
 

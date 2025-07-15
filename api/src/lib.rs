@@ -11,6 +11,7 @@ pub mod models;
 pub mod routes;
 pub mod services;
 pub mod state;
+pub mod v1;
 
 pub mod consts {
     pub const SERVICE_API_KEY_PREFIX: &str = "pt-sk";
