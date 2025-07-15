@@ -41,12 +41,16 @@ impl StdoutSink {
                         match serde_json::to_string(&rec) {
                             Ok(json_str) => {
                                 tracing::info!("{}", &json_str);
-                            },
+                            }
                             Err(e) => {
-                                tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e)
+                                tracing::error!(
+                                    "⚠️ Error serializing record {}: {:?}",
+                                    record_id,
+                                    e
+                                )
                             }
                         };
-                    },
+                    }
                     SinkMessage::Shutdown => {
                         tracing::info!("🛑 Sink received shutdown signal.");
                         break;
@@ -65,7 +69,11 @@ impl StdoutSink {
                             let rec = match models::Record::try_from(record) {
                                 Ok(r) => r,
                                 Err(e) => {
-                                    tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
+                                    tracing::error!(
+                                        "⚠️ Error parsing record {}: {:?}",
+                                        record_id,
+                                        e
+                                    );
                                     continue;
                                 }
                             };
@@ -73,7 +81,11 @@ impl StdoutSink {
                             match serde_json::to_string(&rec) {
                                 Ok(json_str) => tracing::info!("{}", &json_str),
                                 Err(e) => {
-                                    tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e);
+                                    tracing::error!(
+                                        "⚠️ Error serializing record {}: {:?}",
+                                        record_id,
+                                        e
+                                    );
                                 }
                             }
                         }

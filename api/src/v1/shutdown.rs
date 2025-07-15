@@ -1,5 +1,9 @@
-use super::{state::PtolemyState, sink::SinkMessage};
-use tokio::{signal, time::{timeout, Duration}, task::JoinHandle};
+use super::{sink::SinkMessage, state::PtolemyState};
+use tokio::{
+    signal,
+    task::JoinHandle,
+    time::{timeout, Duration},
+};
 
 pub async fn shutdown_signal(state: PtolemyState, sink_join_handle: JoinHandle<()>) {
     let ctrl_c = async {

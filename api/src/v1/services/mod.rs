@@ -1,4 +1,4 @@
-use super::{state::PtolemyState, sink::SinkMessage};
+use super::{sink::SinkMessage, state::PtolemyState};
 use ptolemy::generated::observer;
 use tonic::{Request, Response, Status};
 
