@@ -29,27 +29,9 @@ impl StdoutSink {
             while let Some(msg) = rx.recv().await {
                 match msg {
                     SinkMessage::Record(record) => {
-                        let record_id = record.id.clone();
-                        let rec = match models::Record::try_from(record) {
-                            Ok(r) => r,
-                            Err(e) => {
-                                tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
-                                continue;
-                            }
-                        };
-
-                        match serde_json::to_string(&rec) {
-                            Ok(json_str) => {
-                                tracing::info!("{}", &json_str);
-                            }
-                            Err(e) => {
-                                tracing::error!(
-                                    "⚠️ Error serializing record {}: {:?}",
-                                    record_id,
-                                    e
-                                )
-                            }
-                        };
+                        if let Some(serialized) = serialize_to_json(record) {
+                            tracing::info!("{}", serialized)
+                        }
                     }
                     SinkMessage::Shutdown => {
                         tracing::info!("🛑 Sink received shutdown signal.");
@@ -65,28 +47,8 @@ impl StdoutSink {
                 while let Ok(msg) = rx.try_recv() {
                     match msg {
                         SinkMessage::Record(record) => {
-                            let record_id = record.id.clone();
-                            let rec = match models::Record::try_from(record) {
-                                Ok(r) => r,
-                                Err(e) => {
-                                    tracing::error!(
-                                        "⚠️ Error parsing record {}: {:?}",
-                                        record_id,
-                                        e
-                                    );
-                                    continue;
-                                }
-                            };
-
-                            match serde_json::to_string(&rec) {
-                                Ok(json_str) => tracing::info!("{}", &json_str),
-                                Err(e) => {
-                                    tracing::error!(
-                                        "⚠️ Error serializing record {}: {:?}",
-                                        record_id,
-                                        e
-                                    );
-                                }
+                            if let Some(serialized) = serialize_to_json(record) {
+                                tracing::info!("{}", serialized)
                             }
                         }
                         SinkMessage::Shutdown => {
@@ -107,4 +69,23 @@ impl StdoutSink {
 
         Ok((tx, handle))
     }
+}
+
+fn serialize_to_json(record: Record) -> Option<String> {
+    let record_id = record.id.clone();
+    let rec = match models::Record::try_from(record) {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
+            return None;
+        }
+    };
+
+    match serde_json::to_string(&rec) {
+        Ok(json_str) => return Some(json_str),
+        Err(e) => {
+            tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e);
+            return None;
+        }
+    };
 }
