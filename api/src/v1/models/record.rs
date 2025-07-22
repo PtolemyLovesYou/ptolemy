@@ -38,12 +38,15 @@ impl TryFrom<observer::Record> for Record {
             .tier()
             .try_into()
             .map_err(|_| ApiError::ParseError(format!("Invalid Tier: {:?}", value.tier())))?;
-        let id: Id = value.id.try_into().map_err(|_| ApiError::ParseError(format!("Invalid UUID")))?;
-        let parent_id: Id = value
-            .parent_id
+        let id: Id = value
+            .id
             .try_into()
-            .map_err(|_| ApiError::BadQuery)?;
-        let data = match value.record_data.ok_or(ApiError::ParseError(format!("Missing data for record ID {}", &id)))? {
+            .map_err(|_| ApiError::ParseError(format!("Invalid UUID")))?;
+        let parent_id: Id = value.parent_id.try_into().map_err(|_| ApiError::BadQuery)?;
+        let data = match value.record_data.ok_or(ApiError::ParseError(format!(
+            "Missing data for record ID {}",
+            &id
+        )))? {
             RecordData::Event(e) => Self::Event(Event {
                 tier,
                 parent_id,
@@ -51,7 +54,11 @@ impl TryFrom<observer::Record> for Record {
                 name: e.name,
                 parameters: e
                     .parameters
-                    .map(|p| p.try_into().map_err(|_| ApiError::ParseError(format!("Invalid JSON for record ID {}", &id))))
+                    .map(|p| {
+                        p.try_into().map_err(|_| {
+                            ApiError::ParseError(format!("Invalid JSON for record ID {}", &id))
+                        })
+                    })
                     .transpose()?,
                 version: e.version,
                 environment: e.environment,
@@ -134,9 +141,14 @@ impl IOF {
         field_value: Option<prost_types::Value>,
     ) -> Result<Self, ApiError> {
         let field_value: JSON = field_value
-            .ok_or(ApiError::ParseError(format!("Missing field_value for ID {}", &id)))?
+            .ok_or(ApiError::ParseError(format!(
+                "Missing field_value for ID {}",
+                &id
+            )))?
             .try_into()
-            .map_err(|_| ApiError::ParseError(format!("Failed to parse field_value for ID {}", &id)))?;
+            .map_err(|_| {
+                ApiError::ParseError(format!("Failed to parse field_value for ID {}", &id))
+            })?;
 
         let field_value_type = field_value.field_value_type();
 

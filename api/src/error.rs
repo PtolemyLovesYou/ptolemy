@@ -44,7 +44,7 @@ impl ApiError {
             ApiError::InternalError => "internal_error",
             ApiError::AuthError(_) => "auth_error",
             ApiError::SerializationError(_) => "serialization_error",
-            ApiError::ParseError(_) => "parse_error"
+            ApiError::ParseError(_) => "parse_error",
         }
     }
 

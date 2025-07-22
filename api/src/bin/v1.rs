@@ -1,12 +1,11 @@
+use api::error::ApiError;
 /// This will eventually be src/main.rs
-
 use api::v1::{
     routes::get_router,
     shutdown::shutdown_signal,
     sink::init_sink,
     state::{AppState, PtolemyConfig},
 };
-use api::error::ApiError;
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
