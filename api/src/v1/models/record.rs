@@ -4,7 +4,7 @@ use ptolemy::{
     generated::observer::{self, record::RecordData},
     models::{FieldValueType, Id, Tier, JSON},
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone)]
 pub enum Record {
@@ -78,13 +78,13 @@ impl TryFrom<observer::Record> for Record {
                 error_content: r.error_content,
             }),
             RecordData::Input(i) => {
-                Self::Input(IOF::new(tier, parent_id, id, i.field_name, i.field_value)?)
+                Self::Input(IOF::new(tier, parent_id, id, IoType::Input, i.field_name, i.field_value)?)
             }
             RecordData::Output(o) => {
-                Self::Output(IOF::new(tier, parent_id, id, o.field_name, o.field_value)?)
+                Self::Output(IOF::new(tier, parent_id, id, IoType::Output, o.field_name, o.field_value)?)
             }
             RecordData::Feedback(f) => {
-                Self::Feedback(IOF::new(tier, parent_id, id, f.field_name, f.field_value)?)
+                Self::Feedback(IOF::new(tier, parent_id, id, IoType::Feedback, f.field_name, f.field_value)?)
             }
             RecordData::Metadata(m) => Self::Metadata(Metadata {
                 tier,
@@ -128,6 +128,7 @@ pub struct IOF {
     pub tier: Tier,
     pub event_id: Id,
     pub id: Id,
+    pub io_type: IoType,
     pub field_name: String,
     pub field_value_type: FieldValueType,
     pub field_value_str: Option<String>,
@@ -142,6 +143,7 @@ impl IOF {
         tier: Tier,
         event_id: Id,
         id: Id,
+        io_type: IoType,
         field_name: String,
         field_value: Option<prost_types::Value>,
     ) -> Result<Self, PtolemyError> {
@@ -189,6 +191,7 @@ impl IOF {
             tier,
             event_id,
             id,
+            io_type,
             field_name,
             field_value_type,
             field_value_str,
@@ -217,4 +220,12 @@ fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, PtolemyError> 
             Err(PtolemyError::InvalidTimestamp)
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum IoType {
+    Input,
+    Output,
+    Feedback
 }
