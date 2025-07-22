@@ -56,7 +56,7 @@ impl StdoutSink {
 
             rx.close();
 
-            tracing::debug!("✅ Sink receiver successfully closed.");
+            tracing::info!("✅ Sink receiver successfully closed.");
         };
 
         // spawn task
