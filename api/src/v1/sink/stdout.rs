@@ -13,7 +13,9 @@ pub struct StdoutSink {
 
 impl StdoutSink {
     pub async fn from_config(config: &PtolemyConfig) -> Result<Self, PtolemyError> {
-        Ok(Self { config: config.clone() })
+        Ok(Self {
+            config: config.clone(),
+        })
     }
 
     pub async fn start(&self) -> Result<(mpsc::Sender<SinkMessage>, JoinHandle<()>), PtolemyError> {
