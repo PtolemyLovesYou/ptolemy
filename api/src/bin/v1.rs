@@ -2,7 +2,7 @@ use api::v1::{
     error::PtolemyError,
     routes::get_router,
     shutdown::shutdown_signal,
-    sink::StdoutSink,
+    sink::init_sink,
     state::{AppState, PtolemyConfig},
 };
 
@@ -13,8 +13,11 @@ async fn main() -> Result<(), PtolemyError> {
         .init();
 
     let config = PtolemyConfig::default();
-    let sink = StdoutSink::from_config(&config).await?;
-    let (sink_tx, sink_handle) = sink.start().await?;
+
+    // init sink
+    let (sink_tx, sink_handle) = init_sink(&config).await?;
+
+    // create state
     let state = std::sync::Arc::new(AppState::new(config, sink_tx).await);
 
     let service = get_router(state.clone())
