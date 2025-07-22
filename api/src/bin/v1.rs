@@ -1,13 +1,13 @@
 use api::v1::{
-    error::PtolemyError,
     routes::get_router,
     shutdown::shutdown_signal,
     sink::init_sink,
     state::{AppState, PtolemyConfig},
 };
+use api::error::ApiError;
 
 #[tokio::main]
-async fn main() -> Result<(), PtolemyError> {
+async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
@@ -36,7 +36,7 @@ async fn main() -> Result<(), PtolemyError> {
         Ok(_) => Ok(()),
         Err(e) => {
             tracing::error!("Axum server error: {:?}", e);
-            Err(PtolemyError::ServerError)
+            Err(ApiError::InternalError)
         }
     }
 }

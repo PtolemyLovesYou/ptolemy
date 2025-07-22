@@ -1,4 +1,4 @@
-use super::super::error::PtolemyError;
+use super::super::super::error::ApiError;
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use ptolemy::{
     generated::observer::{self, record::RecordData},
@@ -31,19 +31,19 @@ impl Record {
 }
 
 impl TryFrom<observer::Record> for Record {
-    type Error = PtolemyError;
+    type Error = ApiError;
 
     fn try_from(value: observer::Record) -> Result<Self, Self::Error> {
         let tier: Tier = value
             .tier()
             .try_into()
-            .map_err(|_| PtolemyError::UndefinedTier)?;
-        let id: Id = value.id.try_into().map_err(|_| PtolemyError::InvalidUuid)?;
+            .map_err(|_| ApiError::ParseError(format!("Invalid Tier: {:?}", value.tier())))?;
+        let id: Id = value.id.try_into().map_err(|_| ApiError::ParseError(format!("Invalid UUID")))?;
         let parent_id: Id = value
             .parent_id
             .try_into()
-            .map_err(|_| PtolemyError::InvalidUuid)?;
-        let data = match value.record_data.ok_or(PtolemyError::MissingData)? {
+            .map_err(|_| ApiError::BadQuery)?;
+        let data = match value.record_data.ok_or(ApiError::ParseError(format!("Missing data for record ID {}", &id)))? {
             RecordData::Event(e) => Self::Event(Event {
                 tier,
                 parent_id,
@@ -51,7 +51,7 @@ impl TryFrom<observer::Record> for Record {
                 name: e.name,
                 parameters: e
                     .parameters
-                    .map(|p| p.try_into().map_err(|_| PtolemyError::InvalidJson))
+                    .map(|p| p.try_into().map_err(|_| ApiError::ParseError(format!("Invalid JSON for record ID {}", &id))))
                     .transpose()?,
                 version: e.version,
                 environment: e.environment,
@@ -132,11 +132,11 @@ impl IOF {
         id: Id,
         field_name: String,
         field_value: Option<prost_types::Value>,
-    ) -> Result<Self, PtolemyError> {
+    ) -> Result<Self, ApiError> {
         let field_value: JSON = field_value
-            .ok_or(PtolemyError::MissingData)?
+            .ok_or(ApiError::ParseError(format!("Missing field_value for ID {}", &id)))?
             .try_into()
-            .map_err(|_| PtolemyError::InvalidJson)?;
+            .map_err(|_| ApiError::ParseError(format!("Failed to parse field_value for ID {}", &id)))?;
 
         let field_value_type = field_value.field_value_type();
 
@@ -169,7 +169,7 @@ impl IOF {
             ),
             serde_json::Value::Null => {
                 tracing::error!("Null field value. This shouldn't happen.");
-                return Err(PtolemyError::MissingData);
+                return Err(ApiError::InternalError);
             }
         };
 
@@ -197,12 +197,12 @@ pub struct Metadata {
     pub field_value: String,
 }
 
-fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, PtolemyError> {
+fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, ApiError> {
     match DateTime::from_timestamp(ts.trunc() as i64, (ts.fract() * 1e9) as u32) {
         Some(t) => Ok(t.naive_utc()),
         None => {
             tracing::error!("Invalid timestamp: {}", ts);
-            Err(PtolemyError::InvalidTimestamp)
+            Err(ApiError::ParseError(format!("Invalid timestamp: {}", ts)))
         }
     }
 }

@@ -2,7 +2,7 @@ use ptolemy::generated::observer::Record;
 use tokio::{sync::mpsc, task::JoinHandle};
 
 use super::{
-    super::{error::PtolemyError, models, state::PtolemyConfig},
+    super::{super::error::ApiError, models, state::PtolemyConfig},
     sink_message::SinkMessage,
 };
 
@@ -12,13 +12,13 @@ pub struct StdoutSink {
 }
 
 impl StdoutSink {
-    pub async fn from_config(config: &PtolemyConfig) -> Result<Self, PtolemyError> {
+    pub async fn from_config(config: &PtolemyConfig) -> Result<Self, ApiError> {
         Ok(Self {
             config: config.clone(),
         })
     }
 
-    pub async fn start(&self) -> Result<(mpsc::Sender<SinkMessage>, JoinHandle<()>), PtolemyError> {
+    pub async fn start(&self) -> Result<(mpsc::Sender<SinkMessage>, JoinHandle<()>), ApiError> {
         let (tx, mut rx) = mpsc::channel::<SinkMessage>(self.config.buffer_size);
         let writer_loop = async move {
             while let Some(msg) = rx.recv().await {
