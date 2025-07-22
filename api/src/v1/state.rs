@@ -24,7 +24,7 @@ impl AppState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PtolemyConfig {
     pub port: usize,
     pub buffer_size: usize,

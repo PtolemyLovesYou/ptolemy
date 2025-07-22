@@ -7,15 +7,17 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct StdoutSink;
+pub struct StdoutSink {
+    config: PtolemyConfig,
+}
 
 impl StdoutSink {
-    pub async fn from_config(_config: &PtolemyConfig) -> Result<Self, PtolemyError> {
-        Ok(Self)
+    pub async fn from_config(config: &PtolemyConfig) -> Result<Self, PtolemyError> {
+        Ok(Self { config: config.clone() })
     }
 
     pub async fn start(&self) -> Result<(mpsc::Sender<SinkMessage>, JoinHandle<()>), PtolemyError> {
-        let (tx, mut rx) = mpsc::channel::<SinkMessage>(1024);
+        let (tx, mut rx) = mpsc::channel::<SinkMessage>(self.config.buffer_size);
         let writer_loop = async move {
             while let Some(msg) = rx.recv().await {
                 match msg {
