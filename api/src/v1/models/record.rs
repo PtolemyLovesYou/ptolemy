@@ -6,7 +6,8 @@ use ptolemy::{
 };
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "record_type", rename_all = "lowercase")]
 pub enum Record {
     Event(Event),
     Runtime(Runtime),
@@ -25,19 +26,6 @@ impl Record {
             Record::Output(o) => o.id,
             Record::Feedback(f) => f.id,
             Record::Metadata(m) => m.id,
-        }
-    }
-}
-
-impl Serialize for Record {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Record::Event(inner) => inner.serialize(serializer),
-            Record::Runtime(inner) => inner.serialize(serializer),
-            Record::Input(inner) => inner.serialize(serializer),
-            Record::Output(inner) => inner.serialize(serializer),
-            Record::Feedback(inner) => inner.serialize(serializer),
-            Record::Metadata(inner) => inner.serialize(serializer),
         }
     }
 }
@@ -78,13 +66,13 @@ impl TryFrom<observer::Record> for Record {
                 error_content: r.error_content,
             }),
             RecordData::Input(i) => {
-                Self::Input(IOF::new(tier, parent_id, id, IoType::Input, i.field_name, i.field_value)?)
+                Self::Input(IOF::new(tier, parent_id, id, i.field_name, i.field_value)?)
             }
             RecordData::Output(o) => {
-                Self::Output(IOF::new(tier, parent_id, id, IoType::Output, o.field_name, o.field_value)?)
+                Self::Output(IOF::new(tier, parent_id, id, o.field_name, o.field_value)?)
             }
             RecordData::Feedback(f) => {
-                Self::Feedback(IOF::new(tier, parent_id, id, IoType::Feedback, f.field_name, f.field_value)?)
+                Self::Feedback(IOF::new(tier, parent_id, id, f.field_name, f.field_value)?)
             }
             RecordData::Metadata(m) => Self::Metadata(Metadata {
                 tier,
@@ -128,7 +116,6 @@ pub struct IOF {
     pub tier: Tier,
     pub event_id: Id,
     pub id: Id,
-    pub io_type: IoType,
     pub field_name: String,
     pub field_value_type: FieldValueType,
     pub field_value_str: Option<String>,
@@ -143,7 +130,6 @@ impl IOF {
         tier: Tier,
         event_id: Id,
         id: Id,
-        io_type: IoType,
         field_name: String,
         field_value: Option<prost_types::Value>,
     ) -> Result<Self, PtolemyError> {
@@ -191,7 +177,6 @@ impl IOF {
             tier,
             event_id,
             id,
-            io_type,
             field_name,
             field_value_type,
             field_value_str,
