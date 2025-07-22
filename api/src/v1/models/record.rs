@@ -4,7 +4,7 @@ use ptolemy::{
     generated::observer::{self, record::RecordData},
     models::{FieldValueType, Id, Tier, JSON},
 };
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "record_type", rename_all = "lowercase")]
@@ -205,12 +205,4 @@ fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, PtolemyError> 
             Err(PtolemyError::InvalidTimestamp)
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum IoType {
-    Input,
-    Output,
-    Feedback
 }
