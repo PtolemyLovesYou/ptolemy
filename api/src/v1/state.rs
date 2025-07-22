@@ -1,4 +1,5 @@
 use super::sink::SinkMessage;
+use serde::{Serialize, Deserialize};
 
 pub type PtolemyState = std::sync::Arc<AppState>;
 
@@ -24,11 +25,12 @@ impl AppState {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PtolemyConfig {
     pub port: usize,
     pub buffer_size: usize,
     pub sink_timeout_secs: usize,
+    pub sink: Sink
 }
 
 impl Default for PtolemyConfig {
@@ -37,6 +39,13 @@ impl Default for PtolemyConfig {
             port: 3000,
             buffer_size: 1024,
             sink_timeout_secs: 30,
+            sink: Sink::Stdout
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Sink {
+    Stdout,
 }
