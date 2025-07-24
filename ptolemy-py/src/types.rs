@@ -14,6 +14,12 @@ pub struct PyUUIDWrapper {
     hex: String,
 }
 
+impl PyUUIDWrapper {
+    pub fn to_string(&self) -> String {
+        self.hex.clone()
+    }
+}
+
 impl From<PyUUIDWrapper> for String {
     fn from(value: PyUUIDWrapper) -> String {
         value.hex
