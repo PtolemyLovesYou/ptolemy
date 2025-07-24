@@ -24,6 +24,11 @@ class Ptolemy(BaseModel):
             raise ValueError("Workspace ID must be set.")
 
         return self._workspace_id
+    
+    def send_trace(self, trace: "Trace"):
+        """Send trace."""
+        
+        print(trace.model_dump_json(by_alias=True))
 
 class Trace(BaseModel):
     """Trace."""
