@@ -23,12 +23,15 @@ pub struct Metadata {
 
 #[derive(Debug, FromPyObject)]
 pub struct Trace {
+    pub tier: String,
     pub parent_id: PyUUIDWrapper,
     #[pyo3(attribute("id_"))]
     pub id: PyUUIDWrapper,
 
     pub name: String,
     pub parameters: Option<PyJSON>,
+    pub version: Option<String>,
+    pub environment: Option<String>,
 
     pub start_time: Option<f32>,
     pub end_time: Option<f32>,
