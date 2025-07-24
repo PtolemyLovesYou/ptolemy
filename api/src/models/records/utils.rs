@@ -1,6 +1,5 @@
 use ptolemy::error::ParseError;
-use ptolemy::generated::observer::Tier;
-use ptolemy::models::Id;
+use ptolemy::models::{Id, Tier};
 use uuid::Uuid;
 
 #[allow(clippy::type_complexity)] // this is literally the easiest way to do it
@@ -13,6 +12,5 @@ pub fn get_foreign_keys(
         Tier::Subsystem => Ok((None, Some(parent_id.into()), None, None)),
         Tier::Component => Ok((None, None, Some(parent_id.into()), None)),
         Tier::Subcomponent => Ok((None, None, None, Some(parent_id.into()))),
-        Tier::UndeclaredTier => Err(ParseError::UndefinedTier),
     }
 }

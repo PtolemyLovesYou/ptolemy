@@ -4,6 +4,7 @@ mod event;
 mod id;
 
 mod json {
+    use super::enums::FieldValueType;
     use crate::error::ParseError;
     use prost_types::{value::Kind, ListValue, Struct};
 
@@ -12,6 +13,21 @@ mod json {
 
     #[derive(Clone, Debug)]
     pub struct JSON(pub JsonValue);
+
+    impl JSON {
+        pub fn field_value_type(&self) -> FieldValueType {
+            match &self.0 {
+                JsonValue::Array(_) | JsonValue::Object(_) => FieldValueType::JSON,
+                JsonValue::Bool(_) => FieldValueType::Bool,
+                JsonValue::Number(i) => match i.as_i64() {
+                    Some(_) => FieldValueType::Int,
+                    None => FieldValueType::Float,
+                },
+                JsonValue::String(_) => FieldValueType::String,
+                JsonValue::Null => FieldValueType::Null,
+            }
+        }
+    }
 
     impl serde::Serialize for JSON {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -113,7 +129,7 @@ mod json {
 }
 
 pub use auth::{ServiceApiKey, User, UserApiKey, Workspace, WorkspaceUser};
-pub use enums::{ApiKeyPermission, Tier, UserStatus, WorkspaceRole};
+pub use enums::{ApiKeyPermission, FieldValueType, Tier, UserStatus, WorkspaceRole};
 pub use event::{
     Proto, ProtoEvent, ProtoFeedback, ProtoInput, ProtoMetadata, ProtoOutput, ProtoRecord,
     ProtoRuntime,

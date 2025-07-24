@@ -1,9 +1,10 @@
 use chrono::{DateTime, NaiveDateTime};
 
+use super::enums;
 use crate::error::ParseError;
 use crate::generated::observer::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
-    Record, RuntimeRecord, Tier,
+    Record, RuntimeRecord,
 };
 use crate::models::json::JSON;
 use crate::models::Id;
@@ -307,7 +308,7 @@ impl Proto for ProtoMetadata {
 
 #[derive(Clone, Debug)]
 pub struct ProtoRecord<T: Proto> {
-    pub tier: Tier,
+    pub tier: enums::Tier,
     pub parent_id: Id,
     pub id: Id,
 
@@ -315,7 +316,7 @@ pub struct ProtoRecord<T: Proto> {
 }
 
 impl<T: Proto> ProtoRecord<T> {
-    pub fn new(tier: Tier, parent_id: Id, id: Id, record_data: T) -> Self {
+    pub fn new(tier: enums::Tier, parent_id: Id, id: Id, record_data: T) -> Self {
         Self {
             tier,
             parent_id,
@@ -326,7 +327,7 @@ impl<T: Proto> ProtoRecord<T> {
 
     pub fn proto(&self) -> Record {
         Record {
-            tier: self.tier.into(),
+            tier: self.tier.proto().into(),
             parent_id: self.parent_id.to_string(),
             id: self.id.to_string(),
             record_data: Some(self.record_data.proto()),
@@ -338,7 +339,7 @@ impl<T: Proto> TryFrom<Record> for ProtoRecord<T> {
     type Error = crate::error::ParseError;
 
     fn try_from(value: Record) -> Result<Self, Self::Error> {
-        let tier = value.tier();
+        let tier = value.tier().try_into()?;
         let parent_id: Id = value.parent_id.try_into()?;
         let id: Id = value.id.try_into()?;
         let record_data: T = TryInto::<T>::try_into(
