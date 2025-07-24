@@ -100,8 +100,8 @@ class Trace(BaseModel):
             tier=self.tier.child(),
             name=name,
             parameters=parameters,
-            version=version,
-            environment=environment,
+            version=version or self.version,
+            environment=environment or self.environment,
         )
 
     @classmethod
