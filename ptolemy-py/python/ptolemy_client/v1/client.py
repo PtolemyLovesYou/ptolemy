@@ -50,7 +50,7 @@ class Trace(BaseModel):
     end_time: Optional[float] = None
 
     error_type: Optional[str] = None
-    error_value: Optional[str] = None
+    error_content: Optional[str] = None
 
     inputs_: Optional[List[IO[Any]]] = Field(default=None)
     outputs_: Optional[List[IO[Any]]] = Field(default=None)

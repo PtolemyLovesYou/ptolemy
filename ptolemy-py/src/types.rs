@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
-#[derive(FromPyObject)]
+#[derive(Debug, FromPyObject)]
 pub struct PyUUIDWrapper {
     hex: String,
 }
