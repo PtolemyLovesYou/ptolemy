@@ -1,5 +1,8 @@
-use super::types::{PyUUIDWrapper, PyJSON};
-use ptolemy::{generated::observer::{record::RecordData, EventRecord, FeedbackRecord, InputRecord, OutputRecord, Record, RuntimeRecord, Tier, MetadataRecord}};
+use super::types::{PyJSON, PyUUIDWrapper};
+use ptolemy::generated::observer::{
+    record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
+    Record, RuntimeRecord, Tier,
+};
 use pyo3::{exceptions::PyValueError, prelude::*};
 
 #[derive(Debug, FromPyObject)]
@@ -22,12 +25,10 @@ impl Input {
             tier: tier.clone().into(),
             parent_id: self.0.parent_id.to_string(),
             id: self.0.id.to_string(),
-            record_data: Some(RecordData::Input(
-                InputRecord {
-                    field_name: self.0.field_name.clone(),
-                    field_value: Some(self.0.field_value.0.clone().into())
-                }
-            ))
+            record_data: Some(RecordData::Input(InputRecord {
+                field_name: self.0.field_name.clone(),
+                field_value: Some(self.0.field_value.0.clone().into()),
+            })),
         })
     }
 }
@@ -42,12 +43,10 @@ impl Output {
             tier: tier.clone().into(),
             parent_id: self.0.parent_id.to_string(),
             id: self.0.id.to_string(),
-            record_data: Some(RecordData::Output(
-                OutputRecord {
-                    field_name: self.0.field_name.clone(),
-                    field_value: Some(self.0.field_value.0.clone().into())
-                }
-            ))
+            record_data: Some(RecordData::Output(OutputRecord {
+                field_name: self.0.field_name.clone(),
+                field_value: Some(self.0.field_value.0.clone().into()),
+            })),
         })
     }
 }
@@ -62,12 +61,10 @@ impl Feedback {
             tier: tier.clone().into(),
             parent_id: self.0.parent_id.to_string(),
             id: self.0.id.to_string(),
-            record_data: Some(RecordData::Feedback(
-                FeedbackRecord {
-                    field_name: self.0.field_name.clone(),
-                    field_value: Some(self.0.field_value.0.clone().into())
-                }
-            ))
+            record_data: Some(RecordData::Feedback(FeedbackRecord {
+                field_name: self.0.field_name.clone(),
+                field_value: Some(self.0.field_value.0.clone().into()),
+            })),
         })
     }
 }
@@ -87,26 +84,26 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn to_record(&self, tier: &Tier) -> PyResult<Record> {
-        let start_time = self.start_time.clone().ok_or(PyValueError::new_err(
-            "Start time not set."
-        ))?;
+        let start_time = self
+            .start_time
+            .clone()
+            .ok_or(PyValueError::new_err("Start time not set."))?;
 
-        let end_time = self.end_time.clone().ok_or(PyValueError::new_err(
-            "End time not set."
-        ))?;
+        let end_time = self
+            .end_time
+            .clone()
+            .ok_or(PyValueError::new_err("End time not set."))?;
 
         Ok(Record {
             tier: tier.clone().into(),
             parent_id: self.parent_id.to_string(),
             id: self.parent_id.to_string(),
-            record_data: Some(RecordData::Runtime(
-                RuntimeRecord {
-                    start_time,
-                    end_time,
-                    error_type: self.error_type.clone(),
-                    error_content: self.error_content.clone(),
-                }
-            ))
+            record_data: Some(RecordData::Runtime(RuntimeRecord {
+                start_time,
+                end_time,
+                error_type: self.error_type.clone(),
+                error_content: self.error_content.clone(),
+            })),
         })
     }
 }
@@ -127,12 +124,10 @@ impl Metadata {
             tier: tier.clone().into(),
             parent_id: self.parent_id.to_string(),
             id: self.id.to_string(),
-            record_data: Some(RecordData::Metadata(
-                MetadataRecord {
-                    field_name: self.field_name.clone(),
-                    field_value: self.field_value.clone()
-                }
-            ))
+            record_data: Some(RecordData::Metadata(MetadataRecord {
+                field_name: self.field_name.clone(),
+                field_value: self.field_value.clone(),
+            })),
         })
     }
 }
@@ -169,7 +164,10 @@ impl Trace {
             "component" => Tier::Component,
             "subcomponent" => Tier::Subcomponent,
             _ => {
-                return Err(PyValueError::new_err(format!("Invalid tier: {}", self.tier)))
+                return Err(PyValueError::new_err(format!(
+                    "Invalid tier: {}",
+                    self.tier
+                )))
             }
         };
 
@@ -179,21 +177,17 @@ impl Trace {
     pub fn to_record(&self, tier: &Tier) -> PyResult<Record> {
         let parameters = self.parameters.as_ref().map(|i| i.0.clone().into());
 
-        Ok(
-            Record {
-                tier: tier.clone().into(),
-                parent_id: self.parent_id.to_string(),
-                id: self.id.to_string(),
-                record_data: Some(RecordData::Event(
-                    EventRecord {
-                        name: self.name.clone(),
-                        parameters,
-                        version: self.version.clone(),
-                        environment: self.environment.clone(),
-                    }
-                ))
-            }
-        )
+        Ok(Record {
+            tier: tier.clone().into(),
+            parent_id: self.parent_id.to_string(),
+            id: self.id.to_string(),
+            record_data: Some(RecordData::Event(EventRecord {
+                name: self.name.clone(),
+                parameters,
+                version: self.version.clone(),
+                environment: self.environment.clone(),
+            })),
+        })
     }
 
     pub fn to_records(&self) -> PyResult<Vec<Record>> {
@@ -202,7 +196,7 @@ impl Trace {
         let tier = self.tier()?;
 
         records.push(self.to_record(&tier)?);
-        
+
         if let Some(inputs) = &self.inputs {
             for inp in inputs {
                 records.push(inp.to_record(&tier)?)

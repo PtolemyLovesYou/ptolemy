@@ -24,10 +24,10 @@ class Ptolemy(BaseModel):
             raise ValueError("Workspace ID must be set.")
 
         return self._workspace_id
-    
+
     def send_trace(self, trace: "Trace"):
         """Send trace."""
-        
+
         print(trace.model_dump_json(by_alias=True))
 
 class Trace(BaseModel):
@@ -111,17 +111,17 @@ class Trace(BaseModel):
                 if v is not None
             ],
         )
-    
+
     def runtime(
         self,
         start_time: float,
         end_time: float,
         error_type: Optional[str] = None,
-        error_content: Optional[str] = None
-        ):
+        error_content: Optional[str] = None,
+    ):
         if self.runtime_ is not None:
             raise ValueError("Runtime already exists.")
-        
+
         self.runtime_ = Runtime(
             parent_id=self.id_,
             start_time=start_time,
@@ -129,7 +129,6 @@ class Trace(BaseModel):
             error_type=error_type,
             error_content=error_content,
         )
-        
 
     def inputs(self, **kwargs: Any):
         """Set inputs."""
