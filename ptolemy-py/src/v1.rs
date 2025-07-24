@@ -12,6 +12,19 @@ pub struct IO {
 }
 
 #[derive(Debug, FromPyObject)]
+pub struct Runtime {
+    pub parent_id: PyUUIDWrapper,
+    #[pyo3(attribute("id_"))]
+    pub id: PyUUIDWrapper,
+
+    pub start_time: Option<f32>,
+    pub end_time: Option<f32>,
+
+    pub error_type: Option<String>,
+    pub error_content: Option<String>,
+}
+
+#[derive(Debug, FromPyObject)]
 pub struct Metadata {
     pub parent_id: PyUUIDWrapper,
     #[pyo3(attribute("id_"))]
@@ -33,11 +46,8 @@ pub struct Trace {
     pub version: Option<String>,
     pub environment: Option<String>,
 
-    pub start_time: Option<f32>,
-    pub end_time: Option<f32>,
-    pub error_type: Option<String>,
-    pub error_content: Option<String>,
-
+    #[pyo3(attribute("runtime_"))]
+    pub runtime: Option<Runtime>,
     #[pyo3(attribute("inputs_"))]
     pub inputs: Option<Vec<IO>>,
     #[pyo3(attribute("outputs_"))]

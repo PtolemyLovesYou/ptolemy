@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, PrivateAttr
 
 from .tier import Tier
-from .io import IO
+from .io import IO, Runtime
 
 Parameters = Dict[str, Any]
 
@@ -46,11 +46,7 @@ class Trace(BaseModel):
     version: Optional[str] = Field(default=None)
     environment: Optional[str] = Field(default=None)
 
-    start_time: Optional[float] = None
-    end_time: Optional[float] = None
-
-    error_type: Optional[str] = None
-    error_content: Optional[str] = None
+    runtime_: Optional[Runtime] = Field(default=None)
 
     inputs_: Optional[List[IO[Any]]] = Field(default=None)
     outputs_: Optional[List[IO[Any]]] = Field(default=None)
@@ -115,6 +111,25 @@ class Trace(BaseModel):
                 if v is not None
             ],
         )
+    
+    def runtime(
+        self,
+        start_time: float,
+        end_time: float,
+        error_type: Optional[str] = None,
+        error_content: Optional[str] = None
+        ):
+        if self.runtime_ is not None:
+            raise ValueError("Runtime already exists.")
+        
+        self.runtime_ = Runtime(
+            parent_id=self.id_,
+            start_time=start_time,
+            end_time=end_time,
+            error_type=error_type,
+            error_content=error_content,
+        )
+        
 
     def inputs(self, **kwargs: Any):
         """Set inputs."""
