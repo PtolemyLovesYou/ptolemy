@@ -1,6 +1,7 @@
 """IO Models."""
 
 from typing import TypeVar, Generic, Optional
+import time
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
 
@@ -20,8 +21,27 @@ class Runtime(BaseModel):
     parent_id: UUID
     id_: UUID = Field(default_factory=uuid4, alias="id")
 
-    start_time: float
-    end_time: float
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
 
     error_type: Optional[str] = Field(default=None)
     error_content: Optional[str] = Field(default=None)
+
+    def start(self):
+        """Start runtime log."""
+
+        if self.start_time is not None:
+            raise ValueError("Runtime already started.")
+
+        self.start_time = time.time()
+
+    def end(self):
+        """End runtime log."""
+
+        if self.start_time is None:
+            raise ValueError("Runtime not started yet.")
+
+        if self.end_time is not None:
+            raise ValueError("Runtime already ended.")
+
+        self.end_time = time.time()

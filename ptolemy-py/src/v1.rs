@@ -4,7 +4,7 @@ use ptolemy::generated::observer::{
     FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
     RuntimeRecord, Tier,
 };
-use pyo3::{exceptions::PyValueError, prelude::*, exceptions::PyConnectionError};
+use pyo3::{exceptions::PyConnectionError, exceptions::PyValueError, prelude::*};
 
 #[derive(Debug, FromPyObject)]
 pub struct IO {
@@ -197,6 +197,13 @@ impl Trace {
         let tier = self.tier()?;
 
         records.push(self.to_record(&tier)?);
+        
+        match &self.runtime {
+            Some(r) => records.push(r.to_record(&tier)?),
+            None => {
+                return Err(PyValueError::new_err("No runtime provided."))
+            }
+        }
 
         if let Some(inputs) = &self.inputs {
             for inp in inputs {
@@ -263,7 +270,10 @@ impl RecordExporter {
             .runtime
             .block_on(self.client.publish(publish_request))
             .map_err(|e| {
-                PyConnectionError::new_err(format!("Failed to push records to server: {}", e.message()))
+                PyConnectionError::new_err(format!(
+                    "Failed to push records to server: {}",
+                    e.message()
+                ))
             })?
             .into_inner();
 

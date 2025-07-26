@@ -1,6 +1,7 @@
 """Ptolemy Client."""
 
 from typing import Dict, Any, Optional, List, Self
+import traceback
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 
@@ -61,6 +62,36 @@ class Trace(BaseModel):
     outputs_: Optional[List[IO[Any]]] = Field(default=None)
     feedback_: Optional[List[IO[Any]]] = Field(default=None)
     metadata_: Optional[List[IO[str]]] = Field(default=None)
+
+    def start(self):
+        """Start event trace."""
+
+        if self.runtime_ is not None:
+            raise ValueError("Runtime already initiated.")
+
+        runtime = Runtime(parent_id=self.id_)
+        runtime.start()
+
+        self.runtime_ = runtime
+
+    def end(self):
+        if self.runtime_ is None:
+            raise ValueError("Runtime not yet initiated.")
+
+        self.runtime_.end()
+
+    def __enter__(self):
+        self.start()
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.end()
+
+        if exc_type is not None:
+            format_result = "".join(traceback.format_exception(exc_type, exc_value, tb))
+            self.runtime_.error_type = exc_type.__name__
+            self.runtime_.error_content = format_result
+
+        self.client.add_trace(self)
 
     def child(
         self,
