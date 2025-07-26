@@ -17,9 +17,8 @@ impl RecordPublisherService {
 impl observer::record_publisher_server::RecordPublisher for RecordPublisherService {
     async fn get_workspace_info(
         &self,
-        _request: Request<observer::GetWorkspaceInfoRequest>
+        _request: Request<observer::GetWorkspaceInfoRequest>,
     ) -> Result<Response<observer::GetWorkspaceInfoResponse>, Status> {
-
         // TODO: Get workspace information
         Ok(Response::new(observer::GetWorkspaceInfoResponse {
             workspace_id: uuid::Uuid::new_v4().to_string(),

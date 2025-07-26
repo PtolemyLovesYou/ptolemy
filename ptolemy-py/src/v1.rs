@@ -1,8 +1,8 @@
-use super::types::{PyJSON, PyUUIDWrapper, PyId};
+use super::types::{PyId, PyJSON, PyUUIDWrapper};
 use ptolemy::generated::observer::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
-    FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
-    RuntimeRecord, Tier, GetWorkspaceInfoRequest
+    FeedbackRecord, GetWorkspaceInfoRequest, InputRecord, MetadataRecord, OutputRecord,
+    PublishRequest, Record, RuntimeRecord, Tier,
 };
 use pyo3::{exceptions::PyConnectionError, exceptions::PyValueError, prelude::*};
 
@@ -197,12 +197,10 @@ impl Trace {
         let tier = self.tier()?;
 
         records.push(self.to_record(&tier)?);
-        
+
         match &self.runtime {
             Some(r) => records.push(r.to_record(&tier)?),
-            None => {
-                return Err(PyValueError::new_err("No runtime provided."))
-            }
+            None => return Err(PyValueError::new_err("No runtime provided.")),
         }
 
         if let Some(inputs) = &self.inputs {
@@ -263,7 +261,8 @@ impl RecordExporter {
         // get workspace information
         let wk_request = GetWorkspaceInfoRequest {};
 
-        let wk_resp = self.runtime
+        let wk_resp = self
+            .runtime
             .block_on(self.client.get_workspace_info(wk_request))
             .map_err(|e| {
                 PyConnectionError::new_err(format!(

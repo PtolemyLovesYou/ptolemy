@@ -21,7 +21,7 @@ class Ptolemy(BaseModel):
 
     _workspace_id: Optional[UUID] = PrivateAttr(None)
     _workspace_name: Optional[str] = PrivateAttr(None)
-    
+
     # TODO: we should probably wrap this with retries etc.
     _client: Optional[RecordExporter] = PrivateAttr(None)
 
@@ -32,13 +32,13 @@ class Ptolemy(BaseModel):
             raise ValueError("Workspace ID must be set.")
 
         return self._workspace_id
-    
+
     @property
     def workspace_name(self) -> str:
         """Get workspace name."""
         if self._workspace_name is None:
             raise ValueError("Workspace name must be set.")
-        
+
         return self._workspace_name
 
     @model_validator(mode="after")
