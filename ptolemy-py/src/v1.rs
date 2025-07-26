@@ -1,9 +1,10 @@
 use super::types::{PyJSON, PyUUIDWrapper};
 use ptolemy::generated::observer::{
-    record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
-    Record, RuntimeRecord, Tier,
+    record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
+    FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
+    RuntimeRecord, Tier,
 };
-use pyo3::{exceptions::PyValueError, prelude::*};
+use pyo3::{exceptions::PyValueError, prelude::*, exceptions::PyConnectionError};
 
 #[derive(Debug, FromPyObject)]
 pub struct IO {
@@ -227,21 +228,44 @@ impl Trace {
 
 #[derive(Debug)]
 #[pyclass]
-pub struct RecordExporter;
+pub struct RecordExporter {
+    client: RecordPublisherClient<tonic::transport::Channel>,
+
+    // We really shouldn't be having this object be managing its own runtime...
+    runtime: tokio::runtime::Runtime,
+}
 
 #[pymethods]
 impl RecordExporter {
     #[new]
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(base_url: String) -> PyResult<Self> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+
+        let client = runtime
+            .block_on(RecordPublisherClient::connect(base_url))
+            .map_err(|e| {
+                PyValueError::new_err(format!("Unable to connect to Ptolemy server: {}", e))
+            })?;
+
+        Ok(Self { runtime, client })
     }
 
-    pub fn add_trace(&self, trace: Trace) -> PyResult<()> {
+    pub fn send_trace(&mut self, trace: Trace) -> PyResult<()> {
         let records = trace.to_records()?;
 
-        for record in records {
-            println!("{:?}", record)
-        }
+        tracing::debug!("Pushing {} records", records.len());
+
+        let publish_request = PublishRequest { records };
+
+        let _resp = self
+            .runtime
+            .block_on(self.client.publish(publish_request))
+            .map_err(|e| {
+                PyConnectionError::new_err(format!("Failed to push records to server: {}", e.message()))
+            })?
+            .into_inner();
 
         Ok(())
     }

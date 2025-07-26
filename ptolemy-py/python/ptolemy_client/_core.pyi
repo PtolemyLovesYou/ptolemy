@@ -213,3 +213,10 @@ class GraphQLClient:
     def change_password(
         self, user_id: UUID, current_password: str, new_password: str
     ): ...
+
+class RecordExporter:
+    """Record Exporter."""
+    
+    def __init__(self, base_url: str): ...
+
+    def send_trace(self, trace: Any): ...

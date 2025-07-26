@@ -1,11 +1,12 @@
 """Ptolemy Client."""
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Self
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, model_validator
 
 from .tier import Tier
 from .io import IO, Runtime
+from .._core import RecordExporter
 
 Parameters = Dict[str, Any]
 
@@ -16,6 +17,7 @@ class Ptolemy(BaseModel):
     api_key: str
 
     _workspace_id: Optional[UUID] = PrivateAttr(None)
+    _client: Optional[RecordExporter] = PrivateAttr(None)
 
     @property
     def workspace_id(self) -> UUID:
@@ -25,10 +27,17 @@ class Ptolemy(BaseModel):
 
         return self._workspace_id
 
-    def send_trace(self, trace: "Trace"):
+    @model_validator(mode="after")
+    def connect_to_client(self) -> Self:
+        """Connect to client."""
+        self._client = RecordExporter(self.base_url)
+
+        return self
+
+    def add_trace(self, trace: "Trace"):
         """Send trace."""
 
-        print(trace.model_dump_json(by_alias=True))
+        self._client.send_trace(trace)
 
 class Trace(BaseModel):
     """Trace."""
