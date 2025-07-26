@@ -16,7 +16,16 @@ class Ptolemy(BaseModel):
 
     base_url: str
 
+    _workspace_id: Optional[UUID] = PrivateAttr(None)
     _client: Optional[RecordExporter] = PrivateAttr(None)
+
+    @property
+    def workspace_id(self) -> UUID:
+        """Get workspace id."""
+        if self._workspace_id is None:
+            raise ValueError("Workspace ID must be set.")
+
+        return self._workspace_id
 
     @model_validator(mode="after")
     def connect_to_client(self) -> Self:
