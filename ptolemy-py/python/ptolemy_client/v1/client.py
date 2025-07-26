@@ -65,6 +65,25 @@ class Ptolemy(BaseModel):
         """Send trace."""
 
         self._client.send_trace(trace)
+    
+    def trace(
+        self,
+        name: str,
+        parameters: Optional[Parameters],
+        version: Optional[str] = None,
+        environment: Optional[str] = None
+        ) -> "Trace":
+        """Create new trace."""
+        
+        return Trace(
+            client=self,
+            tier=Tier.SYSTEM,
+            parent_id=self.workspace_id,
+            name=name,
+            parameters=parameters,
+            version=version,
+            environment=environment,
+        )
 
 class Trace(BaseModel):
     """Trace."""
