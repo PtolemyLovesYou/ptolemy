@@ -1,6 +1,7 @@
 """Ptolemy Client."""
 
 from typing import Dict, Any, Optional, List, Self
+import logging
 import traceback
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
@@ -8,6 +9,8 @@ from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from .tier import Tier
 from .io import IO, Runtime
 from .._core import RecordExporter
+
+logger = logging.getLogger(name=__name__)
 
 Parameters = Dict[str, Any]
 
@@ -17,6 +20,9 @@ class Ptolemy(BaseModel):
     base_url: str
 
     _workspace_id: Optional[UUID] = PrivateAttr(None)
+    _workspace_name: Optional[str] = PrivateAttr(None)
+    
+    # TODO: we should probably wrap this with retries etc.
     _client: Optional[RecordExporter] = PrivateAttr(None)
 
     @property
@@ -26,11 +32,23 @@ class Ptolemy(BaseModel):
             raise ValueError("Workspace ID must be set.")
 
         return self._workspace_id
+    
+    @property
+    def workspace_name(self) -> str:
+        """Get workspace name."""
+        if self._workspace_name is None:
+            raise ValueError("Workspace name must be set.")
+        
+        return self._workspace_name
 
     @model_validator(mode="after")
     def connect_to_client(self) -> Self:
         """Connect to client."""
         self._client = RecordExporter(self.base_url)
+        self._workspace_id, self._workspace_name = self._client.get_workspace_info()
+
+        # TODO: This is logging twice for some reason? Might be a model validator issue?
+        logging.info("Sending records to workspace %s", self.workspace_name)
 
         return self
 

@@ -1,8 +1,8 @@
-use super::types::{PyJSON, PyUUIDWrapper};
+use super::types::{PyJSON, PyUUIDWrapper, PyId};
 use ptolemy::generated::observer::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
     FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
-    RuntimeRecord, Tier,
+    RuntimeRecord, Tier, GetWorkspaceInfoRequest
 };
 use pyo3::{exceptions::PyConnectionError, exceptions::PyValueError, prelude::*};
 
@@ -257,6 +257,27 @@ impl RecordExporter {
             })?;
 
         Ok(Self { runtime, client })
+    }
+
+    pub fn get_workspace_info(&mut self) -> PyResult<(PyId, String)> {
+        // get workspace information
+        let wk_request = GetWorkspaceInfoRequest {};
+
+        let wk_resp = self.runtime
+            .block_on(self.client.get_workspace_info(wk_request))
+            .map_err(|e| {
+                PyConnectionError::new_err(format!(
+                    "Failed to get workspace information: {}",
+                    e.message()
+                ))
+            })?
+            .into_inner();
+
+        let workspace_id = PyId::String(wk_resp.workspace_id);
+
+        let workspace_name = wk_resp.workspace_name;
+
+        Ok((workspace_id, workspace_name))
     }
 
     pub fn send_trace(&mut self, trace: Trace) -> PyResult<()> {
