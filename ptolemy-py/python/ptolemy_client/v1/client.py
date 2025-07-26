@@ -18,6 +18,7 @@ class Ptolemy(BaseModel):
     """Ptolemy Client."""
 
     base_url: str
+    connect_on_instantiation: bool = Field(default=False, description="Connect to server upon client creation.")
 
     _workspace_id: Optional[UUID] = PrivateAttr(None)
     _workspace_name: Optional[str] = PrivateAttr(None)
@@ -40,15 +41,23 @@ class Ptolemy(BaseModel):
             raise ValueError("Workspace name must be set.")
 
         return self._workspace_name
+    
+    def init(self) -> Self:
+        """Connect to client."""
+
+        self._client = RecordExporter(self.base_url)
+        self._workspace_id, self._workspace_name = self._client.get_workspace_info()
+
+        logging.info("Sending records to workspace %s", self.workspace_name)
+
+        return self
+        
 
     @model_validator(mode="after")
     def connect_to_client(self) -> Self:
         """Connect to client."""
-        self._client = RecordExporter(self.base_url)
-        self._workspace_id, self._workspace_name = self._client.get_workspace_info()
-
-        # TODO: This is logging twice for some reason? Might be a model validator issue?
-        logging.info("Sending records to workspace %s", self.workspace_name)
+        if self.connect_on_instantiation:
+            self.init()
 
         return self
 
