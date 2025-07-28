@@ -251,7 +251,7 @@ impl RecordExporter {
         let client = runtime
             .block_on(RecordPublisherClient::connect(base_url))
             .map_err(|e| {
-                PyValueError::new_err(format!("Unable to connect to Ptolemy server: {}", e))
+                PyConnectionError::new_err(format!("Unable to connect to Ptolemy server: {}", e))
             })?;
 
         Ok(Self { runtime, client })

@@ -64,9 +64,16 @@ class Ptolemy(BaseModel):
 
     def add_trace(self, trace: "Trace"):
         """Send trace."""
+        # TODO: Batching, retries, etc.
 
-        self._client.send_trace(trace)
-    
+        try:
+            self._client.send_trace(trace)
+        # Thrown when invalid trace is sent
+        except AttributeError as e:
+            logger.error("Invalid trace type: %s", trace.__class__.__name__)
+        except ConnectionError as e:
+            logger.error("Error sending trace %s: %s", trace.id_, e)
+
     def trace(
         self,
         name: str,
