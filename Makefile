@@ -21,6 +21,10 @@ generate-gql-schema:
 test-client:
 	uv run -m pytest ptolemy-py/tests
 
+.PHONY: benchmark-client
+benchmark-client:
+	uv run -m pytest ptolemy-py/tests --codspeed
+
 .PHONY: build-client
 build-client:
 	maturin develop --uv -m ptolemy-py/Cargo.toml

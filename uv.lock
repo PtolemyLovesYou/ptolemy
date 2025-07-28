@@ -1783,6 +1783,7 @@ dev = [
     { name = "pylint" },
     { name = "pylint-pydantic" },
     { name = "pytest" },
+    { name = "pytest-codspeed" },
     { name = "python-semantic-release" },
     { name = "pytoml" },
     { name = "tqdm" },
@@ -1800,6 +1801,7 @@ dev = [
     { name = "pylint", specifier = ">=3.3.3" },
     { name = "pylint-pydantic", specifier = ">=0.3.4" },
     { name = "pytest", specifier = ">=8.3.4" },
+    { name = "pytest-codspeed", specifier = ">=4.0.0" },
     { name = "python-semantic-release", specifier = ">=9.20.0" },
     { name = "pytoml", specifier = ">=0.1.21" },
     { name = "tqdm", specifier = ">=4.67.1" },
@@ -1963,6 +1965,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/05/35/30e0d83068951d90a01852cb1cef56e5d8a09d20c7f511634cc2f7e0372a/pytest-8.3.4.tar.gz", hash = "sha256:965370d062bce11e73868e0335abac31b4d3de0e82f4007408d242b4f8610761", size = 1445919, upload-time = "2024-12-01T12:54:25.98Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/92/76a1c94d3afee238333bc0a42b82935dd8f9cf8ce9e336ff87ee14d9e1cf/pytest-8.3.4-py3-none-any.whl", hash = "sha256:50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6", size = 343083, upload-time = "2024-12-01T12:54:19.735Z" },
+]
+
+[[package]]
+name = "pytest-codspeed"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cffi" },
+    { name = "pytest" },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/13/4989d50a3d6de9fb91de23f3b6ffce7c704f23516d308138242325a7c857/pytest_codspeed-4.0.0.tar.gz", hash = "sha256:0e9af08ca93ad897b376771db92693a81aa8990eecc2a778740412e00a6f6eaf", size = 107630, upload-time = "2025-07-10T08:37:53.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/e4/a9591949783cdea60d5f2a215d89c3e17af7b068f2613e38b1d46cb5b8e9/pytest_codspeed-4.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7f3def79d4072867d038a33e7f35bc7fb1a2a75236a624b3a690c5540017cb38", size = 230601, upload-time = "2025-07-10T08:37:46.018Z" },
+    { url = "https://files.pythonhosted.org/packages/16/fe/22caa7cfb6717d21ba14ffd3c0b013b2143a4c32225715f401489f6c32bc/pytest_codspeed-4.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:01d29d4538c2d111c0034f71811bcce577304506d22af4dd65df87fadf3ab495", size = 221230, upload-time = "2025-07-10T08:37:46.997Z" },
+    { url = "https://files.pythonhosted.org/packages/55/e2/0a2e703301f7560a456e343e1b31d01a2ddee96807db5ded65951bfa5b7a/pytest_codspeed-4.0.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:90894c93c9e23f12487b7fdf16c28da8f6275d565056772072beb41a72a54cf9", size = 230591, upload-time = "2025-07-10T08:37:47.961Z" },
+    { url = "https://files.pythonhosted.org/packages/17/fc/5fee0bcdada8ecb5a89088cd84af7e094652fc94bf414a96b49a874fd8be/pytest_codspeed-4.0.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:79e9c40852fa7fc76776db4f1d290eceaeee2d6c5d2dc95a66c7cc690d83889e", size = 221227, upload-time = "2025-07-10T08:37:49.113Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/e4/e3ddab5fd04febf6189d71bfa4ba2d7c05adaa7d692a6d6b1e8ed68de12d/pytest_codspeed-4.0.0-py3-none-any.whl", hash = "sha256:c5debd4b127dc1c507397a8304776f52cabbfa53aad6f51eae329a5489df1e06", size = 107084, upload-time = "2025-07-10T08:37:52.65Z" },
 ]
 
 [[package]]

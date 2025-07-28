@@ -60,3 +60,12 @@ def test_unsuccessful_custom_class():
 
     with pytest.raises(ValueError):
         validate_field_value(my_obj)
+
+@pytest.mark.benchmark
+def test_ultra_deep_list():
+    # generate deep list
+    result = 1
+    for _ in range(512):
+        result = [1, result]
+    
+    validate_field_value(result, max_size=2048)

@@ -15,6 +15,7 @@ dev = [
  "pylint>=3.3.3",
  "pylint-pydantic>=0.3.4",
  "pytest>=8.3.4",
+ "pytest-codspeed>=4.0.0",
  "python-semantic-release>=9.20.0",
  "pytoml>=0.1.21",
  "tqdm>=4.67.1",
