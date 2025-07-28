@@ -4,7 +4,11 @@ use ptolemy::generated::observer::{
     FeedbackRecord, GetWorkspaceInfoRequest, InputRecord, MetadataRecord, OutputRecord,
     PublishRequest, Record, RuntimeRecord, Tier,
 };
-use pyo3::{exceptions::{PyConnectionError, PyValueError}, prelude::*, types::{PyDict, PyList}};
+use pyo3::{
+    exceptions::{PyConnectionError, PyValueError},
+    prelude::*,
+    types::{PyDict, PyList},
+};
 
 #[derive(Debug, FromPyObject)]
 pub struct IO {
@@ -204,27 +208,39 @@ impl Trace {
         }
 
         if let Some(inputs) = &self.inputs {
-            for inp in inputs {
-                records.push(inp.to_record(&tier)?)
-            }
+            records.extend(
+                inputs
+                    .into_iter()
+                    .map(|i| i.to_record(&tier))
+                    .collect::<PyResult<Vec<Record>>>()?,
+            );
         }
 
         if let Some(outputs) = &self.outputs {
-            for out in outputs {
-                records.push(out.to_record(&tier)?)
-            }
+            records.extend(
+                outputs
+                    .into_iter()
+                    .map(|o| o.to_record(&tier))
+                    .collect::<PyResult<Vec<Record>>>()?,
+            );
         }
 
         if let Some(feedback) = &self.feedback {
-            for fe in feedback {
-                records.push(fe.to_record(&tier)?)
-            }
+            records.extend(
+                feedback
+                    .into_iter()
+                    .map(|f| f.to_record(&tier))
+                    .collect::<PyResult<Vec<Record>>>()?,
+            );
         }
 
         if let Some(metadata) = &self.metadata {
-            for m in metadata {
-                records.push(m.to_record(&tier)?)
-            }
+            records.extend(
+                metadata
+                    .into_iter()
+                    .map(|m| m.to_record(&tier))
+                    .collect::<PyResult<Vec<Record>>>()?,
+            );
         }
 
         Ok(records)
@@ -317,16 +333,17 @@ fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult
     }
     .map(|x| _validate_field_value(x, max_size))
     .try_fold(0, |acc: u16, x| {
-            let s = acc.checked_add(x?).ok_or_else(|| {
-                PyValueError::new_err("Too many paths: exceeds u16 limit (65,535)")
-            })?;
+        let s = acc
+            .checked_add(x?)
+            .ok_or_else(|| PyValueError::new_err("Too many paths: exceeds u16 limit (65,535)"))?;
 
-            if s > max_size {
-                return Err(
-                    PyValueError::new_err(format!("Field value size exceeds max limit: {}", max_size))
-                );
-            }
+        if s > max_size {
+            return Err(PyValueError::new_err(format!(
+                "Field value size exceeds max limit: {}",
+                max_size
+            )));
+        }
 
-            Ok(s)
-        })
+        Ok(s)
+    })
 }
