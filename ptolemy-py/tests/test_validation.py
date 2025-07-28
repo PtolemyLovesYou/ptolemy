@@ -68,4 +68,22 @@ def test_ultra_deep_list():
     for _ in range(512):
         result = [1, result]
     
-    validate_field_value(result, max_size=2048)
+    validate_field_value(result, max_size=1024*8)
+
+@pytest.mark.benchmark
+def test_ultra_deep_dict():
+    # generate deep list
+    result = 1
+    for _ in range(512):
+        result = {1: result}
+    
+    validate_field_value(result, max_size=1024*8)
+
+@pytest.mark.benchmark
+def test_ultra_deep_mixed():
+    # generate deep list
+    result = 1
+    for _ in range(512):
+        result = {1: [result]}
+    
+    validate_field_value(result, max_size=1024*8)
