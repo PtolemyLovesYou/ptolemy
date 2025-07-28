@@ -5,7 +5,7 @@ use ptolemy::generated::observer::{
     PublishRequest, Record, RuntimeRecord, Tier,
 };
 use pyo3::{
-    exceptions::{PyConnectionError, PyValueError},
+    exceptions::{PyConnectionError, PyOverflowError, PyValueError},
     prelude::*,
     types::{PyDict, PyList},
 };
@@ -319,15 +319,31 @@ impl RecordExporter {
 
 #[pyfunction]
 #[pyo3(signature = (val, max_size = 1024))]
-pub fn validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult<()> {
-    _validate_field_value(val, max_size).map(|_| ())
+pub fn validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: isize) -> PyResult<()> {
+    max_size
+        // try into u16, throw PyOverflowError if not
+        .try_into()
+        .map_err(|_| PyOverflowError::new_err(format!("Max size must fit in u16 bounds (max. {})", u16::MAX)))
+        // Validate field value
+        .and_then(|ms| _validate_field_value(val, ms))
+        // Return empty
+        .and_then(|_| Ok(()))
 }
 
 fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult<u16> {
+    // Check val has # paths =< max size
     if let Ok(d) = val.downcast::<PyDict>() {
-        d.values().iter()
+        match d.len() {
+            // Empty list should count as a leaf
+            0 => { return Ok(1); },
+            _ => d.values().iter()
+        }
     } else if let Ok(l) = val.downcast::<PyList>() {
-        l.iter()
+        match l.len() {
+            // Empty dict should count as a leaf
+            0 => { return Ok(1); },
+            _ => l.iter()
+        }
     } else {
         return Ok(1);
     }
