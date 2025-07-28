@@ -7,7 +7,7 @@ use ptolemy::generated::observer::{
 use pyo3::{
     exceptions::{PyConnectionError, PyOverflowError, PyValueError},
     prelude::*,
-    types::{PyDict, PyList},
+    types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString},
 };
 
 #[derive(Debug, FromPyObject)]
@@ -332,7 +332,9 @@ pub fn validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: isize) -> PyR
 
 fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult<u16> {
     // Check val has # paths =< max size
-    if let Ok(d) = val.downcast::<PyDict>() {
+    if _is_serializable_primitive(&val) {
+        return Ok(1);
+    } else if let Ok(d) = val.downcast::<PyDict>() {
         match d.len() {
             // Empty list should count as a leaf
             0 => { return Ok(1); },
@@ -345,7 +347,7 @@ fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult
             _ => l.iter()
         }
     } else {
-        return Ok(1);
+        return Err(PyValueError::new_err(format!("Invalid type: {}", val.get_type())));
     }
     .map(|x| _validate_field_value(x, max_size))
     .try_fold(0, |acc: u16, x| {
@@ -362,4 +364,12 @@ fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult
 
         Ok(s)
     })
+}
+
+fn _is_serializable_primitive<'py>(val: &Bound<'py, PyAny>) -> bool {
+    val.is_instance_of::<PyInt>()
+        || val.is_instance_of::<PyFloat>()
+        || val.is_instance_of::<PyString>()
+        || val.is_instance_of::<PyBool>()
+        || val.is_none()
 }

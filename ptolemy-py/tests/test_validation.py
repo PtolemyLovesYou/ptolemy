@@ -48,3 +48,15 @@ def test_max_size():
     
     with pytest.raises(OverflowError):
         validate_field_value([1, 2, [1] * 2**16], max_size=2**16)
+
+def test_successful_primitive():
+    """Should pass: primitives"""
+    for i in [1, 1.2, None, "str", True]:
+        validate_field_value(i)
+
+def test_unsuccessful_custom_class():
+    """Should fail: unserializable class"""
+    my_obj = type("my_type", (), {})()
+
+    with pytest.raises(ValueError):
+        validate_field_value(my_obj)
