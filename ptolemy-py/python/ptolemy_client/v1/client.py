@@ -18,7 +18,9 @@ class Ptolemy(BaseModel):
     """Ptolemy Client."""
 
     base_url: str
-    connect_on_instantiation: bool = Field(default=False, description="Connect to server upon client creation.")
+    connect_on_instantiation: bool = Field(
+        default=False, description="Connect to server upon client creation."
+    )
 
     _workspace_id: Optional[UUID] = PrivateAttr(None)
     _workspace_name: Optional[str] = PrivateAttr(None)
@@ -41,7 +43,7 @@ class Ptolemy(BaseModel):
             raise ValueError("Workspace name must be set.")
 
         return self._workspace_name
-    
+
     def init(self) -> Self:
         """Connect to client."""
 
@@ -52,7 +54,6 @@ class Ptolemy(BaseModel):
         logger.debug("Sending records to workspace %s", self.workspace_name)
 
         return self
-
 
     @model_validator(mode="after")
     def connect_to_client(self) -> Self:
@@ -79,10 +80,10 @@ class Ptolemy(BaseModel):
         name: str,
         parameters: Optional[Parameters],
         version: Optional[str] = None,
-        environment: Optional[str] = None
-        ) -> "Trace":
+        environment: Optional[str] = None,
+    ) -> "Trace":
         """Create new trace."""
-        
+
         return Trace(
             client=self,
             tier=Tier.SYSTEM,
