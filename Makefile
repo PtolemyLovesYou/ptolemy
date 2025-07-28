@@ -19,7 +19,7 @@ generate-gql-schema:
 
 .PHONY: test-client
 test-client:
-	cd ptolemy && cargo test --features python
+	uv run -m pytest ptolemy-py/tests
 
 .PHONY: build-client
 build-client:
