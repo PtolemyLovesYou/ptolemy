@@ -4,7 +4,7 @@ use ptolemy::generated::observer::{
     FeedbackRecord, GetWorkspaceInfoRequest, InputRecord, MetadataRecord, OutputRecord,
     PublishRequest, Record, RuntimeRecord, Tier,
 };
-use pyo3::{exceptions::PyConnectionError, exceptions::PyValueError, prelude::*};
+use pyo3::{exceptions::{PyConnectionError, PyValueError}, prelude::*, types::{PyDict, PyList}};
 
 #[derive(Debug, FromPyObject)]
 pub struct IO {
@@ -299,4 +299,34 @@ impl RecordExporter {
 
         Ok(())
     }
+}
+
+#[pyfunction]
+#[pyo3(signature = (val, max_size = 1024))]
+pub fn validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult<()> {
+    _validate_field_value(val, max_size).map(|_| ())
+}
+
+fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult<u16> {
+    if let Ok(d) = val.downcast::<PyDict>() {
+        d.values().iter()
+    } else if let Ok(l) = val.downcast::<PyList>() {
+        l.iter()
+    } else {
+        return Ok(1);
+    }
+    .map(|x| _validate_field_value(x, max_size))
+    .try_fold(0, |acc: u16, x| {
+            let s = acc.checked_add(x?).ok_or_else(|| {
+                PyValueError::new_err("Too many paths: exceeds u16 limit (65,535)")
+            })?;
+
+            if s > max_size {
+                return Err(
+                    PyValueError::new_err(format!("Field value size exceeds max limit: {}", max_size))
+                );
+            }
+
+            Ok(s)
+        })
 }

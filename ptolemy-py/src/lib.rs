@@ -22,6 +22,7 @@ pub fn _core<'a>(py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {
     m.add_class::<PtolemyClient>()?;
     m.add_class::<PyGraphQLClient>()?;
     m.add_class::<v1::RecordExporter>()?;
+    m.add_function(wrap_pyfunction!(v1::validate_field_value, m)?)?;
     add_models_to_module(py, m)?;
     api_key_permission::add_enum_to_module(py, m)?;
     user_status::add_enum_to_module(py, m)?;
