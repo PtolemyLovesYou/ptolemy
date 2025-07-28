@@ -10,7 +10,7 @@ from .tier import Tier
 from .io import IO, Runtime
 from .._core import RecordExporter
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(__name__)
 
 Parameters = Dict[str, Any]
 
@@ -45,13 +45,14 @@ class Ptolemy(BaseModel):
     def init(self) -> Self:
         """Connect to client."""
 
+        logger.debug("Initializing Ptolemy client")
         self._client = RecordExporter(self.base_url)
         self._workspace_id, self._workspace_name = self._client.get_workspace_info()
 
-        logging.info("Sending records to workspace %s", self.workspace_name)
+        logger.debug("Sending records to workspace %s", self.workspace_name)
 
         return self
-        
+
 
     @model_validator(mode="after")
     def connect_to_client(self) -> Self:
