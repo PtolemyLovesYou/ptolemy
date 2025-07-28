@@ -19,7 +19,7 @@ generate-gql-schema:
 
 .PHONY: test-client
 test-client:
-	uv run -m pytest ptolemy-py/tests
+	uv run -m pytest ptolemy-py/tests --verbose
 
 .PHONY: benchmark-client
 benchmark-client:
