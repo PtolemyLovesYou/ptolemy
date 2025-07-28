@@ -18,7 +18,7 @@ class IO(BaseModel, Generic[T]):
     id_: UUID = Field(default_factory=uuid4, alias="id")
     field_name: str
     field_value: T
-    
+
     @field_validator("field_value")
     @classmethod
     def _validate_field_value(cls, val: T) -> T:

@@ -45,7 +45,7 @@ def test_successful_nested_dict():
 
 def test_max_size():
     """Should fail: max_size must be 2 bit"""
-    
+
     with pytest.raises(OverflowError):
         validate_field_value([1, 2, [1] * 2**16], max_size=2**16)
 
@@ -67,8 +67,8 @@ def test_ultra_deep_list():
     result = 1
     for _ in range(512):
         result = [1, result]
-    
-    validate_field_value(result, max_size=1024*8)
+
+    validate_field_value(result, max_size=1024 * 8)
 
 @pytest.mark.benchmark
 def test_ultra_deep_dict():
@@ -76,8 +76,8 @@ def test_ultra_deep_dict():
     result = 1
     for _ in range(512):
         result = {1: result}
-    
-    validate_field_value(result, max_size=1024*8)
+
+    validate_field_value(result, max_size=1024 * 8)
 
 @pytest.mark.benchmark
 def test_ultra_deep_mixed():
@@ -85,5 +85,5 @@ def test_ultra_deep_mixed():
     result = 1
     for _ in range(512):
         result = {1: [result]}
-    
-    validate_field_value(result, max_size=1024*8)
+
+    validate_field_value(result, max_size=1024 * 8)

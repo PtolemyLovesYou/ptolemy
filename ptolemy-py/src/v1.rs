@@ -323,7 +323,12 @@ pub fn validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: isize) -> PyR
     max_size
         // try into u16, throw PyOverflowError if not
         .try_into()
-        .map_err(|_| PyOverflowError::new_err(format!("Max size must fit in u16 bounds (max. {})", u16::MAX)))
+        .map_err(|_| {
+            PyOverflowError::new_err(format!(
+                "Max size must fit in u16 bounds (max. {})",
+                u16::MAX
+            ))
+        })
         // Validate field value
         .and_then(|ms| _validate_field_value(val, ms))
         // Return empty
@@ -337,17 +342,24 @@ fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult
     } else if let Ok(d) = val.downcast::<PyDict>() {
         match d.len() {
             // Empty list should count as a leaf
-            0 => { return Ok(1); },
-            _ => d.values().iter()
+            0 => {
+                return Ok(1);
+            }
+            _ => d.values().iter(),
         }
     } else if let Ok(l) = val.downcast::<PyList>() {
         match l.len() {
             // Empty dict should count as a leaf
-            0 => { return Ok(1); },
-            _ => l.iter()
+            0 => {
+                return Ok(1);
+            }
+            _ => l.iter(),
         }
     } else {
-        return Err(PyValueError::new_err(format!("Invalid type: {}", val.get_type())));
+        return Err(PyValueError::new_err(format!(
+            "Invalid type: {}",
+            val.get_type()
+        )));
     }
     .map(|x| _validate_field_value(x, max_size))
     .try_fold(0, |acc: u16, x| {
