@@ -1,7 +1,7 @@
+<div align="center">
+
 ![Ptolemy](docs/docs/img/full-logo-lime.svg#gh-dark-mode-only)
 ![Ptolemy](docs/docs/img/full-logo-black.svg#gh-light-mode-only)
-
-<div align="center">
 
 [![codecov](https://codecov.io/gh/PtolemyLovesYou/ptolemy/branch/main/graph/badge.svg)](https://codecov.io/gh/PtolemyLovesYou/ptolemy)
 [![codspeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/PtolemyLovesYou/ptolemy)
