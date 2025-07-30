@@ -3,9 +3,9 @@
 
 <div align="center">
 
-[![PyTest Badge](https://raw.githubusercontent.com/PtolemyLovesYou/ptolemy/main/assets/badge.svg)](https://app.codspeed.io/gh/PtolemyLovesYou/ptolemy)
+[![codecov](https://codecov.io/gh/PtolemyLovesYou/ptolemy/branch/main/graph/badge.svg)](https://codecov.io/gh/PtolemyLovesYou/ptolemy)
 
-[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/PtolemyLovesYou/ptolemy)
+[![codspeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/PtolemyLovesYou/ptolemy)
 
 </div>
 
