@@ -11,6 +11,17 @@ on:
       - "uv.lock"
       - "**/*.py"
       - "**/*.pyi"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "**/pyproject.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "**/*.py"
+      - "**/*.pyi"
 env:
   CARGO_TERM_COLOR: always
 permissions:
