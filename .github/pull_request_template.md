@@ -16,4 +16,3 @@
 - [ ] New and existing tests pass locally
 - [ ] I have updated relevant documentation
 - [ ] I have added metrics/monitoring for new features (if applicable)
-```
