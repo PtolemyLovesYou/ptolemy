@@ -58,6 +58,11 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v3
+        with:
+          run: uv run pytest ptolemy-py/tests --codspeed
+          token: ${{ secrets.CODSPEED_TOKEN }}
 
   check_rust:
     name: Check Rust
