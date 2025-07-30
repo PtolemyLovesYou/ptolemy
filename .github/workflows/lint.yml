@@ -38,6 +38,12 @@ jobs:
       - name: Run black
         run: |
           uv run -m black --pyi --check ptolemy-py/python integration-tests
+      - name: Run tests with coverage
+        run: |
+          uv run -m coverage run -m pytest ptolemy-py
+          uv run -m coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
 
   check_rust:
     name: Check Rust
