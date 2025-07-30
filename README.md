@@ -1,5 +1,15 @@
+<div align="center">
+
 ![Ptolemy](docs/docs/img/full-logo-lime.svg#gh-dark-mode-only)
 ![Ptolemy](docs/docs/img/full-logo-black.svg#gh-light-mode-only)
+
+[![tests](https://github.com/PtolemyLovesYou/ptolemy/actions/workflows/test_lint.yml/badge.svg)](https://github.com/PtolemyLovesYou/ptolemy/actions/workflows/test_lint.yml)
+[![docs](https://github.com/PtolemyLovesYou/ptolemy/actions/workflows/deploy_docs.yml/badge.svg)](https://github.com/PtolemyLovesYou/ptolemy/actions/workflows/deploy_docs.yml)
+
+[![codecov](https://codecov.io/gh/PtolemyLovesYou/ptolemy/branch/main/graph/badge.svg)](https://codecov.io/gh/PtolemyLovesYou/ptolemy)
+[![codspeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/PtolemyLovesYou/ptolemy)
+
+</div>
 
 Universal monitoring observability for AI systems, without reinventing the wheel for each new methodology.
 

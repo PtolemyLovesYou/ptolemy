@@ -1,4 +1,4 @@
-name: Lint Check
+name: Test/Lint/Benchmark
 on:
   pull_request:
     branches: [main]
@@ -11,6 +11,18 @@ on:
       - "uv.lock"
       - "**/*.py"
       - "**/*.pyi"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "**/pyproject.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "**/*.py"
+      - "**/*.pyi"
+  workflow_dispatch:
 env:
   CARGO_TERM_COLOR: always
 permissions:
@@ -19,7 +31,7 @@ jobs:
   check_python:
     name: Check Python
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ github.event.pull_request.draft != true }}
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
@@ -38,11 +50,24 @@ jobs:
       - name: Run black
         run: |
           uv run -m black --pyi --check ptolemy-py/python integration-tests
+      - name: Run tests with coverage
+        run: |
+          uv run -m coverage run -m pytest ptolemy-py
+          uv run -m coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v3
+        with:
+          run: uv run pytest ptolemy-py/tests --codspeed
+          token: ${{ secrets.CODSPEED_TOKEN }}
 
   check_rust:
     name: Check Rust
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ github.event.pull_request.draft != true }}
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies

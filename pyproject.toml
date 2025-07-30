@@ -9,6 +9,7 @@ dependencies = [ "pydantic>=2.10.4",]
 [dependency-groups]
 dev = [
  "black>=24.10.0",
+ "coverage>=7.10.1",
  "duckdb>=1.1.3",
  "jupyter>=1.1.1",
  "maturin==1.8.2",
