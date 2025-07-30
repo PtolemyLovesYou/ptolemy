@@ -19,7 +19,7 @@ jobs:
   check_python:
     name: Check Python
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ github.event.pull_request.draft != true }}
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
@@ -42,7 +42,7 @@ jobs:
   check_rust:
     name: Check Rust
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ github.event.pull_request.draft != true }}
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
