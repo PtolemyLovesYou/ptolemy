@@ -1,6 +1,11 @@
 name: Lint Check
 on:
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
     branches: [main]
     paths:
       - "**/*.rs"
@@ -19,7 +24,6 @@ jobs:
   check_python:
     name: Check Python
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
