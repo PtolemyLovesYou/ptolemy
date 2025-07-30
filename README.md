@@ -1,11 +1,13 @@
 ![Ptolemy](docs/docs/img/full-logo-lime.svg#gh-dark-mode-only)
 ![Ptolemy](docs/docs/img/full-logo-black.svg#gh-light-mode-only)
 
-<p align="center">
-  <a href="https://codecov.io/gh/PtolemyLovesYou/ptolemy">
-    <img src="https://codecov.io/gh/PtolemyLovesYou/ptolemy/branch/main/graph/badge.svg" />
-  </a>
-</p>
+<div align="center">
+
+[![PyTest Badge](https://raw.githubusercontent.com/PtolemyLovesYou/ptolemy/main/assets/badge.svg)](https://app.codspeed.io/gh/PtolemyLovesYou/ptolemy)
+
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/PtolemyLovesYou/ptolemy)
+
+</div>
 
 Universal monitoring observability for AI systems, without reinventing the wheel for each new methodology.
 
