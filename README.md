@@ -5,7 +5,7 @@
 
 [![codecov](https://codecov.io/gh/PtolemyLovesYou/ptolemy/branch/main/graph/badge.svg)](https://codecov.io/gh/PtolemyLovesYou/ptolemy)
 [![codspeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/PtolemyLovesYou/ptolemy)
-[![tests](https://github.com/PtolemyLovesYou/ptolemy/.github/workflows/test_lint.yml/badge.svg)](https://github.com/PtolemyLovesYou/ptolemy/.github/workflows/test_lint.yml)
+[![tests](https://github.com/PtolemyLovesYou/ptolemy/actions/workflows/test_lint.yml/badge.svg)](https://github.com/PtolemyLovesYou/ptolemy/actions/workflows/test_lint.yml)
 
 </div>
 
