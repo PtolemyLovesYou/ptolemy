@@ -337,7 +337,7 @@ pub fn validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: isize) -> PyR
 
 fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult<u16> {
     // Check val has # paths =< max size
-    if _is_serializable_primitive(&val) {
+    if is_serializable_primitive(&val) {
         return Ok(1);
     } else if let Ok(d) = val.downcast::<PyDict>() {
         match d.len() {
@@ -378,7 +378,8 @@ fn _validate_field_value<'py>(val: Bound<'py, PyAny>, max_size: u16) -> PyResult
     })
 }
 
-fn _is_serializable_primitive<'py>(val: &Bound<'py, PyAny>) -> bool {
+/// Checks whether pyval is int, float, string, bool, or None
+fn is_serializable_primitive<'py>(val: &Bound<'py, PyAny>) -> bool {
     val.is_instance_of::<PyInt>()
         || val.is_instance_of::<PyFloat>()
         || val.is_instance_of::<PyString>()
