@@ -1,4 +1,4 @@
-name: Test + Lint
+name: Test/Lint/Benchmark
 on:
   pull_request:
     branches: [main]
