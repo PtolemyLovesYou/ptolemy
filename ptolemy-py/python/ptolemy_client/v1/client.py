@@ -1,10 +1,10 @@
 """Ptolemy Client."""
 
-from typing import Dict, Any, Optional, List, Self
+from typing import Dict, Any, Optional, List
 import logging
 import traceback
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, Field, InstanceOf
 
 from .tier import Tier
 from .io import IO, Runtime
@@ -18,57 +18,18 @@ class Ptolemy(BaseModel):
     """Ptolemy Client."""
 
     base_url: str
-    connect_on_instantiation: bool = Field(
-        default=False, description="Connect to server upon client creation."
-    )
 
-    _workspace_id: Optional[UUID] = PrivateAttr(None)
-    _workspace_name: Optional[str] = PrivateAttr(None)
+    workspace_id: UUID
+    workspace_name: str
 
-    # TODO: we should probably wrap this with retries etc.
-    _client: Optional[RecordExporter] = PrivateAttr(None)
-
-    @property
-    def workspace_id(self) -> UUID:
-        """Get workspace id."""
-        if self._workspace_id is None:
-            raise ValueError("Workspace ID must be set.")
-
-        return self._workspace_id
-
-    @property
-    def workspace_name(self) -> str:
-        """Get workspace name."""
-        if self._workspace_name is None:
-            raise ValueError("Workspace name must be set.")
-
-        return self._workspace_name
-
-    def init(self) -> Self:
-        """Connect to client."""
-
-        logger.debug("Initializing Ptolemy client")
-        self._client = RecordExporter(self.base_url)
-        self._workspace_id, self._workspace_name = self._client.get_workspace_info()
-
-        logger.debug("Sending records to workspace %s", self.workspace_name)
-
-        return self
-
-    @model_validator(mode="after")
-    def connect_to_client(self) -> Self:
-        """Connect to client."""
-        if self.connect_on_instantiation:
-            self.init()
-
-        return self
+    client: InstanceOf[RecordExporter]
 
     def add_trace(self, trace: "Trace"):
         """Send trace."""
         # TODO: Batching, retries, etc.
 
         try:
-            self._client.send_trace(trace)
+            self.client.send_trace(trace)
         # Thrown when invalid trace is sent
         except AttributeError as e:
             logger.error("Invalid trace type: %s", trace.__class__.__name__)
@@ -93,6 +54,20 @@ class Ptolemy(BaseModel):
             version=version,
             environment=environment,
         )
+
+def connect(base_url: str) -> Ptolemy:
+    """
+    Connect to Ptolemy client.
+    """
+    client = RecordExporter(base_url)
+    workspace_id, workspace_name = client.get_workspace_info()
+
+    return Ptolemy(
+        base_url=base_url,
+        client=RecordExporter(base_url),
+        workspace_id=workspace_id,
+        workspace_name=workspace_name,
+    )
 
 class Trace(BaseModel):
     """Trace."""
