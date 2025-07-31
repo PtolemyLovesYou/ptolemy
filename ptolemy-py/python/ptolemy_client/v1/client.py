@@ -1,6 +1,7 @@
 """Ptolemy Client."""
 
 from typing import Dict, Any, Optional, List
+import time
 import logging
 import traceback
 from uuid import UUID, uuid4
@@ -85,6 +86,8 @@ class Trace(BaseModel):
     version: Optional[str] = Field(default=None)
     environment: Optional[str] = Field(default=None)
 
+    start_time: Optional[float] = None
+
     runtime_: Optional[Runtime] = Field(default=None)
 
     inputs_: Optional[List[IO[Any]]] = Field(default=None)
@@ -95,30 +98,41 @@ class Trace(BaseModel):
     def start(self):
         """Start event trace."""
 
+        if self.start_time is not None:
+            raise ValueError("Runtime already started.")
+
+        self.start_time = time.time()
+
+    def end(self, exc_type, exc_value, tb):
+        """End runtime log."""
+
+        if self.start_time is None:
+            raise ValueError("Runtime not started yet.")
+
         if self.runtime_ is not None:
-            raise ValueError("Runtime already initiated.")
+            raise ValueError("Runtime already ended.")
+        
+        end_time = time.time()
+        error_type = None
+        error_content = None
+        
+        if exc_type is not None:
+            format_result = "".join(traceback.format_exception(exc_type, exc_value, tb))
+            error_type = exc_type.__name__
+            error_content = format_result
 
-        runtime = Runtime(parent_id=self.id_)
-        runtime.start()
-
-        self.runtime_ = runtime
-
-    def end(self):
-        if self.runtime_ is None:
-            raise ValueError("Runtime not yet initiated.")
-
-        self.runtime_.end()
+        self.runtime_ = self.runtime(
+            self.start_time,
+            end_time,
+            error_type=error_type,
+            error_content=error_content,
+        )
 
     def __enter__(self):
         self.start()
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.end()
-
-        if exc_type is not None:
-            format_result = "".join(traceback.format_exception(exc_type, exc_value, tb))
-            self.runtime_.error_type = exc_type.__name__
-            self.runtime_.error_content = format_result
+        self.end(exc_type, exc_value, tb)
 
         self.client.add_trace(self)
 
