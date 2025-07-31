@@ -144,27 +144,6 @@ class Trace(BaseModel):
             environment=environment or self.environment,
         )
 
-    @classmethod
-    def new(
-        cls,
-        client: Ptolemy,
-        name: str,
-        parameters: Optional[Parameters] = None,
-        version: Optional[str] = None,
-        environment: Optional[str] = None,
-    ) -> "Trace":
-        """Create new trace."""
-
-        return cls(
-            client=client,
-            tier=Tier.SYSTEM,
-            parent_id=client.workspace_id,
-            name=name,
-            parameters=parameters,
-            version=version,
-            environment=environment,
-        )
-
     def _set_singleton_field(
         self, attr: str, attr_name: str, cls: type[BaseModel], **kwargs
     ):
