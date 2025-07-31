@@ -70,6 +70,13 @@ def connect(base_url: str) -> Ptolemy:
         workspace_name=workspace_name,
     )
 
+def _format_err(exc_type, exc_value, tb) -> tuple[Optional[str], Optional[str]]:
+    if exc_type is not None:
+        format_result = "".join(traceback.format_exception(exc_type, exc_value, tb))
+        return exc_type.__name__, format_result
+
+    return None, None
+    
 class Trace(BaseModel):
     """Trace."""
 
@@ -111,19 +118,14 @@ class Trace(BaseModel):
 
         if self.runtime_ is not None:
             raise ValueError("Runtime already ended.")
-        
-        end_time = time.time()
-        error_type = None
-        error_content = None
-        
-        if exc_type is not None:
-            format_result = "".join(traceback.format_exception(exc_type, exc_value, tb))
-            error_type = exc_type.__name__
-            error_content = format_result
 
-        self.runtime_ = self.runtime(
-            self.start_time,
-            end_time,
+        end_time = time.time()
+        error_type, error_content = _format_err(exc_type, exc_value, tb)
+
+        self.runtime_ = Runtime(
+            parent_id=self.id_,
+            start_time=self.start_time,
+            end_time=end_time,
             error_type=error_type,
             error_content=error_content,
         )
@@ -172,24 +174,6 @@ class Trace(BaseModel):
                 for k, v in kwargs.items()
                 if v is not None
             ],
-        )
-
-    def runtime(
-        self,
-        start_time: float,
-        end_time: float,
-        error_type: Optional[str] = None,
-        error_content: Optional[str] = None,
-    ):
-        if self.runtime_ is not None:
-            raise ValueError("Runtime already exists.")
-
-        self.runtime_ = Runtime(
-            parent_id=self.id_,
-            start_time=start_time,
-            end_time=end_time,
-            error_type=error_type,
-            error_content=error_content,
         )
 
     def inputs(self, **kwargs: Any):
