@@ -1,6 +1,7 @@
 """Ptolemy Client."""
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Type
+from types import TracebackType
 import time
 import logging
 import traceback
@@ -70,7 +71,11 @@ def connect(base_url: str) -> Ptolemy:
         workspace_name=workspace_name,
     )
 
-def _format_err(exc_type, exc_value, tb) -> tuple[Optional[str], Optional[str]]:
+def _format_err(
+    exc_type: Optional[Type[BaseException]],
+    exc_value: Optional[Exception],
+    tb: Optional[TracebackType],
+) -> tuple[Optional[str], Optional[str]]:
     if exc_type is not None:
         format_result = "".join(traceback.format_exception(exc_type, exc_value, tb))
         return exc_type.__name__, format_result
@@ -110,7 +115,12 @@ class Trace(BaseModel):
 
         self.start_time = time.time()
 
-    def end(self, exc_type, exc_value, tb):
+    def end(
+        self,
+        exc_type: Optional[BaseException],
+        exc_value: Optional[Exception],
+        tb: Optional[TracebackType],
+    ):
         """End runtime log."""
 
         if self.start_time is None:
