@@ -65,7 +65,7 @@ impl TryFrom<observer::Record> for Record {
             }),
             RecordData::Runtime(r) => Self::Runtime(Runtime {
                 tier,
-                event_id: parent_id,
+                parent_id,
                 id,
                 start_time: datetime_from_unix_timestamp(r.start_time)?,
                 end_time: datetime_from_unix_timestamp(r.end_time)?,
@@ -83,7 +83,7 @@ impl TryFrom<observer::Record> for Record {
             }
             RecordData::Metadata(m) => Self::Metadata(Metadata {
                 tier,
-                event_id: parent_id,
+                parent_id,
                 id,
                 field_name: m.field_name,
                 field_value: m.field_value,
@@ -108,7 +108,7 @@ pub struct Event {
 #[derive(Debug, Clone, Serialize)]
 pub struct Runtime {
     pub tier: Tier,
-    pub event_id: Id,
+    pub parent_id: Id,
     pub id: Id,
     #[serde(with = "ts_microseconds")]
     pub start_time: NaiveDateTime,
@@ -121,7 +121,7 @@ pub struct Runtime {
 #[derive(Debug, Clone, Serialize)]
 pub struct IOF {
     pub tier: Tier,
-    pub event_id: Id,
+    pub parent_id: Id,
     pub id: Id,
     pub field_name: String,
     pub field_value_type: FieldValueType,
@@ -135,7 +135,7 @@ pub struct IOF {
 impl IOF {
     fn new(
         tier: Tier,
-        event_id: Id,
+        parent_id: Id,
         id: Id,
         field_name: String,
         field_value: Option<prost_types::Value>,
@@ -187,7 +187,7 @@ impl IOF {
 
         Ok(Self {
             tier,
-            event_id,
+            parent_id,
             id,
             field_name,
             field_value_type,
@@ -203,7 +203,7 @@ impl IOF {
 #[derive(Debug, Clone, Serialize)]
 pub struct Metadata {
     pub tier: Tier,
-    pub event_id: Id,
+    pub parent_id: Id,
     pub id: Id,
     pub field_name: String,
     pub field_value: String,

@@ -30,7 +30,17 @@ service Observer {
 
 service RecordPublisher {
     rpc Publish(PublishRequest) returns (PublishResponse);
+    rpc GetWorkspaceInfo(GetWorkspaceInfoRequest) returns (GetWorkspaceInfoResponse);
 }
+
+message GetWorkspaceInfoRequest {
+
+};
+
+message GetWorkspaceInfoResponse {
+    string workspace_id = 1;
+    string workspace_name = 2;
+};
 
 message PublishRequest {
     repeated Record records = 1;
