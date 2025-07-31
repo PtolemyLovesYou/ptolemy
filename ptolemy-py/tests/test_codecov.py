@@ -11,4 +11,4 @@ def test_codecov():
 
 @pytest.mark.benchmark
 def test_codspeed():
-    assert 2 ** 2 == 4
+    assert 2**2 == 4

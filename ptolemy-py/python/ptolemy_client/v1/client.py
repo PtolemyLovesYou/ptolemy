@@ -76,7 +76,7 @@ def _format_err(exc_type, exc_value, tb) -> tuple[Optional[str], Optional[str]]:
         return exc_type.__name__, format_result
 
     return None, None
-    
+
 class Trace(BaseModel):
     """Trace."""
 
