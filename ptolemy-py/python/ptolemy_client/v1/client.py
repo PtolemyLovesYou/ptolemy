@@ -66,7 +66,7 @@ def connect(base_url: str) -> Ptolemy:
 
     return Ptolemy(
         base_url=base_url,
-        client=RecordExporter(base_url),
+        client=client,
         workspace_id=workspace_id,
         workspace_name=workspace_name,
     )
