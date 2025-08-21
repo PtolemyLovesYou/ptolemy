@@ -1,6 +1,6 @@
 .PHONY: format
 format:
-	black --pyi ptolemy-py/python integration-tests \
+	uv run -m black --pyi ptolemy-py/python ptolemy-py/tests ptolemy-py/examples integration-tests \
 	&& cargo fmt
 
 .PHONY: diesel
@@ -19,7 +19,11 @@ generate-gql-schema:
 
 .PHONY: test-client
 test-client:
-	cd ptolemy && cargo test --features python
+	uv run -m pytest ptolemy-py/tests --verbose
+
+.PHONY: benchmark-client
+benchmark-client:
+	uv run -m pytest ptolemy-py/tests --codspeed
 
 .PHONY: build-client
 build-client:

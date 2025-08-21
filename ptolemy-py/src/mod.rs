@@ -6,6 +6,7 @@ pub mod enums;
 pub mod graphql;
 pub mod models;
 pub mod types;
+pub mod v1;
 
 use crate::{
     client::{client::PtolemyClient, server_handler::QueryEngine},
@@ -58,6 +59,7 @@ pub fn query(
 pub fn _core<'a>(py: Python<'a>, m: &Bound<'a, PyModule>) -> PyResult<()> {
     m.add_class::<PtolemyClient>()?;
     m.add_class::<PyGraphQLClient>()?;
+    m.add_class::<v1::RecordExporter>()?;
     add_models_to_module(py, m)?;
     m.add_function(wrap_pyfunction!(query, m)?)?;
     api_key_permission::add_enum_to_module(py, m)?;
