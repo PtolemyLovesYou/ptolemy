@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [manifest]
@@ -533,7 +533,7 @@ wheels = [
 
 [[package]]
 name = "docs"
-version = "0.1.0a46+08dc03f"
+version = "0.1.0a47+8a25c69"
 source = { virtual = "docs" }
 dependencies = [
     { name = "mkdocs" },
@@ -752,7 +752,7 @@ wheels = [
 
 [[package]]
 name = "integration-tests"
-version = "0.1.0a46+08dc03f"
+version = "0.1.0a47+8a25c69"
 source = { virtual = "integration-tests" }
 dependencies = [
     { name = "ptolemy-client" },
@@ -1799,7 +1799,7 @@ wheels = [
 
 [[package]]
 name = "ptolemy-client"
-version = "0.1.0a46+08dc03f"
+version = "0.1.0a47+8a25c69"
 source = { directory = "ptolemy-py" }
 dependencies = [
     { name = "aiohttp" },
@@ -1832,7 +1832,7 @@ dev = [
 
 [[package]]
 name = "ptolemy-workspace"
-version = "0.1.0a46+08dc03f"
+version = "0.1.0a47+8a25c69"
 source = { virtual = "." }
 dependencies = [
     { name = "pydantic" },
