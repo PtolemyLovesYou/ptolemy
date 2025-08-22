@@ -3,10 +3,6 @@ name = "api"
 path = "src/main.rs"
 
 [[bin]]
-name = "v1"
-path = "src/bin/v1.rs"
-
-[[bin]]
 name = "generate-gql-schema"
 path = "src/bin/generate_gql_schema.rs"
 
@@ -20,10 +16,6 @@ http = "1.2.0"
 r2d2 = "0.8.10"
 tokio-stream = "0.1.17"
 tonic-web = "0.12.3"
-
-[dependencies.async-graphql]
-version = "7.0.15"
-features = [ "uuid", "chrono",]
 
 [dependencies.axum]
 workspace = true

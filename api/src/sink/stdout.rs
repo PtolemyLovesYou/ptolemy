@@ -2,7 +2,7 @@ use ptolemy::generated::observer::Record;
 use tokio::{sync::mpsc, task::JoinHandle};
 
 use super::{
-    super::{super::error::ApiError, models, state::PtolemyConfig},
+    super::{error::ApiError, models, state::PtolemyConfig},
     sink_message::SinkMessage,
 };
 
