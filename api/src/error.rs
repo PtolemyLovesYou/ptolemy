@@ -2,14 +2,8 @@ use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum ServerError {
-    ServerError,
-    GRPCError,
-    ConfigError,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ApiError {
+    ConfigError,
     DatabaseError,
     NotFoundError,
     InsertError,
@@ -33,6 +27,7 @@ impl std::fmt::Display for ApiError {
 impl ApiError {
     pub fn category(&self) -> &str {
         match self {
+            ApiError::ConfigError => "config_error",
             ApiError::DatabaseError => "database_error",
             ApiError::NotFoundError => "not_found",
             ApiError::InsertError => "insert_error",
@@ -50,6 +45,7 @@ impl ApiError {
 
     pub fn http_status_code(&self) -> StatusCode {
         match self {
+            ApiError::ConfigError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::DatabaseError => StatusCode::CONFLICT,
             ApiError::NotFoundError => StatusCode::NOT_FOUND,
             ApiError::BadQuery => StatusCode::BAD_REQUEST,

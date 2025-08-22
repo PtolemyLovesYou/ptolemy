@@ -9,6 +9,7 @@ pub mod shutdown;
 pub mod sink;
 pub mod state;
 pub mod tracing;
+pub mod db;
 
 pub mod consts {
     pub const SERVICE_API_KEY_PREFIX: &str = "pt-sk";

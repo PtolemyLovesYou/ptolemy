@@ -19,7 +19,7 @@ async fn main() -> Result<(), ApiError> {
     let (sink_tx, sink_handle) = init_sink(&config).await?;
 
     // create state
-    let state = std::sync::Arc::new(AppState::new(config, sink_tx).await);
+    let state = std::sync::Arc::new(AppState::new(config, sink_tx).await?);
 
     let service = get_router(state.clone())
         .await
