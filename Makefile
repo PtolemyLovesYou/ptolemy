@@ -1,6 +1,6 @@
 .PHONY: format
 format:
-	uv run -m black --pyi ptolemy-py/python ptolemy-py/tests ptolemy-py/examples integration-tests \
+	uv run -m black --pyi ptolemy-py/python ptolemy-py/tests ptolemy-py/examples \
 	&& cargo fmt
 
 .PHONY: diesel
@@ -37,7 +37,3 @@ run-api:
 .PHONY: run-ui
 run-ui:
 	VITE_PTOLEMY_API=http://localhost:8000 VITE_PTOLEMY_DOCS=http://localhost:8080 cd ptolemy-ui && npm install --force && npm run dev
-
-.PHONY: run-integration_tests
-run-integration-tests:
-	uv run --directory integration-tests -m pytest integration_tests
