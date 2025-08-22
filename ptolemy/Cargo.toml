@@ -13,9 +13,6 @@ tonic-build = "0.12.3"
 openssl = [ "dep:openssl",]
 vendored = [ "openssl",]
 
-[build-dependencies.heck]
-workspace = true
-
 [dependencies.openssl]
 version = "0.10.72"
 features = [ "vendored",]
