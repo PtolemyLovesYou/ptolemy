@@ -9,7 +9,6 @@ edition = "2021"
 
 [dependencies]
 http = "1.2.0"
-r2d2 = "0.8.10"
 tokio-stream = "0.1.17"
 tonic-web = "0.12.3"
 
@@ -26,9 +25,6 @@ workspace = true
 workspace = true
 
 [dependencies.diesel-async]
-workspace = true
-
-[dependencies.hyper]
 workspace = true
 
 [dependencies.serde]
@@ -84,15 +80,6 @@ workspace = true
 workspace = true
 
 [dependencies.jsonwebtoken]
-workspace = true
-
-[dependencies.ipnet]
-workspace = true
-
-[dependencies.heck]
-workspace = true
-
-[dependencies.pin-project-lite]
 workspace = true
 
 [dependencies.diesel_migrations]
