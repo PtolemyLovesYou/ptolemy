@@ -8,15 +8,6 @@ diesel:
 	docker compose exec api \
 		/bin/bash -c "source /app/configure.sh && /bin/bash"
 
-.PHONY: cli
-cli:
-	uv run -m ptolemy_client
-
-.PHONY: generate-gql-schema
-generate-gql-schema:
-	OUTPUT_DIR=$(PWD)/api/graphql/schema.gql cargo run -p api --bin generate-gql-schema \
-	&& OUTPUT_DIR=$(PWD)/ptolemy/graphql/schema.gql cargo run -p api --bin generate-gql-schema
-
 .PHONY: test-client
 test-client:
 	uv run -m pytest ptolemy-py/tests --verbose

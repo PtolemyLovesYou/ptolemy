@@ -13,4 +13,4 @@ dev = [ "black>=24.10.0", "coverage>=7.10.1", "duckdb>=1.1.3", "jupyter>=1.1.1",
 include = "\\.pyi?$"
 
 [tool.uv.workspace]
-members = [ "docs", "integration-tests", "ptolemy-client",]
+members = [ "docs", "ptolemy-client",]

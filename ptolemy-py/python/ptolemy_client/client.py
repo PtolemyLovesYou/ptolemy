@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, InstanceOf
 
 from .tier import Tier
 from .io import IO, Runtime
-from .._core import RecordExporter
+from ._core import RecordExporter
 
 logger = logging.getLogger(__name__)
 

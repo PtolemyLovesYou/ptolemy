@@ -4,7 +4,7 @@ from typing import TypeVar, Generic, Optional
 import time
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
-from .._core import validate_field_value
+from ._core import validate_field_value
 
 T = TypeVar("T")
 
