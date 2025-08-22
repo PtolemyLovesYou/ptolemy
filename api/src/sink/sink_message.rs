@@ -1,4 +1,4 @@
-use ptolemy::generated::observer::Record;
+use ptolemy::generated::record_publisher::Record;
 
 #[derive(Debug)]
 pub enum SinkMessage {

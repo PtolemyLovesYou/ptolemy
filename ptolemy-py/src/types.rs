@@ -1,4 +1,4 @@
-// use crate::generated::observer;
+// use crate::generated::record_publisher;
 use ptolemy::models::{Id, JSON};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;

@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime};
 
 use super::enums;
 use crate::error::ParseError;
-use crate::generated::observer::{
+use crate::generated::record_publisher::{
     record::RecordData, EventRecord, FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     Record, RuntimeRecord,
 };

@@ -1,5 +1,5 @@
 use super::state::PtolemyState;
-use ptolemy::generated::observer;
+use ptolemy::generated::record_publisher;
 use tonic::{Request, Response, Status};
 
 #[derive(Debug)]
@@ -14,13 +14,13 @@ impl RecordPublisherService {
 }
 
 #[tonic::async_trait]
-impl observer::record_publisher_server::RecordPublisher for RecordPublisherService {
+impl record_publisher::record_publisher_server::RecordPublisher for RecordPublisherService {
     async fn get_workspace_info(
         &self,
-        _request: Request<observer::GetWorkspaceInfoRequest>,
-    ) -> Result<Response<observer::GetWorkspaceInfoResponse>, Status> {
+        _request: Request<record_publisher::GetWorkspaceInfoRequest>,
+    ) -> Result<Response<record_publisher::GetWorkspaceInfoResponse>, Status> {
         // TODO: Get workspace information
-        Ok(Response::new(observer::GetWorkspaceInfoResponse {
+        Ok(Response::new(record_publisher::GetWorkspaceInfoResponse {
             workspace_id: uuid::Uuid::new_v4().to_string(),
             workspace_name: "TODO".to_string(),
         }))
@@ -28,8 +28,8 @@ impl observer::record_publisher_server::RecordPublisher for RecordPublisherServi
 
     async fn publish(
         &self,
-        request: Request<observer::PublishRequest>,
-    ) -> Result<Response<observer::PublishResponse>, Status> {
+        request: Request<record_publisher::PublishRequest>,
+    ) -> Result<Response<record_publisher::PublishResponse>, Status> {
         let records = request.into_inner().records;
 
         let sender = self.state.sender();
@@ -47,7 +47,7 @@ impl observer::record_publisher_server::RecordPublisher for RecordPublisherServi
 
         tokio::spawn(publish_job);
 
-        let reply = observer::PublishResponse {
+        let reply = record_publisher::PublishResponse {
             successful: true,
             jobs: Vec::new(),
             message: Some("Success".to_string()),

@@ -1,4 +1,4 @@
-use ptolemy::generated::observer::{
+use ptolemy::generated::record_publisher::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
     PublishRequest, Record, Tier,
 };

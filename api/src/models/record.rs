@@ -1,7 +1,7 @@
 use super::super::error::ApiError;
 use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use ptolemy::{
-    generated::observer::{self, record::RecordData},
+    generated::record_publisher::{self, record::RecordData},
     models::{FieldValueType, Id, Tier, JSON},
 };
 use serde::Serialize;
@@ -30,10 +30,10 @@ impl Record {
     }
 }
 
-impl TryFrom<observer::Record> for Record {
+impl TryFrom<record_publisher::Record> for Record {
     type Error = ApiError;
 
-    fn try_from(value: observer::Record) -> Result<Self, Self::Error> {
+    fn try_from(value: record_publisher::Record) -> Result<Self, Self::Error> {
         let tier: Tier = value
             .tier()
             .try_into()
