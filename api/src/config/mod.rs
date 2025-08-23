@@ -19,14 +19,12 @@ pub mod serialization_method {
 }
 
 const DEFAULT_CONFIG: &'static str = "
-port: 3000
 buffer_size: 1024
 sink_timeout_secs: 10
 ";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PtolemyConfig {
-    pub port: usize,
     pub buffer_size: usize,
     pub sink_timeout_secs: usize,
     pub stdout: Option<StdoutConfig>,
