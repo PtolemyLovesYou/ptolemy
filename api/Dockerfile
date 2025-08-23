@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # Runtime stage
 FROM debian:bookworm-slim
 
-ENV API_PORT=8000 \
+ENV API_PORT=7865 \
     PTOLEMY_ENV=PROD \
     PTOLEMY_USER=admin \
     PTOLEMY_PASS=admin

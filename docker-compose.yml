@@ -16,7 +16,7 @@ services:
       # JWT secret goes here
       JWT_SECRET: pC15dRLduel2TYONYEfyjHZ289j7dIXv1RXL09T/t0o=
     ports:
-      - "8000:8000"
+      - "7865:7865"
       - "50051:50051"
     volumes:
       - ./api:/app
@@ -35,7 +35,7 @@ services:
     networks:
       - ptolemy
     environment:
-      VITE_PTOLEMY_API: http://api:8000
+      VITE_PTOLEMY_API: http://api:7865
       VITE_PTOLEMY_DOCS: http://host.docker.internal:8080
     depends_on:
       - api

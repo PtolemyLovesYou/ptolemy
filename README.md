@@ -64,7 +64,7 @@ PTOLEMY_ENV=DEV
 JWT_SECRET=your-base64-encoded-secret-here
 
 # Optional configurations
-API_PORT=8000
+API_PORT=7865
 ```
 
 For convenience, these variables are included in .cargo/config.toml as default environment variables.

@@ -36,4 +36,4 @@ run-api:
 
 .PHONY: run-ui
 run-ui:
-	VITE_PTOLEMY_API=http://localhost:8000 VITE_PTOLEMY_DOCS=http://localhost:8080 cd ptolemy-ui && npm install --force && npm run dev
+	VITE_PTOLEMY_API=http://localhost:7865 VITE_PTOLEMY_DOCS=http://localhost:8080 cd ptolemy-ui && npm install --force && npm run dev
