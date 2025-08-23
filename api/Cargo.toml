@@ -4,16 +4,19 @@ path = "src/main.rs"
 
 [package]
 name = "api"
-version = "0.1.0-alpha.49+e8c4d26"
+version = "0.1.0-alpha.50+6288a02"
 edition = "2021"
 
 [dependencies]
 async-trait = "0.1.89"
-figment = { version = "0.10.19", features = ["yaml", "env"] }
 futures = "0.3.31"
 http = "1.2.0"
 tokio-stream = "0.1.17"
 tonic-web = "0.12.3"
+
+[dependencies.figment]
+version = "0.10.19"
+features = [ "yaml", "env",]
 
 [dependencies.axum]
 workspace = true
