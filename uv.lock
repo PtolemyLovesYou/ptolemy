@@ -464,7 +464,7 @@ wheels = [
 
 [[package]]
 name = "docs"
-version = "0.1.0a48+629addd"
+version = "0.1.0a49+e8c4d26"
 source = { virtual = "docs" }
 dependencies = [
     { name = "mkdocs" },
@@ -1592,7 +1592,7 @@ wheels = [
 
 [[package]]
 name = "ptolemy-workspace"
-version = "0.1.0a48+629addd"
+version = "0.1.0a49+e8c4d26"
 source = { virtual = "." }
 dependencies = [
     { name = "pydantic" },
