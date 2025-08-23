@@ -1,7 +1,7 @@
 use ptolemy::generated::record_publisher::Record;
 
 use super::{
-    super::{error::ApiError, models, config::PtolemyConfig},
+    super::{config::PtolemyConfig, error::ApiError, models},
     sink::Sink,
 };
 

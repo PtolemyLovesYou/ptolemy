@@ -1,10 +1,10 @@
 use super::{
+    config::PtolemyConfig,
     crypto::PasswordHandler,
     db::DbConnection,
     env_settings::PostgresConfig,
     error::ApiError,
     sink::{configure_sink_registry, sink::SinkRegistry},
-    config::PtolemyConfig,
 };
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
 use tracing::error;

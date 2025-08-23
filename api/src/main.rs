@@ -1,10 +1,6 @@
 use api::error::ApiError;
 /// This will eventually be src/main.rs
-use api::{
-    routes::get_router,
-    state::AppState,
-    config::PtolemyConfig,
-};
+use api::{config::PtolemyConfig, routes::get_router, state::AppState};
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {

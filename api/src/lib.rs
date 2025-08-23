@@ -1,3 +1,4 @@
+pub mod config;
 pub mod crypto;
 pub mod db;
 pub mod env_settings;
@@ -9,7 +10,6 @@ pub mod services;
 pub mod sink;
 pub mod state;
 pub mod tracing;
-pub mod config;
 
 pub mod consts {
     pub const SERVICE_API_KEY_PREFIX: &str = "pt-sk";

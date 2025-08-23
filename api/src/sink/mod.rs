@@ -4,8 +4,8 @@ pub mod stdout;
 pub use sink::Sink;
 pub use stdout::StdoutSink;
 
-use crate::error::ApiError;
 use crate::config::PtolemyConfig;
+use crate::error::ApiError;
 
 pub fn configure_sink_registry(config: &PtolemyConfig) -> Result<sink::SinkRegistry, ApiError> {
     let mut registry = sink::SinkRegistry::new();
