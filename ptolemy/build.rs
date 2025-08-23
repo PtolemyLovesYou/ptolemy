@@ -10,7 +10,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .protoc_arg("--experimental_allow_proto3_optional")
             .build_server(true)
             .out_dir("src/generated")
-            .compile_protos(&["proto/record_publisher.proto"], &["proto/record_publisher"])?;
+            .compile_protos(
+                &["proto/record_publisher.proto"],
+                &["proto/record_publisher"],
+            )?;
     }
 
     Ok(())

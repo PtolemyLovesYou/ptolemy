@@ -6,7 +6,7 @@ use bb8::PooledConnection;
 use diesel::{pg::PgConnection, prelude::*};
 use diesel_async::{
     pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
-    AsyncPgConnection
+    AsyncPgConnection,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use tracing::error;

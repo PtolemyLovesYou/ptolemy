@@ -1,7 +1,10 @@
-use super::{sink::SinkMessage, crypto::PasswordHandler, db::DbConnection, error::ApiError, env_settings::PostgresConfig};
-use tracing::error;
+use super::{
+    crypto::PasswordHandler, db::DbConnection, env_settings::PostgresConfig, error::ApiError,
+    sink::SinkMessage,
+};
+use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
 use serde::{Deserialize, Serialize};
-use diesel_async::{AsyncPgConnection, pooled_connection::bb8::Pool};
+use tracing::error;
 
 pub type PtolemyState = std::sync::Arc<AppState>;
 
