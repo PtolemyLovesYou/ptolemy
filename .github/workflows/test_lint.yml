@@ -37,6 +37,25 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      - name: Cargo cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -47,9 +66,15 @@ jobs:
       - name: Sync
         run: |
           uv sync --locked --all-packages --dev
+      - name: Install maturin
+        run: |
+          uv pip install maturin
       - name: Run black
         run: |
           uv run -m black --pyi --check ptolemy-py/python
+      - name: Build client
+        run: |
+          make build-client
       - name: Run tests with coverage
         run: |
           uv run -m coverage run -m pytest ptolemy-py
