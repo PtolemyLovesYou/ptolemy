@@ -1,7 +1,5 @@
 pub mod config;
 pub mod crypto;
-pub mod db;
-pub mod env_settings;
 pub mod error;
 pub mod generated;
 pub mod models;
