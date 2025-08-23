@@ -1,21 +1,15 @@
 use serde::{Serialize, Deserialize};
+use super::serialization_method::SerializationMethod;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StdoutConfig {
-    serialization_method: SerializationMethod,
+    serialization: SerializationMethod,
 }
 
 impl Default for StdoutConfig {
     fn default() -> StdoutConfig {
         StdoutConfig {
-            serialization_method: SerializationMethod::Json
+            serialization: SerializationMethod::Json
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum SerializationMethod {
-    Json,
-    Protobuf
 }

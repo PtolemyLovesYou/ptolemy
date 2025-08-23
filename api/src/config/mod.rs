@@ -7,6 +7,17 @@ use self::stdout::StdoutConfig;
 
 pub mod stdout;
 
+pub mod serialization_method {
+    use serde::{Serialize, Deserialize};
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[serde(rename_all = "lowercase")]
+    pub enum SerializationMethod {
+        Json,
+        Protobuf
+    }
+}
+
 const DEFAULT_CONFIG: &'static str = "
 port: 3000
 buffer_size: 1024
