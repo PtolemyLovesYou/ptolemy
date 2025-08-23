@@ -7,7 +7,7 @@ async fn main() -> Result<(), ApiError> {
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    let config = PtolemyConfig::default();
+    let config = PtolemyConfig::from_file()?;
 
     // create state
     let state = std::sync::Arc::new(AppState::new(config).await?);

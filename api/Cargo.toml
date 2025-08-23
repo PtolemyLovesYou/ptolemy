@@ -9,6 +9,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.89"
+figment = { version = "0.10.19", features = ["yaml", "env"] }
 futures = "0.3.31"
 http = "1.2.0"
 tokio-stream = "0.1.17"
