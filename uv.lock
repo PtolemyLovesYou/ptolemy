@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [manifest]
@@ -320,7 +320,7 @@ wheels = [
 
 [[package]]
 name = "docs"
-version = "0.1.0a49+e8c4d26"
+version = "0.1.0a50+27052ab"
 source = { virtual = "docs" }
 dependencies = [
     { name = "mkdocs" },
@@ -868,7 +868,7 @@ wheels = [
 
 [[package]]
 name = "ptolemy-workspace"
-version = "0.1.0a49+e8c4d26"
+version = "0.1.0a50+27052ab"
 source = { virtual = "." }
 dependencies = [
     { name = "pydantic" },
