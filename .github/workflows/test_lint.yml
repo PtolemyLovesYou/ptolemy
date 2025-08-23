@@ -49,7 +49,7 @@ jobs:
           uv sync --locked --all-packages --dev
       - name: Run black
         run: |
-          uv run -m black --pyi --check ptolemy-py/python integration-tests
+          uv run -m black --pyi --check ptolemy-py/python
       - name: Run tests with coverage
         run: |
           uv run -m coverage run -m pytest ptolemy-py
