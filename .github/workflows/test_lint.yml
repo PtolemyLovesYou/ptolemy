@@ -68,7 +68,7 @@ jobs:
           uv sync --locked --all-packages --dev
       - name: Install maturin
         run: |
-          cargo binstall maturin
+          cargo install --locked maturin
       - name: Run black
         run: |
           uv run -m black --pyi --check ptolemy-py/python
