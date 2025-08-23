@@ -5,7 +5,7 @@ pub use sink::Sink;
 pub use stdout::StdoutSink;
 
 use crate::error::ApiError;
-use crate::state::PtolemyConfig;
+use crate::config::PtolemyConfig;
 
 pub fn configure_sink_registry(config: &PtolemyConfig) -> Result<sink::SinkRegistry, ApiError> {
     let mut registry = sink::SinkRegistry::new();

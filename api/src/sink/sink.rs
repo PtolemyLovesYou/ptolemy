@@ -1,6 +1,6 @@
 use ptolemy::generated::record_publisher::Record;
 
-use crate::{error::ApiError, state::PtolemyConfig};
+use crate::{error::ApiError, config::PtolemyConfig};
 
 use std::collections::HashMap;
 use std::sync::Arc;

@@ -4,9 +4,9 @@ use super::{
     env_settings::PostgresConfig,
     error::ApiError,
     sink::{configure_sink_registry, sink::SinkRegistry},
+    config::PtolemyConfig,
 };
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
-use serde::{Deserialize, Serialize};
 use tracing::error;
 
 pub type PtolemyState = std::sync::Arc<AppState>;
@@ -40,29 +40,4 @@ impl AppState {
             ApiError::ConnectionError
         })
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PtolemyConfig {
-    pub port: usize,
-    pub buffer_size: usize,
-    pub sink_timeout_secs: usize,
-    pub sink: SinkType,
-}
-
-impl Default for PtolemyConfig {
-    fn default() -> Self {
-        Self {
-            port: 3000,
-            buffer_size: 1024,
-            sink_timeout_secs: 30,
-            sink: SinkType::Stdout,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum SinkType {
-    Stdout,
 }

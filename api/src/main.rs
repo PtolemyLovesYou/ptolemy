@@ -2,7 +2,8 @@ use api::error::ApiError;
 /// This will eventually be src/main.rs
 use api::{
     routes::get_router,
-    state::{AppState, PtolemyConfig},
+    state::AppState,
+    config::PtolemyConfig,
 };
 
 #[tokio::main]
