@@ -39,9 +39,6 @@ To run outside of docker, you must have:
 
 # If you want to run postgres in docker:
 > docker compose up -d postgres
-
-# In a separate terminal, start experimental frontend
-> make run-ui
 ```
 
 # Configuration
