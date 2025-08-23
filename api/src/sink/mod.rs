@@ -1,14 +1,16 @@
-pub mod sink_message;
+pub mod sink;
 pub mod stdout;
 
-pub use sink_message::SinkMessage;
 pub use stdout::StdoutSink;
+pub use sink::Sink;
 
-use super::{error::ApiError, state::PtolemyConfig};
-use tokio::{sync::mpsc::Sender, task::JoinHandle};
+use crate::state::PtolemyConfig;
+use crate::error::ApiError;
 
-pub async fn init_sink(
-    config: &PtolemyConfig,
-) -> Result<(Sender<SinkMessage>, JoinHandle<()>), ApiError> {
-    StdoutSink::from_config(config).await?.start().await
+pub fn configure_sink_registry(config: &PtolemyConfig) -> Result<sink::SinkRegistry, ApiError> {
+    let mut registry = sink::SinkRegistry::new();
+
+    registry.register(StdoutSink::from_config(config)?);
+
+    Ok(registry)
 }

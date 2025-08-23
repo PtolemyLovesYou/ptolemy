@@ -1,68 +1,30 @@
 use ptolemy::generated::record_publisher::Record;
-use tokio::{sync::mpsc, task::JoinHandle};
 
 use super::{
     super::{error::ApiError, models, state::PtolemyConfig},
-    sink_message::SinkMessage,
+    sink::Sink,
 };
 
 #[derive(Debug)]
-pub struct StdoutSink {
-    config: PtolemyConfig,
-}
+pub struct StdoutSink;
 
-impl StdoutSink {
-    pub async fn from_config(config: &PtolemyConfig) -> Result<Self, ApiError> {
-        Ok(Self {
-            config: config.clone(),
-        })
+#[async_trait::async_trait]
+impl Sink for StdoutSink {
+    async fn send_batch(&self, messages: Vec<Record>) -> Result<(), ApiError> {
+        for record in messages {
+            if let Some(serialized) = serialize_to_json(record) {
+                tracing::info!("{}", serialized)
+            }
+        }
+        Ok(())
     }
 
-    pub async fn start(&self) -> Result<(mpsc::Sender<SinkMessage>, JoinHandle<()>), ApiError> {
-        let (tx, mut rx) = mpsc::channel::<SinkMessage>(self.config.buffer_size);
-        let writer_loop = async move {
-            while let Some(msg) = rx.recv().await {
-                match msg {
-                    SinkMessage::Record(record) => {
-                        if let Some(serialized) = serialize_to_json(record) {
-                            tracing::info!("{}", serialized)
-                        }
-                    }
-                    SinkMessage::Shutdown => {
-                        tracing::info!("🛑 Sink received shutdown signal.");
-                        break;
-                    }
-                }
-            }
+    fn name(&self) -> &'static str {
+        "stdout"
+    }
 
-            if !rx.is_empty() {
-                tracing::debug!("Flushing remaining {} messages...", rx.len());
-
-                // Drain any remaining messages in the channel
-                while let Ok(msg) = rx.try_recv() {
-                    match msg {
-                        SinkMessage::Record(record) => {
-                            if let Some(serialized) = serialize_to_json(record) {
-                                tracing::info!("{}", serialized)
-                            }
-                        }
-                        SinkMessage::Shutdown => {
-                            tracing::info!("🛑 Sink received explicit shutdown during flush.");
-                            break;
-                        }
-                    }
-                }
-            }
-
-            rx.close();
-
-            tracing::info!("✅ Sink receiver successfully closed.");
-        };
-
-        // spawn task
-        let handle = tokio::spawn(writer_loop);
-
-        Ok((tx, handle))
+    fn from_config(_config: &PtolemyConfig) -> Result<Self, ApiError> {
+        Ok(Self)
     }
 }
 

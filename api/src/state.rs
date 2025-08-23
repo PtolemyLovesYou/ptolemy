@@ -1,6 +1,6 @@
 use super::{
     crypto::PasswordHandler, db::DbConnection, env_settings::PostgresConfig, error::ApiError,
-    sink::SinkMessage,
+    sink::{configure_sink_registry, sink::SinkRegistry},
 };
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
 use serde::{Deserialize, Serialize};
@@ -13,28 +13,24 @@ pub struct AppState {
     pub config: PtolemyConfig,
     pub pg_pool: Pool<AsyncPgConnection>,
     pub password_handler: PasswordHandler,
-    event_sender: tokio::sync::mpsc::Sender<SinkMessage>,
+    pub sink_registry: SinkRegistry,
 }
 
 impl AppState {
     pub async fn new(
         config: PtolemyConfig,
-        event_sender: tokio::sync::mpsc::Sender<SinkMessage>,
     ) -> Result<Self, ApiError> {
         let postgres_config = PostgresConfig::from_env()?;
         let pg_pool = postgres_config.diesel_conn().await?;
         let password_handler = super::crypto::PasswordHandler::new();
+        let sink_registry = configure_sink_registry(&config)?;
 
         Ok(Self {
             config,
-            event_sender,
             pg_pool,
             password_handler,
+            sink_registry,
         })
-    }
-
-    pub fn sender(&self) -> tokio::sync::mpsc::Sender<SinkMessage> {
-        self.event_sender.clone()
     }
 
     pub async fn get_conn(&self) -> Result<DbConnection<'_>, ApiError> {
@@ -50,7 +46,7 @@ pub struct PtolemyConfig {
     pub port: usize,
     pub buffer_size: usize,
     pub sink_timeout_secs: usize,
-    pub sink: Sink,
+    pub sink: SinkType,
 }
 
 impl Default for PtolemyConfig {
@@ -59,13 +55,13 @@ impl Default for PtolemyConfig {
             port: 3000,
             buffer_size: 1024,
             sink_timeout_secs: 30,
-            sink: Sink::Stdout,
+            sink: SinkType::Stdout,
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Sink {
+pub enum SinkType {
     Stdout,
 }
