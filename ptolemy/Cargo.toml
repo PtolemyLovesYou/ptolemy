@@ -8,14 +8,10 @@ name = "ptolemy"
 
 [build-dependencies]
 tonic-build = "0.12.3"
-apollo-compiler = "0.11.3"
 
 [features]
 openssl = [ "dep:openssl",]
 vendored = [ "openssl",]
-
-[build-dependencies.heck]
-workspace = true
 
 [dependencies.openssl]
 version = "0.10.72"
@@ -33,12 +29,6 @@ workspace = true
 workspace = true
 
 [dependencies.tokio]
-workspace = true
-
-[dependencies.log]
-workspace = true
-
-[dependencies.env_logger]
 workspace = true
 
 [dependencies.tonic-types]
@@ -59,13 +49,7 @@ workspace = true
 [dependencies.serde_json]
 workspace = true
 
-[dependencies.chrono]
-workspace = true
-
 [dependencies.heck]
-workspace = true
-
-[dependencies.reqwest]
 workspace = true
 
 [dependencies.tracing]

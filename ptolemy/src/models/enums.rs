@@ -1,5 +1,5 @@
 use crate::error::ParseError;
-use crate::generated::observer;
+use crate::generated::record_publisher;
 use crate::prelude::enum_utils::*;
 use crate::serialize_enum;
 
@@ -20,36 +20,6 @@ serialize_enum!(
 );
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ApiKeyPermission {
-    ReadOnly,
-    WriteOnly,
-    ReadWrite,
-}
-
-serialize_enum!(
-    ApiKeyPermission,
-    ShoutySnakeCase,
-    [ReadOnly, WriteOnly, ReadWrite]
-);
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum UserStatus {
-    Active,
-    Suspended,
-}
-
-serialize_enum!(UserStatus, ShoutySnakeCase, [Active, Suspended]);
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum WorkspaceRole {
-    User,
-    Manager,
-    Admin,
-}
-
-serialize_enum!(WorkspaceRole, ShoutySnakeCase, [User, Manager, Admin]);
-
-#[derive(Clone, Debug, PartialEq)]
 pub enum Tier {
     System,
     Subsystem,
@@ -63,16 +33,16 @@ serialize_enum!(
     [System, Subsystem, Component, Subcomponent]
 );
 
-impl TryFrom<observer::Tier> for Tier {
+impl TryFrom<record_publisher::Tier> for Tier {
     type Error = ParseError;
 
-    fn try_from(value: observer::Tier) -> Result<Tier, Self::Error> {
+    fn try_from(value: record_publisher::Tier) -> Result<Tier, Self::Error> {
         let tier = match value {
-            observer::Tier::System => Tier::System,
-            observer::Tier::Subsystem => Tier::Subsystem,
-            observer::Tier::Component => Tier::Component,
-            observer::Tier::Subcomponent => Tier::Subcomponent,
-            observer::Tier::UndeclaredTier => return Err(ParseError::UndefinedTier),
+            record_publisher::Tier::System => Tier::System,
+            record_publisher::Tier::Subsystem => Tier::Subsystem,
+            record_publisher::Tier::Component => Tier::Component,
+            record_publisher::Tier::Subcomponent => Tier::Subcomponent,
+            record_publisher::Tier::UndeclaredTier => return Err(ParseError::UndefinedTier),
         };
 
         Ok(tier)
@@ -80,23 +50,23 @@ impl TryFrom<observer::Tier> for Tier {
 }
 
 impl Tier {
-    pub fn proto(&self) -> observer::Tier {
+    pub fn proto(&self) -> record_publisher::Tier {
         match self {
-            Tier::System => observer::Tier::System,
-            Tier::Subsystem => observer::Tier::Subsystem,
-            Tier::Component => observer::Tier::Component,
-            Tier::Subcomponent => observer::Tier::Subcomponent,
+            Tier::System => record_publisher::Tier::System,
+            Tier::Subsystem => record_publisher::Tier::Subsystem,
+            Tier::Component => record_publisher::Tier::Component,
+            Tier::Subcomponent => record_publisher::Tier::Subcomponent,
         }
     }
 }
 
-impl From<Tier> for observer::Tier {
-    fn from(value: Tier) -> observer::Tier {
+impl From<Tier> for record_publisher::Tier {
+    fn from(value: Tier) -> record_publisher::Tier {
         match value {
-            Tier::System => observer::Tier::System,
-            Tier::Subsystem => observer::Tier::Subsystem,
-            Tier::Component => observer::Tier::Component,
-            Tier::Subcomponent => observer::Tier::Subcomponent,
+            Tier::System => record_publisher::Tier::System,
+            Tier::Subsystem => record_publisher::Tier::Subsystem,
+            Tier::Component => record_publisher::Tier::Component,
+            Tier::Subcomponent => record_publisher::Tier::Subcomponent,
         }
     }
 }

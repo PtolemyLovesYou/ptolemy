@@ -1,44 +1,43 @@
+use api::error::ApiError;
+/// This will eventually be src/main.rs
 use api::{
-    crud::auth::admin::ensure_sysadmin, db::run_migrations, error::ServerError,
-    middleware::shutdown_signal, routes::get_router, state::AppState,
+    routes::get_router,
+    shutdown::shutdown_signal,
+    sink::init_sink,
+    state::{AppState, PtolemyConfig},
 };
-use tracing::error;
 
 #[tokio::main]
-async fn main() -> Result<(), ServerError> {
+async fn main() -> Result<(), ApiError> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    run_migrations()?;
+    let config = PtolemyConfig::default();
 
-    let shared_state = std::sync::Arc::new(AppState::new().await?);
+    // init sink
+    let (sink_tx, sink_handle) = init_sink(&config).await?;
 
-    // ensure sysadmin
-    match ensure_sysadmin(&shared_state).await {
-        Ok(_) => (),
-        Err(err) => {
-            error!("Failed to set up sysadmin. This may be because the Postgres db is empty. Run Diesel migrations and then try again. More details: {:?}", err);
-        }
-    };
+    // create state
+    let state = std::sync::Arc::new(AppState::new(config, sink_tx).await?);
 
-    let service = get_router(&shared_state)
+    let service = get_router(state.clone())
         .await
         .into_make_service_with_connect_info::<std::net::SocketAddr>();
 
-    let server_url = format!("[::]:{}", shared_state.config.port);
+    let server_url = format!("[::]:{}", state.config.port);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 
     tracing::info!("Ptolemy running on {} <3", server_url);
 
     match axum::serve(listener, service)
-        .with_graceful_shutdown(shutdown_signal(shared_state))
+        .with_graceful_shutdown(shutdown_signal(state, sink_handle))
         .await
     {
         Ok(_) => Ok(()),
         Err(e) => {
             tracing::error!("Axum server error: {:?}", e);
-            Err(ServerError::ServerError)
+            Err(ApiError::InternalError)
         }
     }
 }

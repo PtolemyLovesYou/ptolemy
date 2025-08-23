@@ -3,7 +3,7 @@
 import uuid
 import pytest
 from pydantic import ValidationError
-from ptolemy_client.v1.io import IO
+from ptolemy_client.io import IO
 
 def test_validate_io_success():
     """Validate IO."""

@@ -1,11 +1,11 @@
-use crate::error::ServerError;
+use crate::error::ApiError;
 
-pub fn get_env_var(name: &str) -> Result<String, ServerError> {
+pub fn get_env_var(name: &str) -> Result<String, ApiError> {
     match std::env::var(name) {
         Ok(val) => Ok(val),
         Err(_) => {
             tracing::error!("{} must be set.", name);
-            Err(ServerError::ConfigError)
+            Err(ApiError::ConfigError)
         }
     }
 }
@@ -22,7 +22,7 @@ pub struct ApiConfig {
 }
 
 impl ApiConfig {
-    pub fn from_env() -> Result<Self, ServerError> {
+    pub fn from_env() -> Result<Self, ApiError> {
         Ok(ApiConfig {
             port: get_env_var("API_PORT")?,
             enable_prometheus: std::env::var("ENABLE_PROMETHEUS")
@@ -51,7 +51,7 @@ pub struct PostgresConfig {
 }
 
 impl PostgresConfig {
-    pub fn from_env() -> Result<Self, ServerError> {
+    pub fn from_env() -> Result<Self, ApiError> {
         Ok(PostgresConfig {
             user: get_env_var("POSTGRES_USER")?,
             password: get_env_var("POSTGRES_PASSWORD")?,

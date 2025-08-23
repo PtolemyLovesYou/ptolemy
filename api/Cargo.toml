@@ -2,14 +2,6 @@
 name = "api"
 path = "src/main.rs"
 
-[[bin]]
-name = "v1"
-path = "src/bin/v1.rs"
-
-[[bin]]
-name = "generate-gql-schema"
-path = "src/bin/generate_gql_schema.rs"
-
 [package]
 name = "api"
 version = "0.1.0-alpha.47+8a25c69"
@@ -17,13 +9,8 @@ edition = "2021"
 
 [dependencies]
 http = "1.2.0"
-r2d2 = "0.8.10"
 tokio-stream = "0.1.17"
 tonic-web = "0.12.3"
-
-[dependencies.async-graphql]
-version = "7.0.15"
-features = [ "uuid", "chrono",]
 
 [dependencies.axum]
 workspace = true
@@ -38,9 +25,6 @@ workspace = true
 workspace = true
 
 [dependencies.diesel-async]
-workspace = true
-
-[dependencies.hyper]
 workspace = true
 
 [dependencies.serde]
@@ -96,15 +80,6 @@ workspace = true
 workspace = true
 
 [dependencies.jsonwebtoken]
-workspace = true
-
-[dependencies.ipnet]
-workspace = true
-
-[dependencies.heck]
-workspace = true
-
-[dependencies.pin-project-lite]
 workspace = true
 
 [dependencies.diesel_migrations]
