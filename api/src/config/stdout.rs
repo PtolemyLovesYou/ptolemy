@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use super::serialization_method::SerializationMethod;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StdoutConfig {
@@ -9,7 +9,7 @@ pub struct StdoutConfig {
 impl Default for StdoutConfig {
     fn default() -> StdoutConfig {
         StdoutConfig {
-            serialization: SerializationMethod::Json
+            serialization: SerializationMethod::Json,
         }
     }
 }

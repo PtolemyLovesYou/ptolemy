@@ -1,5 +1,8 @@
+use figment::{
+    providers::{Format, Yaml},
+    Figment,
+};
 use serde::{Deserialize, Serialize};
-use figment::{Figment, providers::{Yaml, Format}};
 
 use crate::error::ApiError;
 
@@ -8,13 +11,13 @@ use self::stdout::StdoutConfig;
 pub mod stdout;
 
 pub mod serialization_method {
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     #[serde(rename_all = "lowercase")]
     pub enum SerializationMethod {
         Json,
-        Protobuf
+        Protobuf,
     }
 }
 
