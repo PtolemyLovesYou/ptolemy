@@ -1,5 +1,8 @@
 use super::{
-    crypto::PasswordHandler, db::DbConnection, env_settings::PostgresConfig, error::ApiError,
+    crypto::PasswordHandler,
+    db::DbConnection,
+    env_settings::PostgresConfig,
+    error::ApiError,
     sink::{configure_sink_registry, sink::SinkRegistry},
 };
 use diesel_async::{pooled_connection::bb8::Pool, AsyncPgConnection};
@@ -17,9 +20,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(
-        config: PtolemyConfig,
-    ) -> Result<Self, ApiError> {
+    pub async fn new(config: PtolemyConfig) -> Result<Self, ApiError> {
         let postgres_config = PostgresConfig::from_env()?;
         let pg_pool = postgres_config.diesel_conn().await?;
         let password_handler = super::crypto::PasswordHandler::new();
