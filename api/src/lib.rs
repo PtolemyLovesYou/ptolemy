@@ -1,3 +1,4 @@
+pub mod config;
 pub mod crypto;
 pub mod db;
 pub mod env_settings;
@@ -6,7 +7,6 @@ pub mod generated;
 pub mod models;
 pub mod routes;
 pub mod services;
-pub mod shutdown;
 pub mod sink;
 pub mod state;
 pub mod tracing;
