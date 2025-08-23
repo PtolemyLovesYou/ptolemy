@@ -4,7 +4,7 @@ path = "src/main.rs"
 
 [package]
 name = "api"
-version = "0.1.0-alpha.50+27052ab"
+version = "0.1.0-beta.50"
 edition = "2021"
 
 [dependencies]
