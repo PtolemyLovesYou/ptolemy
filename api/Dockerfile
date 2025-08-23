@@ -19,11 +19,6 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # Runtime stage
 FROM debian:bookworm-slim
 
-ENV API_PORT=8000 \
-    PTOLEMY_ENV=PROD \
-    PTOLEMY_USER=admin \
-    PTOLEMY_PASS=admin
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libpq5 && \
     rm -rf /var/lib/apt/lists/* && \

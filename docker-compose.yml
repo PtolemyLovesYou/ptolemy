@@ -4,66 +4,18 @@ services:
     build:
       dockerfile: api/Dockerfile
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ptolemy
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
       # disable if the debug logs get too annoying
       RUST_LOG: info,api=debug,ptolemy=debug
-      # set to "PROD" for production
-      PTOLEMY_ENV: DEV
-      # JWT secret goes here
-      JWT_SECRET: pC15dRLduel2TYONYEfyjHZ289j7dIXv1RXL09T/t0o=
     ports:
-      - "8000:8000"
+      - "7865:7865"
       - "50051:50051"
     volumes:
       - ./api:/app
       - ptolemy_data:/ptolemy/data
     networks:
       - ptolemy
-    depends_on:
-      - postgres
-  ui:
-    container_name: ui
-    build:
-      context: ptolemy-ui/
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80"
-    networks:
-      - ptolemy
-    environment:
-      VITE_PTOLEMY_API: http://api:8000
-      VITE_PTOLEMY_DOCS: http://host.docker.internal:8080
-    depends_on:
-      - api
-  postgres:
-    container_name: postgres
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ptolemy
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres:/var/lib/postgresql
-    networks:
-      - ptolemy
-    healthcheck:
-      test: /usr/bin/pg_isready
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
 volumes:
-  postgres:
-    driver: local
-  grafana_data:
-    driver: local
   ptolemy_data:
     driver: local
 

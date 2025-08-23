@@ -7,7 +7,7 @@ async fn main() -> Result<(), ApiError> {
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    let config = PtolemyConfig::default();
+    let config = PtolemyConfig::from_file()?;
 
     // create state
     let state = std::sync::Arc::new(AppState::new(config).await?);
@@ -16,7 +16,7 @@ async fn main() -> Result<(), ApiError> {
         .await
         .into_make_service_with_connect_info::<std::net::SocketAddr>();
 
-    let server_url = format!("[::]:{}", state.config.port);
+    let server_url = format!("[::]:{}", 7865);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
 
     tracing::info!("Ptolemy running on {} <3", server_url);
