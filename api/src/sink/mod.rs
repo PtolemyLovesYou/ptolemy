@@ -1,3 +1,4 @@
+pub mod kafka;
 pub mod sink;
 pub mod stdout;
 

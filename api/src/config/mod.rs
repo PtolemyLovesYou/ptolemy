@@ -6,8 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 
+use self::kafka::KafkaConfig;
 use self::stdout::StdoutConfig;
 
+pub mod kafka;
 pub mod stdout;
 
 pub mod serialization_method {
@@ -31,6 +33,7 @@ pub struct PtolemyConfig {
     pub buffer_size: usize,
     pub sink_timeout_secs: usize,
     pub stdout: Option<StdoutConfig>,
+    pub kafka: Option<KafkaConfig>,
 }
 
 impl PtolemyConfig {
