@@ -12,7 +12,6 @@ services:
   #   volumes:
   #     - ./api:/app
   #     - ptolemy_data:/ptolemy/data
-  #     - ./api/ptolemy.yml:/app/ptolemy.yml
   #   networks:
   #     - ptolemy
 
