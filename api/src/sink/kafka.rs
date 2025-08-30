@@ -77,7 +77,7 @@ impl Sink for KafkaSink {
                 .await
             {
                 Ok(_) => tracing::debug!("Successfully produced message to Kafka."),
-                Err(e) => tracing::error!("Error producing message to Kafka: {:?}", e),
+                Err(e) => tracing::error!("Error producing message to Kafka: {:?}", e.0),
             }
         }
 
