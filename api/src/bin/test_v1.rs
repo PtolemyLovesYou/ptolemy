@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {
-    let mut client = RecordPublisherClient::connect("http://localhost:3000")
+    let mut client = RecordPublisherClient::connect("http://localhost:7865")
         .await
         .unwrap();
 
