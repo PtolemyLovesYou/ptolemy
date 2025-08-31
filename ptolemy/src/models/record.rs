@@ -1,9 +1,9 @@
 use super::super::error::ParseError;
-use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use crate::{
     generated::record_publisher::{self, record::RecordData},
     models::{FieldValueType, Id, Tier, JSON},
 };
+use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
@@ -38,11 +38,11 @@ impl TryFrom<record_publisher::Record> for Record {
             .tier()
             .try_into()
             .map_err(|_| ParseError::UndefinedTier)?;
-        let id: Id = value
-            .id
+        let id: Id = value.id.try_into().map_err(|_| ParseError::InvalidUuid)?;
+        let parent_id: Id = value
+            .parent_id
             .try_into()
             .map_err(|_| ParseError::InvalidUuid)?;
-        let parent_id: Id = value.parent_id.try_into().map_err(|_| ParseError::InvalidUuid)?;
         let data = match value.record_data.ok_or(ParseError::MissingField)? {
             RecordData::Event(e) => Self::Event(Event {
                 tier,
@@ -51,11 +51,7 @@ impl TryFrom<record_publisher::Record> for Record {
                 name: e.name,
                 parameters: e
                     .parameters
-                    .map(|p| {
-                        p.try_into().map_err(|_| {
-                            ParseError::BadJSON
-                        })
-                    })
+                    .map(|p| p.try_into().map_err(|_| ParseError::BadJSON))
                     .transpose()?,
                 version: e.version,
                 environment: e.environment,
@@ -140,9 +136,7 @@ impl IOF {
         let field_value: JSON = field_value
             .ok_or(ParseError::MissingField)?
             .try_into()
-            .map_err(|_| {
-                ParseError::BadJSON
-            })?;
+            .map_err(|_| ParseError::BadJSON)?;
 
         let field_value_type = field_value.field_value_type();
 
