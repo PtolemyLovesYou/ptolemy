@@ -1,24 +1,10 @@
 # For my own vanity...
-*.gql linguist-detectable
 *.mmd linguist-detectable
 # *.sql.j2 linguist-detectable
 # *.yaml linguist-detectable
 # *.yml linguist-detectable
 # *.toml linguist-detectable
 *.proto linguist-detectable
-
-# *.sql.j2 linguist-language=sql
-
-# Set generated code as undetectable >:)
-api/src/generated/*.rs -linguist-detectable
-ptolemy/src/generated/*.rs -linguist-detectable
-api/graphql/schema.gql -linguist-detectable
-ptolemy/graphql/schema.gql -linguist-detectable
-
-# Set migrations as detectable
-api/diesel/**/*.sql -linguist-detectable
-
-# *.sql linguist-language=SQL
 
 docs/**/* linguist-documentation
 *.mmd -linguist-documentation
