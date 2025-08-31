@@ -1,19 +1,21 @@
 services:
-  # api:
-  #   container_name: api
-  #   build:
-  #     dockerfile: api/Dockerfile
-  #   environment:
-  #     # disable if the debug logs get too annoying
-  #     RUST_LOG: info,api=debug,ptolemy=debug
-  #   ports:
-  #     - "7865:7865"
-  #     - "50051:50051"
-  #   volumes:
-  #     - ./api:/app
-  #     - ptolemy_data:/ptolemy/data
-  #   networks:
-  #     - ptolemy
+  api:
+    container_name: api
+    build:
+      dockerfile: api/Dockerfile
+    environment:
+      # disable if the debug logs get too annoying
+      RUST_LOG: info,api=debug,ptolemy=debug
+    ports:
+      - "7865:7865"
+      - "50051:50051"
+    volumes:
+      - ptolemy_data:/ptolemy/data
+      - ./ptolemy.yml:/app/ptolemy.yml
+    networks:
+      - ptolemy
+    depends_on:
+      - redpanda-0
 
   ## Redpanda stuff
   redpanda-0:
