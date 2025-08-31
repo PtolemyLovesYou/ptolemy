@@ -27,13 +27,14 @@ impl Sink for KafkaSink {
 
         let mut client = ClientConfig::new();
         client
-            .set("bootstrap.servers", &conf.bootstrap_servers)
-            .set(
-                "queue.buffering.max.ms",
-                &conf.queue_buffering_max_ms.to_string(),
-            );
+            .set("bootstrap.servers", &conf.bootstrap_servers);
 
         // ---- Optional settings ----
+
+        if let Some(ref qm) = conf.queue_buffering_max_ms {
+            client.set("queue.buffering.max.ms", &qm.to_string());
+        }
+
         if let Some(ref proto) = conf.security_protocol {
             client.set("security.protocol", proto);
         }

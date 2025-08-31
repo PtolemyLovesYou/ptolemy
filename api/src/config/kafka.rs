@@ -17,7 +17,7 @@ pub struct KafkaConfig {
     pub retry_backoff_ms: Option<u32>,    // e.g., 100
 
     // --- Performance ---
-    pub queue_buffering_max_ms: u32, // prefer numeric over string
+    pub queue_buffering_max_ms: Option<u32>, // prefer numeric over string
     pub batch_size: Option<u32>,     // bytes per batch
     pub linger_ms: Option<u32>,      // wait time for batching
     pub compression_type: Option<String>, // "none", "gzip", "lz4", etc.
@@ -42,7 +42,7 @@ impl Default for KafkaConfig {
             message_timeout_ms: Some(30_000),
             retries: Some(5),
             retry_backoff_ms: Some(100),
-            queue_buffering_max_ms: 100,
+            queue_buffering_max_ms: Some(100),
             batch_size: Some(16_384),
             linger_ms: Some(5),
             compression_type: Some("lz4".to_string()),
