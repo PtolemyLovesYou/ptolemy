@@ -20,6 +20,8 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # Runtime stage
 FROM debian:bookworm-slim
 
+ENV PTOLEMY_CONFIG=/app/ptolemy.yml
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libpq5 && \
     rm -rf /var/lib/apt/lists/* && \
