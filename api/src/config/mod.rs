@@ -1,5 +1,5 @@
 use figment::{
-    providers::{Format, Yaml},
+    providers::{Format, Yaml, Serialized},
     Figment,
 };
 use serde::{Deserialize, Serialize};
@@ -23,11 +23,6 @@ pub mod serialization_method {
     }
 }
 
-const DEFAULT_CONFIG: &'static str = "
-buffer_size: 1024
-sink_timeout_secs: 10
-";
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PtolemyConfig {
     pub buffer_size: usize,
@@ -36,10 +31,20 @@ pub struct PtolemyConfig {
     pub kafka: Option<KafkaConfig>,
 }
 
+impl Default for PtolemyConfig {
+    fn default() -> PtolemyConfig {
+        PtolemyConfig {
+            buffer_size: 1024,
+            sink_timeout_secs: 10,
+            stdout: None,
+            kafka: None,
+        }
+    }
+}
+
 impl PtolemyConfig {
     pub fn from_file() -> Result<Self, ApiError> {
-        Figment::new()
-            .merge(Yaml::string(DEFAULT_CONFIG))
+        Figment::from(Serialized::defaults(PtolemyConfig::default()))
             .merge(Yaml::file("ptolemy.yml"))
             .extract()
             .map_err(|e| {
