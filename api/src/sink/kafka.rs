@@ -23,15 +23,47 @@ impl Sink for KafkaSink {
     where
         Self: Sized,
     {
-        match &config.kafka {
-            Some(conf) => ClientConfig::new()
-                .set("bootstrap.servers", &conf.bootstrap_servers)
-                .set("queue.buffering.max.ms", &conf.queue_buffering_max_ms)
-                .create()
-                .map(|producer| KafkaSink { producer })
-                .map_err(|_| ApiError::ConnectionError),
-            None => Err(ApiError::ConfigError),
+        let conf = config.kafka.as_ref().ok_or(ApiError::ConfigError)?;
+
+        let mut client = ClientConfig::new();
+        client.set("bootstrap.servers", &conf.bootstrap_servers)
+              .set("queue.buffering.max.ms", &conf.queue_buffering_max_ms.to_string());
+
+        // ---- Optional settings ----
+        if let Some(ref proto) = conf.security_protocol {
+            client.set("security.protocol", proto);
         }
+        if let (Some(user), Some(pass)) = (&conf.sasl_username, &conf.sasl_password) {
+            client.set("sasl.username", user)
+                  .set("sasl.password", pass);
+        }
+        if let Some(ref acks) = conf.acks {
+            client.set("acks", acks);
+        }
+        if let Some(idem) = conf.enable_idempotence {
+            client.set("enable.idempotence", &idem.to_string());
+        }
+        if let Some(timeout) = conf.message_timeout_ms {
+            client.set("message.timeout.ms", &timeout.to_string());
+        }
+        if let Some(retries) = conf.retries {
+            client.set("retries", &retries.to_string());
+        }
+        if let Some(backoff) = conf.retry_backoff_ms {
+            client.set("retry.backoff.ms", &backoff.to_string());
+        }
+        if let Some(ref comp) = conf.compression_type {
+            client.set("compression.type", comp);
+        }
+
+        // ---- Create producer ----
+        client
+            .create::<FutureProducer>()
+            .map(|producer| KafkaSink { producer })
+            .map_err(|err| {
+                tracing::error!("Kafka producer creation failed: {}", err);
+                ApiError::ConnectionError
+            })
     }
 
     async fn send_batch(&self, records: Vec<Record>) -> Result<(), ApiError> {
