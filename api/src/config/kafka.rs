@@ -18,9 +18,9 @@ pub struct KafkaConfig {
 
     // --- Performance ---
     pub queue_buffering_max_ms: Option<u32>, // prefer numeric over string
-    pub batch_size: Option<u32>,     // bytes per batch
-    pub linger_ms: Option<u32>,      // wait time for batching
-    pub compression_type: Option<String>, // "none", "gzip", "lz4", etc.
+    pub batch_size: Option<u32>,             // bytes per batch
+    pub linger_ms: Option<u32>,              // wait time for batching
+    pub compression_type: Option<String>,    // "none", "gzip", "lz4", etc.
 
     // --- Serialization ---
     pub serialization: SerializationMethod,

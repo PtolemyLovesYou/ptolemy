@@ -26,8 +26,7 @@ impl Sink for KafkaSink {
         let conf = config.kafka.as_ref().ok_or(ApiError::ConfigError)?;
 
         let mut client = ClientConfig::new();
-        client
-            .set("bootstrap.servers", &conf.bootstrap_servers);
+        client.set("bootstrap.servers", &conf.bootstrap_servers);
 
         // ---- Optional settings ----
 
