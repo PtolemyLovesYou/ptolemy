@@ -112,7 +112,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/ptolemylovesyou/ptolemy:latest,ghcr.io/ptolemylovesyou/ptolemy:${{ env.VERSION }}
-          file: api/Dockerfile
+          file: ptolemy/Dockerfile
 
   # Build wheels for different platforms
   build-linux:
