@@ -1,5 +1,5 @@
 use figment::{
-    providers::{Format, Yaml, Serialized},
+    providers::{Format, Serialized, Yaml},
     Figment,
 };
 use serde::{Deserialize, Serialize};
