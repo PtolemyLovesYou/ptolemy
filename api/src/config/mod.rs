@@ -1,5 +1,5 @@
 use figment::{
-    providers::{Format, Serialized, Yaml},
+    providers::{Env, Format, Serialized, Yaml},
     Figment,
 };
 use serde::{Deserialize, Serialize};
@@ -32,8 +32,8 @@ pub struct PtolemyConfig {
 }
 
 impl Default for PtolemyConfig {
-    fn default() -> PtolemyConfig {
-        PtolemyConfig {
+    fn default() -> Self {
+        Self {
             buffer_size: 1024,
             sink_timeout_secs: 10,
             stdout: None,
@@ -44,8 +44,11 @@ impl Default for PtolemyConfig {
 
 impl PtolemyConfig {
     pub fn from_file() -> Result<Self, ApiError> {
-        Figment::from(Serialized::defaults(PtolemyConfig::default()))
-            .merge(Yaml::file("ptolemy.yml"))
+        let config_path = std::env::var("PTOLEMY_CONFIG").unwrap_or_else(|_| "ptolemy.yml".into());
+
+        Figment::from(Serialized::defaults(Self::default()))
+            .merge(Yaml::file(config_path))
+            .merge(Env::prefixed("PTOLEMY_"))
             .extract()
             .map_err(|e| {
                 tracing::error!("{:?}", e);
