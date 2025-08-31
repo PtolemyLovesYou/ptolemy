@@ -48,39 +48,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
 
 [[package]]
-name = "api"
-version = "0.1.0-alpha.51+6a5789d"
-dependencies = [
- "argon2",
- "async-trait",
- "axum",
- "base64 0.22.1",
- "chrono",
- "figment",
- "futures",
- "http",
- "jsonwebtoken",
- "prost",
- "prost-types",
- "ptolemy",
- "rdkafka",
- "ring",
- "serde",
- "serde_json",
- "serde_repr",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-types",
- "tonic-web",
- "tower 0.5.2",
- "tower-http 0.6.2",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "argon2"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

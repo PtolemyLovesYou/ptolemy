@@ -2,7 +2,7 @@ services:
   api:
     container_name: api
     build:
-      dockerfile: api/Dockerfile
+      dockerfile: ptolemy/Dockerfile
     environment:
       # disable if the debug logs get too annoying
       RUST_LOG: info,api=debug,ptolemy=debug

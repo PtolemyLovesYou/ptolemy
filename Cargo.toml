@@ -1,12 +1,10 @@
 [workspace]
 members = [
     "ptolemy",
-    "api",
     "ptolemy-py"
     ]
 
 default-members = [
-    "api",
     "ptolemy",
     "ptolemy-py"
 ]
