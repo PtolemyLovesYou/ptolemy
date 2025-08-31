@@ -26,16 +26,19 @@ impl Sink for KafkaSink {
         let conf = config.kafka.as_ref().ok_or(ApiError::ConfigError)?;
 
         let mut client = ClientConfig::new();
-        client.set("bootstrap.servers", &conf.bootstrap_servers)
-              .set("queue.buffering.max.ms", &conf.queue_buffering_max_ms.to_string());
+        client
+            .set("bootstrap.servers", &conf.bootstrap_servers)
+            .set(
+                "queue.buffering.max.ms",
+                &conf.queue_buffering_max_ms.to_string(),
+            );
 
         // ---- Optional settings ----
         if let Some(ref proto) = conf.security_protocol {
             client.set("security.protocol", proto);
         }
         if let (Some(user), Some(pass)) = (&conf.sasl_username, &conf.sasl_password) {
-            client.set("sasl.username", user)
-                  .set("sasl.password", pass);
+            client.set("sasl.username", user).set("sasl.password", pass);
         }
         if let Some(ref acks) = conf.acks {
             client.set("acks", acks);
