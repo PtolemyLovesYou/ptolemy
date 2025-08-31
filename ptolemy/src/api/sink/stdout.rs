@@ -1,7 +1,7 @@
-use crate::generated::record_publisher::Record;
+use crate::{generated::record_publisher::Record, models};
 
 use super::{
-    super::{config::PtolemyConfig, error::ApiError, models},
+    super::{config::PtolemyConfig, error::ApiError},
     sink::Sink,
 };
 

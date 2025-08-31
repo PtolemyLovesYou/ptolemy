@@ -15,7 +15,6 @@ pub enum ApiError {
     InternalError,
     AuthError(String),
     SerializationError(String),
-    ParseError(String),
 }
 
 impl std::fmt::Display for ApiError {
@@ -39,7 +38,6 @@ impl ApiError {
             ApiError::InternalError => "internal_error",
             ApiError::AuthError(_) => "auth_error",
             ApiError::SerializationError(_) => "serialization_error",
-            ApiError::ParseError(_) => "parse_error",
         }
     }
 
@@ -57,7 +55,6 @@ impl ApiError {
             ApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::AuthError(_) => StatusCode::UNAUTHORIZED,
             ApiError::SerializationError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::ParseError(_) => StatusCode::BAD_REQUEST,
         }
     }
 }
