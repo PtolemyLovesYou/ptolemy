@@ -1,11 +1,12 @@
 # Build stage
-FROM rust:1.82-bookworm as builder
+FROM rust:1.82-bookworm AS builder
 
-ENV BUILD_PROTOBUFS=0 \
-    COMPILE_GQL=0 \
-    PTOLEMY_ENV=PROD
+ENV BUILD_PROTOBUFS=0
 
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends cmake
 
 COPY Cargo.toml Cargo.lock ./
 COPY ./api ./api
@@ -18,6 +19,8 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 
 # Runtime stage
 FROM debian:bookworm-slim
+
+ENV PTOLEMY_CONFIG=/app/ptolemy.yml
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libpq5 && \
