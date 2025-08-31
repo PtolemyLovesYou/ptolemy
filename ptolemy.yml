@@ -1,4 +1,5 @@
 stdout:
+  serialization: json
 kafka:
   bootstrap_servers: localhost:19092
   queue_buffering_max_ms: "100"
