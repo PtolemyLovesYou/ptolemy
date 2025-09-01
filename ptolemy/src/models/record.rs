@@ -1,9 +1,9 @@
-use super::super::error::ApiError;
-use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
-use ptolemy::{
+use super::super::error::ParseError;
+use crate::{
     generated::record_publisher::{self, record::RecordData},
     models::{FieldValueType, Id, Tier, JSON},
 };
+use chrono::{naive::serde::ts_microseconds, DateTime, NaiveDateTime};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
@@ -31,22 +31,19 @@ impl Record {
 }
 
 impl TryFrom<record_publisher::Record> for Record {
-    type Error = ApiError;
+    type Error = ParseError;
 
     fn try_from(value: record_publisher::Record) -> Result<Self, Self::Error> {
         let tier: Tier = value
             .tier()
             .try_into()
-            .map_err(|_| ApiError::ParseError(format!("Invalid Tier: {:?}", value.tier())))?;
-        let id: Id = value
-            .id
+            .map_err(|_| ParseError::UndefinedTier)?;
+        let id: Id = value.id.try_into().map_err(|_| ParseError::InvalidUuid)?;
+        let parent_id: Id = value
+            .parent_id
             .try_into()
-            .map_err(|_| ApiError::ParseError(format!("Invalid UUID")))?;
-        let parent_id: Id = value.parent_id.try_into().map_err(|_| ApiError::BadQuery)?;
-        let data = match value.record_data.ok_or(ApiError::ParseError(format!(
-            "Missing data for record ID {}",
-            &id
-        )))? {
+            .map_err(|_| ParseError::InvalidUuid)?;
+        let data = match value.record_data.ok_or(ParseError::MissingField)? {
             RecordData::Event(e) => Self::Event(Event {
                 tier,
                 parent_id,
@@ -54,11 +51,7 @@ impl TryFrom<record_publisher::Record> for Record {
                 name: e.name,
                 parameters: e
                     .parameters
-                    .map(|p| {
-                        p.try_into().map_err(|_| {
-                            ApiError::ParseError(format!("Invalid JSON for record ID {}", &id))
-                        })
-                    })
+                    .map(|p| p.try_into().map_err(|_| ParseError::BadJSON))
                     .transpose()?,
                 version: e.version,
                 environment: e.environment,
@@ -139,16 +132,11 @@ impl IOF {
         id: Id,
         field_name: String,
         field_value: Option<prost_types::Value>,
-    ) -> Result<Self, ApiError> {
+    ) -> Result<Self, ParseError> {
         let field_value: JSON = field_value
-            .ok_or(ApiError::ParseError(format!(
-                "Missing field_value for ID {}",
-                &id
-            )))?
+            .ok_or(ParseError::MissingField)?
             .try_into()
-            .map_err(|_| {
-                ApiError::ParseError(format!("Failed to parse field_value for ID {}", &id))
-            })?;
+            .map_err(|_| ParseError::BadJSON)?;
 
         let field_value_type = field_value.field_value_type();
 
@@ -181,7 +169,7 @@ impl IOF {
             ),
             serde_json::Value::Null => {
                 tracing::error!("Null field value. This shouldn't happen.");
-                return Err(ApiError::InternalError);
+                return Err(ParseError::MissingField);
             }
         };
 
@@ -209,12 +197,12 @@ pub struct Metadata {
     pub field_value: String,
 }
 
-fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, ApiError> {
+fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, ParseError> {
     match DateTime::from_timestamp(ts.trunc() as i64, (ts.fract() * 1e9) as u32) {
         Some(t) => Ok(t.naive_utc()),
         None => {
             tracing::error!("Invalid timestamp: {}", ts);
-            Err(ApiError::ParseError(format!("Invalid timestamp: {}", ts)))
+            Err(ParseError::BadTimestamp)
         }
     }
 }

@@ -28,7 +28,7 @@ pub fn get_cors_layer() -> CorsLayer {
 
 pub async fn get_router(state: PtolemyState) -> Router {
     let publisher_service =
-        ptolemy::generated::record_publisher::record_publisher_server::RecordPublisherServer::new(
+        crate::generated::record_publisher::record_publisher_server::RecordPublisherServer::new(
             super::services::RecordPublisherService::new(state.clone()),
         );
 

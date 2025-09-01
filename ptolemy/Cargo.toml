@@ -3,6 +3,10 @@ name = "ptolemy"
 version = "0.1.0-alpha.51+6a5789d"
 edition = "2021"
 
+[[bin]]
+name = "api"
+path = "bin/api.rs"
+
 [lib]
 name = "ptolemy"
 
@@ -12,6 +16,49 @@ tonic-build = "0.12.3"
 [features]
 openssl = [ "dep:openssl",]
 vendored = [ "openssl",]
+
+[dependencies]
+async-trait = "0.1.89"
+futures = "0.3.31"
+http = "1.2.0"
+tokio-stream = "0.1.17"
+tonic-web = "0.12.3"
+
+[dependencies.tracing-subscriber]
+workspace = true
+
+[dependencies.rdkafka]
+version = "0.38.0"
+features = [ "cmake-build",]
+
+[dependencies.figment]
+version = "0.10.19"
+features = [ "yaml", "env",]
+
+[dependencies.ring]
+workspace = true
+
+[dependencies.base64]
+workspace = true
+
+[dependencies.tower-http]
+workspace = true
+features = [ "cors",]
+
+[dependencies.argon2]
+workspace = true
+
+[dependencies.tower]
+workspace = true
+
+[dependencies.jsonwebtoken]
+workspace = true
+
+[dependencies.chrono]
+workspace = true
+
+[dependencies.axum]
+workspace = true
 
 [dependencies.openssl]
 version = "0.10.72"

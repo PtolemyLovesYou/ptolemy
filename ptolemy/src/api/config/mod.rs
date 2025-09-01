@@ -4,7 +4,7 @@ use figment::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::error::ApiError;
+use super::error::ApiError;
 
 use self::kafka::KafkaConfig;
 use self::stdout::StdoutConfig;

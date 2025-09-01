@@ -6,8 +6,8 @@ pub use kafka::KafkaSink;
 pub use sink::Sink;
 pub use stdout::StdoutSink;
 
-use crate::config::PtolemyConfig;
-use crate::error::ApiError;
+use super::config::PtolemyConfig;
+use super::error::ApiError;
 
 pub fn configure_sink_registry(config: &PtolemyConfig) -> Result<sink::SinkRegistry, ApiError> {
     let mut registry = sink::SinkRegistry::new();

@@ -9,13 +9,12 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends cmake
 
 COPY Cargo.toml Cargo.lock ./
-COPY ./api ./api
 COPY ./ptolemy ./ptolemy
 COPY ./ptolemy-py ./ptolemy-py
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
-    cargo build -p api --bin api --release
+    cargo build -p ptolemy --bin api --release
 
 # Runtime stage
 FROM debian:bookworm-slim

@@ -1,4 +1,4 @@
-use ptolemy::generated::record_publisher::Record;
+use crate::generated::record_publisher::Record;
 use rdkafka::{
     producer::{FutureProducer, FutureRecord},
     ClientConfig,
@@ -70,7 +70,7 @@ impl Sink for KafkaSink {
     }
 
     async fn send_batch(&self, records: Vec<Record>) -> Result<(), ApiError> {
-        let recs: Vec<super::super::models::Record> = records
+        let recs: Vec<crate::models::Record> = records
             .into_iter()
             .filter_map(|r| match r.try_into() {
                 Ok(r) => Some(r),
@@ -83,12 +83,12 @@ impl Sink for KafkaSink {
 
         for rec in recs {
             let record_type = match &rec {
-                super::super::models::Record::Event(_) => "event",
-                super::super::models::Record::Runtime(_) => "runtime",
-                super::super::models::Record::Input(_) => "input",
-                super::super::models::Record::Output(_) => "output",
-                super::super::models::Record::Feedback(_) => "feedback",
-                super::super::models::Record::Metadata(_) => "metadata",
+                crate::models::Record::Event(_) => "event",
+                crate::models::Record::Runtime(_) => "runtime",
+                crate::models::Record::Input(_) => "input",
+                crate::models::Record::Output(_) => "output",
+                crate::models::Record::Feedback(_) => "feedback",
+                crate::models::Record::Metadata(_) => "metadata",
             };
 
             let topic = format!("ptolemy.{}", record_type);

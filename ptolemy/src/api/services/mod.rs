@@ -1,5 +1,5 @@
 use super::state::PtolemyState;
-use ptolemy::generated::record_publisher;
+use crate::generated::record_publisher;
 use tonic::{Request, Response, Status};
 
 #[derive(Debug)]

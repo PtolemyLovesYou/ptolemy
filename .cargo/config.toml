@@ -1,3 +1,3 @@
 [env]
-RUST_LOG = "info,api=debug,ptolemy=debug"
+RUST_LOG = "info,ptolemy=debug"
 BUILD_PROTOBUFS="1"

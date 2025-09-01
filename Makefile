@@ -32,7 +32,7 @@ docs:
 
 .PHONY: run-api
 run-api:
-	cargo run -p api --bin api
+	cargo run -p ptolemy --bin api
 
 .PHONY: run-ui
 run-ui:

@@ -1,5 +1,5 @@
-use api::error::ApiError;
-use api::{config::PtolemyConfig, routes::get_router, state::AppState};
+use ptolemy::api::error::ApiError;
+use ptolemy::api::{config::PtolemyConfig, routes::get_router, state::AppState};
 
 #[tokio::main]
 async fn main() -> Result<(), ApiError> {
