@@ -1,11 +1,11 @@
-[package]
-name = "ptolemy"
-version = "0.1.0-alpha.51+6a5789d"
-edition = "2021"
-
 [[bin]]
 name = "api"
 path = "bin/api.rs"
+
+[package]
+name = "ptolemy"
+version = "0.1.0-alpha.52+7c24a33"
+edition = "2021"
 
 [lib]
 name = "ptolemy"

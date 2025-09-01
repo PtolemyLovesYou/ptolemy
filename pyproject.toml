@@ -1,6 +1,6 @@
 [project]
 name = "ptolemy-workspace"
-version = "0.1.0-alpha.51+6a5789d"
+version = "0.1.0-alpha.52+7c24a33"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
