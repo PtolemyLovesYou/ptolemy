@@ -314,7 +314,7 @@ impl RecordExporter {
     }
 
     pub fn send_trace_threaded(&self, py: Python<'_>, trace: Trace) -> PyResult<()> {
-        py.allow_threads(|| self.send_trace_blocking(trace))
+        py.detach(|| self.send_trace_blocking(trace))
     }
 }
 
