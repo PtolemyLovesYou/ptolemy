@@ -4,7 +4,7 @@ path = "bin/api.rs"
 
 [package]
 name = "ptolemy"
-version = "0.1.0-alpha.53+7836cd7"
+version = "0.1.0-alpha.54+c8f30c8"
 edition = "2021"
 
 [lib]
