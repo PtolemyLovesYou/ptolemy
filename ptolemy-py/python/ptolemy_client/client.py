@@ -34,7 +34,7 @@ class Ptolemy(BaseModel):
             logger.error("Invalid trace type: %s", trace.__class__.__name__)
         except ConnectionError as e:
             logger.error("Error sending trace %s: %s", trace.id_, e)
-    
+
     async def add_trace(self, trace: "Trace"):
         """Send trace."""
         # TODO: Batching, retries, etc.
@@ -46,7 +46,6 @@ class Ptolemy(BaseModel):
             logger.error("Invalid trace type: %s", trace.__class__.__name__)
         except ConnectionError as e:
             logger.error("Error sending trace %s: %s", trace.id_, e)
-        
 
     def trace(
         self,
@@ -150,10 +149,10 @@ class Trace(BaseModel):
             error_type=error_type,
             error_content=error_content,
         )
-    
+
     async def __aenter__(self):
         self.start()
-    
+
     async def __aexit__(self, exc_type, exc_value, tb):
         self.end(exc_type, exc_value, tb)
 
