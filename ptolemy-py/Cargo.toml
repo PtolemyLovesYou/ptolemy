@@ -10,9 +10,12 @@ crate-type = [ "cdylib",]
 [features]
 vendored = [ "ptolemy/vendored",]
 
+[dependencies]
+once_cell = "1.21.3"
+
 [dependencies.pyo3]
-version = "0.23.3"
-features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module",]
+version = "0.26.0"
+features = [ "chrono", "abi3-py311", "multiple-pymethods", "extension-module", "experimental-async"]
 
 [dependencies.openssl]
 version = "0.10.72"

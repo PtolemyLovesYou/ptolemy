@@ -1,4 +1,7 @@
-use super::types::{PyJSON, PyUUIDWrapper};
+use super::{
+    runtime::runtime,
+    types::{PyJSON, PyUUIDWrapper},
+};
 use ptolemy::generated::record_publisher::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
     FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
@@ -260,30 +263,31 @@ impl Trace {
 #[derive(Debug)]
 #[pyclass]
 pub struct RecordExporter {
-    client: RecordPublisherClient<tonic::transport::Channel>,
+    channel: tonic::transport::Channel,
+}
 
-    // We really shouldn't be having this object be managing its own runtime...
-    runtime: tokio::runtime::Runtime,
+impl RecordExporter {
+    fn client(&self) -> RecordPublisherClient<tonic::transport::Channel> {
+        RecordPublisherClient::new(self.channel.clone())
+    }
 }
 
 #[pymethods]
 impl RecordExporter {
     #[new]
     pub fn new(base_url: String) -> PyResult<Self> {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()?;
-
-        let client = runtime
-            .block_on(RecordPublisherClient::connect(base_url))
-            .map_err(|e| {
-                PyConnectionError::new_err(format!("Unable to connect to Ptolemy server: {}", e))
-            })?;
-
-        Ok(Self { runtime, client })
+        let channel_base = tonic::transport::Channel::from_shared(base_url)
+            .map_err(|e| PyConnectionError::new_err(format!("bad URI: {e}")))?;
+        let channel = runtime()?.block_on(async {
+            channel_base
+                .connect()
+                .await
+                .map_err(|e| PyConnectionError::new_err(format!("connect failed: {e}")))
+        })?;
+        Ok(Self { channel })
     }
 
-    pub fn send_trace(&mut self, trace: Trace) -> PyResult<()> {
+    pub async fn send_trace(&self, trace: Trace) -> PyResult<()> {
         let records = trace.to_records()?;
 
         tracing::debug!("Pushing {} records", records.len());
@@ -291,8 +295,9 @@ impl RecordExporter {
         let publish_request = PublishRequest { records };
 
         let _resp = self
-            .runtime
-            .block_on(self.client.publish(publish_request))
+            .client()
+            .publish(publish_request)
+            .await
             .map_err(|e| {
                 PyConnectionError::new_err(format!(
                     "Failed to push records to server: {}",
@@ -302,6 +307,14 @@ impl RecordExporter {
             .into_inner();
 
         Ok(())
+    }
+
+    pub fn send_trace_blocking(&self, trace: Trace) -> PyResult<()> {
+        runtime()?.block_on(self.send_trace(trace))
+    }
+
+    pub fn send_trace_threaded(&self, py: Python<'_>, trace: Trace) -> PyResult<()> {
+        py.detach(|| self.send_trace_blocking(trace))
     }
 }
 

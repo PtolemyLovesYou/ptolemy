@@ -23,12 +23,24 @@ class Ptolemy(BaseModel):
 
     client: InstanceOf[RecordExporter]
 
-    def add_trace(self, trace: "Trace"):
+    def add_trace_blocking(self, trace: "Trace"):
         """Send trace."""
         # TODO: Batching, retries, etc.
 
         try:
-            self.client.send_trace(trace)
+            self.client.send_trace_blocking(trace)
+        # Thrown when invalid trace is sent
+        except AttributeError as e:
+            logger.error("Invalid trace type: %s", trace.__class__.__name__)
+        except ConnectionError as e:
+            logger.error("Error sending trace %s: %s", trace.id_, e)
+
+    async def add_trace(self, trace: "Trace"):
+        """Send trace."""
+        # TODO: Batching, retries, etc.
+
+        try:
+            await self.client.send_trace(trace)
         # Thrown when invalid trace is sent
         except AttributeError as e:
             logger.error("Invalid trace type: %s", trace.__class__.__name__)
@@ -138,13 +150,21 @@ class Trace(BaseModel):
             error_content=error_content,
         )
 
+    async def __aenter__(self):
+        self.start()
+
+    async def __aexit__(self, exc_type, exc_value, tb):
+        self.end(exc_type, exc_value, tb)
+
+        await self.client.add_trace(self)
+
     def __enter__(self):
         self.start()
 
     def __exit__(self, exc_type, exc_value, tb):
         self.end(exc_type, exc_value, tb)
 
-        self.client.add_trace(self)
+        self.client.add_trace_blocking(self)
 
     def child(
         self,
