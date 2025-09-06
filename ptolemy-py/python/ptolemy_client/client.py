@@ -21,9 +21,6 @@ class Ptolemy(BaseModel):
 
     base_url: str
 
-    workspace_id: UUID
-    workspace_name: str
-
     client: InstanceOf[RecordExporter]
 
     def add_trace(self, trace: "Trace"):
@@ -40,6 +37,7 @@ class Ptolemy(BaseModel):
 
     def trace(
         self,
+        subject_id: UUID,
         name: str,
         parameters: Optional[Parameters],
         version: Optional[str] = None,
@@ -50,7 +48,8 @@ class Ptolemy(BaseModel):
         return Trace(
             client=self,
             tier=Tier.SYSTEM,
-            parent_id=self.workspace_id,
+            subject_id=subject_id,
+            parent_id=subject_id,
             name=name,
             parameters=parameters,
             version=version,
@@ -62,13 +61,10 @@ def connect(base_url: str) -> Ptolemy:
     Connect to Ptolemy client.
     """
     client = RecordExporter(base_url)
-    workspace_id, workspace_name = client.get_workspace_info()
 
     return Ptolemy(
         base_url=base_url,
         client=client,
-        workspace_id=workspace_id,
-        workspace_name=workspace_name,
     )
 
 def _format_err(
@@ -87,6 +83,7 @@ class Trace(BaseModel):
 
     client: Ptolemy = Field(exclude=True, repr=False)
 
+    subject_id: UUID
     parent_id: UUID
     id_: UUID = Field(default_factory=uuid4, alias="id")
 
@@ -133,7 +130,8 @@ class Trace(BaseModel):
         error_type, error_content = _format_err(exc_type, exc_value, tb)
 
         self.runtime_ = Runtime(
-            parent_id=self.id_,
+            subject_id=self.subject_id,
+            event_id=self.id_,
             start_time=self.start_time,
             end_time=end_time,
             error_type=error_type,
@@ -162,6 +160,7 @@ class Trace(BaseModel):
 
         return Trace(
             client=self.client,
+            subject_id=self.subject_id,
             parent_id=self.id_,
             tier=self.tier.child(),
             name=name,
@@ -180,7 +179,7 @@ class Trace(BaseModel):
             self,
             attr,
             [
-                cls(parent_id=self.id_, field_name=k, field_value=v)
+                cls(subject_id=self.subject_id, event_id=self.id_, field_name=k, field_value=v)
                 for k, v in kwargs.items()
                 if v is not None
             ],

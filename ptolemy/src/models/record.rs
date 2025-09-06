@@ -11,9 +11,9 @@ use serde::Serialize;
 pub enum Record {
     Event(Event),
     Runtime(Runtime),
-    Input(IOF),
-    Output(IOF),
-    Feedback(IOF),
+    Input(Input),
+    Output(Output),
+    Feedback(Feedback),
     Metadata(Metadata),
 }
 
@@ -34,62 +34,21 @@ impl TryFrom<record_publisher::Record> for Record {
     type Error = ParseError;
 
     fn try_from(value: record_publisher::Record) -> Result<Self, Self::Error> {
-        let tier: Tier = value
-            .tier()
-            .try_into()
-            .map_err(|_| ParseError::UndefinedTier)?;
-        let id: Id = value.id.try_into().map_err(|_| ParseError::InvalidUuid)?;
-        let parent_id: Id = value
-            .parent_id
-            .try_into()
-            .map_err(|_| ParseError::InvalidUuid)?;
-        let data = match value.record_data.ok_or(ParseError::MissingField)? {
-            RecordData::Event(e) => Self::Event(Event {
-                tier,
-                parent_id,
-                id,
-                name: e.name,
-                parameters: e
-                    .parameters
-                    .map(|p| p.try_into().map_err(|_| ParseError::BadJSON))
-                    .transpose()?,
-                version: e.version,
-                environment: e.environment,
-            }),
-            RecordData::Runtime(r) => Self::Runtime(Runtime {
-                tier,
-                parent_id,
-                id,
-                start_time: datetime_from_unix_timestamp(r.start_time)?,
-                end_time: datetime_from_unix_timestamp(r.end_time)?,
-                error_type: r.error_type,
-                error_content: r.error_content,
-            }),
-            RecordData::Input(i) => {
-                Self::Input(IOF::new(tier, parent_id, id, i.field_name, i.field_value)?)
-            }
-            RecordData::Output(o) => {
-                Self::Output(IOF::new(tier, parent_id, id, o.field_name, o.field_value)?)
-            }
-            RecordData::Feedback(f) => {
-                Self::Feedback(IOF::new(tier, parent_id, id, f.field_name, f.field_value)?)
-            }
-            RecordData::Metadata(m) => Self::Metadata(Metadata {
-                tier,
-                parent_id,
-                id,
-                field_name: m.field_name,
-                field_value: m.field_value,
-            }),
-        };
-
-        Ok(data)
+        Ok(match value.record_data.ok_or(ParseError::MissingField)? {
+            RecordData::Event(e) => Self::Event(e.try_into()?),
+            RecordData::Runtime(r) => Self::Runtime(r.try_into()?),
+            RecordData::Input(i) => Self::Input(i.try_into()?),
+            RecordData::Output(o) => Self::Output(o.try_into()?),
+            RecordData::Feedback(f) => Self::Feedback(f.try_into()?),
+            RecordData::Metadata(m) => Self::Metadata(m.try_into()?),
+        })
     }
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Event {
     pub tier: Tier,
+    pub subject_id: Id,
     pub parent_id: Id,
     pub id: Id,
     pub name: String,
@@ -98,10 +57,40 @@ pub struct Event {
     pub environment: Option<String>,
 }
 
+impl TryFrom<record_publisher::EventRecord> for Event {
+    type Error = ParseError;
+
+    fn try_from(value: record_publisher::EventRecord) -> Result<Event, ParseError> {
+        Ok(Event {
+            tier: value
+                .tier()
+                .try_into()
+                .map_err(|_| ParseError::UndefinedTier)?,
+            subject_id: value
+                .subject_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            parent_id: value
+                .parent_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            id: value.id.try_into().map_err(|_| ParseError::InvalidUuid)?,
+            name: value.name,
+            parameters: value
+                .parameters
+                .map(|p| p.try_into().map_err(|_| ParseError::BadJSON))
+                .transpose()?,
+            version: value.version,
+            environment: value.environment,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Runtime {
     pub tier: Tier,
-    pub parent_id: Id,
+    pub subject_id: Id,
+    pub event_id: Id,
     pub id: Id,
     #[serde(with = "ts_microseconds")]
     pub start_time: NaiveDateTime,
@@ -111,10 +100,37 @@ pub struct Runtime {
     pub error_content: Option<String>,
 }
 
+impl TryFrom<record_publisher::RuntimeRecord> for Runtime {
+    type Error = ParseError;
+
+    fn try_from(value: record_publisher::RuntimeRecord) -> Result<Runtime, ParseError> {
+        Ok(Runtime {
+            tier: value
+                .tier()
+                .try_into()
+                .map_err(|_| ParseError::UndefinedTier)?,
+            subject_id: value
+                .subject_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            event_id: value
+                .event_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            id: value.id.try_into().map_err(|_| ParseError::UndefinedTier)?,
+            start_time: datetime_from_unix_timestamp(value.start_time)?,
+            end_time: datetime_from_unix_timestamp(value.end_time)?,
+            error_type: value.error_type,
+            error_content: value.error_content,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct IOF {
     pub tier: Tier,
-    pub parent_id: Id,
+    pub subject_id: Id,
+    pub event_id: Id,
     pub id: Id,
     pub field_name: String,
     pub field_value_type: FieldValueType,
@@ -125,10 +141,116 @@ pub struct IOF {
     pub field_value_json: Option<JSON>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(transparent)]
+pub struct Input(IOF);
+
+impl std::ops::Deref for Input {
+    type Target = IOF;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl TryFrom<record_publisher::InputRecord> for Input {
+    type Error = ParseError;
+
+    fn try_from(value: record_publisher::InputRecord) -> Result<Input, ParseError> {
+        Ok(Input(IOF::new(
+            value
+                .tier()
+                .try_into()
+                .map_err(|_| ParseError::UndefinedTier)?,
+            value
+                .subject_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            value
+                .event_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            value.id.try_into().map_err(|_| ParseError::InvalidUuid)?,
+            value.field_name,
+            value.field_value,
+        )?))
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(transparent)]
+pub struct Output(IOF);
+
+impl std::ops::Deref for Output {
+    type Target = IOF;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl TryFrom<record_publisher::OutputRecord> for Output {
+    type Error = ParseError;
+
+    fn try_from(value: record_publisher::OutputRecord) -> Result<Output, ParseError> {
+        Ok(Output(IOF::new(
+            value
+                .tier()
+                .try_into()
+                .map_err(|_| ParseError::UndefinedTier)?,
+            value
+                .subject_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            value
+                .event_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            value.id.try_into().map_err(|_| ParseError::InvalidUuid)?,
+            value.field_name,
+            value.field_value,
+        )?))
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(transparent)]
+pub struct Feedback(IOF);
+
+impl std::ops::Deref for Feedback {
+    type Target = IOF;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl TryFrom<record_publisher::FeedbackRecord> for Feedback {
+    type Error = ParseError;
+
+    fn try_from(value: record_publisher::FeedbackRecord) -> Result<Feedback, ParseError> {
+        Ok(Feedback(IOF::new(
+            value
+                .tier()
+                .try_into()
+                .map_err(|_| ParseError::UndefinedTier)?,
+            value
+                .subject_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            value
+                .event_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            value.id.try_into().map_err(|_| ParseError::InvalidUuid)?,
+            value.field_name,
+            value.field_value,
+        )?))
+    }
+}
+
 impl IOF {
     fn new(
         tier: Tier,
-        parent_id: Id,
+        subject_id: Id,
+        event_id: Id,
         id: Id,
         field_name: String,
         field_value: Option<prost_types::Value>,
@@ -175,7 +297,8 @@ impl IOF {
 
         Ok(Self {
             tier,
-            parent_id,
+            subject_id,
+            event_id,
             id,
             field_name,
             field_value_type,
@@ -191,10 +314,35 @@ impl IOF {
 #[derive(Debug, Clone, Serialize)]
 pub struct Metadata {
     pub tier: Tier,
-    pub parent_id: Id,
+    pub subject_id: Id,
+    pub event_id: Id,
     pub id: Id,
     pub field_name: String,
     pub field_value: String,
+}
+
+impl TryFrom<record_publisher::MetadataRecord> for Metadata {
+    type Error = ParseError;
+
+    fn try_from(value: record_publisher::MetadataRecord) -> Result<Metadata, ParseError> {
+        Ok(Metadata {
+            tier: value
+                .tier()
+                .try_into()
+                .map_err(|_| ParseError::UndefinedTier)?,
+            subject_id: value
+                .subject_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            event_id: value
+                .event_id
+                .try_into()
+                .map_err(|_| ParseError::InvalidUuid)?,
+            id: value.id.try_into().map_err(|_| ParseError::InvalidUuid)?,
+            field_name: value.field_name,
+            field_value: value.field_value,
+        })
+    }
 }
 
 fn datetime_from_unix_timestamp(ts: f32) -> Result<NaiveDateTime, ParseError> {

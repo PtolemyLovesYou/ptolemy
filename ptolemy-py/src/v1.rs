@@ -1,7 +1,7 @@
-use super::types::{PyId, PyJSON, PyUUIDWrapper};
+use super::types::{PyJSON, PyUUIDWrapper};
 use ptolemy::generated::record_publisher::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
-    FeedbackRecord, GetWorkspaceInfoRequest, InputRecord, MetadataRecord, OutputRecord,
+    FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
     PublishRequest, Record, RuntimeRecord, Tier,
 };
 use pyo3::{
@@ -12,7 +12,8 @@ use pyo3::{
 
 #[derive(Debug, FromPyObject)]
 pub struct IO {
-    pub parent_id: PyUUIDWrapper,
+    pub subject_id: PyUUIDWrapper,
+    pub event_id: PyUUIDWrapper,
     #[pyo3(attribute("id_"))]
     pub id: PyUUIDWrapper,
 
@@ -27,10 +28,11 @@ pub struct Input(pub IO);
 impl Input {
     pub fn to_record(&self, tier: &Tier) -> PyResult<Record> {
         Ok(Record {
-            tier: tier.clone().into(),
-            parent_id: self.0.parent_id.to_string(),
-            id: self.0.id.to_string(),
             record_data: Some(RecordData::Input(InputRecord {
+                tier: tier.clone().into(),
+                subject_id: self.0.subject_id.to_string(),
+                event_id: self.0.event_id.to_string(),
+                id: self.0.id.to_string(),
                 field_name: self.0.field_name.clone(),
                 field_value: Some(self.0.field_value.0.clone().into()),
             })),
@@ -45,10 +47,11 @@ pub struct Output(pub IO);
 impl Output {
     pub fn to_record(&self, tier: &Tier) -> PyResult<Record> {
         Ok(Record {
-            tier: tier.clone().into(),
-            parent_id: self.0.parent_id.to_string(),
-            id: self.0.id.to_string(),
             record_data: Some(RecordData::Output(OutputRecord {
+                tier: tier.clone().into(),
+                subject_id: self.0.subject_id.to_string(),
+                event_id: self.0.event_id.to_string(),
+                id: self.0.id.to_string(),
                 field_name: self.0.field_name.clone(),
                 field_value: Some(self.0.field_value.0.clone().into()),
             })),
@@ -63,10 +66,11 @@ pub struct Feedback(pub IO);
 impl Feedback {
     pub fn to_record(&self, tier: &Tier) -> PyResult<Record> {
         Ok(Record {
-            tier: tier.clone().into(),
-            parent_id: self.0.parent_id.to_string(),
-            id: self.0.id.to_string(),
             record_data: Some(RecordData::Feedback(FeedbackRecord {
+                tier: tier.clone().into(),
+                subject_id: self.0.subject_id.to_string(),
+                event_id: self.0.event_id.to_string(),
+                id: self.0.id.to_string(),
                 field_name: self.0.field_name.clone(),
                 field_value: Some(self.0.field_value.0.clone().into()),
             })),
@@ -76,7 +80,8 @@ impl Feedback {
 
 #[derive(Debug, FromPyObject)]
 pub struct Runtime {
-    pub parent_id: PyUUIDWrapper,
+    pub subject_id: PyUUIDWrapper,
+    pub event_id: PyUUIDWrapper,
     #[pyo3(attribute("id_"))]
     pub id: PyUUIDWrapper,
 
@@ -100,10 +105,11 @@ impl Runtime {
             .ok_or(PyValueError::new_err("End time not set."))?;
 
         Ok(Record {
-            tier: tier.clone().into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.parent_id.to_string(),
             record_data: Some(RecordData::Runtime(RuntimeRecord {
+                tier: tier.clone().into(),
+                subject_id: self.subject_id.to_string(),
+                event_id: self.event_id.to_string(),
+                id: self.id.to_string(),
                 start_time,
                 end_time,
                 error_type: self.error_type.clone(),
@@ -115,7 +121,8 @@ impl Runtime {
 
 #[derive(Debug, FromPyObject)]
 pub struct Metadata {
-    pub parent_id: PyUUIDWrapper,
+    pub subject_id: PyUUIDWrapper,
+    pub event_id: PyUUIDWrapper,
     #[pyo3(attribute("id_"))]
     pub id: PyUUIDWrapper,
 
@@ -126,10 +133,11 @@ pub struct Metadata {
 impl Metadata {
     pub fn to_record(&self, tier: &Tier) -> PyResult<Record> {
         Ok(Record {
-            tier: tier.clone().into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.id.to_string(),
             record_data: Some(RecordData::Metadata(MetadataRecord {
+                tier: tier.clone().into(),
+                subject_id: self.subject_id.to_string(),
+                event_id: self.event_id.to_string(),
+                id: self.id.to_string(),
                 field_name: self.field_name.clone(),
                 field_value: self.field_value.clone(),
             })),
@@ -140,6 +148,7 @@ impl Metadata {
 #[derive(Debug, FromPyObject)]
 pub struct Trace {
     pub tier: String,
+    pub subject_id: PyUUIDWrapper,
     pub parent_id: PyUUIDWrapper,
     #[pyo3(attribute("id_"))]
     pub id: PyUUIDWrapper,
@@ -183,10 +192,11 @@ impl Trace {
         let parameters = self.parameters.as_ref().map(|i| i.0.clone().into());
 
         Ok(Record {
-            tier: tier.clone().into(),
-            parent_id: self.parent_id.to_string(),
-            id: self.id.to_string(),
             record_data: Some(RecordData::Event(EventRecord {
+                tier: tier.clone().into(),
+                subject_id: self.subject_id.to_string(),
+                parent_id: self.parent_id.to_string(),
+                id: self.id.to_string(),
                 name: self.name.clone(),
                 parameters,
                 version: self.version.clone(),
@@ -271,28 +281,6 @@ impl RecordExporter {
             })?;
 
         Ok(Self { runtime, client })
-    }
-
-    pub fn get_workspace_info(&mut self) -> PyResult<(PyId, String)> {
-        // get workspace information
-        let wk_request = GetWorkspaceInfoRequest {};
-
-        let wk_resp = self
-            .runtime
-            .block_on(self.client.get_workspace_info(wk_request))
-            .map_err(|e| {
-                PyConnectionError::new_err(format!(
-                    "Failed to get workspace information: {}",
-                    e.message()
-                ))
-            })?
-            .into_inner();
-
-        let workspace_id = PyId::String(wk_resp.workspace_id);
-
-        let workspace_name = wk_resp.workspace_name;
-
-        Ok((workspace_id, workspace_name))
     }
 
     pub fn send_trace(&mut self, trace: Trace) -> PyResult<()> {
