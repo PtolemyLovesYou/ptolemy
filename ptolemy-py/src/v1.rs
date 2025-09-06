@@ -1,4 +1,4 @@
-use super::types::{PyJSON, PyUUIDWrapper};
+use super::{types::{PyJSON, PyUUIDWrapper}, runtime::runtime};
 use ptolemy::generated::record_publisher::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
     FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
@@ -261,26 +261,19 @@ impl Trace {
 #[pyclass]
 pub struct RecordExporter {
     client: RecordPublisherClient<tonic::transport::Channel>,
-
-    // We really shouldn't be having this object be managing its own runtime...
-    runtime: tokio::runtime::Runtime,
 }
 
 #[pymethods]
 impl RecordExporter {
     #[new]
     pub fn new(base_url: String) -> PyResult<Self> {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()?;
-
-        let client = runtime
+        let client = runtime()?
             .block_on(RecordPublisherClient::connect(base_url))
             .map_err(|e| {
                 PyConnectionError::new_err(format!("Unable to connect to Ptolemy server: {}", e))
             })?;
 
-        Ok(Self { runtime, client })
+        Ok(Self { client })
     }
 
     pub fn send_trace(&mut self, trace: Trace) -> PyResult<()> {
@@ -290,8 +283,7 @@ impl RecordExporter {
 
         let publish_request = PublishRequest { records };
 
-        let _resp = self
-            .runtime
+        let _resp = runtime()?
             .block_on(self.client.publish(publish_request))
             .map_err(|e| {
                 PyConnectionError::new_err(format!(
