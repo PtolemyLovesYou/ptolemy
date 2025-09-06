@@ -29,11 +29,10 @@ impl Sink for StdoutSink {
 }
 
 fn serialize_to_json(record: Record) -> Option<String> {
-    let record_id = record.id.clone();
     let rec = match models::Record::try_from(record) {
         Ok(r) => r,
         Err(e) => {
-            tracing::error!("⚠️ Error parsing record {}: {:?}", record_id, e);
+            tracing::error!("⚠️ Error parsing record: {:?}", e);
             return None;
         }
     };
@@ -41,7 +40,7 @@ fn serialize_to_json(record: Record) -> Option<String> {
     match serde_json::to_string(&rec) {
         Ok(json_str) => return Some(json_str),
         Err(e) => {
-            tracing::error!("⚠️ Error serializing record {}: {:?}", record_id, e);
+            tracing::error!("⚠️ Error serializing record {}: {:?}", rec.id(), e);
             return None;
         }
     };
