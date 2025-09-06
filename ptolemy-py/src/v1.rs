@@ -287,7 +287,7 @@ impl RecordExporter {
         Ok(Self { channel })
     }
 
-    pub async fn send_trace(&mut self, trace: Trace) -> PyResult<()> {
+    pub async fn send_trace(&self, trace: Trace) -> PyResult<()> {
         let records = trace.to_records()?;
 
         tracing::debug!("Pushing {} records", records.len());
@@ -309,11 +309,11 @@ impl RecordExporter {
         Ok(())
     }
 
-    pub fn send_trace_blocking(&mut self, trace: Trace) -> PyResult<()> {
+    pub fn send_trace_blocking(&self, trace: Trace) -> PyResult<()> {
         runtime()?.block_on(self.send_trace(trace))
     }
 
-    pub fn send_trace_threaded(&mut self, py: Python<'_>, trace: Trace) -> PyResult<()> {
+    pub fn send_trace_threaded(&self, py: Python<'_>, trace: Trace) -> PyResult<()> {
         py.allow_threads(|| self.send_trace_blocking(trace))
     }
 }
