@@ -1,0 +1,1701 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ptolemy.dev/concepts/data_model/">
+      
+      
+        <link rel="prev" href="../../getting_started/usage/">
+      
+      
+        <link rel="next" href="../iam/">
+      
+      
+      <link rel="icon" href="../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>Data Model - Ptolemy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=B612:300,300i,400,400i,700,700i%7CB612+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"B612";--md-code-font:"B612 Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/mkdocs_puml/puml.css">
+    
+      <link rel="stylesheet" href="../../assets/mkdocs_puml/interaction.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#data-model" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Ptolemy" class="md-header__button md-logo" aria-label="Ptolemy" data-md-component="logo">
+      
+  <img src="../../img/logomark-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Ptolemy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Data Model
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PtolemyLovesYou/ptolemy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PtolemyLovesYou/ptolemy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/" class="md-tabs__link">
+          
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api_reference/configuration/" class="md-tabs__link">
+          
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../integrations/" class="md-tabs__link">
+          
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/" class="md-tabs__link">
+          
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Ptolemy" class="md-nav__button md-logo" aria-label="Ptolemy" data-md-component="logo">
+      
+  <img src="../../img/logomark-white.svg" alt="logo">
+
+    </a>
+    Ptolemy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PtolemyLovesYou/ptolemy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PtolemyLovesYou/ptolemy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ptolemy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/installation_docker_compose/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install with Docker Compose
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/building_documentation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/usage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Concepts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Data Model
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Data Model
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hierarchical-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Structure 🏗️
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Categories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Events ⚡
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-runtime-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Runtime Information ⏱️
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-data-flow-inputs-outputs-and-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Data Flow: Inputs, Outputs, and Feedback 🔄
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Metadata 🏷️
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-type-flexibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Type Flexibility 🧩
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Management 🗄️
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schema Design Principles 📐
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#systems-engineering-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Systems Engineering Alignment 🔧
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Systems Engineering Alignment 🔧">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Decomposition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#separation-of-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Separation of Concerns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-boundaries-and-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Boundaries and Interfaces
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#governance-and-quality-assurance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Governance and Quality Assurance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adaptability-and-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adaptability and Evolution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../iam/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Identity & Access Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_reference/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_reference/gql_schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GraphQL Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    System Diagrams
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            System Diagrams
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_reference/system_diagrams/database_schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Database Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Integrations
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Integrations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/code_of_conduct/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code of Conduct
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/development_process/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/issues_commits_prs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Issue, Pull Request, & Commit Guidelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hierarchical-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Structure 🏗️
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Categories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Events ⚡
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-runtime-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Runtime Information ⏱️
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-data-flow-inputs-outputs-and-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Data Flow: Inputs, Outputs, and Feedback 🔄
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Metadata 🏷️
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-type-flexibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Type Flexibility 🧩
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Management 🗄️
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schema Design Principles 📐
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#systems-engineering-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Systems Engineering Alignment 🔧
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Systems Engineering Alignment 🔧">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Decomposition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#separation-of-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Separation of Concerns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-boundaries-and-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Boundaries and Interfaces
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#governance-and-quality-assurance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Governance and Quality Assurance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adaptability-and-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adaptability and Evolution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="data-model">Data Model</h1>
+<p>Ptolemy uses a hierarchical data model designed to capture comprehensive information about machine learning systems at various levels of granularity. This structure enables detailed tracking, debugging, and analysis of ML workflows across environments.</p>
+<h3 id="hierarchical-structure">Hierarchical Structure 🏗️</h3>
+<p>The platform organizes observability data across four tiers:</p>
+<ol>
+<li><strong>System</strong>: The highest level, representing the entire ML application or workflow</li>
+<li><strong>Subsystem</strong>: Major functional units within a system</li>
+<li><strong>Component</strong>: Individual modules or services within subsystems</li>
+<li><strong>Subcomponent</strong>: The smallest trackable units within components</li>
+</ol>
+<p>This hierarchical approach allows for both broad system-level insights and detailed component-level analysis.</p>
+<details class="guide">
+<summary>Structuring Your ML System in Ptolemy</summary>
+<p><strong>Tiers</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>What It Represents</th>
+<th>How to Identify</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>System</strong></td>
+<td>Complete ML application</td>
+<td>Has its own API, solves a business problem</td>
+<td>Recommendation Engine</td>
+</tr>
+<tr>
+<td><strong>Subsystem</strong></td>
+<td>Major functional area</td>
+<td>Distinct processing phase, owned by specific team</td>
+<td>Candidate Generation</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td>Single-purpose unit</td>
+<td>Specific algorithm, clear inputs/outputs</td>
+<td>Vector Search</td>
+</tr>
+<tr>
+<td><strong>Subcomponent</strong></td>
+<td>Algorithm step</td>
+<td>Use sparingly for complex components needing detailed monitoring</td>
+<td>Query Tokenization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Best Practices:</strong></p>
+<ul>
+<li>Start with Systems and Subsystems, add deeper tiers as needed</li>
+<li>Aim for 3-7 Subsystems per System</li>
+<li>Ensure data flows logically between tiers</li>
+<li>Use consistent granularity for similar functionality</li>
+</ul>
+<p><strong>Common Pattern Example:</strong>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>├── System: ML Service
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    ├── Subsystem: Data Processing
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    ├── Subsystem: Model Inference
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    │   ├── Component: Algorithm A
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    │   └── Component: Algorithm B
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    └── Subsystem: Post-Processing
+</span></code></pre></div></p>
+</details>
+<h3 id="data-categories">Data Categories</h3>
+<p>Within each tier, the platform captures six types of information:</p>
+<h4 id="1-events">1. Events ⚡</h4>
+<p>Events represent executions or actions at each tier. Each event includes:</p>
+<ul>
+<li>A unique identifier</li>
+<li>Name and version</li>
+<li>Parameter configurations (as JSON)</li>
+<li>Environment context (DEV, STAGE, PROD, etc.)</li>
+</ul>
+<p>Events form the backbone of the observability model, with each tier's events linked to its parent tier through references.</p>
+<h4 id="2-runtime-information">2. Runtime Information ⏱️</h4>
+<p>Runtime captures execution details including:</p>
+<ul>
+<li>Start and end timestamps (with microsecond precision)</li>
+<li>Error information (type and content when applicable)</li>
+<li>Associated tier and event reference</li>
+</ul>
+<p>This data enables performance tracking, failure analysis, and SLA monitoring.</p>
+<h4 id="3-data-flow-inputs-outputs-and-feedback">3. Data Flow: Inputs, Outputs, and Feedback 🔄</h4>
+<p>Ptolemy systematically tracks the flow of data through your ML systems:</p>
+<p><strong>Inputs</strong></p>
+<ul>
+<li>Field names and typed values (supporting string, integer, float, boolean, and JSON)</li>
+<li>Input context and metadata</li>
+<li>Enables reproducibility and helps identify how varying inputs affect outcomes</li>
+</ul>
+<p><strong>Outputs</strong></p>
+<ul>
+<li>Results produced at each tier using the same flexible data typing system</li>
+<li>Captures various return formats consistently</li>
+</ul>
+<p><strong>Feedback</strong></p>
+<ul>
+<li>Auxiliary metrics collected during or immediately after execution</li>
+<li>Includes quality scores, toxicity measurements, compliance metrics, and other immediate evaluations</li>
+<li>Enables real-time quality assessment of model performance</li>
+</ul>
+<p>This three-part data flow tracking creates a complete picture of how information transforms throughout your ML pipeline.</p>
+<div class="admonition note">
+<p class="admonition-title">Why Four Tiers? Understanding Supersystems in Ptolemy</p>
+<p><strong>The Four-Tier Architecture</strong></p>
+<p>Ptolemy intentionally limits its hierarchy to four tiers (System, Subsystem, Component, Subcomponent) to balance observability with practical usability. But what about higher-level constructs?</p>
+<p><strong>Supersystems: The Fifth Tier That Isn't</strong></p>
+<p><em>Supersystems</em> represent end-to-end workflows that span multiple systems. For example:</p>
+<ul>
+<li>A complete user conversation spanning multiple turns</li>
+<li>A multi-stage ML pipeline crossing service boundaries</li>
+<li>A business process involving several ML systems</li>
+</ul>
+<p>Rather than adding a fifth tier, Ptolemy recommends using <em>metadata</em> to track supersystem relationships:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a># Instead of:
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── Supersystem: User Conversation
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    └── System: Turn Processing
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a># Use metadata at the System level:
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>├── System: Turn Processing
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    └── Metadata: conversation_id=abc123, turn_number=3
+</span></code></pre></div>
+<p><strong>Why This Approach?</strong></p>
+<ol>
+<li><em>Simplicity</em>: Four tiers provide sufficient granularity without overwhelming complexity</li>
+<li><em>Query Flexibility</em>: Metadata-based grouping enables more dynamic supersystem analysis</li>
+<li><em>Cross-Cutting Concerns</em>: Some systems may participate in multiple supersystems</li>
+<li><em>Varying Lifecycles</em>: Supersystems often have different retention and governance needs</li>
+</ol>
+<p>This approach gives you supersystem visibility while keeping it simple, stupid.</p>
+</div>
+<h4 id="4-metadata">4. Metadata 🏷️</h4>
+<p>Metadata provides additional context through string key-value pairs, useful for:</p>
+<ul>
+<li>Tagging executions</li>
+<li>Adding identifiers</li>
+<li>Including searchable annotations</li>
+<li>Linking to external systems</li>
+</ul>
+<h3 id="data-type-flexibility">Data Type Flexibility 🧩</h3>
+<p>A core principle of Ptolemy's design is the flexible handling of input, output, and feedback data. This flexibility is critical for ML observability due to the diverse nature of machine learning workloads:</p>
+<ol>
+<li>
+<p><strong>Polymorphic Data Storage</strong>: Ptolemy stores values in type-specific fields (string, integer, float, boolean, or JSON) while maintaining a unified query interface.</p>
+</li>
+<li>
+<p><strong>JSON Support for Complex Structures</strong>: For nested or complex data formats like prompt templates, embedding vectors, or configuration objects, the JSON type provides unlimited flexibility without requiring schema modifications.</p>
+</li>
+<li>
+<p><strong>Type Safety with Runtime Flexibility</strong>: The <code>field_value_type</code> enum ensures type safety while allowing for dynamic data handling, enabling Ptolemy to adapt to various ML frameworks and model types without code changes.</p>
+</li>
+<li>
+<p><strong>Single Field Conceptual Model</strong>: Although implemented as separate columns for efficiency, conceptually each field represents a single value that can be of any supported type, simplifying the developer experience.</p>
+</li>
+<li>
+<p><strong>Cross-Framework Compatibility</strong>: This approach enables Ptolemy to accommodate diverse ML ecosystems, from traditional statistical models to neural networks to large language models, each with their own input/output characteristics.</p>
+</li>
+</ol>
+<p>This flexible type system is particularly valuable for:
+- LLM applications with text inputs/outputs alongside numerical configuration parameters
+- Multimodal models that process various data types
+- Ensemble systems combining different model architectures
+- Feature stores with heterogeneous feature types
+- Experimental workflows where data schemas evolve frequently</p>
+<h2 id="data-management">Data Management 🗄️</h2>
+<p>The platform implements soft deletion throughout the data model. Rather than permanently removing records, the system:</p>
+<ol>
+<li>Marks records with deletion timestamps</li>
+<li>Records deletion reasons</li>
+<li>Preserves the data for audit and analysis purposes</li>
+</ol>
+<p>This approach maintains data lineage and enables historical analysis while supporting data governance requirements.</p>
+<h2 id="schema-design-principles">Schema Design Principles 📐</h2>
+<p>The data model follows several key design principles:</p>
+<ol>
+<li><strong>Referential Integrity</strong>: Cascading deletes ensure that related records remain consistent</li>
+<li><strong>Type Safety</strong>: Enumerated types enforce data validation</li>
+<li><strong>Flexible Value Storage</strong>: Different data types are accommodated through type-specific fields</li>
+<li><strong>Constraint Enforcement</strong>: Check constraints ensure that records are associated with the correct tier</li>
+</ol>
+<h2 id="systems-engineering-alignment">Systems Engineering Alignment 🔧</h2>
+<p>Ptolemy's data model is deliberately structured to align with traditional systems engineering principles:</p>
+<h3 id="hierarchical-decomposition">Hierarchical Decomposition</h3>
+<p>The four-tier structure (system, subsystem, component, subcomponent) directly mirrors the classic systems engineering approach of breaking down complex systems into manageable, functionally distinct parts. This decomposition:</p>
+<ol>
+<li><strong>Enables Clear Boundaries</strong>: Each tier has well-defined responsibilities and interfaces</li>
+<li><strong>Supports Modularity</strong>: Changes in one component can be isolated without affecting others</li>
+<li><strong>Facilitates Traceability</strong>: Issues can be tracked through the hierarchy to their source</li>
+<li><strong>Promotes Reusability</strong>: Well-defined components can be reused across different systems</li>
+</ol>
+<h3 id="separation-of-concerns">Separation of Concerns</h3>
+<p>Ptolemy enforces good system architecture by separating different aspects of ML workflows:</p>
+<ol>
+<li><strong>Configuration vs. Execution</strong>: Parameters are separated from runtime information</li>
+<li><strong>Functional Logic vs. Performance</strong>: Events capture what happened, while runtime tracks how efficiently it occurred</li>
+<li><strong>Data Flow Transparency</strong>: Explicit tracking of inputs and outputs makes data lineage clear</li>
+<li><strong>Metadata Independence</strong>: Contextual information is kept separate from functional data</li>
+</ol>
+<h3 id="system-boundaries-and-interfaces">System Boundaries and Interfaces</h3>
+<p>The data model explicitly captures system interfaces through:</p>
+<ol>
+<li><strong>Defined Input/Output Contracts</strong>: Each tier's inputs and outputs are formally recorded</li>
+<li><strong>Clear Parent-Child Relationships</strong>: References between tiers enforce proper hierarchical structure</li>
+<li><strong>Environment Context</strong>: The environment field ensures proper separation between development, staging, and production</li>
+</ol>
+<h3 id="governance-and-quality-assurance">Governance and Quality Assurance</h3>
+<p>Ptolemy's model embeds governance principles:</p>
+<ol>
+<li><strong>Soft Deletion</strong>: Maintains audit trails and historical context</li>
+<li><strong>Version Tracking</strong>: Captures evolutionary changes in systems</li>
+<li><strong>Error Documentation</strong>: Explicitly tracks failure modes and error types</li>
+<li><strong>Feedback Integration</strong>: Incorporates quality metrics directly into the observability framework</li>
+</ol>
+<h3 id="adaptability-and-evolution">Adaptability and Evolution</h3>
+<p>The flexible type system ensures that Ptolemy can evolve alongside ML technology:</p>
+<ol>
+<li><strong>Future-Proofing</strong>: New model types can be integrated without schema changes</li>
+<li><strong>Progressive Enhancement</strong>: Systems can begin with simple metrics and add complexity over time</li>
+<li><strong>Technology Independence</strong>: The data model makes no assumptions about specific ML frameworks</li>
+</ol>
+<p>By adhering to these systems engineering principles, Ptolemy not only provides observability but also gently guides organizations toward better ML system architecture. The very act of instrumenting ML systems with Ptolemy encourages developers to think systematically about system boundaries, interfaces, and component responsibilities - leading to more maintainable, debuggable, and robust ML applications.</p>
+<p>To learn more about Ptolemy's data model, check out our <a href="../../api_reference/system_diagrams/database_schema/">System Diagrams</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+      <div class="md-consent" data-md-component="consent" id="__consent" hidden>
+        <div class="md-consent__overlay"></div>
+        <aside class="md-consent__inner">
+          <form class="md-consent__form md-grid md-typeset" name="consent">
+            
+
+
+  
+    
+  
+
+
+
+  
+
+
+<h4>Cookie consent</h4>
+<p>We use cookies to recognize your repeated visits and preferences, as well as to measure the effectiveness of our documentation and whether users find what they're searching for. With your consent, you're helping us to make our documentation better.</p>
+<input class="md-toggle" type="checkbox" id="__settings" >
+<div class="md-consent__settings">
+  <ul class="task-list">
+    
+      
+      
+        
+        
+      
+      <li class="task-list-item">
+        <label class="task-list-control">
+          <input type="checkbox" name="github" checked>
+          <span class="task-list-indicator"></span>
+          GitHub
+        </label>
+      </li>
+    
+  </ul>
+</div>
+<div class="md-consent__controls">
+  
+    
+      <button class="md-button md-button--primary">Accept</button>
+    
+    
+    
+  
+    
+    
+    
+      <label class="md-button" for="__settings">Manage settings</label>
+    
+  
+</div>
+          </form>
+        </aside>
+      </div>
+      <script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout((function(){document.querySelector("[data-md-component=consent]").hidden=!1}),250);var form=document.forms.consent;for(var action of["submit","reset"])form.addEventListener(action,(function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map((function(e){return[e,!0]})))),location.hash="",location.reload()}))</script>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "search.suggest", "navigation.tabs", "content.code.copy", "toc"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+        <script src="../../assets/mkdocs_puml/puml.js"></script>
+      
+        <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+      
+        <script src="../../assets/mkdocs_puml/interaction.js"></script>
+      
+    
+  </body>
+</html>
