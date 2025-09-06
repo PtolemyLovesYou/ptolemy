@@ -179,7 +179,12 @@ class Trace(BaseModel):
             self,
             attr,
             [
-                cls(subject_id=self.subject_id, event_id=self.id_, field_name=k, field_value=v)
+                cls(
+                    subject_id=self.subject_id,
+                    event_id=self.id_,
+                    field_name=k,
+                    field_value=v,
+                )
                 for k, v in kwargs.items()
                 if v is not None
             ],

@@ -1,8 +1,8 @@
 use super::types::{PyJSON, PyUUIDWrapper};
 use ptolemy::generated::record_publisher::{
     record::RecordData, record_publisher_client::RecordPublisherClient, EventRecord,
-    FeedbackRecord, InputRecord, MetadataRecord, OutputRecord,
-    PublishRequest, Record, RuntimeRecord, Tier,
+    FeedbackRecord, InputRecord, MetadataRecord, OutputRecord, PublishRequest, Record,
+    RuntimeRecord, Tier,
 };
 use pyo3::{
     exceptions::{PyConnectionError, PyOverflowError, PyValueError},
