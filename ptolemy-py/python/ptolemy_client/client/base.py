@@ -14,10 +14,8 @@ from ..trace import Trace
 class PtolemyBase(BaseModel, ABC):
     @abstractmethod
     def add_trace_blocking(self, trace: "Trace"): ...
-    
     @abstractmethod
     async def add_trace(self, trace: "Trace"): ...
-    
     def trace(
         self,
         subject_id: UUID,
