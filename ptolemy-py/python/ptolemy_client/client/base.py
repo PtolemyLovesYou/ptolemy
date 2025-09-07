@@ -39,5 +39,11 @@ class PtolemyBase(BaseModel, ABC):
             environment=environment,
         )
 
-# NOTE: Required to avoid Pydantic error
+# Pydantic forward-ref resolution:
+# Trace.client is annotated as type "PtolemyBase", but at import time Trace was
+# defined before PtolemyBase was available in its namespace. Because we use
+# `from __future__ import annotations`, Pydantic stores that annotation as a string
+# and cannot resolve it automatically. After both classes are defined, we call
+# `Trace.model_rebuild()` with a namespace mapping so Pydantic can resolve the
+# forward reference and validate instances correctly at runtime.
 Trace.model_rebuild()
