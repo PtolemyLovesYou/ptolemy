@@ -1,7 +1,6 @@
 """IO Models."""
 
-from typing import TypeVar, Generic, Optional
-import time
+from typing import TypeVar, Generic, Optional, Dict, Any
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
 from ._core import validate_field_value
@@ -10,6 +9,8 @@ T = TypeVar("T")
 
 # TODO: Eventually make this configurable
 MAX_SIZE = 1024
+
+Parameters = Dict[str, Any]
 
 class IO(BaseModel, Generic[T]):
     """IO object."""

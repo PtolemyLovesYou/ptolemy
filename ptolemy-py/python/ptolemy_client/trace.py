@@ -1,83 +1,17 @@
-"""Ptolemy Client."""
+from __future__ import annotations
 
-from typing import Dict, Any, Optional, List, Type
-from types import TracebackType
+from uuid import uuid4, UUID
 import time
-import logging
+from typing import Optional, Any, Type, List, TYPE_CHECKING
+from types import TracebackType
 import traceback
-from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, InstanceOf
+from pydantic import BaseModel, Field
 
 from .tier import Tier
-from .io import IO, Runtime
-from ._core import RecordExporter
+from .io import Runtime, IO, Parameters
 
-logger = logging.getLogger(__name__)
-
-Parameters = Dict[str, Any]
-
-class Ptolemy(BaseModel):
-    """Ptolemy Client."""
-
-    base_url: str
-
-    client: InstanceOf[RecordExporter]
-
-    def add_trace_blocking(self, trace: "Trace"):
-        """Send trace."""
-        # TODO: Batching, retries, etc.
-
-        try:
-            self.client.send_trace_blocking(trace)
-        # Thrown when invalid trace is sent
-        except AttributeError as e:
-            logger.error("Invalid trace type: %s", trace.__class__.__name__)
-        except ConnectionError as e:
-            logger.error("Error sending trace %s: %s", trace.id_, e)
-
-    async def add_trace(self, trace: "Trace"):
-        """Send trace."""
-        # TODO: Batching, retries, etc.
-
-        try:
-            await self.client.send_trace(trace)
-        # Thrown when invalid trace is sent
-        except AttributeError as e:
-            logger.error("Invalid trace type: %s", trace.__class__.__name__)
-        except ConnectionError as e:
-            logger.error("Error sending trace %s: %s", trace.id_, e)
-
-    def trace(
-        self,
-        subject_id: UUID,
-        name: str,
-        parameters: Optional[Parameters],
-        version: Optional[str] = None,
-        environment: Optional[str] = None,
-    ) -> "Trace":
-        """Create new trace."""
-
-        return Trace(
-            client=self,
-            tier=Tier.SYSTEM,
-            subject_id=subject_id,
-            parent_id=subject_id,
-            name=name,
-            parameters=parameters,
-            version=version,
-            environment=environment,
-        )
-
-def connect(base_url: str) -> Ptolemy:
-    """
-    Connect to Ptolemy client.
-    """
-    client = RecordExporter(base_url)
-
-    return Ptolemy(
-        base_url=base_url,
-        client=client,
-    )
+if TYPE_CHECKING:
+    from .client.base import PtolemyBase
 
 def _format_err(
     exc_type: Optional[Type[BaseException]],
@@ -93,7 +27,7 @@ def _format_err(
 class Trace(BaseModel):
     """Trace."""
 
-    client: Ptolemy = Field(exclude=True, repr=False)
+    client: "PtolemyBase" = Field(exclude=True, repr=False)
 
     subject_id: UUID
     parent_id: UUID
