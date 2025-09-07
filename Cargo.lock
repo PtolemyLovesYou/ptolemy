@@ -1317,7 +1317,7 @@ checksum = "7dc55d7dec32ecaf61e0bd90b3d2392d721a28b95cfd23c3e176eccefbeab2f2"
 
 [[package]]
 name = "ptolemy"
-version = "0.1.0-alpha.54+c8f30c8"
+version = "0.1.0-alpha.55+3d02667"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1353,7 +1353,7 @@ dependencies = [
 
 [[package]]
 name = "ptolemy-client"
-version = "0.1.0-alpha.54+c8f30c8"
+version = "0.1.0-alpha.55+3d02667"
 dependencies = [
  "once_cell",
  "openssl",
